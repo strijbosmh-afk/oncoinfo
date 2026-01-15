@@ -38,8 +38,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Logo URL from the published site
+    const logoUrl = 'https://uroinfo.lovable.app/images/logo-rzt.png';
+    
     // Generate patient-friendly HTML
-    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects);
+    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoUrl);
 
     return new Response(
       JSON.stringify({ 
@@ -60,7 +63,7 @@ Deno.serve(async (req) => {
   }
 });
 
-function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideEffects: boolean): string {
+function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideEffects: boolean, logoUrl: string): string {
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
     : '';
@@ -87,13 +90,23 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
       padding: 40px 20px;
       background: white;
     }
+    .logo-header {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .logo-header img {
+      max-height: 60px;
+      width: auto;
+    }
     .header {
-      border-bottom: 3px solid #0066cc;
+      border-bottom: 3px solid #6b2d5b;
       padding-bottom: 20px;
       margin-bottom: 30px;
+      text-align: center;
     }
     .header h1 {
-      color: #0066cc;
+      color: #6b2d5b;
       font-size: 28px;
       margin-bottom: 8px;
     }
@@ -103,8 +116,8 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     }
     .drug-class {
       display: inline-block;
-      background: #e6f2ff;
-      color: #0066cc;
+      background: #f5e6f0;
+      color: #6b2d5b;
       padding: 4px 12px;
       border-radius: 4px;
       font-size: 14px;
@@ -114,7 +127,7 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
       margin-bottom: 28px;
     }
     .section h2 {
-      color: #0066cc;
+      color: #6b2d5b;
       font-size: 20px;
       margin-bottom: 12px;
       padding-bottom: 6px;
@@ -134,7 +147,7 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     }
     .warning-box {
       background: #fff3e6;
-      border-left: 4px solid #ff9500;
+      border-left: 4px solid #e87722;
       padding: 15px;
       margin: 20px 0;
       border-radius: 0 4px 4px 0;
@@ -157,14 +170,14 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
       margin-bottom: 8px;
     }
     .info-box {
-      background: #e6f7ff;
-      border-left: 4px solid #0066cc;
+      background: #f5e6f0;
+      border-left: 4px solid #6b2d5b;
       padding: 15px;
       margin: 20px 0;
       border-radius: 0 4px 4px 0;
     }
     .info-box h3 {
-      color: #0066cc;
+      color: #6b2d5b;
       font-size: 16px;
       margin-bottom: 8px;
     }
@@ -177,6 +190,7 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     .contact-section h2 {
       border-bottom: none;
       margin-bottom: 15px;
+      color: #6b2d5b;
     }
     .footer {
       margin-top: 40px;
@@ -197,6 +211,10 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
   </style>
 </head>
 <body>
+  <div class="logo-header">
+    <img src="${logoUrl}" alt="RZ Tienen Logo" />
+  </div>
+  
   <div class="header">
     <h1>${drug.generic_name}${brandNamesText}</h1>
     <p class="subtitle">Informatie voor patiënten</p>
@@ -285,11 +303,11 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     <p><strong>Uw behandelend arts:</strong> _______________________</p>
     <p><strong>Verpleegkundige:</strong> _______________________</p>
     <p><strong>Apotheek:</strong> _______________________</p>
-    <p><strong>Telefoonnummer:</strong> _______________________</p>
+    <p><strong>Telefoonnummer:</strong> 016 80 90 11</p>
   </div>
 
   <div class="footer">
-    <p>Dit document is gegenereerd door UroInfo | ${new Date().toLocaleDateString('nl-NL')}</p>
+    <p>Dit document is gegenereerd door RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')}</p>
     <p>Deze informatie is bedoeld als aanvulling op het gesprek met uw arts en vervangt dit niet.</p>
   </div>
 </body>

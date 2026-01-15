@@ -1,17 +1,14 @@
-import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
   Pill, 
   Loader2, 
-  FileText, 
   AlertTriangle, 
   Info, 
   Stethoscope,
@@ -19,53 +16,10 @@ import {
   Shield,
   ExternalLink
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const { toast } = useToast();
-
-  const handleGeneratePatientInfo = async () => {
-    if (!drug) return;
-    
-    setIsGeneratingPdf(true);
-    try {
-      // We'll use the existing generate-patient-pdf function but adapted for drugs
-      const { data, error } = await supabase.functions.invoke('generate-drug-patient-info', {
-        body: { 
-          drug_id: drug.id,
-          include_dosing: true,
-          include_side_effects: true
-        }
-      });
-
-      if (error) throw error;
-
-      // Open HTML in new window for printing
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(data.html);
-        printWindow.document.close();
-      }
-
-      toast({
-        title: 'Patiëntinformatie Gegenereerd',
-        description: 'De patiëntfolder is geopend in een nieuw venster.',
-      });
-    } catch (err) {
-      console.error('Error generating patient info:', err);
-      toast({
-        title: 'Fout',
-        description: 'Kon patiëntinformatie niet genereren.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -109,38 +63,27 @@ export default function DrugDetailPage() {
             </Button>
           </Link>
 
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Pill className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold">{drug.generic_name}</h1>
-              </div>
-              {drug.brand_names.length > 0 && (
-                <p className="text-lg text-muted-foreground">
-                  {drug.brand_names.join(', ')}
-                </p>
-              )}
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Badge variant="default">{drug.drug_class}</Badge>
-                {drug.administration_route && (
-                  <Badge variant="outline">{drug.administration_route}</Badge>
-                )}
-                {drug.is_on_zvz && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    ZVZ Vergoed
-                  </Badge>
-                )}
-              </div>
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Pill className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold">{drug.generic_name}</h1>
             </div>
-
-            <Button onClick={handleGeneratePatientInfo} disabled={isGeneratingPdf}>
-              {isGeneratingPdf ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="mr-2 h-4 w-4" />
+            {drug.brand_names.length > 0 && (
+              <p className="text-lg text-muted-foreground">
+                {drug.brand_names.join(', ')}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Badge variant="default">{drug.drug_class}</Badge>
+              {drug.administration_route && (
+                <Badge variant="outline">{drug.administration_route}</Badge>
               )}
-              Genereer Patiëntfolder
-            </Button>
+              {drug.is_on_zvz && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  ZVZ Vergoed
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
