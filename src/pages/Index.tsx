@@ -96,7 +96,7 @@ const Index = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
-                    AI-gegenereerde analyses
+                    Data uit PubMed en ClinicalTrials.gov
                   </li>
                 </ul>
                 <div className="pt-2">
