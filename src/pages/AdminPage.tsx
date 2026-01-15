@@ -26,6 +26,8 @@ export default function AdminPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUpdatingTrials, setIsUpdatingTrials] = useState(false);
   const [isFetchingResults, setIsFetchingResults] = useState(false);
+  const [isGeneratingBulkAI, setIsGeneratingBulkAI] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [updateDiseaseArea, setUpdateDiseaseArea] = useState<string>('');
   
   const [formData, setFormData] = useState({
@@ -171,6 +173,53 @@ export default function AdminPage() {
     }
   };
 
+  const handleBulkGenerateAI = async () => {
+    if (!trials || trials.length === 0) {
+      toast({ title: 'Geen Trials', description: 'Er zijn geen trials om te analyseren', variant: 'destructive' });
+      return;
+    }
+
+    setIsGeneratingBulkAI(true);
+    setBulkProgress({ current: 0, total: trials.length });
+    
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < trials.length; i++) {
+      const trial = trials[i];
+      setBulkProgress({ current: i + 1, total: trials.length });
+      
+      try {
+        const { error } = await supabase.functions.invoke('generate-analysis', {
+          body: { trial_id: trial.id }
+        });
+        
+        if (error) {
+          console.error(`Error generating analysis for ${trial.acronym}:`, error);
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Error generating analysis for ${trial.acronym}:`, error);
+        errorCount++;
+      }
+
+      // Small delay to avoid rate limiting
+      if (i < trials.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+
+    setIsGeneratingBulkAI(false);
+    setBulkProgress({ current: 0, total: 0 });
+    
+    toast({ 
+      title: 'Bulk Analyse Voltooid', 
+      description: `${successCount} analyses gegenereerd${errorCount > 0 ? `, ${errorCount} fouten` : ''}`
+    });
+  };
+
   return (
     <Layout>
       <div className="container py-8">
@@ -265,6 +314,34 @@ export default function AdminPage() {
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">
                     Haalt alleen feitelijke gegevens op die expliciet vermeld worden in abstracts. Survival curves worden alleen opgenomen als percentages op specifieke tijdspunten worden genoemd.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    Bulk AI Analyse
+                  </CardTitle>
+                  <CardDescription>Genereer automatisch AI-analyses voor alle trials</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={handleBulkGenerateAI} disabled={isGeneratingBulkAI || !trials?.length} className="w-full">
+                    {isGeneratingBulkAI ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyseren... ({bulkProgress.current}/{bulkProgress.total})
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Genereer Alle AI Analyses
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Genereert voor elke trial een uitgebreide analyse met sterke/zwakke punten, klinische implicaties en lekensamenvatting. Dit kan enkele minuten duren.
                   </p>
                 </CardContent>
               </Card>
