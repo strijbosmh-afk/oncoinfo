@@ -142,12 +142,12 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
     return (
       <Layout>
         <div className="container py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Trial not found</h1>
+          <h1 className="text-2xl font-bold mb-4">Studie niet gevonden</h1>
           <p className="text-muted-foreground mb-6">
-            The trial you're looking for doesn't exist or has been removed.
+            De studie die je zoekt bestaat niet of is verwijderd.
           </p>
           <Button asChild>
-            <Link to="/trials">Browse Trials</Link>
+            <Link to="/trials">Bekijk Studies</Link>
           </Button>
         </div>
       </Layout>
@@ -159,13 +159,13 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
   return (
     <Layout>
       <div className="container py-8">
-        {/* Back button */}
+        {/* Terug knop */}
         <Link 
           to="/trials" 
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <ChevronLeft className="h-4 w-4" />
-          Back to trials
+          Terug naar studies
         </Link>
 
         {/* Header */}
@@ -332,61 +332,61 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Navigatie Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="design">Design</TabsTrigger>
-            <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsTrigger value="overview">Overzicht</TabsTrigger>
+            <TabsTrigger value="design">Opzet</TabsTrigger>
+            <TabsTrigger value="results">Resultaten</TabsTrigger>
             <TabsTrigger value="survival">Survival Data</TabsTrigger>
             <TabsTrigger value="patient">Patiënt Info</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
+          {/* Overzicht Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>At a Glance</CardTitle>
+                  <CardTitle>In één oogopslag</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Disease</p>
-                      <p className="font-medium">{trial.disease_area}</p>
+                      <p className="text-sm text-muted-foreground">Ziekte</p>
+                      <p className="font-medium">{diseaseLabels[trial.disease_area] || trial.disease_area}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phase</p>
-                      <p className="font-medium">{trial.phase || 'Not specified'}</p>
+                      <p className="text-sm text-muted-foreground">Fase</p>
+                      <p className="font-medium">{trial.phase || 'Niet gespecificeerd'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Setting</p>
-                      <p className="font-medium">{trial.setting || 'Not specified'}</p>
+                      <p className="font-medium">{trial.setting || 'Niet gespecificeerd'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Line of Therapy</p>
-                      <p className="font-medium">{trial.line_of_therapy || 'Not specified'}</p>
+                      <p className="text-sm text-muted-foreground">Therapielijn</p>
+                      <p className="font-medium">{trial.line_of_therapy || 'Niet gespecificeerd'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Randomization</p>
-                      <p className="font-medium">{trial.randomization || 'Not specified'}</p>
+                      <p className="text-sm text-muted-foreground">Randomisatie</p>
+                      <p className="font-medium">{trial.randomization || 'Niet gespecificeerd'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Blinding</p>
-                      <p className="font-medium">{trial.blinding || 'Not specified'}</p>
+                      <p className="text-sm text-muted-foreground">Blindering</p>
+                      <p className="font-medium">{trial.blinding || 'Niet gespecificeerd'}</p>
                     </div>
                   </div>
                   
                   <Separator />
                   
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Primary Endpoint</p>
-                    <p className="font-medium">{trial.primary_endpoint || 'Not specified'}</p>
+                    <p className="text-sm text-muted-foreground mb-1">Primair Eindpunt</p>
+                    <p className="font-medium">{trial.primary_endpoint || 'Niet gespecificeerd'}</p>
                   </div>
                   
                   {trial.secondary_endpoints && trial.secondary_endpoints.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Secondary Endpoints</p>
+                      <p className="text-sm text-muted-foreground mb-2">Secundaire Eindpunten</p>
                       <ul className="list-disc list-inside space-y-1 text-sm">
                         {trial.secondary_endpoints.map((endpoint, i) => (
                           <li key={i}>{endpoint}</li>
@@ -399,12 +399,12 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Interventions</CardTitle>
+                  <CardTitle>Interventies</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {trial.intervention_classes && trial.intervention_classes.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Intervention Classes</p>
+                      <p className="text-sm text-muted-foreground mb-2">Interventie Klassen</p>
                       <div className="flex flex-wrap gap-1.5">
                         {trial.intervention_classes.map((cls) => (
                           <Badge key={cls} variant="secondary">{cls}</Badge>
@@ -415,7 +415,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                   
                   {trial.drugs && trial.drugs.length > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Drugs</p>
+                      <p className="text-sm text-muted-foreground mb-2">Medicijnen</p>
                       <div className="flex flex-wrap gap-1.5">
                         {trial.drugs.map((drug) => (
                           <Badge key={drug} variant="outline">{drug}</Badge>
@@ -439,7 +439,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                     <>
                       <Separator />
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Treatment Arms</p>
+                        <p className="text-sm text-muted-foreground mb-2">Behandelarmen</p>
                         <div className="space-y-2">
                           {arms.map((arm) => (
                             <div key={arm.id} className="text-sm">
@@ -463,7 +463,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             {trial.abstract && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Abstract</CardTitle>
+                  <CardTitle>Samenvatting</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-relaxed">{trial.abstract}</p>
@@ -472,50 +472,50 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             )}
           </TabsContent>
 
-          {/* Design Tab */}
+          {/* Opzet Tab */}
           <TabsContent value="design" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Study Design</CardTitle>
+                <CardTitle>Studie Opzet</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Phase</p>
-                    <p className="font-medium">{trial.phase || 'Not specified'}</p>
+                    <p className="text-muted-foreground">Fase</p>
+                    <p className="font-medium">{trial.phase || 'Niet gespecificeerd'}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Design Type</p>
-                    <p className="font-medium">{trial.design_type || 'Not specified'}</p>
+                    <p className="text-muted-foreground">Type Opzet</p>
+                    <p className="font-medium">{trial.design_type || 'Niet gespecificeerd'}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Randomization</p>
-                    <p className="font-medium">{trial.randomization || 'Not specified'}</p>
+                    <p className="text-muted-foreground">Randomisatie</p>
+                    <p className="font-medium">{trial.randomization || 'Niet gespecificeerd'}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Blinding</p>
-                    <p className="font-medium">{trial.blinding || 'Not specified'}</p>
+                    <p className="text-muted-foreground">Blindering</p>
+                    <p className="font-medium">{trial.blinding || 'Niet gespecificeerd'}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Sample Size</p>
-                    <p className="font-medium">{trial.sample_size ? `N=${trial.sample_size.toLocaleString()}` : 'Not specified'}</p>
+                    <p className="text-muted-foreground">Steekproefgrootte</p>
+                    <p className="font-medium">{trial.sample_size ? `N=${trial.sample_size.toLocaleString()}` : 'Niet gespecificeerd'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Setting</p>
-                    <p className="font-medium">{trial.setting || 'Not specified'}</p>
+                    <p className="font-medium">{trial.setting || 'Niet gespecificeerd'}</p>
                   </div>
                 </div>
                 
                 {trial.primary_endpoint && (
                   <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">Primary Endpoint</p>
+                    <p className="text-sm text-muted-foreground">Primair Eindpunt</p>
                     <p className="font-medium">{trial.primary_endpoint}</p>
                   </div>
                 )}
                 
                 {trial.secondary_endpoints && trial.secondary_endpoints.length > 0 && (
                   <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground mb-2">Secondary Endpoints</p>
+                    <p className="text-sm text-muted-foreground mb-2">Secundaire Eindpunten</p>
                     <ul className="list-disc list-inside text-sm space-y-1">
                       {trial.secondary_endpoints.map((ep, i) => (
                         <li key={i}>{ep}</li>
@@ -529,7 +529,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Inclusion Criteria</CardTitle>
+                  <CardTitle>Inclusiecriteria</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {trial.inclusion_criteria ? (
@@ -548,14 +548,14 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Not available</p>
+                    <p className="text-sm text-muted-foreground">Niet beschikbaar</p>
                   )}
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Exclusion Criteria</CardTitle>
+                  <CardTitle>Exclusiecriteria</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {trial.exclusion_criteria ? (
@@ -574,21 +574,21 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Not available</p>
+                    <p className="text-sm text-muted-foreground">Niet beschikbaar</p>
                   )}
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          {/* Results Tab */}
+          {/* Resultaten Tab */}
           <TabsContent value="results" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Results Summary</CardTitle>
+                <CardTitle>Resultaten Samenvatting</CardTitle>
                 {trial.results_summary?.source && (
                   <CardDescription>
-                    Source: {trial.results_summary.source}
+                    Bron: {trial.results_summary.source}
                     {trial.results_summary.nct_id && (
                       <a 
                         href={`https://clinicaltrials.gov/study/${trial.results_summary.nct_id}`}
@@ -596,7 +596,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                         rel="noopener noreferrer"
                         className="ml-2 text-primary hover:underline"
                       >
-                        View on ClinicalTrials.gov
+                        Bekijk op ClinicalTrials.gov
                       </a>
                     )}
                   </CardDescription>
@@ -605,10 +605,10 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
               <CardContent>
                 {trial.results_summary ? (
                   <div className="space-y-6">
-                    {/* Primary Endpoint Result */}
+                    {/* Primair Eindpunt Resultaat */}
                     {(trial.results_summary.hazard_ratio || trial.results_summary.p_value) && (
                       <div className="p-4 bg-muted rounded-lg">
-                        <p className="text-sm font-medium mb-2">Primary Endpoint Analysis</p>
+                        <p className="text-sm font-medium mb-2">Primair Eindpunt Analyse</p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {trial.results_summary.hazard_ratio && (
                             <div>
@@ -618,14 +618,14 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                               </p>
                               {trial.results_summary.hazard_ratio.ci_lower && trial.results_summary.hazard_ratio.ci_upper && (
                                 <p className="text-xs text-muted-foreground">
-                                  95% CI: {trial.results_summary.hazard_ratio.ci_lower?.toFixed(2)} - {trial.results_summary.hazard_ratio.ci_upper?.toFixed(2)}
+                                  95% BI: {trial.results_summary.hazard_ratio.ci_lower?.toFixed(2)} - {trial.results_summary.hazard_ratio.ci_upper?.toFixed(2)}
                                 </p>
                               )}
                             </div>
                           )}
                           {trial.results_summary.p_value && (
                             <div>
-                              <p className="text-xs text-muted-foreground">P-value</p>
+                              <p className="text-xs text-muted-foreground">P-waarde</p>
                               <p className="text-lg font-bold">
                                 {trial.results_summary.p_value < 0.001 ? '<0.001' : trial.results_summary.p_value.toFixed(3)}
                               </p>
@@ -633,14 +633,14 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                           )}
                           {trial.results_summary.median_os_months && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Median OS</p>
-                              <p className="text-lg font-bold">{trial.results_summary.median_os_months} mo</p>
+                              <p className="text-xs text-muted-foreground">Mediane OS</p>
+                              <p className="text-lg font-bold">{trial.results_summary.median_os_months} mnd</p>
                             </div>
                           )}
                           {trial.results_summary.median_pfs_months && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Median PFS</p>
-                              <p className="text-lg font-bold">{trial.results_summary.median_pfs_months} mo</p>
+                              <p className="text-xs text-muted-foreground">Mediane PFS</p>
+                              <p className="text-lg font-bold">{trial.results_summary.median_pfs_months} mnd</p>
                             </div>
                           )}
                         </div>
@@ -649,21 +649,21 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
 
                     {trial.results_summary.enrollment && (
                       <div>
-                        <p className="text-sm font-medium mb-1">Enrollment</p>
-                        <p className="text-sm">{trial.results_summary.enrollment} patients</p>
+                        <p className="text-sm font-medium mb-1">Inclusie</p>
+                        <p className="text-sm">{trial.results_summary.enrollment} patiënten</p>
                       </div>
                     )}
 
                     {trial.results_summary.primary_outcome && (
                       <div>
-                        <p className="text-sm font-medium mb-1">Primary Outcome</p>
+                        <p className="text-sm font-medium mb-1">Primaire Uitkomst</p>
                         <p className="text-sm">{trial.results_summary.primary_outcome}</p>
                       </div>
                     )}
 
                     {trial.results_summary.key_findings && trial.results_summary.key_findings.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium mb-1">Key Findings</p>
+                        <p className="text-sm font-medium mb-1">Belangrijkste Bevindingen</p>
                         <ul className="list-disc list-inside text-sm space-y-1">
                           {trial.results_summary.key_findings.map((finding: string, i: number) => (
                             <li key={i}>{finding}</li>
@@ -674,26 +674,26 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
 
                     {trial.results_summary.conclusions && (
                       <div>
-                        <p className="text-sm font-medium mb-1">Conclusions</p>
+                        <p className="text-sm font-medium mb-1">Conclusies</p>
                         <p className="text-sm">{trial.results_summary.conclusions}</p>
                       </div>
                     )}
 
-                    {/* Primary Endpoints from CTGov */}
+                    {/* Primaire Eindpunten van CTGov */}
                     {trial.results_summary.primary_endpoints && trial.results_summary.primary_endpoints.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium mb-2">Primary Endpoints</p>
+                        <p className="text-sm font-medium mb-2">Primaire Eindpunten</p>
                         <div className="space-y-3">
                           {trial.results_summary.primary_endpoints.map((ep: any, i: number) => (
                             <div key={i} className="p-3 border rounded-lg">
                               <p className="font-medium text-sm">{ep.name}</p>
                               {ep.time_frame && (
-                                <p className="text-xs text-muted-foreground">Time frame: {ep.time_frame}</p>
+                                <p className="text-xs text-muted-foreground">Tijdsframe: {ep.time_frame}</p>
                               )}
                               <div className="flex flex-wrap gap-4 mt-2">
                                 {ep.value && (
                                   <span className="text-sm">
-                                    <span className="text-muted-foreground">Value:</span> {ep.value} {ep.unit || ''}
+                                    <span className="text-muted-foreground">Waarde:</span> {ep.value} {ep.unit || ''}
                                   </span>
                                 )}
                                 {ep.hr && (
@@ -701,7 +701,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                                     <span className="text-muted-foreground">HR:</span> {ep.hr.toFixed(2)}
                                     {ep.hr_ci_lower && ep.hr_ci_upper && (
                                       <span className="text-xs text-muted-foreground ml-1">
-                                        (95% CI: {ep.hr_ci_lower.toFixed(2)}-{ep.hr_ci_upper.toFixed(2)})
+                                        (95% BI: {ep.hr_ci_lower.toFixed(2)}-{ep.hr_ci_upper.toFixed(2)})
                                       </span>
                                     )}
                                   </span>
@@ -718,15 +718,15 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                       </div>
                     )}
 
-                    {/* Secondary Endpoints from CTGov */}
+                    {/* Secundaire Eindpunten van CTGov */}
                     {trial.results_summary.secondary_endpoints && trial.results_summary.secondary_endpoints.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium mb-2">Secondary Endpoints</p>
+                        <p className="text-sm font-medium mb-2">Secundaire Eindpunten</p>
                         <div className="space-y-2">
                           {trial.results_summary.secondary_endpoints.slice(0, 5).map((ep: any, i: number) => (
                             <div key={i} className="p-2 border rounded text-sm">
                               <span className="font-medium">{ep.name}</span>
-                              {ep.value && <span className="ml-2 text-muted-foreground">Value: {ep.value}</span>}
+                              {ep.value && <span className="ml-2 text-muted-foreground">Waarde: {ep.value}</span>}
                               {ep.hr && <span className="ml-2 text-muted-foreground">HR: {ep.hr.toFixed(2)}</span>}
                             </div>
                           ))}
@@ -736,7 +736,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">Results data not yet available.</p>
+                    <p className="text-muted-foreground mb-4">Resultaten data nog niet beschikbaar.</p>
                     {trial.pubmed_id && (
                       <a
                         href={`https://pubmed.ncbi.nlm.nih.gov/${trial.pubmed_id}`}
@@ -745,7 +745,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                         className="inline-flex items-center gap-2 text-primary hover:underline"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        View on PubMed
+                        Bekijk op PubMed
                       </a>
                     )}
                   </div>
@@ -756,7 +756,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             {trial.safety_highlights && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Safety Highlights</CardTitle>
+                  <CardTitle>Veiligheid Highlights</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm">{trial.safety_highlights}</p>

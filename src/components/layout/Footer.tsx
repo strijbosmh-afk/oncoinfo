@@ -7,10 +7,10 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              GU
+              UI
             </div>
             <span className="text-sm text-muted-foreground">
-              GU Studies Database © {new Date().getFullYear()}
+              UroInfo © {new Date().getFullYear()}
             </span>
           </div>
           
