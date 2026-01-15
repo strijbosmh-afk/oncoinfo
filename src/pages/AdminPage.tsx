@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Sparkles, Upload, RefreshCw } from 'lucide-react';
+import { Loader2, Plus, Search, Sparkles, Upload, RefreshCw, Database } from 'lucide-react';
 import { DISEASE_AREAS, PHASES, SETTINGS, INTERVENTION_CLASSES } from '@/types/trial';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [isFetching, setIsFetching] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUpdatingTrials, setIsUpdatingTrials] = useState(false);
+  const [isFetchingResults, setIsFetchingResults] = useState(false);
   const [updateDiseaseArea, setUpdateDiseaseArea] = useState<string>('');
   
   const [formData, setFormData] = useState({
@@ -146,6 +147,30 @@ export default function AdminPage() {
     }
   };
 
+  const handleFetchResults = async () => {
+    setIsFetchingResults(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-trial-results', {
+        body: {}
+      });
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: 'Resultaten Opgehaald', 
+        description: `${data.processed} trials verwerkt met echte resultaatgegevens`
+      });
+    } catch (error: any) {
+      toast({ 
+        title: 'Ophalen Mislukt', 
+        description: error.message || 'Kon resultaten niet ophalen', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsFetchingResults(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="container py-8">
@@ -213,6 +238,34 @@ export default function AdminPage() {
                       </>
                     )}
                   </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="h-5 w-5" />
+                    Resultaten Ophalen
+                  </CardTitle>
+                  <CardDescription>Haal echte resultaten, arms en endpoints op uit PubMed abstracts (geen gegenereerde data)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={handleFetchResults} disabled={isFetchingResults} className="w-full">
+                    {isFetchingResults ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Resultaten ophalen uit PubMed...
+                      </>
+                    ) : (
+                      <>
+                        <Database className="mr-2 h-4 w-4" />
+                        Haal Resultaten Op voor Alle Trials
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Haalt alleen feitelijke gegevens op die expliciet vermeld worden in abstracts. Survival curves worden alleen opgenomen als percentages op specifieke tijdspunten worden genoemd.
+                  </p>
                 </CardContent>
               </Card>
             </div>
