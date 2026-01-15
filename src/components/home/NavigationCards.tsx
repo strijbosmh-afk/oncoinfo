@@ -3,36 +3,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { 
   Search, 
-  FlaskConical, 
   Activity, 
   Pill 
 } from 'lucide-react';
 
 const navigationCards = [
   {
-    title: 'Search by Trial Name',
-    description: 'Find specific trials by acronym or full name',
+    title: 'Zoeken op Studienaam',
+    description: 'Vind specifieke studies op acroniem of volledige naam',
     icon: Search,
     href: '/trials',
     examples: ['ENZAMET', 'PROSPER', 'LATITUDE']
   },
   {
-    title: 'Browse by Trial Design',
-    description: 'Filter by phase, randomization, or endpoint type',
-    icon: FlaskConical,
-    href: '/trials?view=design',
-    examples: ['Phase III', 'Randomized', 'Survival endpoint']
-  },
-  {
-    title: 'Browse by Disease Area',
-    description: 'Explore trials organized by cancer type',
+    title: 'Zoeken op Ziektegebied',
+    description: 'Bekijk studies georganiseerd per kankertype',
     icon: Activity,
     href: '/trials?view=disease',
-    examples: ['Prostate', 'Bladder', 'RCC', 'Testis']
+    examples: ['Prostaat', 'Blaas', 'Nier', 'Testis']
   },
   {
-    title: 'Browse by Intervention',
-    description: 'Find trials by treatment class or specific drugs',
+    title: 'Zoeken op Interventie',
+    description: 'Vind studies op behandelklasse of specifieke medicijnen',
     icon: Pill,
     href: '/trials?view=intervention',
     examples: ['IO/ICI', 'PARPi', 'ARPI', 'ADC']
@@ -44,10 +36,10 @@ export function NavigationCards() {
     <section className="py-16 bg-muted/30">
       <div className="container">
         <h2 className="text-2xl font-bold text-center mb-10">
-          Find Trials Your Way
+          Vind Studies op Uw Manier
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {navigationCards.map((card) => (
             <Link key={card.title} to={card.href}>
               <Card className="h-full transition-all hover:shadow-medical hover:-translate-y-1 cursor-pointer group">

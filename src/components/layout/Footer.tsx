@@ -10,16 +10,16 @@ export function Footer() {
               GU
             </div>
             <span className="text-sm text-muted-foreground">
-              GU Trials Hub © {new Date().getFullYear()}
+              GU Studies Database © {new Date().getFullYear()}
             </span>
           </div>
           
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/trials" className="hover:text-foreground transition-colors">
-              Browse Trials
+              Bekijk Studies
             </Link>
             <Link to="/about" className="hover:text-foreground transition-colors">
-              About
+              Over Ons
             </Link>
             <Link to="/contact" className="hover:text-foreground transition-colors">
               Contact
@@ -27,8 +27,8 @@ export function Footer() {
           </nav>
 
           <p className="text-xs text-muted-foreground max-w-xs text-center md:text-right">
-            Clinical trial information is for educational purposes only. 
-            Consult medical professionals for treatment decisions.
+            Informatie over klinische studies is uitsluitend bedoeld voor educatieve doeleinden. 
+            Raadpleeg medische professionals voor behandelbeslissingen.
           </p>
         </div>
       </div>

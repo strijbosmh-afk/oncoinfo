@@ -81,9 +81,9 @@ export default function TrialsPage() {
     <Layout>
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Clinical Trials</h1>
+          <h1 className="text-3xl font-bold mb-2">Klinische Studies</h1>
           <p className="text-muted-foreground">
-            Browse and filter GU oncology clinical trials
+            Doorzoek en filter urologische oncologie studies
           </p>
         </div>
 
@@ -99,7 +99,7 @@ export default function TrialsPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search trials..."
+                    placeholder="Zoek studies..."
                     className="pl-9"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -119,7 +119,7 @@ export default function TrialsPage() {
                     </Button>
                   )}
                 </div>
-                <Button type="submit">Search</Button>
+                <Button type="submit">Zoeken</Button>
               </form>
 
               <div className="flex items-center gap-2">
@@ -139,14 +139,14 @@ export default function TrialsPage() {
 
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-36">
-                    <SelectValue placeholder="Sort by" />
+                    <SelectValue placeholder="Sorteren" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
-                    <SelectItem value="newest">Newest first</SelectItem>
-                    <SelectItem value="oldest">Oldest first</SelectItem>
-                    <SelectItem value="a-z">A to Z</SelectItem>
-                    <SelectItem value="z-a">Z to A</SelectItem>
-                    <SelectItem value="size">Sample size</SelectItem>
+                    <SelectItem value="newest">Nieuwste eerst</SelectItem>
+                    <SelectItem value="oldest">Oudste eerst</SelectItem>
+                    <SelectItem value="a-z">A tot Z</SelectItem>
+                    <SelectItem value="z-a">Z tot A</SelectItem>
+                    <SelectItem value="size">Steekproefgrootte</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -161,7 +161,7 @@ export default function TrialsPage() {
             ) : sortedTrials && sortedTrials.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Showing {sortedTrials.length} trial{sortedTrials.length !== 1 && 's'}
+                  {sortedTrials.length} {sortedTrials.length === 1 ? 'studie' : 'studies'} gevonden
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {sortedTrials.map((trial) => (
@@ -171,9 +171,9 @@ export default function TrialsPage() {
               </>
             ) : (
               <div className="text-center py-16">
-                <p className="text-lg text-muted-foreground mb-2">No trials found</p>
+                <p className="text-lg text-muted-foreground mb-2">Geen studies gevonden</p>
                 <p className="text-sm text-muted-foreground">
-                  Try adjusting your filters or search query
+                  Probeer uw filters of zoekopdracht aan te passen
                 </p>
                 <Button
                   variant="outline"
@@ -183,7 +183,7 @@ export default function TrialsPage() {
                     setSearchQuery('');
                   }}
                 >
-                  Clear all filters
+                  Alle filters wissen
                 </Button>
               </div>
             )}

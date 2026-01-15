@@ -4,39 +4,39 @@ import { INTERVENTION_CLASSES } from '@/types/trial';
 
 const interventionDetails: Record<string, { description: string; examples: string[] }> = {
   'IO/ICI': {
-    description: 'Immune checkpoint inhibitors',
+    description: 'Immuuncheckpointremmers',
     examples: ['pembrolizumab', 'nivolumab', 'atezolizumab', 'avelumab']
   },
   'PARPi': {
-    description: 'PARP inhibitors',
+    description: 'PARP-remmers',
     examples: ['olaparib', 'rucaparib', 'niraparib', 'talazoparib']
   },
   'ARPI': {
-    description: 'Androgen receptor pathway inhibitors',
+    description: 'Androgeenreceptor pathway remmers',
     examples: ['enzalutamide', 'apalutamide', 'darolutamide', 'abiraterone']
   },
   'Chemotherapy': {
-    description: 'Cytotoxic agents',
-    examples: ['docetaxel', 'cabazitaxel', 'gemcitabine', 'cisplatin']
+    description: 'Cytotoxische middelen',
+    examples: ['docetaxel', 'cabazitaxel', 'gemcitabine', 'cisplatine']
   },
   'Radioligand Therapy': {
-    description: 'Targeted radiopharmaceuticals',
+    description: 'Doelgerichte radiofarmacie',
     examples: ['Lu-177 PSMA-617', 'Ra-223', 'Ac-225 PSMA']
   },
   'Radiation Therapy': {
-    description: 'External beam and brachytherapy',
-    examples: ['SBRT', 'IMRT', 'proton therapy', 'brachytherapy']
+    description: 'Uitwendige bestraling en brachytherapie',
+    examples: ['SBRT', 'IMRT', 'protontherapie', 'brachytherapie']
   },
   'Surgery': {
-    description: 'Surgical interventions',
-    examples: ['prostatectomy', 'cystectomy', 'nephrectomy']
+    description: 'Chirurgische interventies',
+    examples: ['prostatectomie', 'cystectomie', 'nefrectomie']
   },
   'Targeted Therapy': {
-    description: 'Molecularly targeted agents',
+    description: 'Moleculair doelgerichte middelen',
     examples: ['cabozantinib', 'lenvatinib', 'axitinib', 'sunitinib']
   },
   'ADC': {
-    description: 'Antibody-drug conjugates',
+    description: 'Antilichaam-geneesmiddel conjugaten',
     examples: ['enfortumab vedotin', 'sacituzumab govitecan']
   }
 };
@@ -46,10 +46,10 @@ export function InterventionSection() {
     <section className="py-16 bg-muted/30">
       <div className="container">
         <h2 className="text-2xl font-bold text-center mb-4">
-          Browse by Intervention Class
+          Zoeken op Interventieklasse
         </h2>
         <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto">
-          Find trials by treatment modality or specific drug classes
+          Vind studies op behandelmodaliteit of specifieke geneesmiddelklassen
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

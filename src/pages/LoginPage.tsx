@@ -52,33 +52,33 @@ export default function LoginPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold mx-auto mb-4">
               GU
             </div>
-            <CardTitle className="text-2xl">Welcome to GU Trials Hub</CardTitle>
+            <CardTitle className="text-2xl">Welkom bij GU Studies Database</CardTitle>
             <CardDescription>
-              Sign in to access admin features or browse trials as a guest
+              Log in om toegang te krijgen tot beheerfuncties of bekijk studies als gast
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">Inloggen</TabsTrigger>
+                <TabsTrigger value="signup">Registreren</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email">E-mail</Label>
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="uw@email.nl"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">Wachtwoord</Label>
                     <Input
                       id="signin-password"
                       type="password"
@@ -90,7 +90,7 @@ export default function LoginPage() {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
+                    Inloggen
                   </Button>
                 </form>
               </TabsContent>
@@ -98,18 +98,18 @@ export default function LoginPage() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">E-mail</Label>
                     <Input
                       id="signup-email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="uw@email.nl"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">Wachtwoord</Label>
                     <Input
                       id="signup-password"
                       type="password"
@@ -122,7 +122,7 @@ export default function LoginPage() {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Account
+                    Account Aanmaken
                   </Button>
                 </form>
               </TabsContent>
@@ -130,7 +130,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center">
               <Link to="/trials" className="text-sm text-muted-foreground hover:text-primary">
-                Continue browsing as guest →
+                Verder bladeren als gast →
               </Link>
             </div>
           </CardContent>

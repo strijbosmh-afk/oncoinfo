@@ -16,6 +16,14 @@ const diseaseColors: Record<string, string> = {
   'Penile Cancer': 'bg-[hsl(340,75%,55%)]'
 };
 
+const diseaseLabels: Record<string, string> = {
+  'Prostate Cancer': 'Prostaatkanker',
+  'Bladder Cancer': 'Blaaskanker',
+  'Renal Cell Carcinoma': 'Niercelcarcinoom',
+  'Testicular Cancer': 'Testiskanker',
+  'Penile Cancer': 'Peniskanker'
+};
+
 export function TrialCard({ trial }: TrialCardProps) {
   return (
     <Link to={`/trials/${trial.id}`}>
@@ -39,11 +47,11 @@ export function TrialCard({ trial }: TrialCardProps) {
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-1.5">
             <Badge variant="secondary" className="text-xs">
-              {trial.disease_area}
+              {diseaseLabels[trial.disease_area] || trial.disease_area}
             </Badge>
             {trial.phase && (
               <Badge variant="outline" className="text-xs">
-                {trial.phase}
+                {trial.phase.replace('Phase', 'Fase')}
               </Badge>
             )}
             {trial.setting && (
@@ -76,7 +84,7 @@ export function TrialCard({ trial }: TrialCardProps) {
 
           {trial.primary_endpoint && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Primary:</span> {trial.primary_endpoint}
+              <span className="font-medium">Primair:</span> {trial.primary_endpoint}
             </p>
           )}
 
