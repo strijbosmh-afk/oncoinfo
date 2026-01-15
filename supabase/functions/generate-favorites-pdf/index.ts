@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
 function generateDrugSection(drug: any, includeDosing: boolean, includeSideEffects: boolean): string {
   const brandNamesText = drug.brand_names?.length > 0 
-    ? ` (${drug.brand_names.join(', ')})` 
+    ? ` (${drug.brand_names.slice(0, 2).join(', ')})` 
     : '';
 
   return `
@@ -73,71 +73,28 @@ function generateDrugSection(drug: any, includeDosing: boolean, includeSideEffec
       <h2>${drug.generic_name}${brandNamesText}</h2>
       <span class="drug-class">${drug.drug_class}</span>
     </div>
+    <div class="drug-content">
+      ${drug.mechanism_of_action ? `<p class="moa">${drug.mechanism_of_action.substring(0, 150)}${drug.mechanism_of_action.length > 150 ? '...' : ''}</p>` : ''}
+      
+      ${drug.approved_indications?.length > 0 ? `
+      <div class="inline-list"><strong>Indicaties:</strong> ${drug.approved_indications.slice(0, 2).join('; ')}</div>
+      ` : ''}
 
-    ${drug.mechanism_of_action ? `
-    <div class="subsection">
-      <h3>Wat is ${drug.generic_name}?</h3>
-      <p>${drug.mechanism_of_action}</p>
-      ${drug.administration_route ? `<p><strong>Toediening:</strong> ${drug.administration_route}</p>` : ''}
-    </div>
-    ` : ''}
+      ${includeDosing && drug.dosing_info?.standard_dose ? `
+      <div class="inline-list"><strong>Dosering:</strong> ${drug.dosing_info.standard_dose}</div>
+      ` : ''}
 
-    ${drug.approved_indications?.length > 0 ? `
-    <div class="subsection">
-      <h3>Waarvoor wordt het gebruikt?</h3>
-      <ul>
-        ${drug.approved_indications.map((ind: string) => `<li>${ind}</li>`).join('')}
-      </ul>
-    </div>
-    ` : ''}
-
-    ${includeDosing && drug.dosing_info ? `
-    <div class="subsection">
-      <h3>Hoe wordt het gegeven?</h3>
-      ${drug.dosing_info.standard_dose ? `<p><strong>Standaard dosering:</strong> ${drug.dosing_info.standard_dose}</p>` : ''}
-      ${drug.dosing_info.frequency ? `<p><strong>Hoe vaak:</strong> ${drug.dosing_info.frequency}</p>` : ''}
-      ${drug.dosing_info.duration ? `<p><strong>Behandelduur:</strong> ${drug.dosing_info.duration}</p>` : ''}
-      ${drug.cycle_length_days ? `<p><strong>Cyclusduur:</strong> ${drug.cycle_length_days} dagen</p>` : ''}
-    </div>
-    ` : ''}
-
-    ${includeSideEffects && drug.side_effects?.common?.length > 0 ? `
-    <div class="subsection">
-      <h3>Mogelijke bijwerkingen</h3>
-      <div class="warning-box">
-        <strong>Veel voorkomend:</strong>
-        <ul>
-          ${drug.side_effects.common.slice(0, 5).map((effect: string) => `<li>${effect}</li>`).join('')}
-        </ul>
-      </div>
-      ${drug.side_effects.serious?.length > 0 ? `
-      <div class="danger-box">
-        <strong>Ernstig - Neem direct contact op:</strong>
-        <ul>
-          ${drug.side_effects.serious.slice(0, 3).map((effect: string) => `<li>${effect}</li>`).join('')}
-        </ul>
+      ${includeSideEffects && drug.side_effects?.common?.length > 0 ? `
+      <div class="side-effects">
+        <span class="warning-label">Bijwerkingen:</span> ${drug.side_effects.common.slice(0, 4).join(', ')}
+        ${drug.side_effects.serious?.length > 0 ? `<span class="danger-label">Ernstig:</span> ${drug.side_effects.serious.slice(0, 2).join(', ')}` : ''}
       </div>
       ` : ''}
-    </div>
-    ` : ''}
 
-    ${drug.patient_counseling_points?.length > 0 ? `
-    <div class="subsection">
-      <h3>Belangrijke tips</h3>
-      <ul>
-        ${drug.patient_counseling_points.slice(0, 4).map((point: string) => `<li>${point}</li>`).join('')}
-      </ul>
+      ${drug.patient_counseling_points?.length > 0 ? `
+      <div class="tips"><strong>Tips:</strong> ${drug.patient_counseling_points.slice(0, 2).join('; ')}</div>
+      ` : ''}
     </div>
-    ` : ''}
-
-    ${drug.monitoring_requirements?.length > 0 ? `
-    <div class="subsection">
-      <h3>Controles tijdens behandeling</h3>
-      <ul>
-        ${drug.monitoring_requirements.slice(0, 4).map((req: string) => `<li>${req}</li>`).join('')}
-      </ul>
-    </div>
-    ` : ''}
   </div>
   `;
 }
@@ -153,6 +110,10 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Favoriete Medicijnen - Patiëntinformatie</title>
   <style>
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
     * {
       margin: 0;
       padding: 0;
@@ -160,158 +121,125 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.5;
+      font-size: 9px;
+      line-height: 1.3;
       color: #1a1a1a;
-      max-width: 800px;
+      width: 210mm;
+      min-height: 297mm;
+      max-height: 297mm;
       margin: 0 auto;
-      padding: 30px 20px;
+      padding: 10mm;
       background: white;
+      overflow: hidden;
     }
     .logo-header {
       display: flex;
-      justify-content: center;
-      margin-bottom: 15px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #6b2d5b;
     }
     .logo-header img {
-      max-height: 50px;
+      max-height: 32px;
       width: auto;
     }
-    .main-header {
-      border-bottom: 3px solid #6b2d5b;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .main-header h1 {
+    .header-title h1 {
       color: #6b2d5b;
-      font-size: 24px;
-      margin-bottom: 5px;
-    }
-    .main-header .subtitle {
-      color: #666;
       font-size: 14px;
     }
-    .toc {
-      background: #f5f5f5;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 25px;
+    .header-title .subtitle {
+      color: #666;
+      font-size: 9px;
     }
-    .toc h2 {
-      font-size: 16px;
-      margin-bottom: 10px;
-      color: #6b2d5b;
-    }
-    .toc ul {
-      list-style: none;
-      columns: 2;
-      column-gap: 20px;
-    }
-    .toc li {
-      font-size: 13px;
-      padding: 3px 0;
+    .drugs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
     }
     .drug-section {
-      margin-bottom: 30px;
-      padding-bottom: 25px;
-      border-bottom: 2px solid #e0e0e0;
-      page-break-inside: avoid;
-    }
-    .drug-section:last-child {
-      border-bottom: none;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 6px 8px;
+      background: #fafafa;
     }
     .drug-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
       border-bottom: 1px solid #e0e0e0;
     }
     .drug-header h2 {
       color: #6b2d5b;
-      font-size: 20px;
+      font-size: 11px;
+      margin: 0;
     }
     .drug-class {
-      display: inline-block;
       background: #f5e6f0;
       color: #6b2d5b;
-      padding: 3px 10px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 8px;
     }
-    .subsection {
-      margin-bottom: 12px;
+    .drug-content {
+      font-size: 8px;
     }
-    .subsection h3 {
+    .drug-content p, .drug-content div {
+      margin-bottom: 2px;
+    }
+    .moa {
+      color: #555;
+      font-style: italic;
+    }
+    .inline-list {
       color: #333;
-      font-size: 14px;
-      margin-bottom: 6px;
     }
-    .subsection p {
-      font-size: 13px;
-      color: #444;
-      margin-bottom: 4px;
+    .side-effects {
+      color: #333;
     }
-    .subsection ul {
-      margin-left: 18px;
-      font-size: 13px;
+    .warning-label {
+      color: #cc7a00;
+      font-weight: 600;
     }
-    .subsection li {
-      margin-bottom: 3px;
-      color: #444;
+    .danger-label {
+      color: #cc0000;
+      font-weight: 600;
+      margin-left: 6px;
     }
-    .warning-box {
-      background: #fff8e6;
-      border-left: 3px solid #e87722;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 0 4px 4px 0;
-      font-size: 13px;
-    }
-    .danger-box {
-      background: #ffe6e6;
-      border-left: 3px solid #cc0000;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 0 4px 4px 0;
-      font-size: 13px;
-    }
-    .warning-box ul, .danger-box ul {
-      margin-left: 18px;
-      margin-top: 5px;
+    .tips {
+      color: #6b2d5b;
     }
     .contact-section {
       background: #f5f5f5;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 25px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      font-size: 8px;
     }
     .contact-section h2 {
-      font-size: 16px;
-      margin-bottom: 10px;
+      grid-column: 1 / -1;
+      font-size: 10px;
       color: #6b2d5b;
-    }
-    .contact-section p {
-      font-size: 13px;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 15px;
+      margin-top: 6px;
+      padding-top: 4px;
       border-top: 1px solid #e0e0e0;
-      font-size: 11px;
+      font-size: 7px;
       color: #666;
       text-align: center;
     }
     @media print {
       body {
-        padding: 15px;
-      }
-      .drug-section {
-        page-break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
     }
   </style>
@@ -319,34 +247,26 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
 <body>
   <div class="logo-header">
     <img src="${logoUrl}" alt="RZ Tienen Logo" />
-  </div>
-  
-  <div class="main-header">
-    <h1>Mijn Medicijnen</h1>
-    <p class="subtitle">Informatie voor patiënten - ${drugs.length} medicijn${drugs.length !== 1 ? 'en' : ''}</p>
-  </div>
-
-  <div class="toc">
-    <h2>Inhoud</h2>
-    <ul>
-      ${drugs.map(drug => `<li>• ${drug.generic_name}</li>`).join('')}
-    </ul>
+    <div class="header-title">
+      <h1>Mijn Medicijnen</h1>
+      <p class="subtitle">${drugs.length} medicijn${drugs.length !== 1 ? 'en' : ''} - Patiëntinformatie</p>
+    </div>
   </div>
 
-  ${drugSections}
+  <div class="drugs-grid">
+    ${drugSections}
+  </div>
 
   <div class="contact-section">
     <h2>Contact</h2>
-    <p>Heeft u vragen over deze medicijnen? Neem contact op met:</p>
-    <p><strong>Uw behandelend arts:</strong> _______________________</p>
-    <p><strong>Verpleegkundige:</strong> _______________________</p>
-    <p><strong>Apotheek:</strong> _______________________</p>
-    <p><strong>Telefoonnummer:</strong> 016 80 90 11</p>
+    <p><strong>Arts:</strong> _____________</p>
+    <p><strong>Verpleegkundige:</strong> _____________</p>
+    <p><strong>Apotheek:</strong> _____________</p>
+    <p><strong>Tel:</strong> 016 80 90 11</p>
   </div>
 
   <div class="footer">
-    <p>Dit document is gegenereerd door RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')}</p>
-    <p>Deze informatie is bedoeld als aanvulling op het gesprek met uw arts en vervangt dit niet.</p>
+    <p>RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.</p>
   </div>
 </body>
 </html>
