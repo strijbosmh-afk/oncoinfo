@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Sparkles, Upload } from 'lucide-react';
+import { Loader2, Plus, Search, Sparkles, Upload, RefreshCw } from 'lucide-react';
 import { DISEASE_AREAS, PHASES, SETTINGS, INTERVENTION_CLASSES } from '@/types/trial';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -24,6 +24,8 @@ export default function AdminPage() {
   const [pubmedId, setPubmedId] = useState('');
   const [isFetching, setIsFetching] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUpdatingTrials, setIsUpdatingTrials] = useState(false);
+  const [updateDiseaseArea, setUpdateDiseaseArea] = useState<string>('');
   
   const [formData, setFormData] = useState({
     acronym: '',
@@ -117,6 +119,33 @@ export default function AdminPage() {
     }
   };
 
+  const handleUpdateTrials = async () => {
+    setIsUpdatingTrials(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('update-trials', {
+        body: { 
+          disease_area: updateDiseaseArea || undefined,
+          year_from: 2015 
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: 'Trials Updated', 
+        description: data.message || `Added ${data.added} new trials`
+      });
+    } catch (error: any) {
+      toast({ 
+        title: 'Update Failed', 
+        description: error.message || 'Failed to update trials', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsUpdatingTrials(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="container py-8">
@@ -153,15 +182,36 @@ export default function AdminPage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    AI Generation
+                    <RefreshCw className="h-5 w-5" />
+                    Auto-Update Trials
                   </CardTitle>
-                  <CardDescription>Generate structured summaries using AI</CardDescription>
+                  <CardDescription>Fetch latest GU oncology trials using AI (2015-present)</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button variant="outline" disabled className="w-full">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate AI Summary (Select trial first)
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Filter by Disease Area (optional)</Label>
+                    <Select value={updateDiseaseArea} onValueChange={setUpdateDiseaseArea}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All disease areas" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        <SelectItem value="">All disease areas</SelectItem>
+                        {DISEASE_AREAS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleUpdateTrials} disabled={isUpdatingTrials} className="w-full">
+                    {isUpdatingTrials ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Searching for new trials...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Fetch Latest Trials
+                      </>
+                    )}
                   </Button>
                 </CardContent>
               </Card>

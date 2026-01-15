@@ -1,1 +1,7 @@
 project_id = "ynuggqeumqzwwuffrnnv"
+
+[functions.fetch-pubmed]
+verify_jwt = false
+
+[functions.update-trials]
+verify_jwt = false
