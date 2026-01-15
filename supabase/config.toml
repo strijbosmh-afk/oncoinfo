@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.fetch-trial-results]
 verify_jwt = false
+
+[functions.fetch-pubmed-data]
+verify_jwt = false
+
+[functions.fetch-ctgov-data]
+verify_jwt = false
