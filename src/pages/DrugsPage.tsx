@@ -65,18 +65,11 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-2">
-            {drug.administration_route && (
-              <span className="text-sm text-muted-foreground">
-                {drug.administration_route}
-              </span>
-            )}
-            {drug.unit_price !== null && drug.unit_price !== undefined && (
-              <Badge variant="outline" className="font-mono text-xs">
-                €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
-              </Badge>
-            )}
-          </div>
+          {drug.administration_route && (
+            <p className="text-sm text-muted-foreground mb-2">
+              {drug.administration_route}
+            </p>
+          )}
           {drug.disease_areas.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {drug.disease_areas.slice(0, 3).map((area) => (

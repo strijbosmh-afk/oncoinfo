@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
+import { useFavorites } from '@/hooks/useFavorites';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +15,14 @@ import {
   Stethoscope,
   Clock,
   Shield,
-  ExternalLink
+  ExternalLink,
+  Star
 } from 'lucide-react';
 
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (isLoading) {
     return (
@@ -63,32 +66,47 @@ export default function DrugDetailPage() {
             </Button>
           </Link>
 
-          <div>
+          <div className="flex items-start justify-between">
             <div className="flex items-center gap-3 mb-2">
               <Pill className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold">{drug.generic_name}</h1>
             </div>
-            {drug.brand_names.length > 0 && (
-              <p className="text-lg text-muted-foreground">
-                {drug.brand_names.join(', ')}
-              </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleFavorite(drug.id)}
+              className="shrink-0"
+              aria-label={isFavorite(drug.id) ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+            >
+              <Star
+                className={`h-6 w-6 transition-colors ${
+                  isFavorite(drug.id)
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-muted-foreground hover:text-yellow-400'
+                }`}
+              />
+            </Button>
+          </div>
+          {drug.brand_names.length > 0 && (
+            <p className="text-lg text-muted-foreground">
+              {drug.brand_names.join(', ')}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2 mt-3">
+            <Badge variant="default">{drug.drug_class}</Badge>
+            {drug.administration_route && (
+              <Badge variant="outline">{drug.administration_route}</Badge>
             )}
-            <div className="flex flex-wrap gap-2 mt-3">
-              <Badge variant="default">{drug.drug_class}</Badge>
-              {drug.administration_route && (
-                <Badge variant="outline">{drug.administration_route}</Badge>
-              )}
-              {drug.is_on_zvz && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  RIZIV Terugbetaald
-                </Badge>
-              )}
-              {drug.unit_price !== null && drug.unit_price !== undefined && (
-                <Badge variant="outline" className="font-mono">
-                  €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
-                </Badge>
-              )}
-            </div>
+            {drug.is_on_zvz && (
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                RIZIV Terugbetaald
+              </Badge>
+            )}
+            {drug.unit_price !== null && drug.unit_price !== undefined && (
+              <Badge variant="outline" className="font-mono">
+                €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
+              </Badge>
+            )}
           </div>
         </div>
 
