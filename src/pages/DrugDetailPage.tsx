@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft, 
   Pill, 
@@ -16,13 +18,44 @@ import {
   Clock,
   Shield,
   ExternalLink,
-  Star
+  Star,
+  FileText
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { isFavorite, toggleFavorite } = useFavorites();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  const handleGeneratePatientInfo = async () => {
+    if (!drug) return;
+    
+    setIsGeneratingPdf(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-drug-patient-info', {
+        body: { drug_id: drug.id, include_dosing: true, include_side_effects: true }
+      });
+
+      if (error) throw error;
+
+      // Open HTML in new window for printing
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(data.html);
+        printWindow.document.close();
+        printWindow.focus();
+        // Small delay to ensure styles are loaded
+        setTimeout(() => printWindow.print(), 500);
+      }
+    } catch (err) {
+      console.error('Error generating patient info:', err);
+      toast.error('Fout bij genereren patiëntenfolder');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -111,12 +144,27 @@ export default function DrugDetailPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overzicht</TabsTrigger>
-            <TabsTrigger value="dosing">Dosering</TabsTrigger>
-            <TabsTrigger value="side-effects">Bijwerkingen</TabsTrigger>
-            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overzicht</TabsTrigger>
+              <TabsTrigger value="dosing">Dosering</TabsTrigger>
+              <TabsTrigger value="side-effects">Bijwerkingen</TabsTrigger>
+              <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
+            </TabsList>
+            <Button 
+              onClick={handleGeneratePatientInfo} 
+              disabled={isGeneratingPdf}
+              variant="outline"
+              className="gap-2"
+            >
+              {isGeneratingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+              Patiëntenfolder
+            </Button>
+          </div>
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
