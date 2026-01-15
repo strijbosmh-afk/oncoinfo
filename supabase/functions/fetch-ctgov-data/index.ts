@@ -165,26 +165,56 @@ interface CTGovStudy {
   };
 }
 
+// Disease area mappings for matching
+const DISEASE_AREA_TERMS: Record<string, string[]> = {
+  "Prostate Cancer": [
+    "prostate", "prostatic", "crpc", "mcrpc", "cspc", "mcspc", "hspc", "mhspc",
+    "castration-resistant", "castration resistant", "hormone-sensitive", "hormone sensitive",
+    "adt", "androgen deprivation", "enzalutamide", "abiraterone", "apalutamide", "darolutamide",
+    "docetaxel", "cabazitaxel", "radium-223", "lutetium", "psma"
+  ],
+  "Bladder Cancer": [
+    "bladder", "urothelial", "transitional cell", "uroepithelial", "urinary tract",
+    "cystectomy", "intravesical", "bcg", "gemcitabine cisplatin", "mvac",
+    "enfortumab", "erdafitinib", "pembrolizumab bladder", "atezolizumab bladder"
+  ],
+  "Kidney Cancer": [
+    "kidney", "renal", "renal cell", "rcc", "clear cell", "papillary renal",
+    "chromophobe", "nephrectomy", "cytoreductive",
+    "sunitinib", "pazopanib", "axitinib", "cabozantinib", "lenvatinib", "everolimus", "temsirolimus",
+    "nivolumab rcc", "ipilimumab rcc", "pembrolizumab rcc"
+  ],
+  "Testicular Cancer": [
+    "testicular", "testis", "germ cell", "seminoma", "nonseminoma", "non-seminoma",
+    "teratoma", "choriocarcinoma", "bep", "bleomycin etoposide", "orchiectomy",
+    "rplnd", "retroperitoneal lymph node"
+  ],
+  "Penile Cancer": [
+    "penile", "penis", "squamous cell penile"
+  ]
+};
+
+// Get all text from a study for matching
+function getStudyText(study: CTGovStudy): string {
+  const protocol = study.protocolSection;
+  const conditions = protocol.conditionsModule?.conditions || [];
+  const keywords = protocol.conditionsModule?.keywords || [];
+  const interventions = protocol.armsInterventionsModule?.interventions || [];
+  
+  return [
+    protocol.identificationModule?.officialTitle || "",
+    protocol.identificationModule?.briefTitle || "",
+    protocol.descriptionModule?.briefSummary || "",
+    ...conditions,
+    ...keywords,
+    ...interventions.map(i => `${i.name} ${i.description || ""}`)
+  ].join(" ").toLowerCase();
+}
+
 // Check if a study is cancer/oncology related
 function isOncologyStudy(study: CTGovStudy): boolean {
-  const protocol = study.protocolSection;
+  const allText = getStudyText(study);
   
-  // Check conditions
-  const conditions = protocol.conditionsModule?.conditions || [];
-  const conditionText = conditions.join(" ").toLowerCase();
-  
-  // Check title and description
-  const title = protocol.identificationModule?.officialTitle?.toLowerCase() || "";
-  const briefTitle = protocol.identificationModule?.briefTitle?.toLowerCase() || "";
-  const briefSummary = protocol.descriptionModule?.briefSummary?.toLowerCase() || "";
-  
-  // Check keywords
-  const keywords = protocol.conditionsModule?.keywords || [];
-  const keywordText = keywords.join(" ").toLowerCase();
-  
-  const allText = `${conditionText} ${title} ${briefTitle} ${briefSummary} ${keywordText}`;
-  
-  // Oncology-related terms
   const oncologyTerms = [
     "cancer", "carcinoma", "tumor", "tumour", "neoplasm", "malignant", "oncology",
     "metastatic", "metastasis", "chemotherapy", "immunotherapy", "checkpoint inhibitor",
@@ -203,12 +233,123 @@ function isOncologyStudy(study: CTGovStudy): boolean {
   return oncologyTerms.some(term => allText.includes(term));
 }
 
-async function searchCTGov(searchTerm: string, diseaseArea?: string): Promise<CTGovStudy[]> {
+// Check if study matches the expected disease area
+function matchesDiseaseArea(study: CTGovStudy, diseaseArea: string): boolean {
+  const terms = DISEASE_AREA_TERMS[diseaseArea];
+  if (!terms) return true; // No specific terms, allow any oncology study
+  
+  const studyText = getStudyText(study);
+  
+  // Must match at least one disease-specific term
+  return terms.some(term => studyText.includes(term));
+}
+
+// Calculate similarity between two strings (simple word overlap)
+function calculateSimilarity(str1: string, str2: string): number {
+  const words1 = new Set(str1.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+  const words2 = new Set(str2.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+  
+  if (words1.size === 0 || words2.size === 0) return 0;
+  
+  let matchCount = 0;
+  words1.forEach(word => {
+    if (words2.has(word)) matchCount++;
+  });
+  
+  return matchCount / Math.max(words1.size, words2.size);
+}
+
+// Calculate match confidence score
+function calculateMatchScore(
+  study: CTGovStudy, 
+  trial: { acronym: string; title: string; disease_area: string; drugs?: string[] | null }
+): { score: number; reasons: string[] } {
+  const protocol = study.protocolSection;
+  const studyText = getStudyText(study);
+  const reasons: string[] = [];
+  let score = 0;
+  
+  // 1. Exact acronym match (highest weight)
+  const studyAcronym = protocol.identificationModule.acronym?.toLowerCase() || "";
+  if (studyAcronym && studyAcronym === trial.acronym.toLowerCase()) {
+    score += 50;
+    reasons.push(`Exact acronym match: ${studyAcronym}`);
+  } else if (studyAcronym && studyAcronym.includes(trial.acronym.toLowerCase())) {
+    score += 25;
+    reasons.push(`Partial acronym match: ${studyAcronym}`);
+  }
+  
+  // 2. Disease area match (required for acceptance)
+  if (matchesDiseaseArea(study, trial.disease_area)) {
+    score += 30;
+    reasons.push(`Disease area match: ${trial.disease_area}`);
+  } else {
+    // Major penalty if disease area doesn't match
+    score -= 100;
+    reasons.push(`Disease area MISMATCH: expected ${trial.disease_area}`);
+  }
+  
+  // 3. Drug/intervention matching
+  if (trial.drugs && trial.drugs.length > 0) {
+    let drugMatches = 0;
+    for (const drug of trial.drugs) {
+      if (studyText.includes(drug.toLowerCase())) {
+        drugMatches++;
+      }
+    }
+    if (drugMatches > 0) {
+      const drugScore = Math.min(20, drugMatches * 10);
+      score += drugScore;
+      reasons.push(`Drug matches: ${drugMatches}/${trial.drugs.length}`);
+    }
+  }
+  
+  // 4. Title similarity
+  const briefTitle = protocol.identificationModule.briefTitle || "";
+  const officialTitle = protocol.identificationModule.officialTitle || "";
+  const titleSim1 = calculateSimilarity(trial.title, briefTitle);
+  const titleSim2 = calculateSimilarity(trial.title, officialTitle);
+  const titleSimilarity = Math.max(titleSim1, titleSim2);
+  
+  if (titleSimilarity > 0.3) {
+    const titleScore = Math.round(titleSimilarity * 20);
+    score += titleScore;
+    reasons.push(`Title similarity: ${Math.round(titleSimilarity * 100)}%`);
+  }
+  
+  // 5. Check if acronym appears in study title/text
+  if (!studyAcronym && studyText.includes(trial.acronym.toLowerCase())) {
+    score += 15;
+    reasons.push(`Acronym found in study text`);
+  }
+  
+  // 6. Phase 3 bonus (most landmark trials are phase 3)
+  const phases = protocol.designModule?.phases || [];
+  if (phases.some(p => p.includes("3"))) {
+    score += 5;
+    reasons.push("Phase 3 study");
+  }
+  
+  // 7. Has results bonus (prefer studies with results)
+  if (study.resultsSection) {
+    score += 5;
+    reasons.push("Has results data");
+  }
+  
+  return { score, reasons };
+}
+
+// Enhanced search with validation
+async function searchCTGov(
+  searchTerm: string, 
+  diseaseArea?: string,
+  trial?: { acronym: string; title: string; disease_area: string; drugs?: string[] | null }
+): Promise<{ studies: CTGovStudy[]; scoredStudies: Array<{ study: CTGovStudy; score: number; reasons: string[] }> }> {
   try {
-    // Add disease area to search for better matching
+    // Build search query - include disease area for better results
     const searchQuery = diseaseArea ? `${searchTerm} ${diseaseArea}` : searchTerm;
     const encodedTerm = encodeURIComponent(searchQuery);
-    const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodedTerm}&pageSize=10&format=json`;
+    const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodedTerm}&pageSize=15&format=json`;
     
     console.log(`Searching ClinicalTrials.gov: ${searchQuery}`);
     
@@ -218,22 +359,41 @@ async function searchCTGov(searchTerm: string, diseaseArea?: string): Promise<CT
     
     if (!response.ok) {
       console.error(`CTGov search failed: ${response.status}`);
-      return [];
+      return { studies: [], scoredStudies: [] };
     }
     
     const data = await response.json();
     const studies = data.studies || [];
     
-    // Filter to only oncology studies
+    // Filter to oncology studies
     const oncologyStudies = studies.filter((s: CTGovStudy) => isOncologyStudy(s));
     console.log(`Found ${studies.length} studies, ${oncologyStudies.length} are oncology-related`);
     
-    return oncologyStudies;
+    // If we have trial info, score each study
+    if (trial) {
+      const scoredStudies = oncologyStudies.map((study: CTGovStudy) => {
+        const { score, reasons } = calculateMatchScore(study, trial);
+        return { study, score, reasons };
+      }).sort((a: { score: number }, b: { score: number }) => b.score - a.score);
+      
+      // Log scoring for debugging
+      for (const scored of scoredStudies.slice(0, 3)) {
+        const nctId = scored.study.protocolSection.identificationModule.nctId;
+        console.log(`  ${nctId}: score=${scored.score}, reasons: ${scored.reasons.join("; ")}`);
+      }
+      
+      return { studies: oncologyStudies, scoredStudies };
+    }
+    
+    return { studies: oncologyStudies, scoredStudies: [] };
   } catch (e) {
     console.error(`Error searching CTGov:`, e);
-    return [];
+    return { studies: [], scoredStudies: [] };
   }
 }
+
+// Minimum confidence score to accept a match
+const MIN_CONFIDENCE_SCORE = 40;
 
 async function fetchCTGovStudy(nctId: string): Promise<CTGovStudy | null> {
   try {
@@ -565,26 +725,40 @@ Deno.serve(async (req) => {
       console.log(`Processing: ${trial.acronym}`);
       
       // Search ClinicalTrials.gov by acronym with disease area filter
-      let studies = await searchCTGov(trial.acronym, trial.disease_area);
+      const trialForMatching = {
+        acronym: trial.acronym,
+        title: trial.title,
+        disease_area: trial.disease_area,
+        drugs: (trial as any).drugs || null
+      };
+      
+      let searchResult = await searchCTGov(trial.acronym, trial.disease_area, trialForMatching);
       
       // If no results, try with title keywords
-      if (studies.length === 0) {
+      if (searchResult.scoredStudies.length === 0) {
         const titleKeywords = trial.title.split(" ").slice(0, 5).join(" ");
-        studies = await searchCTGov(titleKeywords, trial.disease_area);
+        searchResult = await searchCTGov(titleKeywords, trial.disease_area, trialForMatching);
       }
       
-      if (studies.length === 0) {
+      if (searchResult.scoredStudies.length === 0) {
         console.log(`No CTGov match for ${trial.acronym}`);
         continue;
       }
       
-      // Find best matching study - prefer exact acronym match
-      const study = studies.find(s => 
-        s.protocolSection.identificationModule.acronym?.toLowerCase() === trial.acronym.toLowerCase()
-      ) || studies[0];
+      // Get best scoring study
+      const bestMatch = searchResult.scoredStudies[0];
       
+      // Check if score meets minimum threshold
+      if (bestMatch.score < MIN_CONFIDENCE_SCORE) {
+        console.log(`No confident match for ${trial.acronym} - best score: ${bestMatch.score} (min: ${MIN_CONFIDENCE_SCORE})`);
+        console.log(`  Best candidate: ${bestMatch.study.protocolSection.identificationModule.nctId}`);
+        console.log(`  Reasons: ${bestMatch.reasons.join("; ")}`);
+        continue;
+      }
+      
+      const study = bestMatch.study;
       const nctId = study.protocolSection.identificationModule.nctId;
-      console.log(`Found match: ${nctId} for ${trial.acronym}`);
+      console.log(`Matched ${trial.acronym} → ${nctId} (score: ${bestMatch.score})`);
       
       // Fetch full study details
       const fullStudy = await fetchCTGovStudy(nctId);
