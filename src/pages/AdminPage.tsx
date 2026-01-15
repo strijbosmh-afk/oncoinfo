@@ -149,18 +149,18 @@ export default function AdminPage() {
     }
   };
 
-  const handleFetchResults = async () => {
+  const handleFetchResults = async (forceRefresh = false) => {
     setIsFetchingResults(true);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-trial-results', {
-        body: {}
+        body: { force_refresh: forceRefresh }
       });
       
       if (error) throw error;
       
       toast({ 
         title: 'Resultaten Opgehaald', 
-        description: `${data.processed} trials verwerkt met echte resultaatgegevens`
+        description: `${data.processed} trials verwerkt. Arms: ${data.results?.reduce((a: number, r: any) => a + r.arms_added, 0) || 0}, Endpoints: ${data.results?.reduce((a: number, r: any) => a + r.endpoints_added, 0) || 0}`
       });
     } catch (error: any) {
       toast({ 
@@ -294,26 +294,32 @@ export default function AdminPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Database className="h-5 w-5" />
-                    Resultaten Ophalen
+                    Resultaten & Design Ophalen
                   </CardTitle>
-                  <CardDescription>Haal echte resultaten, arms en endpoints op uit PubMed abstracts (geen gegenereerde data)</CardDescription>
+                  <CardDescription>Haal resultaten, design summaries, arms en endpoints op uit PubMed abstracts</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button onClick={handleFetchResults} disabled={isFetchingResults} className="w-full">
-                    {isFetchingResults ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Resultaten ophalen uit PubMed...
-                      </>
-                    ) : (
-                      <>
-                        <Database className="mr-2 h-4 w-4" />
-                        Haal Resultaten Op voor Alle Trials
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Haalt alleen feitelijke gegevens op die expliciet vermeld worden in abstracts. Survival curves worden alleen opgenomen als percentages op specifieke tijdspunten worden genoemd.
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleFetchResults(false)} disabled={isFetchingResults} className="flex-1">
+                      {isFetchingResults ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Ophalen...
+                        </>
+                      ) : (
+                        <>
+                          <Database className="mr-2 h-4 w-4" />
+                          Nieuwe Trials
+                        </>
+                      )}
+                    </Button>
+                    <Button onClick={() => handleFetchResults(true)} disabled={isFetchingResults} variant="outline">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Alles Herladen
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Haalt feitelijke gegevens op uit PubMed abstracts en genereert design summaries. "Alles Herladen" vervangt bestaande data.
                   </p>
                 </CardContent>
               </Card>
