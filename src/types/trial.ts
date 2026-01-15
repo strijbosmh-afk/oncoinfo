@@ -47,6 +47,38 @@ export interface ResultsSummary {
   primary_outcome?: string;
   key_findings?: string[];
   conclusions?: string;
+  // PubMed/CTGov extracted fields
+  source?: string;
+  nct_id?: string;
+  has_ctgov_results?: boolean;
+  hazard_ratio?: {
+    value?: number;
+    ci_lower?: number;
+    ci_upper?: number;
+  };
+  p_value?: number;
+  median_os_months?: number;
+  median_pfs_months?: number;
+  primary_endpoints?: Array<{
+    name: string;
+    time_frame?: string;
+    value?: string;
+    unit?: string;
+    hr?: number;
+    hr_ci_lower?: number;
+    hr_ci_upper?: number;
+    p_value?: number;
+  }>;
+  secondary_endpoints?: Array<{
+    name: string;
+    time_frame?: string;
+    value?: string;
+    unit?: string;
+    hr?: number;
+    hr_ci_lower?: number;
+    hr_ci_upper?: number;
+    p_value?: number;
+  }>;
 }
 
 export interface Arm {
