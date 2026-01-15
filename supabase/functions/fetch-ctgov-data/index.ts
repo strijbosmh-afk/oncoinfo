@@ -481,8 +481,9 @@ Deno.serve(async (req) => {
     if (trial_id) {
       query = query.eq("id", trial_id);
     } else {
-      // Get trials without complete results data - prioritize those without NCT data
-      query = query.limit(batch_size);
+      // Get trials without CTGov data - filter using raw filter for JSONB
+      query = query.or("results_summary.is.null,results_summary->nct_id.is.null")
+        .limit(batch_size);
     }
     
     const { data: trials, error: trialsError } = await query;
