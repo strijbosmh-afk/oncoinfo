@@ -11,6 +11,7 @@ export interface Trial {
   blinding?: string;
   sample_size?: number;
   primary_endpoint?: string;
+  primary_endpoint_met?: boolean | null;
   secondary_endpoints?: string[];
   intervention_classes?: string[];
   drugs?: string[];

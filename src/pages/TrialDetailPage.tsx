@@ -27,8 +27,11 @@ import {
   FileDown,
   RefreshCw,
   Stethoscope,
-  BookOpen
+  BookOpen,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ForestPlot } from '@/components/charts/ForestPlot';
 import { KaplanMeierPlot } from '@/components/charts/KaplanMeierPlot';
 import { EndpointsTable } from '@/components/trials/EndpointsTable';
@@ -224,7 +227,29 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
         {/* Header */}
         <div className="mb-8">
           <div className={`h-2 w-24 rounded-full ${diseaseColors[trial.disease_area] || 'bg-primary'} mb-4`} />
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">{trial.acronym}</h1>
+          <div className="flex items-center gap-3 mb-2">
+            {trial.primary_endpoint_met !== null && trial.primary_endpoint_met !== undefined && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 ${
+                      trial.primary_endpoint_met ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {trial.primary_endpoint_met ? (
+                        <CheckCircle2 className="h-6 w-6" />
+                      ) : (
+                        <XCircle className="h-6 w-6" />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{trial.primary_endpoint_met ? 'Primair eindpunt behaald' : 'Primair eindpunt niet behaald'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <h1 className="text-3xl md:text-4xl font-bold">{trial.acronym}</h1>
+          </div>
           <p className="text-lg text-muted-foreground mb-4">{trial.title}</p>
           
           <div className="flex flex-wrap gap-2 mb-4">

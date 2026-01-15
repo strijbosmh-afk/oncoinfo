@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trial } from '@/types/trial';
-import { Calendar, Users, FileText, ExternalLink } from 'lucide-react';
+import { Calendar, Users, FileText, ExternalLink, CheckCircle2, XCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrialCardProps {
   trial: Trial;
@@ -24,6 +25,31 @@ const diseaseLabels: Record<string, string> = {
   'Penile Cancer': 'Peniskanker'
 };
 
+function EndpointIndicator({ met }: { met: boolean | null | undefined }) {
+  if (met === null || met === undefined) return null;
+  
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${
+            met ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+          }`}>
+            {met ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <XCircle className="h-4 w-4" />
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{met ? 'Primair eindpunt behaald' : 'Primair eindpunt niet behaald'}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function TrialCard({ trial }: TrialCardProps) {
   return (
     <Link to={`/trials/${trial.id}`}>
@@ -31,13 +57,16 @@ export function TrialCard({ trial }: TrialCardProps) {
         <div className={`h-1.5 ${diseaseColors[trial.disease_area] || 'bg-primary'}`} />
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
-                {trial.acronym}
-              </h3>
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                {trial.title}
-              </p>
+            <div className="flex items-center gap-2">
+              <EndpointIndicator met={trial.primary_endpoint_met} />
+              <div>
+                <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
+                  {trial.acronym}
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {trial.title}
+                </p>
+              </div>
             </div>
             {trial.doi && (
               <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />

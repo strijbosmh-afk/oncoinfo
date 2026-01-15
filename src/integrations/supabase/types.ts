@@ -285,6 +285,7 @@ export type Database = {
           original_km_plot_url: string | null
           phase: string | null
           primary_endpoint: string | null
+          primary_endpoint_met: boolean | null
           publication_year: number | null
           pubmed_id: string | null
           randomization: string | null
@@ -319,6 +320,7 @@ export type Database = {
           original_km_plot_url?: string | null
           phase?: string | null
           primary_endpoint?: string | null
+          primary_endpoint_met?: boolean | null
           publication_year?: number | null
           pubmed_id?: string | null
           randomization?: string | null
@@ -353,6 +355,7 @@ export type Database = {
           original_km_plot_url?: string | null
           phase?: string | null
           primary_endpoint?: string | null
+          primary_endpoint_met?: boolean | null
           publication_year?: number | null
           pubmed_id?: string | null
           randomization?: string | null
