@@ -18,14 +18,9 @@ import {
   Users, 
   Calendar, 
   FileText,
-  Download,
-  Sparkles,
-  AlertCircle,
-  CheckCircle,
   Loader2,
   Printer,
   FileDown,
-  RefreshCw,
   Stethoscope,
   BookOpen,
   CheckCircle2,
@@ -33,11 +28,8 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ForestPlot } from '@/components/charts/ForestPlot';
-import { KaplanMeierPlot } from '@/components/charts/KaplanMeierPlot';
-import { EndpointsTable } from '@/components/trials/EndpointsTable';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
 
 const diseaseColors: Record<string, string> = {
   'Prostate Cancer': 'bg-[hsl(199,89%,32%)]',
@@ -58,14 +50,12 @@ const diseaseLabels: Record<string, string> = {
 export default function TrialDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: trial, isLoading } = useTrial(id!);
-  const { data: arms, refetch: refetchArms } = useTrialArms(id!);
-  const { data: endpoints, refetch: refetchEndpoints } = useTrialEndpoints(id!);
-  const { data: aiSummaries, refetch: refetchSummaries } = useTrialAISummaries(id!);
+  const { data: arms } = useTrialArms(id!);
+  const { data: endpoints } = useTrialEndpoints(id!);
+  const { data: aiSummaries } = useTrialAISummaries(id!);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [isSeedingData, setIsSeedingData] = useState(false);
   const [selectedDrug, setSelectedDrug] = useState<string>('');
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
@@ -73,28 +63,6 @@ export default function TrialDetailPage() {
 
   const laymanSummary = (aiSummaries?.find(s => s.summary_type === 'strengths_weaknesses')?.content as any)?.layman_summary;
 
-  const handleSeedTrialData = async () => {
-    if (!id) return;
-    setIsSeedingData(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('seed-trial-data', {
-        body: { trial_id: id }
-      });
-      if (error) throw error;
-      
-      if (data.skipped) {
-        toast({ title: 'Data Bestaat Al', description: 'Deze studie heeft al armen en eindpunten' });
-      } else {
-        await refetchArms();
-        await refetchEndpoints();
-        toast({ title: 'Data Gegenereerd', description: `${data.arms_added} armen en ${data.endpoints_added} eindpunten toegevoegd` });
-      }
-    } catch (error: any) {
-      toast({ title: 'Fout', description: error.message || 'Data genereren mislukt', variant: 'destructive' });
-    } finally {
-      setIsSeedingData(false);
-    }
-  };
 
   const handleGeneratePatientPdf = async () => {
     if (!id) return;
@@ -187,8 +155,6 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
   }
 
   const hasEndpointsWithHR = endpoints?.some(e => e.hazard_ratio !== null && e.hazard_ratio !== undefined);
-  const hasTimepoints = endpoints?.some(e => e.survival_timepoints && e.survival_timepoints.length > 0);
-  const hasArmsOrEndpoints = (arms && arms.length > 0) || (endpoints && endpoints.length > 0);
 
   return (
     <Layout>
@@ -363,21 +329,6 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
               </Button>
             )}
 
-            {!hasArmsOrEndpoints && (
-              <Button variant="outline" className="gap-2" onClick={handleSeedTrialData} disabled={isSeedingData}>
-                {isSeedingData ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4" />
-                    Generate Arms & Endpoints
-                  </>
-                )}
-              </Button>
-            )}
           </div>
         </div>
 
@@ -814,84 +765,230 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             )}
           </TabsContent>
 
-          {/* Survival Data Tab */}
+          {/* Survival Data Tab - Shows real results from ClinicalTrials.gov */}
           <TabsContent value="survival" className="space-y-6">
-            {endpoints && endpoints.length > 0 ? (
-              <>
-                <EndpointsTable endpoints={endpoints} arms={arms || []} />
-                
-                {hasEndpointsWithHR && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Forest Plot - Hazard Ratios</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ForestPlot endpoints={endpoints} />
-                    </CardContent>
-                  </Card>
-                )}
-
-                {hasTimepoints && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Reconstructed Kaplan-Meier Curves</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        These curves are reconstructed from reported survival rates at specific timepoints.
-                        They may not exactly match the original publication.
+            {/* Key Survival Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {trial.results_summary?.median_os_months && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Median OS</p>
+                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_os_months}</p>
+                    <p className="text-sm text-muted-foreground">maanden</p>
+                  </CardContent>
+                </Card>
+              )}
+              {trial.results_summary?.median_pfs_months && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Median PFS</p>
+                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_pfs_months}</p>
+                    <p className="text-sm text-muted-foreground">maanden</p>
+                  </CardContent>
+                </Card>
+              )}
+              {trial.results_summary?.hazard_ratio && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Hazard Ratio</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {trial.results_summary.hazard_ratio.value?.toFixed(2)}
+                    </p>
+                    {trial.results_summary.hazard_ratio.ci_lower && trial.results_summary.hazard_ratio.ci_upper && (
+                      <p className="text-sm text-muted-foreground">
+                        95% CI: {trial.results_summary.hazard_ratio.ci_lower.toFixed(2)} - {trial.results_summary.hazard_ratio.ci_upper.toFixed(2)}
                       </p>
-                      <KaplanMeierPlot endpoints={endpoints} />
-                    </CardContent>
-                  </Card>
-                )}
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+              {trial.results_summary?.p_value && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">P-value</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {trial.results_summary.p_value < 0.001 ? '<0.001' : trial.results_summary.p_value.toFixed(4)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {trial.results_summary.p_value < 0.05 ? 'Statistisch significant' : 'Niet significant'}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-                {trial.original_km_plot_url && trial.is_open_access && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Original Publication Plot</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <img 
-                        src={trial.original_km_plot_url} 
-                        alt="Original Kaplan-Meier plot from publication"
-                        className="max-w-full rounded-lg border"
-                      />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Source: Original open-access publication
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
+            {/* Treatment Arms from results_summary */}
+            {arms && arms.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Behandelarmen</CardTitle>
+                  <CardDescription>Armen uit ClinicalTrials.gov protocol</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {arms.map((arm) => (
+                      <div key={arm.id} className="p-4 border rounded-lg">
+                        <p className="font-semibold text-lg">{arm.name}</p>
+                        {arm.sample_size && (
+                          <p className="text-sm text-muted-foreground">N = {arm.sample_size}</p>
+                        )}
+                        {arm.description && (
+                          <p className="text-sm mt-2">{arm.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2">
-                    <Download className="h-4 w-4" />
-                    Export as CSV
-                  </Button>
-                </div>
-              </>
-            ) : (
+            {/* Primary Endpoints with Results */}
+            {trial.results_summary?.primary_endpoints && trial.results_summary.primary_endpoints.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Primaire Eindpunten</CardTitle>
+                  <CardDescription>Resultaten van primaire eindpunten</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {trial.results_summary.primary_endpoints.map((ep: any, i: number) => (
+                      <div key={i} className="p-4 bg-muted rounded-lg">
+                        <p className="font-semibold">{ep.name}</p>
+                        {ep.time_frame && (
+                          <p className="text-sm text-muted-foreground mb-2">Tijdsframe: {ep.time_frame}</p>
+                        )}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+                          {ep.value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">Waarde</p>
+                              <p className="font-bold">{ep.value} {ep.unit || ''}</p>
+                            </div>
+                          )}
+                          {ep.hr && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">HR</p>
+                              <p className="font-bold">{ep.hr.toFixed(2)}</p>
+                              {ep.hr_ci_lower && ep.hr_ci_upper && (
+                                <p className="text-xs text-muted-foreground">
+                                  CI: {ep.hr_ci_lower.toFixed(2)}-{ep.hr_ci_upper.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          {ep.p_value && (
+                            <div>
+                              <p className="text-xs text-muted-foreground">P-waarde</p>
+                              <p className="font-bold">
+                                {ep.p_value < 0.001 ? '<0.001' : ep.p_value.toFixed(4)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Secondary Endpoints */}
+            {trial.results_summary?.secondary_endpoints && trial.results_summary.secondary_endpoints.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Secundaire Eindpunten</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {trial.results_summary.secondary_endpoints.map((ep: any, i: number) => (
+                      <div key={i} className="p-3 border rounded-lg">
+                        <p className="font-medium">{ep.name}</p>
+                        <div className="flex flex-wrap gap-4 mt-2 text-sm">
+                          {ep.value && (
+                            <span><span className="text-muted-foreground">Waarde:</span> {ep.value}</span>
+                          )}
+                          {ep.hr && (
+                            <span><span className="text-muted-foreground">HR:</span> {ep.hr.toFixed(2)}</span>
+                          )}
+                          {ep.p_value && (
+                            <span><span className="text-muted-foreground">p:</span> {ep.p_value < 0.001 ? '<0.001' : ep.p_value.toFixed(4)}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Forest Plot if endpoints have HR */}
+            {endpoints && endpoints.length > 0 && hasEndpointsWithHR && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Forest Plot - Hazard Ratios</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ForestPlot endpoints={endpoints} />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Original KM Plot */}
+            {trial.original_km_plot_url && trial.is_open_access && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Originele Publicatie Plot</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <img 
+                    src={trial.original_km_plot_url} 
+                    alt="Original Kaplan-Meier plot from publication"
+                    className="max-w-full rounded-lg border"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Bron: Originele open-access publicatie
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No data fallback */}
+            {!trial.results_summary?.primary_endpoints && 
+             !trial.results_summary?.median_os_months && 
+             !trial.results_summary?.median_pfs_months && 
+             !trial.results_summary?.hazard_ratio &&
+             (!arms || arms.length === 0) && (
               <Card>
                 <CardContent className="py-12 text-center">
                   <p className="text-muted-foreground mb-4">
-                    No survival endpoint data available for this trial.
+                    Geen survival data beschikbaar voor deze studie.
                   </p>
-                  <Button onClick={handleSeedTrialData} disabled={isSeedingData}>
-                    {isSeedingData ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generate Arms & Endpoints Data
-                      </>
-                    )}
-                  </Button>
+                  {trial.results_summary?.nct_id && (
+                    <a
+                      href={`https://clinicaltrials.gov/study/${trial.results_summary.nct_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Bekijk op ClinicalTrials.gov
+                    </a>
+                  )}
                 </CardContent>
               </Card>
+            )}
+
+            {trial.results_summary?.nct_id && (
+              <p className="text-sm text-muted-foreground text-center">
+                Data afkomstig van{' '}
+                <a
+                  href={`https://clinicaltrials.gov/study/${trial.results_summary.nct_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  ClinicalTrials.gov ({trial.results_summary.nct_id})
+                </a>
+              </p>
             )}
           </TabsContent>
 
