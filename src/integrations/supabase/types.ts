@@ -116,6 +116,7 @@ export type Database = {
           patient_counseling_points: string[] | null
           reference_links: string[] | null
           side_effects: Json | null
+          unit_price: number | null
           updated_at: string
         }
         Insert: {
@@ -140,6 +141,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           reference_links?: string[] | null
           side_effects?: Json | null
+          unit_price?: number | null
           updated_at?: string
         }
         Update: {
@@ -164,6 +166,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           reference_links?: string[] | null
           side_effects?: Json | null
+          unit_price?: number | null
           updated_at?: string
         }
         Relationships: []

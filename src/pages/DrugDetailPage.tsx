@@ -83,6 +83,11 @@ export default function DrugDetailPage() {
                   RIZIV Terugbetaald
                 </Badge>
               )}
+              {drug.unit_price !== null && drug.unit_price !== undefined && (
+                <Badge variant="outline" className="font-mono">
+                  €{drug.unit_price.toFixed(2)}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
