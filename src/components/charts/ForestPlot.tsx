@@ -23,7 +23,7 @@ export function ForestPlot({ endpoints }: ForestPlotProps) {
   if (data.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No hazard ratio data available for forest plot
+        Geen hazard ratio data beschikbaar voor forest plot
       </div>
     );
   }
@@ -90,8 +90,8 @@ export function ForestPlot({ endpoints }: ForestPlotProps) {
         </BarChart>
       </ResponsiveContainer>
       <div className="flex justify-center gap-6 text-sm text-muted-foreground mt-2">
-        <span>← Favors Treatment</span>
-        <span>Favors Control →</span>
+        <span>← Voordeel Behandeling</span>
+        <span>Voordeel Controle →</span>
       </div>
     </div>
   );

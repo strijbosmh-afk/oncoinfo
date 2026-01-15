@@ -66,7 +66,7 @@ export function KaplanMeierPlot({ endpoints }: KaplanMeierPlotProps) {
   if (chartData.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No survival timepoint data available for Kaplan-Meier reconstruction
+        Geen survival data beschikbaar voor Kaplan-Meier curve
       </div>
     );
   }
@@ -81,18 +81,18 @@ export function KaplanMeierPlot({ endpoints }: KaplanMeierPlotProps) {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
             dataKey="month" 
-            label={{ value: 'Time (months)', position: 'bottom', offset: 0 }}
+            label={{ value: 'Tijd (maanden)', position: 'bottom', offset: 0 }}
           />
           <YAxis 
             domain={[0, 100]}
-            label={{ value: 'Survival (%)', angle: -90, position: 'insideLeft' }}
+            label={{ value: 'Overleving (%)', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
               return (
                 <div className="bg-popover p-3 rounded-lg shadow-lg border">
-                  <p className="font-medium mb-2">Month {label}</p>
+                  <p className="font-medium mb-2">Maand {label}</p>
                   {payload.map((p: any, i: number) => (
                     <p key={i} className="text-sm" style={{ color: p.color }}>
                       {p.name}: {p.value?.toFixed(1)}%
