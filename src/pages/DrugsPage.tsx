@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, ChevronDown, Pill, Loader2, Star } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
@@ -94,6 +96,9 @@ export default function DrugsPage() {
   const [filters, setFilters] = useState<DrugFilters>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
+  const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
@@ -101,6 +106,39 @@ export default function DrugsPage() {
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+
+  const handleExportFavorites = async () => {
+    if (favorites.length === 0) {
+      toast.error('Geen favorieten om te exporteren');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-favorites-pdf', {
+        body: { 
+          drug_ids: favorites, 
+          include_dosing: exportIncludeDosing, 
+          include_side_effects: exportIncludeSideEffects 
+        }
+      });
+
+      if (error) throw error;
+
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(data.html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 500);
+      }
+    } catch (err) {
+      console.error('Error exporting favorites:', err);
+      toast.error('Fout bij exporteren favorieten');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleClassFilter = (drugClass: string, checked: boolean) => {
     const current = filters.drug_class || [];
@@ -147,10 +185,44 @@ export default function DrugsPage() {
         {/* Favorites Section */}
         {favoriteDrugs.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-              <h2 className="text-xl font-semibold">Favorieten</h2>
-              <Badge variant="secondary">{favoriteDrugs.length}</Badge>
+            <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                <h2 className="text-xl font-semibold">Favorieten</h2>
+                <Badge variant="secondary">{favoriteDrugs.length}</Badge>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 text-sm">
+                  <label className="flex items-center gap-1.5">
+                    <Checkbox
+                      checked={exportIncludeDosing}
+                      onCheckedChange={(checked) => setExportIncludeDosing(checked as boolean)}
+                    />
+                    Dosering
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    <Checkbox
+                      checked={exportIncludeSideEffects}
+                      onCheckedChange={(checked) => setExportIncludeSideEffects(checked as boolean)}
+                    />
+                    Bijwerkingen
+                  </label>
+                </div>
+                <Button
+                  onClick={handleExportFavorites}
+                  disabled={isExporting}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  Exporteer als PDF
+                </Button>
+              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {favoriteDrugs.map((drug) => (

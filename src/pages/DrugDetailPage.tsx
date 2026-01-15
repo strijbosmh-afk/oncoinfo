@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft, 
@@ -19,7 +21,8 @@ import {
   Shield,
   ExternalLink,
   Star,
-  FileText
+  FileText,
+  Settings2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,6 +31,8 @@ export default function DrugDetailPage() {
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { isFavorite, toggleFavorite } = useFavorites();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [includeDosing, setIncludeDosing] = useState(true);
+  const [includeSideEffects, setIncludeSideEffects] = useState(true);
 
   const handleGeneratePatientInfo = async () => {
     if (!drug) return;
@@ -35,7 +40,7 @@ export default function DrugDetailPage() {
     setIsGeneratingPdf(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-drug-patient-info', {
-        body: { drug_id: drug.id, include_dosing: true, include_side_effects: true }
+        body: { drug_id: drug.id, include_dosing: includeDosing, include_side_effects: includeSideEffects }
       });
 
       if (error) throw error;
@@ -151,19 +156,47 @@ export default function DrugDetailPage() {
               <TabsTrigger value="side-effects">Bijwerkingen</TabsTrigger>
               <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
             </TabsList>
-            <Button 
-              onClick={handleGeneratePatientInfo} 
-              disabled={isGeneratingPdf}
-              variant="outline"
-              className="gap-2"
-            >
-              {isGeneratingPdf ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-              Patiëntenfolder
-            </Button>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56" align="end">
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Folder opties</p>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={includeDosing}
+                        onCheckedChange={(checked) => setIncludeDosing(checked as boolean)}
+                      />
+                      Dosering opnemen
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={includeSideEffects}
+                        onCheckedChange={(checked) => setIncludeSideEffects(checked as boolean)}
+                      />
+                      Bijwerkingen opnemen
+                    </label>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button 
+                onClick={handleGeneratePatientInfo} 
+                disabled={isGeneratingPdf}
+                variant="outline"
+                className="gap-2"
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                Patiëntenfolder
+              </Button>
+            </div>
           </div>
 
           <TabsContent value="overview" className="space-y-6">
