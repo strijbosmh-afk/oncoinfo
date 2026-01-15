@@ -114,6 +114,7 @@ export type Database = {
           mechanism_of_action: string | null
           monitoring_requirements: string[] | null
           patient_counseling_points: string[] | null
+          price_unit: string | null
           reference_links: string[] | null
           side_effects: Json | null
           unit_price: number | null
@@ -139,6 +140,7 @@ export type Database = {
           mechanism_of_action?: string | null
           monitoring_requirements?: string[] | null
           patient_counseling_points?: string[] | null
+          price_unit?: string | null
           reference_links?: string[] | null
           side_effects?: Json | null
           unit_price?: number | null
@@ -164,6 +166,7 @@ export type Database = {
           mechanism_of_action?: string | null
           monitoring_requirements?: string[] | null
           patient_counseling_points?: string[] | null
+          price_unit?: string | null
           reference_links?: string[] | null
           side_effects?: Json | null
           unit_price?: number | null

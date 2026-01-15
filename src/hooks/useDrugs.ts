@@ -24,6 +24,7 @@ function convertDrug(dbDrug: any): Drug {
     fda_approval_date: dbDrug.fda_approval_date,
     is_on_zvz: dbDrug.is_on_zvz,
     unit_price: dbDrug.unit_price,
+    price_unit: dbDrug.price_unit,
     reference_links: dbDrug.reference_links,
     created_at: dbDrug.created_at,
     updated_at: dbDrug.updated_at,
