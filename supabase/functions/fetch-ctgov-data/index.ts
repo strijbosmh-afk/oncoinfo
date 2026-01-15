@@ -17,6 +17,14 @@ interface CTGovStudy {
       overallStatus: string;
       completionDateStruct?: { date: string };
     };
+    conditionsModule?: {
+      conditions?: string[];
+      keywords?: string[];
+    };
+    descriptionModule?: {
+      briefSummary?: string;
+      detailedDescription?: string;
+    };
     designModule?: {
       studyType: string;
       phases?: string[];
@@ -157,12 +165,52 @@ interface CTGovStudy {
   };
 }
 
-async function searchCTGov(searchTerm: string): Promise<CTGovStudy[]> {
+// Check if a study is cancer/oncology related
+function isOncologyStudy(study: CTGovStudy): boolean {
+  const protocol = study.protocolSection;
+  
+  // Check conditions
+  const conditions = protocol.conditionsModule?.conditions || [];
+  const conditionText = conditions.join(" ").toLowerCase();
+  
+  // Check title and description
+  const title = protocol.identificationModule?.officialTitle?.toLowerCase() || "";
+  const briefTitle = protocol.identificationModule?.briefTitle?.toLowerCase() || "";
+  const briefSummary = protocol.descriptionModule?.briefSummary?.toLowerCase() || "";
+  
+  // Check keywords
+  const keywords = protocol.conditionsModule?.keywords || [];
+  const keywordText = keywords.join(" ").toLowerCase();
+  
+  const allText = `${conditionText} ${title} ${briefTitle} ${briefSummary} ${keywordText}`;
+  
+  // Oncology-related terms
+  const oncologyTerms = [
+    "cancer", "carcinoma", "tumor", "tumour", "neoplasm", "malignant", "oncology",
+    "metastatic", "metastasis", "chemotherapy", "immunotherapy", "checkpoint inhibitor",
+    "bladder", "prostate", "kidney", "renal cell", "urothelial", "testicular", "germ cell",
+    "penile", "adrenal", "urologic", "urological",
+    "pembrolizumab", "nivolumab", "ipilimumab", "atezolizumab", "durvalumab", "avelumab",
+    "docetaxel", "cabazitaxel", "paclitaxel", "cisplatin", "carboplatin", "gemcitabine",
+    "enzalutamide", "abiraterone", "apalutamide", "darolutamide",
+    "sunitinib", "pazopanib", "axitinib", "cabozantinib", "lenvatinib", "everolimus", "temsirolimus",
+    "lutetium", "radium-223", "psma", "parp inhibitor", "olaparib", "rucaparib", "niraparib",
+    "enfortumab", "sacituzumab", "erdafitinib",
+    "radical prostatectomy", "radical cystectomy", "nephrectomy", "orchiectomy",
+    "radiotherapy", "brachytherapy", "sbrt", "salvage"
+  ];
+  
+  return oncologyTerms.some(term => allText.includes(term));
+}
+
+async function searchCTGov(searchTerm: string, diseaseArea?: string): Promise<CTGovStudy[]> {
   try {
-    const encodedTerm = encodeURIComponent(searchTerm);
-    const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodedTerm}&pageSize=5&format=json`;
+    // Add disease area to search for better matching
+    const searchQuery = diseaseArea ? `${searchTerm} ${diseaseArea}` : searchTerm;
+    const encodedTerm = encodeURIComponent(searchQuery);
+    const url = `https://clinicaltrials.gov/api/v2/studies?query.term=${encodedTerm}&pageSize=10&format=json`;
     
-    console.log(`Searching ClinicalTrials.gov: ${searchTerm}`);
+    console.log(`Searching ClinicalTrials.gov: ${searchQuery}`);
     
     const response = await fetch(url, {
       headers: { "Accept": "application/json" }
@@ -174,7 +222,13 @@ async function searchCTGov(searchTerm: string): Promise<CTGovStudy[]> {
     }
     
     const data = await response.json();
-    return data.studies || [];
+    const studies = data.studies || [];
+    
+    // Filter to only oncology studies
+    const oncologyStudies = studies.filter((s: CTGovStudy) => isOncologyStudy(s));
+    console.log(`Found ${studies.length} studies, ${oncologyStudies.length} are oncology-related`);
+    
+    return oncologyStudies;
   } catch (e) {
     console.error(`Error searching CTGov:`, e);
     return [];
@@ -475,7 +529,7 @@ Deno.serve(async (req) => {
     // Get trials that need ClinicalTrials.gov data
     let query = supabase
       .from("trials")
-      .select("id, acronym, title, results_summary, sample_size, phase, design_type, randomization, blinding, primary_endpoint, secondary_endpoints")
+      .select("id, acronym, title, disease_area, results_summary, sample_size, phase, design_type, randomization, blinding, primary_endpoint, secondary_endpoints")
       .order("publication_year", { ascending: false });
     
     if (trial_id) {
@@ -510,13 +564,13 @@ Deno.serve(async (req) => {
       
       console.log(`Processing: ${trial.acronym}`);
       
-      // Search ClinicalTrials.gov by acronym
-      let studies = await searchCTGov(trial.acronym);
+      // Search ClinicalTrials.gov by acronym with disease area filter
+      let studies = await searchCTGov(trial.acronym, trial.disease_area);
       
       // If no results, try with title keywords
       if (studies.length === 0) {
         const titleKeywords = trial.title.split(" ").slice(0, 5).join(" ");
-        studies = await searchCTGov(titleKeywords);
+        studies = await searchCTGov(titleKeywords, trial.disease_area);
       }
       
       if (studies.length === 0) {
@@ -524,7 +578,7 @@ Deno.serve(async (req) => {
         continue;
       }
       
-      // Find best matching study
+      // Find best matching study - prefer exact acronym match
       const study = studies.find(s => 
         s.protocolSection.identificationModule.acronym?.toLowerCase() === trial.acronym.toLowerCase()
       ) || studies[0];
