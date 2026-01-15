@@ -85,7 +85,7 @@ export default function DrugDetailPage() {
               )}
               {drug.unit_price !== null && drug.unit_price !== undefined && (
                 <Badge variant="outline" className="font-mono">
-                  €{drug.unit_price.toFixed(2)}
+                  €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
                 </Badge>
               )}
             </div>

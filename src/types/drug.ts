@@ -19,6 +19,7 @@ export interface Drug {
   fda_approval_date?: string;
   is_on_zvz?: boolean;
   unit_price?: number | null;
+  price_unit?: string | null;
   reference_links?: string[];
   created_at: string;
   updated_at: string;
