@@ -1,15 +1,101 @@
 import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
-import { DrugFilters, DRUG_CLASSES, DRUG_DISEASE_AREAS } from '@/types/drug';
+import { useFavorites } from '@/hooks/useFavorites';
+import { DrugFilters, DRUG_CLASSES, DRUG_DISEASE_AREAS, Drug } from '@/types/drug';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, ChevronDown, Pill, Loader2, FileText } from 'lucide-react';
+import { Search, Filter, ChevronDown, Pill, Loader2, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const getDrugClassColor = (drugClass: string) => {
+  const colors: Record<string, string> = {
+    'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
+    'PARPi': 'bg-pink-100 text-pink-800 border-pink-200',
+    'ARPI': 'bg-blue-100 text-blue-800 border-blue-200',
+    'Chemotherapie': 'bg-red-100 text-red-800 border-red-200',
+    'TKI': 'bg-orange-100 text-orange-800 border-orange-200',
+    'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
+    'Radioligand Therapie': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'Hormonale Therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  };
+  return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
+};
+
+interface DrugCardProps {
+  drug: Drug;
+  isFavorite: boolean;
+  onToggleFavorite: (e: React.MouseEvent) => void;
+}
+
+function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
+  return (
+    <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
+      <button
+        onClick={onToggleFavorite}
+        className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
+        aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+      >
+        <Star
+          className={`h-5 w-5 transition-colors ${
+            isFavorite
+              ? 'fill-yellow-400 text-yellow-400'
+              : 'text-muted-foreground hover:text-yellow-400'
+          }`}
+        />
+      </button>
+      <Link to={`/drugs/${drug.id}`}>
+        <CardHeader className="pb-2 pr-12">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
+              {drug.brand_names.length > 0 && (
+                <CardDescription>
+                  {drug.brand_names.join(', ')}
+                </CardDescription>
+              )}
+            </div>
+            <Badge className={getDrugClassColor(drug.drug_class)}>
+              {drug.drug_class}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-2">
+            {drug.administration_route && (
+              <span className="text-sm text-muted-foreground">
+                {drug.administration_route}
+              </span>
+            )}
+            {drug.unit_price !== null && drug.unit_price !== undefined && (
+              <Badge variant="outline" className="font-mono text-xs">
+                €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
+              </Badge>
+            )}
+          </div>
+          {drug.disease_areas.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {drug.disease_areas.slice(0, 3).map((area) => (
+                <Badge key={area} variant="outline" className="text-xs">
+                  {area}
+                </Badge>
+              ))}
+              {drug.disease_areas.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{drug.disease_areas.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Link>
+    </Card>
+  );
+}
 
 export default function DrugsPage() {
   const [filters, setFilters] = useState<DrugFilters>({});
@@ -20,6 +106,8 @@ export default function DrugsPage() {
     ...filters,
     search: searchQuery || undefined,
   });
+
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
 
   const handleClassFilter = (drugClass: string, checked: boolean) => {
     const current = filters.drug_class || [];
@@ -50,19 +138,8 @@ export default function DrugsPage() {
     (filters.drug_class?.length || 0) + 
     (filters.disease_area?.length || 0);
 
-  const getDrugClassColor = (drugClass: string) => {
-    const colors: Record<string, string> = {
-      'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
-      'PARPi': 'bg-pink-100 text-pink-800 border-pink-200',
-      'ARPI': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Chemotherapie': 'bg-red-100 text-red-800 border-red-200',
-      'TKI': 'bg-orange-100 text-orange-800 border-orange-200',
-      'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
-      'Radioligand Therapie': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'Hormonale Therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    };
-    return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
-  };
+  // Get favorite drugs from the loaded drugs list
+  const favoriteDrugs = drugs?.filter(drug => favorites.includes(drug.id)) || [];
 
   return (
     <Layout>
@@ -73,6 +150,31 @@ export default function DrugsPage() {
             Doorzoek medicijnen voor urologische oncologie. Klik op een medicijn voor gedetailleerde informatie en patiëntfolders.
           </p>
         </div>
+
+        {/* Favorites Section */}
+        {favoriteDrugs.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+              <h2 className="text-xl font-semibold">Favorieten</h2>
+              <Badge variant="secondary">{favoriteDrugs.length}</Badge>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {favoriteDrugs.map((drug) => (
+                <DrugCard
+                  key={drug.id}
+                  drug={drug}
+                  isFavorite={true}
+                  onToggleFavorite={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleFavorite(drug.id);
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Search Bar */}
         <div className="flex gap-4 mb-6">
@@ -201,46 +303,16 @@ export default function DrugsPage() {
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {drugs?.map((drug) => (
-                    <Link key={drug.id} to={`/drugs/${drug.id}`}>
-                      <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
-                              {drug.brand_names.length > 0 && (
-                                <CardDescription>
-                                  {drug.brand_names.join(', ')}
-                                </CardDescription>
-                              )}
-                            </div>
-                            <Badge className={getDrugClassColor(drug.drug_class)}>
-                              {drug.drug_class}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          {drug.administration_route && (
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Toediening: {drug.administration_route}
-                            </p>
-                          )}
-                          {drug.disease_areas.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {drug.disease_areas.slice(0, 3).map((area) => (
-                                <Badge key={area} variant="outline" className="text-xs">
-                                  {area}
-                                </Badge>
-                              ))}
-                              {drug.disease_areas.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{drug.disease_areas.length - 3}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </Link>
+                    <DrugCard
+                      key={drug.id}
+                      drug={drug}
+                      isFavorite={isFavorite(drug.id)}
+                      onToggleFavorite={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFavorite(drug.id);
+                      }}
+                    />
                   ))}
                 </div>
               </div>
