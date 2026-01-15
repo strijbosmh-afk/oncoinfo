@@ -11,6 +11,24 @@ interface FilterPanelProps {
   onFiltersChange: (filters: TrialFilters) => void;
 }
 
+const diseaseAreaLabels: Record<string, string> = {
+  'Prostate Cancer': 'Prostaatkanker',
+  'Bladder Cancer': 'Blaaskanker',
+  'Renal Cell Carcinoma': 'Niercelcarcinoom',
+  'Testicular Cancer': 'Testiskanker',
+  'Penile Cancer': 'Peniskanker'
+};
+
+const settingLabels: Record<string, string> = {
+  'Localized': 'Gelokaliseerd',
+  'Locally Advanced': 'Lokaal gevorderd',
+  'Metastatic': 'Gemetastaseerd',
+  'Adjuvant': 'Adjuvant',
+  'Neoadjuvant': 'Neoadjuvant',
+  'Maintenance': 'Onderhouds',
+  'Salvage': 'Salvage'
+};
+
 export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
   const handleFilterChange = (
     key: keyof TrialFilters,
@@ -48,7 +66,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
             className="h-8 px-2 text-xs"
           >
             <X className="h-3 w-3 mr-1" />
-            Clear all
+            Alles wissen
           </Button>
         )}
       </div>
@@ -57,7 +75,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
         <div className="space-y-6 pr-4">
           {/* Disease Area */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Disease Area</h4>
+            <h4 className="text-sm font-medium mb-3">Ziektegebied</h4>
             <div className="space-y-2">
               {DISEASE_AREAS.map((area) => (
                 <div key={area} className="flex items-center gap-2">
@@ -69,7 +87,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
                     }
                   />
                   <Label htmlFor={`disease-${area}`} className="text-sm cursor-pointer">
-                    {area}
+                    {diseaseAreaLabels[area] || area}
                   </Label>
                 </div>
               ))}
@@ -92,7 +110,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
                     }
                   />
                   <Label htmlFor={`setting-${setting}`} className="text-sm cursor-pointer">
-                    {setting}
+                    {settingLabels[setting] || setting}
                   </Label>
                 </div>
               ))}
@@ -103,7 +121,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
 
           {/* Phase */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Phase</h4>
+            <h4 className="text-sm font-medium mb-3">Fase</h4>
             <div className="space-y-2">
               {PHASES.map((phase) => (
                 <div key={phase} className="flex items-center gap-2">
@@ -115,7 +133,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
                     }
                   />
                   <Label htmlFor={`phase-${phase}`} className="text-sm cursor-pointer">
-                    {phase}
+                    {phase.replace('Phase', 'Fase')}
                   </Label>
                 </div>
               ))}
@@ -126,7 +144,7 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
 
           {/* Intervention Class */}
           <div>
-            <h4 className="text-sm font-medium mb-3">Intervention Class</h4>
+            <h4 className="text-sm font-medium mb-3">Interventieklasse</h4>
             <div className="space-y-2">
               {INTERVENTION_CLASSES.map((intervention) => (
                 <div key={intervention} className="flex items-center gap-2">

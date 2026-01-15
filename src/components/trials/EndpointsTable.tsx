@@ -9,20 +9,20 @@ interface EndpointsTableProps {
 
 export function EndpointsTable({ endpoints, arms }: EndpointsTableProps) {
   const getArmName = (armId?: string) => {
-    if (!armId) return 'Overall';
+    if (!armId) return 'Totaal';
     const arm = arms.find(a => a.id === armId);
-    return arm?.name || 'Unknown';
+    return arm?.name || 'Onbekend';
   };
 
   const formatPValue = (p?: number) => {
     if (p === undefined || p === null) return '-';
-    if (p < 0.001) return '<0.001';
-    return p.toFixed(3);
+    if (p < 0.001) return '<0,001';
+    return p.toFixed(3).replace('.', ',');
   };
 
   const formatCI = (lower?: number, upper?: number) => {
     if (lower === undefined || upper === undefined) return '-';
-    return `${lower.toFixed(2)} - ${upper.toFixed(2)}`;
+    return `${lower.toFixed(2).replace('.', ',')} - ${upper.toFixed(2).replace('.', ',')}`;
   };
 
   return (
@@ -30,14 +30,14 @@ export function EndpointsTable({ endpoints, arms }: EndpointsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Endpoint</TableHead>
+            <TableHead>Eindpunt</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Arm</TableHead>
             <TableHead className="text-right">HR</TableHead>
-            <TableHead className="text-right">95% CI</TableHead>
-            <TableHead className="text-right">p-value</TableHead>
-            <TableHead className="text-right">Median (mo)</TableHead>
-            <TableHead className="text-right">Rate (%)</TableHead>
+            <TableHead className="text-right">95% BI</TableHead>
+            <TableHead className="text-right">p-waarde</TableHead>
+            <TableHead className="text-right">Mediaan (mnd)</TableHead>
+            <TableHead className="text-right">Percentage (%)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -46,12 +46,13 @@ export function EndpointsTable({ endpoints, arms }: EndpointsTableProps) {
               <TableCell className="font-medium">{endpoint.endpoint_name}</TableCell>
               <TableCell>
                 <Badge variant="outline" className="text-xs">
-                  {endpoint.endpoint_type}
+                  {endpoint.endpoint_type === 'primary' ? 'primair' : 
+                   endpoint.endpoint_type === 'secondary' ? 'secundair' : endpoint.endpoint_type}
                 </Badge>
               </TableCell>
               <TableCell>{getArmName(endpoint.arm_id)}</TableCell>
               <TableCell className="text-right font-mono">
-                {endpoint.hazard_ratio?.toFixed(2) || '-'}
+                {endpoint.hazard_ratio?.toFixed(2).replace('.', ',') || '-'}
               </TableCell>
               <TableCell className="text-right font-mono text-sm">
                 {formatCI(endpoint.hazard_ratio_ci_lower, endpoint.hazard_ratio_ci_upper)}
@@ -60,15 +61,15 @@ export function EndpointsTable({ endpoints, arms }: EndpointsTableProps) {
                 {formatPValue(endpoint.p_value)}
               </TableCell>
               <TableCell className="text-right font-mono">
-                {endpoint.median_months?.toFixed(1) || '-'}
+                {endpoint.median_months?.toFixed(1).replace('.', ',') || '-'}
               </TableCell>
               <TableCell className="text-right font-mono">
                 {endpoint.rate_percent !== undefined && endpoint.rate_percent !== null
-                  ? `${endpoint.rate_percent.toFixed(1)}%`
+                  ? `${endpoint.rate_percent.toFixed(1).replace('.', ',')}%`
                   : '-'}
                 {endpoint.rate_timepoint_months && (
                   <span className="text-xs text-muted-foreground ml-1">
-                    @{endpoint.rate_timepoint_months}mo
+                    @{endpoint.rate_timepoint_months}mnd
                   </span>
                 )}
               </TableCell>

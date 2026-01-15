@@ -32,7 +32,7 @@ export function Header() {
             GU
           </div>
           <span className="hidden font-semibold text-lg sm:inline-block">
-            Trials Hub
+            Studies Database
           </span>
         </Link>
 
@@ -41,7 +41,7 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search trials..."
+              placeholder="Zoek studies..."
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -51,7 +51,7 @@ export function Header() {
 
         <nav className="flex items-center gap-2">
           <Button variant="ghost" asChild>
-            <Link to="/trials">Browse Trials</Link>
+            <Link to="/trials">Bekijk Studies</Link>
           </Button>
           
           {loading ? (
@@ -76,7 +76,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
                         <Shield className="h-4 w-4" />
-                        Admin Portal
+                        Beheerportaal
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -87,13 +87,13 @@ export function Header() {
                   className="flex items-center gap-2 cursor-pointer text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign Out
+                  Uitloggen
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild>
-              <Link to="/login">Sign In</Link>
+              <Link to="/login">Inloggen</Link>
             </Button>
           )}
         </nav>

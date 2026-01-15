@@ -5,34 +5,34 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const diseaseAreas = [
   {
-    name: 'Prostate Cancer',
+    name: 'Prostaatkanker',
     key: 'Prostate Cancer',
     color: 'bg-[hsl(199,89%,32%)]',
-    description: 'mCRPC, mHSPC, localized'
+    description: 'mCRPC, mHSPC, gelokaliseerd'
   },
   {
-    name: 'Bladder Cancer',
+    name: 'Blaaskanker',
     key: 'Bladder Cancer',
     color: 'bg-[hsl(174,62%,38%)]',
-    description: 'NMIBC, MIBC, metastatic'
+    description: 'NMIBC, MIBC, gemetastaseerd'
   },
   {
-    name: 'Renal Cell Carcinoma',
+    name: 'Niercelcarcinoom',
     key: 'Renal Cell Carcinoma',
     color: 'bg-[hsl(25,95%,53%)]',
-    description: 'Clear cell, non-clear cell'
+    description: 'Heldercellig, niet-heldercellig'
   },
   {
-    name: 'Testicular Cancer',
+    name: 'Testiskanker',
     key: 'Testicular Cancer',
     color: 'bg-[hsl(262,83%,58%)]',
-    description: 'GCT, seminoma, NSGCT'
+    description: 'KCT, seminoom, non-seminoom'
   },
   {
-    name: 'Penile Cancer',
+    name: 'Peniskanker',
     key: 'Penile Cancer',
     color: 'bg-[hsl(340,75%,55%)]',
-    description: 'Squamous cell carcinoma'
+    description: 'Plaveiselcelcarcinoom'
   }
 ];
 
@@ -43,10 +43,10 @@ export function DiseaseAreaSection() {
     <section className="py-16">
       <div className="container">
         <h2 className="text-2xl font-bold text-center mb-4">
-          Browse by Disease Area
+          Zoeken op Ziektegebied
         </h2>
         <p className="text-center text-muted-foreground mb-10 max-w-2xl mx-auto">
-          Explore clinical trials organized by genitourinary cancer type
+          Bekijk klinische studies georganiseerd per urologisch kankertype
         </p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -66,7 +66,7 @@ export function DiseaseAreaSection() {
                     <Skeleton className="h-5 w-16" />
                   ) : (
                     <span className="text-sm font-medium text-primary">
-                      {counts?.[area.key] || 0} trials
+                      {counts?.[area.key] || 0} studies
                     </span>
                   )}
                 </CardContent>

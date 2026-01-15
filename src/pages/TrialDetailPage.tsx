@@ -44,6 +44,14 @@ const diseaseColors: Record<string, string> = {
   'Penile Cancer': 'bg-[hsl(340,75%,55%)]'
 };
 
+const diseaseLabels: Record<string, string> = {
+  'Prostate Cancer': 'Prostaatkanker',
+  'Bladder Cancer': 'Blaaskanker',
+  'Renal Cell Carcinoma': 'Niercelcarcinoom',
+  'Testicular Cancer': 'Testiskanker',
+  'Penile Cancer': 'Peniskanker'
+};
+
 export default function TrialDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: trial, isLoading } = useTrial(id!);
@@ -76,9 +84,9 @@ export default function TrialDetailPage() {
       if (error) throw error;
       
       await refetchSummaries();
-      toast({ title: 'Analysis Generated', description: 'AI analysis has been created successfully' });
+      toast({ title: 'Analyse Gegenereerd', description: 'AI-analyse is succesvol aangemaakt' });
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to generate analysis', variant: 'destructive' });
+      toast({ title: 'Fout', description: error.message || 'Analyse genereren mislukt', variant: 'destructive' });
     } finally {
       setIsGeneratingAnalysis(false);
     }
@@ -94,14 +102,14 @@ export default function TrialDetailPage() {
       if (error) throw error;
       
       if (data.skipped) {
-        toast({ title: 'Already Has Data', description: 'This trial already has arms and endpoints data' });
+        toast({ title: 'Data Bestaat Al', description: 'Deze studie heeft al armen en eindpunten' });
       } else {
         await refetchArms();
         await refetchEndpoints();
-        toast({ title: 'Data Generated', description: `Added ${data.arms_added} arms and ${data.endpoints_added} endpoints` });
+        toast({ title: 'Data Gegenereerd', description: `${data.arms_added} armen en ${data.endpoints_added} eindpunten toegevoegd` });
       }
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to generate data', variant: 'destructive' });
+      toast({ title: 'Fout', description: error.message || 'Data genereren mislukt', variant: 'destructive' });
     } finally {
       setIsSeedingData(false);
     }
@@ -131,9 +139,9 @@ export default function TrialDetailPage() {
       }
       
       setPdfDialogOpen(false);
-      toast({ title: 'PDF Generated', description: 'Patient information document is ready to print' });
+      toast({ title: 'PDF Gegenereerd', description: 'Patiëntinformatie is klaar om te printen' });
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to generate PDF', variant: 'destructive' });
+      toast({ title: 'Fout', description: error.message || 'PDF genereren mislukt', variant: 'destructive' });
     } finally {
       setIsGeneratingPdf(false);
     }
