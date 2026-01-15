@@ -29,10 +29,10 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            GU
+            UI
           </div>
           <span className="hidden font-semibold text-lg sm:inline-block">
-            Studies Database
+            UroInfo
           </span>
         </Link>
 
@@ -41,7 +41,7 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Zoek studies..."
+              placeholder="Zoek medicijnen of studies..."
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -51,7 +51,10 @@ export function Header() {
 
         <nav className="flex items-center gap-2">
           <Button variant="ghost" asChild>
-            <Link to="/trials">Bekijk Studies</Link>
+            <Link to="/drugs">Medicijnen</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/trials">Studies</Link>
           </Button>
           
           {loading ? (

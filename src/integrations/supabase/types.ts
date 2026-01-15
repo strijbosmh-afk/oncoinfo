@@ -93,6 +93,81 @@ export type Database = {
           },
         ]
       }
+      drugs: {
+        Row: {
+          administration_route: string | null
+          approved_indications: string[] | null
+          brand_names: string[] | null
+          common_regimens: string[] | null
+          contraindications: string[] | null
+          created_at: string
+          cycle_length_days: number | null
+          disease_areas: string[] | null
+          dosing_info: Json | null
+          drug_class: string
+          drug_interactions: string[] | null
+          ema_approval_date: string | null
+          fda_approval_date: string | null
+          generic_name: string
+          id: string
+          is_on_zvz: boolean | null
+          mechanism_of_action: string | null
+          monitoring_requirements: string[] | null
+          patient_counseling_points: string[] | null
+          reference_links: string[] | null
+          side_effects: Json | null
+          updated_at: string
+        }
+        Insert: {
+          administration_route?: string | null
+          approved_indications?: string[] | null
+          brand_names?: string[] | null
+          common_regimens?: string[] | null
+          contraindications?: string[] | null
+          created_at?: string
+          cycle_length_days?: number | null
+          disease_areas?: string[] | null
+          dosing_info?: Json | null
+          drug_class: string
+          drug_interactions?: string[] | null
+          ema_approval_date?: string | null
+          fda_approval_date?: string | null
+          generic_name: string
+          id?: string
+          is_on_zvz?: boolean | null
+          mechanism_of_action?: string | null
+          monitoring_requirements?: string[] | null
+          patient_counseling_points?: string[] | null
+          reference_links?: string[] | null
+          side_effects?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          administration_route?: string | null
+          approved_indications?: string[] | null
+          brand_names?: string[] | null
+          common_regimens?: string[] | null
+          contraindications?: string[] | null
+          created_at?: string
+          cycle_length_days?: number | null
+          disease_areas?: string[] | null
+          dosing_info?: Json | null
+          drug_class?: string
+          drug_interactions?: string[] | null
+          ema_approval_date?: string | null
+          fda_approval_date?: string | null
+          generic_name?: string
+          id?: string
+          is_on_zvz?: boolean | null
+          mechanism_of_action?: string | null
+          monitoring_requirements?: string[] | null
+          patient_counseling_points?: string[] | null
+          reference_links?: string[] | null
+          side_effects?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       endpoints: {
         Row: {
           arm_id: string | null
