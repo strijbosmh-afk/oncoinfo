@@ -80,7 +80,7 @@ export default function DrugDetailPage() {
               )}
               {drug.is_on_zvz && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  ZVZ Vergoed
+                  RIZIV Terugbetaald
                 </Badge>
               )}
             </div>
