@@ -338,7 +338,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
             <TabsTrigger value="design">Opzet</TabsTrigger>
             <TabsTrigger value="results">Resultaten</TabsTrigger>
-            <TabsTrigger value="survival">Survival Data</TabsTrigger>
+            <TabsTrigger value="uitkomst">Uitkomst</TabsTrigger>
             <TabsTrigger value="patient">Patiënt Info</TabsTrigger>
           </TabsList>
 
@@ -765,28 +765,49 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
             )}
           </TabsContent>
 
-          {/* Survival Data Tab - Shows real results from ClinicalTrials.gov */}
-          <TabsContent value="survival" className="space-y-6">
-            {/* Key Survival Metrics */}
+          {/* Uitkomst Tab - Effectieve uitkomst van de studie */}
+          <TabsContent value="uitkomst" className="space-y-6">
+            {/* Primair Eindpunt Uitkomst */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  {trial.primary_endpoint_met !== null && trial.primary_endpoint_met !== undefined && (
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      trial.primary_endpoint_met ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {trial.primary_endpoint_met ? (
+                        <CheckCircle2 className="h-5 w-5" />
+                      ) : (
+                        <XCircle className="h-5 w-5" />
+                      )}
+                    </div>
+                  )}
+                  Primair Eindpunt
+                </CardTitle>
+                <CardDescription>
+                  {trial.primary_endpoint || 'Niet gespecificeerd'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className={`p-4 rounded-lg ${
+                  trial.primary_endpoint_met === true ? 'bg-green-50 border border-green-200' :
+                  trial.primary_endpoint_met === false ? 'bg-red-50 border border-red-200' :
+                  'bg-muted'
+                }`}>
+                  <p className="font-semibold text-lg">
+                    {trial.primary_endpoint_met === true ? 'Primair eindpunt behaald' :
+                     trial.primary_endpoint_met === false ? 'Primair eindpunt niet behaald' :
+                     'Uitkomst onbekend'}
+                  </p>
+                  {trial.results_summary?.conclusions && (
+                    <p className="mt-2 text-sm">{trial.results_summary.conclusions}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Kernresultaten */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {trial.results_summary?.median_os_months && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Median OS</p>
-                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_os_months}</p>
-                    <p className="text-sm text-muted-foreground">maanden</p>
-                  </CardContent>
-                </Card>
-              )}
-              {trial.results_summary?.median_pfs_months && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Median PFS</p>
-                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_pfs_months}</p>
-                    <p className="text-sm text-muted-foreground">maanden</p>
-                  </CardContent>
-                </Card>
-              )}
               {trial.results_summary?.hazard_ratio && (
                 <Card>
                   <CardContent className="pt-6">
@@ -796,7 +817,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                     </p>
                     {trial.results_summary.hazard_ratio.ci_lower && trial.results_summary.hazard_ratio.ci_upper && (
                       <p className="text-sm text-muted-foreground">
-                        95% CI: {trial.results_summary.hazard_ratio.ci_lower.toFixed(2)} - {trial.results_summary.hazard_ratio.ci_upper.toFixed(2)}
+                        95% BI: {trial.results_summary.hazard_ratio.ci_lower.toFixed(2)} - {trial.results_summary.hazard_ratio.ci_upper.toFixed(2)}
                       </p>
                     )}
                   </CardContent>
@@ -805,7 +826,7 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
               {trial.results_summary?.p_value && (
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide">P-value</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">P-waarde</p>
                     <p className="text-3xl font-bold text-primary">
                       {trial.results_summary.p_value < 0.001 ? '<0.001' : trial.results_summary.p_value.toFixed(4)}
                     </p>
@@ -815,116 +836,63 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
                   </CardContent>
                 </Card>
               )}
+              {trial.results_summary?.median_os_months && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Mediane OS</p>
+                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_os_months}</p>
+                    <p className="text-sm text-muted-foreground">maanden</p>
+                  </CardContent>
+                </Card>
+              )}
+              {trial.results_summary?.median_pfs_months && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Mediane PFS</p>
+                    <p className="text-3xl font-bold text-primary">{trial.results_summary.median_pfs_months}</p>
+                    <p className="text-sm text-muted-foreground">maanden</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
-            {/* Treatment Arms from results_summary */}
-            {arms && arms.length > 0 && (
+            {/* Belangrijkste Bevindingen */}
+            {trial.results_summary?.key_findings && trial.results_summary.key_findings.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Behandelarmen</CardTitle>
-                  <CardDescription>Armen uit ClinicalTrials.gov protocol</CardDescription>
+                  <CardTitle>Belangrijkste Bevindingen</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {arms.map((arm) => (
-                      <div key={arm.id} className="p-4 border rounded-lg">
-                        <p className="font-semibold text-lg">{arm.name}</p>
-                        {arm.sample_size && (
-                          <p className="text-sm text-muted-foreground">N = {arm.sample_size}</p>
-                        )}
-                        {arm.description && (
-                          <p className="text-sm mt-2">{arm.description}</p>
-                        )}
-                      </div>
+                  <ul className="space-y-2">
+                    {trial.results_summary.key_findings.map((finding: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span>{finding}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </CardContent>
               </Card>
             )}
 
-            {/* Primary Endpoints with Results */}
-            {trial.results_summary?.primary_endpoints && trial.results_summary.primary_endpoints.length > 0 && (
+            {/* Primaire Uitkomst */}
+            {trial.results_summary?.primary_outcome && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Primaire Eindpunten</CardTitle>
-                  <CardDescription>Resultaten van primaire eindpunten</CardDescription>
+                  <CardTitle>Primaire Uitkomst</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {trial.results_summary.primary_endpoints.map((ep: any, i: number) => (
-                      <div key={i} className="p-4 bg-muted rounded-lg">
-                        <p className="font-semibold">{ep.name}</p>
-                        {ep.time_frame && (
-                          <p className="text-sm text-muted-foreground mb-2">Tijdsframe: {ep.time_frame}</p>
-                        )}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
-                          {ep.value && (
-                            <div>
-                              <p className="text-xs text-muted-foreground">Waarde</p>
-                              <p className="font-bold">{ep.value} {ep.unit || ''}</p>
-                            </div>
-                          )}
-                          {ep.hr && (
-                            <div>
-                              <p className="text-xs text-muted-foreground">HR</p>
-                              <p className="font-bold">{ep.hr.toFixed(2)}</p>
-                              {ep.hr_ci_lower && ep.hr_ci_upper && (
-                                <p className="text-xs text-muted-foreground">
-                                  CI: {ep.hr_ci_lower.toFixed(2)}-{ep.hr_ci_upper.toFixed(2)}
-                                </p>
-                              )}
-                            </div>
-                          )}
-                          {ep.p_value && (
-                            <div>
-                              <p className="text-xs text-muted-foreground">P-waarde</p>
-                              <p className="font-bold">
-                                {ep.p_value < 0.001 ? '<0.001' : ep.p_value.toFixed(4)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-sm">{trial.results_summary.primary_outcome}</p>
                 </CardContent>
               </Card>
             )}
 
-            {/* Secondary Endpoints */}
-            {trial.results_summary?.secondary_endpoints && trial.results_summary.secondary_endpoints.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Secundaire Eindpunten</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {trial.results_summary.secondary_endpoints.map((ep: any, i: number) => (
-                      <div key={i} className="p-3 border rounded-lg">
-                        <p className="font-medium">{ep.name}</p>
-                        <div className="flex flex-wrap gap-4 mt-2 text-sm">
-                          {ep.value && (
-                            <span><span className="text-muted-foreground">Waarde:</span> {ep.value}</span>
-                          )}
-                          {ep.hr && (
-                            <span><span className="text-muted-foreground">HR:</span> {ep.hr.toFixed(2)}</span>
-                          )}
-                          {ep.p_value && (
-                            <span><span className="text-muted-foreground">p:</span> {ep.p_value < 0.001 ? '<0.001' : ep.p_value.toFixed(4)}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Forest Plot if endpoints have HR */}
+            {/* Forest Plot als er HR data is */}
             {endpoints && endpoints.length > 0 && hasEndpointsWithHR && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Forest Plot - Hazard Ratios</CardTitle>
+                  <CardTitle>Forest Plot</CardTitle>
+                  <CardDescription>Visuele weergave van hazard ratios</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ForestPlot endpoints={endpoints} />
@@ -932,63 +900,47 @@ ${trial.journal ? `Tijdschrift: ${trial.journal}` : ''}
               </Card>
             )}
 
-            {/* Original KM Plot */}
-            {trial.original_km_plot_url && trial.is_open_access && (
+            {/* Bron */}
+            {trial.results_summary?.nct_id && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Originele Publicatie Plot</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <img 
-                    src={trial.original_km_plot_url} 
-                    alt="Original Kaplan-Meier plot from publication"
-                    className="max-w-full rounded-lg border"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Bron: Originele open-access publicatie
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* No data fallback */}
-            {!trial.results_summary?.primary_endpoints && 
-             !trial.results_summary?.median_os_months && 
-             !trial.results_summary?.median_pfs_months && 
-             !trial.results_summary?.hazard_ratio &&
-             (!arms || arms.length === 0) && (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Geen survival data beschikbaar voor deze studie.
-                  </p>
-                  {trial.results_summary?.nct_id && (
-                    <a
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Databron</p>
+                      <p className="font-medium">ClinicalTrials.gov</p>
+                    </div>
+                    <a 
                       href={`https://clinicaltrials.gov/study/${trial.results_summary.nct_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-primary hover:underline"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      Bekijk op ClinicalTrials.gov
+                      Bekijk studie
                     </a>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             )}
 
-            {trial.results_summary?.nct_id && (
-              <p className="text-sm text-muted-foreground text-center">
-                Data afkomstig van{' '}
-                <a
-                  href={`https://clinicaltrials.gov/study/${trial.results_summary.nct_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  ClinicalTrials.gov ({trial.results_summary.nct_id})
-                </a>
-              </p>
+            {/* Fallback als geen uitkomstdata beschikbaar */}
+            {!trial.results_summary && !trial.primary_endpoint_met && (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground mb-4">Geen uitkomstdata beschikbaar voor deze studie.</p>
+                  {trial.pubmed_id && (
+                    <a
+                      href={`https://pubmed.ncbi.nlm.nih.gov/${trial.pubmed_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Bekijk op PubMed
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
