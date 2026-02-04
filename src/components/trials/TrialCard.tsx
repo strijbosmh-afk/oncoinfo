@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trial } from '@/types/trial';
-import { Calendar, Users, FileText, ExternalLink, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Users, FileText, ExternalLink, CheckCircle2, XCircle, BookOpen, BarChart3 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TrialCardProps {
@@ -50,6 +50,46 @@ function EndpointIndicator({ met }: { met: boolean | null | undefined }) {
   );
 }
 
+function StatusIndicators({ trial }: { trial: Trial }) {
+  const isPublished = !!(trial.doi || trial.pubmed_id);
+  const hasResults = !!trial.results_summary;
+  
+  if (!isPublished && !hasResults) return null;
+  
+  return (
+    <div className="flex gap-1">
+      {isPublished && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-center w-5 h-5 rounded bg-blue-100 text-blue-600">
+                <BookOpen className="h-3 w-3" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Gepubliceerd</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      {hasResults && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-center w-5 h-5 rounded bg-emerald-100 text-emerald-600">
+                <BarChart3 className="h-3 w-3" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Resultaten beschikbaar</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
+  );
+}
+
 export function TrialCard({ trial }: TrialCardProps) {
   return (
     <Link to={`/trials/${trial.id}`}>
@@ -68,9 +108,12 @@ export function TrialCard({ trial }: TrialCardProps) {
                 </p>
               </div>
             </div>
-            {trial.doi && (
-              <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-            )}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <StatusIndicators trial={trial} />
+              {trial.doi && (
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
