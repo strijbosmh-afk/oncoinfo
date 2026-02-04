@@ -29,24 +29,22 @@ function EndpointIndicator({ met }: { met: boolean | null | undefined }) {
   if (met === null || met === undefined) return null;
   
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${
-            met ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-          }`}>
-            {met ? (
-              <CheckCircle2 className="h-4 w-4" />
-            ) : (
-              <XCircle className="h-4 w-4" />
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{met ? 'Primair eindpunt behaald' : 'Primair eindpunt niet behaald'}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={`flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${
+          met ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+        }`}>
+          {met ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <XCircle className="h-4 w-4" />
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{met ? 'Primair eindpunt behaald' : 'Primair eindpunt niet behaald'}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -59,32 +57,28 @@ function StatusIndicators({ trial }: { trial: Trial }) {
   return (
     <div className="flex gap-1">
       {isPublished && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center justify-center w-5 h-5 rounded bg-blue-100 text-blue-600">
-                <BookOpen className="h-3 w-3" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Gepubliceerd</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-5 h-5 rounded bg-blue-100 text-blue-600">
+              <BookOpen className="h-3 w-3" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Gepubliceerd</p>
+          </TooltipContent>
+        </Tooltip>
       )}
       {hasResults && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center justify-center w-5 h-5 rounded bg-emerald-100 text-emerald-600">
-                <BarChart3 className="h-3 w-3" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Resultaten beschikbaar</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-5 h-5 rounded bg-emerald-100 text-emerald-600">
+              <BarChart3 className="h-3 w-3" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Resultaten beschikbaar</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
@@ -92,6 +86,7 @@ function StatusIndicators({ trial }: { trial: Trial }) {
 
 export function TrialCard({ trial }: TrialCardProps) {
   return (
+    <TooltipProvider delayDuration={300}>
     <Link to={`/trials/${trial.id}`}>
       <Card className="h-full transition-all hover:shadow-medical hover:-translate-y-0.5 cursor-pointer overflow-hidden group">
         <div className={`h-1.5 ${diseaseColors[trial.disease_area] || 'bg-primary'}`} />
@@ -177,5 +172,6 @@ export function TrialCard({ trial }: TrialCardProps) {
         </CardContent>
       </Card>
     </Link>
+    </TooltipProvider>
   );
 }
