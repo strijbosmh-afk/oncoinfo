@@ -26,12 +26,10 @@ export default function TrialsPage() {
   const [filters, setFilters] = useState<TrialFilters>(() => {
     const disease = searchParams.get('disease');
     const intervention = searchParams.get('intervention');
-    const search = searchParams.get('search');
     
     return {
       disease_area: disease ? [disease] : undefined,
-      intervention_class: intervention ? [intervention] : undefined,
-      search: search || undefined
+      intervention_class: intervention ? [intervention] : undefined
     };
   });
 
@@ -46,7 +44,7 @@ export default function TrialsPage() {
   }, [searchQuery]);
 
   // Memoize the actual filters with debounced search
-  const activeFilters = useMemo(() => ({
+  const activeFilters = useMemo((): TrialFilters => ({
     ...filters,
     search: debouncedSearch.trim() || undefined
   }), [filters, debouncedSearch]);
