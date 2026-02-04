@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { FilterPanel } from '@/components/trials/FilterPanel';
@@ -35,7 +35,23 @@ export default function TrialsPage() {
     };
   });
 
-  const { data: trials, isLoading } = useTrials(filters);
+  // Debounced search - update filters automatically after typing stops
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Memoize the actual filters with debounced search
+  const activeFilters = useMemo(() => ({
+    ...filters,
+    search: debouncedSearch.trim() || undefined
+  }), [filters, debouncedSearch]);
+
+  const { data: trials, isLoading } = useTrials(activeFilters);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -45,15 +61,16 @@ export default function TrialsPage() {
     if (filters.intervention_class?.length === 1) {
       params.set('intervention', filters.intervention_class[0]);
     }
-    if (filters.search) {
-      params.set('search', filters.search);
+    if (debouncedSearch.trim()) {
+      params.set('search', debouncedSearch.trim());
     }
     setSearchParams(params, { replace: true });
-  }, [filters, setSearchParams]);
+  }, [filters, debouncedSearch, setSearchParams]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setFilters({ ...filters, search: searchQuery || undefined });
+    // Form submit is no longer needed since we use debounced search
+    // but we keep it for accessibility (pressing Enter)
   };
 
   const sortedTrials = trials?.slice().sort((a, b) => {
@@ -75,7 +92,7 @@ export default function TrialsPage() {
 
   const activeFilterCount = Object.values(filters).filter(
     (v) => v !== undefined && (Array.isArray(v) ? v.length > 0 : v !== '')
-  ).length;
+  ).length + (debouncedSearch.trim() ? 1 : 0);
 
   return (
     <Layout>
@@ -112,7 +129,6 @@ export default function TrialsPage() {
                       className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
                       onClick={() => {
                         setSearchQuery('');
-                        setFilters({ ...filters, search: undefined });
                       }}
                     >
                       <X className="h-4 w-4" />
