@@ -3,8 +3,13 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { TrialFilters, DISEASE_AREAS, INTERVENTION_CLASSES, PHASES, SETTINGS } from '@/types/trial';
+import { TrialFilters, DISEASE_AREAS, INTERVENTION_CLASSES, PHASES, SETTINGS, TRIAL_STATUSES } from '@/types/trial';
 import { X } from 'lucide-react';
+
+const statusLabels: Record<string, string> = {
+  'published': 'Gepubliceerd',
+  'has_results': 'Met resultaten'
+};
 
 interface FilterPanelProps {
   filters: TrialFilters;
@@ -88,6 +93,29 @@ export function FilterPanel({ filters, onFiltersChange }: FilterPanelProps) {
                   />
                   <Label htmlFor={`disease-${area}`} className="text-sm cursor-pointer">
                     {diseaseAreaLabels[area] || area}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Status */}
+          <div>
+            <h4 className="text-sm font-medium mb-3">Status</h4>
+            <div className="space-y-2">
+              {TRIAL_STATUSES.map((status) => (
+                <div key={status} className="flex items-center gap-2">
+                  <Checkbox
+                    id={`status-${status}`}
+                    checked={filters.status?.includes(status) || false}
+                    onCheckedChange={(checked) =>
+                      handleFilterChange('status', status, checked as boolean)
+                    }
+                  />
+                  <Label htmlFor={`status-${status}`} className="text-sm cursor-pointer">
+                    {statusLabels[status] || status}
                   </Label>
                 </div>
               ))}
