@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUpdatingTrials, setIsUpdatingTrials] = useState(false);
   const [isFetchingResults, setIsFetchingResults] = useState(false);
+  const [isRefreshingCTGov, setIsRefreshingCTGov] = useState(false);
   const [isGeneratingBulkAI, setIsGeneratingBulkAI] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [updateDiseaseArea, setUpdateDiseaseArea] = useState<string>('');
@@ -170,6 +171,36 @@ export default function AdminPage() {
       });
     } finally {
       setIsFetchingResults(false);
+    }
+  };
+
+  const handleRefreshCTGovResults = async (onlyMissing = true) => {
+    setIsRefreshingCTGov(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('refresh-trial-results', {
+        body: { 
+          only_missing: onlyMissing,
+          refresh_all: !onlyMissing
+        }
+      });
+      
+      if (error) throw error;
+      
+      const updated = data.updated || 0;
+      const total = data.total || 0;
+      
+      toast({ 
+        title: 'CTGov Resultaten', 
+        description: `${updated} van ${total} trials bijgewerkt met CTGov data`
+      });
+    } catch (error: any) {
+      toast({ 
+        title: 'Update Mislukt', 
+        description: error.message || 'Kon CTGov resultaten niet ophalen', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsRefreshingCTGov(false);
     }
   };
 
@@ -320,6 +351,40 @@ export default function AdminPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Haalt feitelijke gegevens op uit PubMed abstracts en genereert design summaries. "Alles Herladen" vervangt bestaande data.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <RefreshCw className="h-5 w-5" />
+                    CTGov Resultaten Ophalen
+                  </CardTitle>
+                  <CardDescription>Zoek en koppel trials aan ClinicalTrials.gov en haal resultaten op</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleRefreshCTGovResults(true)} disabled={isRefreshingCTGov} className="flex-1">
+                      {isRefreshingCTGov ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Zoeken...
+                        </>
+                      ) : (
+                        <>
+                          <Database className="mr-2 h-4 w-4" />
+                          Trials Zonder Resultaten
+                        </>
+                      )}
+                    </Button>
+                    <Button onClick={() => handleRefreshCTGovResults(false)} disabled={isRefreshingCTGov} variant="outline">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Alles Vernieuwen
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Zoekt automatisch naar overeenkomende CTGov studies met verbeterde validatie en haalt resultaten op.
                   </p>
                 </CardContent>
               </Card>
