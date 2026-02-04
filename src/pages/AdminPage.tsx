@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, Search, Sparkles, Upload, RefreshCw, Database } from 'lucide-react';
+import { Loader2, Plus, Search, Sparkles, Upload, RefreshCw, Database, BookOpen, BarChart3, FileText, TrendingUp } from 'lucide-react';
 import { DISEASE_AREAS, PHASES, SETTINGS, INTERVENTION_CLASSES } from '@/types/trial';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -251,11 +251,79 @@ export default function AdminPage() {
     });
   };
 
+  // Calculate statistics
+  const totalTrials = trials?.length || 0;
+  const publishedTrials = trials?.filter(t => t.doi || t.pubmed_id).length || 0;
+  const trialsWithResults = trials?.filter(t => t.results_summary).length || 0;
+  const trialsWithBoth = trials?.filter(t => (t.doi || t.pubmed_id) && t.results_summary).length || 0;
+
   return (
     <Layout>
       <div className="container py-8">
         <h1 className="text-3xl font-bold mb-2">Admin Portal</h1>
         <p className="text-muted-foreground mb-8">Manage trials and generate AI summaries</p>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Totaal Trials</p>
+                  <p className="text-3xl font-bold">{totalTrials}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Gepubliceerd</p>
+                  <p className="text-3xl font-bold">{publishedTrials}</p>
+                  <p className="text-xs text-muted-foreground">{totalTrials > 0 ? Math.round((publishedTrials / totalTrials) * 100) : 0}% van totaal</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <BookOpen className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Met Resultaten</p>
+                  <p className="text-3xl font-bold">{trialsWithResults}</p>
+                  <p className="text-xs text-muted-foreground">{totalTrials > 0 ? Math.round((trialsWithResults / totalTrials) * 100) : 0}% van totaal</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-emerald-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Compleet</p>
+                  <p className="text-3xl font-bold">{trialsWithBoth}</p>
+                  <p className="text-xs text-muted-foreground">Gepubliceerd + resultaten</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-amber-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Tabs defaultValue="add">
           <TabsList>
