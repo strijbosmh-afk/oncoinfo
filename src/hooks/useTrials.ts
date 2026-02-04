@@ -39,6 +39,15 @@ export function useTrials(filters?: TrialFilters) {
       if (filters?.publication_year?.length) {
         query = query.in('publication_year', filters.publication_year);
       }
+      if (filters?.status?.length) {
+        // Handle status filters - these need special logic
+        if (filters.status.includes('published')) {
+          query = query.not('doi', 'is', null);
+        }
+        if (filters.status.includes('has_results')) {
+          query = query.not('results_summary', 'is', null);
+        }
+      }
       if (filters?.search) {
         query = query.or(`acronym.ilike.%${filters.search}%,title.ilike.%${filters.search}%`);
       }

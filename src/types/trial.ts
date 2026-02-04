@@ -160,7 +160,13 @@ export interface TrialFilters {
   publication_year?: number[];
   journal?: string[];
   search?: string;
+  status?: string[];
 }
+
+export const TRIAL_STATUSES = [
+  'published',
+  'has_results'
+] as const;
 
 export const DISEASE_AREAS = [
   'Prostate Cancer',
