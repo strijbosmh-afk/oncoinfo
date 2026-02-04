@@ -292,7 +292,7 @@ export default function DrugsPage() {
                         <div key={drugClass} className="flex items-center space-x-2">
                           <Checkbox
                             id={`class-${drugClass}`}
-                            checked={filters.drug_class?.includes(drugClass)}
+                            checked={filters.drug_class?.includes(drugClass) ?? false}
                             onCheckedChange={(checked) =>
                               handleClassFilter(drugClass, checked as boolean)
                             }
@@ -316,7 +316,7 @@ export default function DrugsPage() {
                         <div key={disease} className="flex items-center space-x-2">
                           <Checkbox
                             id={`disease-${disease}`}
-                            checked={filters.disease_area?.includes(disease)}
+                            checked={filters.disease_area?.includes(disease) ?? false}
                             onCheckedChange={(checked) =>
                               handleDiseaseFilter(disease, checked as boolean)
                             }
