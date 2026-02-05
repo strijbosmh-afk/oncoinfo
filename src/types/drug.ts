@@ -60,7 +60,8 @@ export const DRUG_CLASSES = [
   'ADC',
   'Radioligand Therapie',
   'Hormonale Therapie',
-  'Bifosfonaten',
+  'Antiresorptiva',
+  'Combinatietherapie',
   'Supportive Care'
 ] as const;
 
