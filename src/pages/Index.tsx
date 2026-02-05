@@ -43,14 +43,14 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 overflow-hidden">
+      <section className="relative py-8 md:py-12 overflow-hidden">
         <div className="absolute inset-0 gradient-medical opacity-5" />
         <div className="container relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              <span className="text-primary">OncoInfo</span>
+          <div className="mx-auto max-w-2xl text-center">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl text-primary">
+              OncoInfo
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
               Uw complete medicijnbibliotheek voor oncologie. Patiëntvriendelijke informatie 
               over medicijnen, doseringen en bijwerkingen.
             </p>
