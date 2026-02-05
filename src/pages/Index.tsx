@@ -89,19 +89,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick Info Section */}
-      <section className="py-12 bg-muted/30">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-xl font-semibold mb-4">Voor Zorgverleners & Patiënten</h2>
-            <p className="text-muted-foreground">
-              OncoInfo is ontwikkeld als hulpmiddel voor oncologen en hun patiënten. 
-              De medicijnbibliotheek biedt begrijpelijke informatie over doseringen, 
-              bijwerkingen en counselingpunten. Genereer eenvoudig patiëntfolders.
-            </p>
-          </div>
-        </div>
-      </section>
     </Layout>
   );
 };
