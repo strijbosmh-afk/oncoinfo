@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/hooks/useAuth';
 import { DrugFilters, DRUG_CLASSES, DRUG_DISEASE_AREAS, Drug, DRUG_CATEGORIES, DrugCategoryKey } from '@/types/drug';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stet
 import { Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SortableDrugList } from '@/components/drugs/SortableDrugList';
 
 const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
@@ -206,6 +208,7 @@ export default function DrugsPage() {
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { isAdmin } = useAuth();
 
   // Filter drugs based on selected subtype/stage
   const filteredDrugs = useMemo(() => {
@@ -875,55 +878,14 @@ export default function DrugsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {/* Combination Regimens Section */}
-                {combinationDrugs.length > 0 && (viewMode === 'all' || viewMode === 'combinations') && (
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Layers className="h-5 w-5 text-amber-600" />
-                      <h2 className="text-xl font-semibold">Combinatieschema's</h2>
-                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">{combinationDrugs.length}</Badge>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {combinationDrugs.map((drug) => (
-                        <DrugCard
-                          key={drug.id}
-                          drug={drug}
-                          isFavorite={isFavorite(drug.id)}
-                          onToggleFavorite={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleFavorite(drug.id);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Individual Drugs Section */}
-                {individualDrugs.length > 0 && (viewMode === 'all' || viewMode === 'individual') && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <Pill className="h-5 w-5 text-primary" />
-                      <h2 className="text-xl font-semibold">Individuele Medicijnen</h2>
-                      <Badge variant="secondary">{individualDrugs.length}</Badge>
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {individualDrugs.map((drug) => (
-                        <DrugCard
-                          key={drug.id}
-                          drug={drug}
-                          isFavorite={isFavorite(drug.id)}
-                          onToggleFavorite={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleFavorite(drug.id);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <SortableDrugList
+                  combinationDrugs={combinationDrugs}
+                  individualDrugs={individualDrugs}
+                  viewMode={viewMode}
+                  isFavorite={isFavorite}
+                  toggleFavorite={toggleFavorite}
+                  isAdmin={isAdmin}
+                />
 
                 <p className="text-sm text-muted-foreground pt-2">
                   Totaal: {filteredDrugs?.length} item{filteredDrugs?.length !== 1 ? 's' : ''} gevonden
