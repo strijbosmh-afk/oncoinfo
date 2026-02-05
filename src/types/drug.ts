@@ -65,6 +65,14 @@ export const DRUG_CLASSES = [
   'Supportive Care'
 ] as const;
 
+export const COMBINATION_SUBTYPES = [
+  'IO + Chemotherapie',
+  'IO + TKI', 
+  'IO + IO',
+  'ARPI + Chemotherapie',
+  'ARPI + IO'
+] as const;
+
 export const ADMINISTRATION_ROUTES = [
   'Oraal',
   'Intraveneus',
