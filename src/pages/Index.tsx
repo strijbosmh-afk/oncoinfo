@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Pill, ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const drugLibraries = [
   {
@@ -12,7 +13,9 @@ const drugLibraries = [
     href: '/drugs?category=breast',
     color: 'text-pink-500',
     bgColor: 'bg-pink-500/10',
-    examples: ['Chemotherapie', 'Hormoontherapie', 'Targeted therapy']
+    drugClasses: ['Chemotherapie', 'Hormoontherapie', 'HER2-remmers', 'CDK4/6i', 'IO/ICI'],
+    stages: ['Neoadjuvant/Adjuvant', 'Gemetastaseerd'],
+    subtypes: ['Hormoongevoelig (HR+)', 'HER2-positief', 'Triple negatief']
   },
   {
     title: 'Urologie',
@@ -21,7 +24,9 @@ const drugLibraries = [
     href: '/drugs?category=urology',
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10',
-    examples: ['ARPI', 'Chemotherapie', 'Immunotherapie']
+    drugClasses: ['ARPI', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand'],
+    stages: null,
+    subtypes: null
   },
   {
     title: 'Gynaecologie',
@@ -30,7 +35,9 @@ const drugLibraries = [
     href: '/drugs?category=gynecology',
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10',
-    examples: ['PARPi', 'Chemotherapie', 'Targeted therapy']
+    drugClasses: ['Chemotherapie', 'PARPi', 'Antiangiogenese', 'IO/ICI', 'Hormoontherapie'],
+    stages: null,
+    subtypes: null
   },
   {
     title: 'Overige',
@@ -39,7 +46,9 @@ const drugLibraries = [
     href: '/drugs?category=other',
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10',
-    examples: ['Antiresorptiva', 'Ondersteunend', 'Anti-emetica']
+    drugClasses: ['Antiresorptiva', 'Anti-emetica', 'G-CSF', 'Bisfosfonaten'],
+    stages: null,
+    subtypes: null
   }
 ];
 
@@ -82,17 +91,58 @@ const Index = () => {
                     <CardDescription>{library.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="relative">
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {library.examples.map((example) => (
-                        <span 
-                          key={example} 
-                          className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground"
-                        >
-                          {example}
-                        </span>
-                      ))}
+                    {/* Drug Classes */}
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Medicijnklassen</p>
+                      <div className="flex flex-wrap gap-1">
+                        {library.drugClasses.slice(0, 4).map((drugClass) => (
+                          <span 
+                            key={drugClass} 
+                            className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground"
+                          >
+                            {drugClass}
+                          </span>
+                        ))}
+                        {library.drugClasses.length > 4 && (
+                          <span className="text-xs px-2 py-0.5 text-muted-foreground">
+                            +{library.drugClasses.length - 4}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+
+                    {/* Stages - only for breast cancer */}
+                    {library.stages && (
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Stadia</p>
+                        <div className="flex flex-wrap gap-1">
+                          {library.stages.map((stage) => (
+                            <Badge key={stage} variant="outline" className="text-xs font-normal">
+                              {stage}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Subtypes - only for breast cancer */}
+                    {library.subtypes && (
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Subtypen</p>
+                        <div className="flex flex-wrap gap-1">
+                          {library.subtypes.map((subtype) => (
+                            <span 
+                              key={subtype} 
+                              className="text-xs px-2 py-0.5 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full"
+                            >
+                              {subtype}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Button variant="ghost" className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground">
                       Bekijk medicijnen
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
