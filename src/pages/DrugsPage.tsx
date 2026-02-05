@@ -202,6 +202,29 @@ export default function DrugsPage() {
     if (category === 'breast') {
       result = result.filter(drug => drug.disease_areas.includes('Borstkanker'));
     }
+   
+   if (category === 'urology') {
+     const urologyAreas = ['Prostaatkanker', 'Blaaskanker', 'Niercelcarcinoom', 'Testiskanker', 'Peniskanker'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => urologyAreas.includes(area))
+     );
+   }
+   
+   if (category === 'gynecology') {
+     const gynecologyAreas = ['Ovariumkanker', 'Endometriumkanker', 'Cervixkanker', 'Vulvakanker', 'gynecology'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => gynecologyAreas.includes(area))
+     );
+   }
+   
+   if (category === 'other') {
+     const otherAreas = ['Overige', 'Supportive Care'];
+     const otherClasses = ['Antiresorptiva', 'Supportive Care'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => otherAreas.includes(area)) ||
+       otherClasses.includes(drug.drug_class)
+     );
+   }
     
     // Filter by subtype (approved_indications)
     if (selectedSubtype) {
