@@ -62,7 +62,9 @@ export const DRUG_CLASSES = [
   'Hormonale Therapie',
   'Antiresorptiva',
   'Combinatietherapie',
-  'Supportive Care'
+  'Supportive Care',
+  'HER2-remmers',
+  'CDK4/6i'
 ] as const;
 
 export const COMBINATION_SUBTYPES = [
