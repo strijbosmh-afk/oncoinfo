@@ -28,10 +28,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            OI
-          </div>
-          <span className="hidden font-semibold text-lg sm:inline-block">
+          <span className="text-xl font-bold text-primary sm:text-2xl">
             OncoInfo
           </span>
         </Link>
