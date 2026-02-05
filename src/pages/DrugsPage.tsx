@@ -184,6 +184,7 @@ export default function DrugsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'individual'>('all');
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
@@ -436,6 +437,47 @@ export default function DrugsPage() {
             )}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
               Wis filter
+            </Button>
+          </div>
+        )}
+
+        {/* View Mode Toggle */}
+        {category && (
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={viewMode === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('all')}
+              className="gap-2"
+            >
+              Alles
+              <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
+                {filteredDrugs.length}
+              </Badge>
+            </Button>
+            <Button
+              variant={viewMode === 'combinations' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('combinations')}
+              className="gap-2"
+            >
+              <Layers className="h-4 w-4" />
+              Combinatieschema's
+              <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
+                {combinationDrugs.length}
+              </Badge>
+            </Button>
+            <Button
+              variant={viewMode === 'individual' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('individual')}
+              className="gap-2"
+            >
+              <Pill className="h-4 w-4" />
+              Individuele Medicijnen
+              <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
+                {individualDrugs.length}
+              </Badge>
             </Button>
           </div>
         )}
@@ -724,7 +766,7 @@ export default function DrugsPage() {
             ) : (
               <div className="space-y-4">
                 {/* Combination Regimens Section */}
-                {combinationDrugs.length > 0 && (
+                {combinationDrugs.length > 0 && (viewMode === 'all' || viewMode === 'combinations') && (
                   <div className="mb-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Layers className="h-5 w-5 text-amber-600" />
@@ -749,7 +791,7 @@ export default function DrugsPage() {
                 )}
 
                 {/* Individual Drugs Section */}
-                {individualDrugs.length > 0 && (
+                {individualDrugs.length > 0 && (viewMode === 'all' || viewMode === 'individual') && (
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <Pill className="h-5 w-5 text-primary" />
