@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, User, LogOut, Shield } from 'lucide-react';
+import { Search, User, LogOut, Shield, Pill } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 import {
@@ -20,7 +20,7 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/trials?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/drugs?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -29,10 +29,10 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            UI
+            OI
           </div>
           <span className="hidden font-semibold text-lg sm:inline-block">
-            UroInfo
+            OncoInfo
           </span>
         </Link>
 
@@ -41,7 +41,7 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Zoek medicijnen of studies..."
+              placeholder="Zoek medicijnen..."
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -52,9 +52,6 @@ export function Header() {
         <nav className="flex items-center gap-2">
           <Button variant="ghost" asChild>
             <Link to="/drugs">Medicijnen</Link>
-          </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/trials">Studies</Link>
           </Button>
           
           {loading ? (
