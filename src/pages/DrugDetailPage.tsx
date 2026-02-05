@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   ArrowLeft, 
@@ -22,7 +23,8 @@ import {
   ExternalLink,
   Star,
   FileText,
-  Settings2
+  Settings2,
+  Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +35,9 @@ export default function DrugDetailPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleGeneratePatientInfo = async () => {
     if (!drug) return;
@@ -45,20 +50,21 @@ export default function DrugDetailPage() {
 
       if (error) throw error;
 
-      // Open HTML in new window for printing
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(data.html);
-        printWindow.document.close();
-        printWindow.focus();
-        // Small delay to ensure styles are loaded
-        setTimeout(() => printWindow.print(), 500);
-      }
+      // Show preview dialog
+      setPreviewHtml(data.html);
+      setIsPreviewOpen(true);
     } catch (err) {
       console.error('Error generating patient info:', err);
       toast.error('Fout bij genereren patiëntenfolder');
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.focus();
+      iframeRef.current.contentWindow.print();
     }
   };
 
@@ -461,6 +467,38 @@ export default function DrugDetailPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Patient Info Preview Dialog */}
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Patiëntenfolder - {drug.generic_name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-hidden bg-muted rounded-md min-h-[500px]">
+              {previewHtml && (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={previewHtml}
+                  className="w-full h-full border-0"
+                  title="Patiëntenfolder preview"
+                  style={{ minHeight: '500px' }}
+                />
+              )}
+            </div>
+            <DialogFooter className="flex gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+                Sluiten
+              </Button>
+              <Button onClick={handlePrint} className="gap-2">
+                <Printer className="h-4 w-4" />
+                Afdrukken
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
