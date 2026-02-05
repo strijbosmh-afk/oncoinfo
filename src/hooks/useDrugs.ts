@@ -55,9 +55,9 @@ export function useDrugs(filters?: DrugFilters) {
       }
 
       if (filters?.search) {
-        // Search by generic_name only - brand_names array search via .cs requires exact match
-        // which doesn't work well for partial text search
-        query = query.ilike('generic_name', `%${filters.search}%`);
+        // Search by generic_name and brand_names (cast array to text for partial matching)
+        const searchTerm = `%${filters.search}%`;
+        query = query.or(`generic_name.ilike.${searchTerm},brand_names::text.ilike.${searchTerm}`);
       }
 
       query = query.order('display_order').order('generic_name');
