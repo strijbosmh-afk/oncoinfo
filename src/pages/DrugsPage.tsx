@@ -453,46 +453,6 @@ export default function DrugsPage() {
           </div>
         )}
 
-        {/* View Mode Toggle */}
-        {category && (
-          <div className="flex gap-2 mb-6">
-            <Button
-              variant={viewMode === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('all')}
-              className="gap-2"
-            >
-              Alles
-              <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
-                {filteredDrugs.length}
-              </Badge>
-            </Button>
-            <Button
-              variant={viewMode === 'combinations' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('combinations')}
-              className="gap-2"
-            >
-              <Layers className="h-4 w-4" />
-              Combinatieschema's
-              <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
-                {combinationDrugs.length}
-              </Badge>
-            </Button>
-            <Button
-              variant={viewMode === 'individual' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('individual')}
-              className="gap-2"
-            >
-              <Pill className="h-4 w-4" />
-              Individuele Medicijnen
-              <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
-                {individualDrugs.length}
-              </Badge>
-            </Button>
-          </div>
-        )}
 
         {/* Category-specific navigation cards */}
         {categoryConfig && (
@@ -588,6 +548,45 @@ export default function DrugsPage() {
                   ))}
                 </>
               )}
+            </div>
+
+            {/* View Mode Toggle - under subtypes */}
+            <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
+              <Button
+                variant={viewMode === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('all')}
+                className="gap-2"
+              >
+                Alles
+                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
+                  {filteredDrugs.length}
+                </Badge>
+              </Button>
+              <Button
+                variant={viewMode === 'combinations' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('combinations')}
+                className="gap-2"
+              >
+                <Layers className="h-4 w-4" />
+                Combinatieschema's
+                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
+                  {combinationDrugs.length}
+                </Badge>
+              </Button>
+              <Button
+                variant={viewMode === 'individual' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('individual')}
+                className="gap-2"
+              >
+                <Pill className="h-4 w-4" />
+                Individuele Medicijnen
+                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
+                  {individualDrugs.length}
+                </Badge>
+              </Button>
             </div>
           </div>
         )}
