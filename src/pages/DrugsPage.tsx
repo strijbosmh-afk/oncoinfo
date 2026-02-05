@@ -188,6 +188,7 @@ export default function DrugsPage() {
   const category = searchParams.get('category') as DrugCategoryKey | null;
   const selectedSubtype = searchParams.get('subtype');
   const selectedStage = searchParams.get('stage');
+  const selectedSubcategory = searchParams.get('subcategory');
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
   const [filters, setFilters] = useState<DrugFilters>({});
@@ -237,6 +238,23 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => otherAreas.includes(area)) ||
        otherClasses.includes(drug.drug_class)
      );
+     
+     // Filter by subcategory
+     if (selectedSubcategory) {
+       const subcategoryFilters: Record<string, { areas: string[], classes: string[] }> = {
+         'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
+         'antiemetic': { areas: ['Anti-emetica'], classes: [] },
+         'gcsf': { areas: ['Groeifactoren'], classes: [] },
+         'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'] }
+       };
+       const filter = subcategoryFilters[selectedSubcategory];
+       if (filter) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => filter.areas.includes(area)) ||
+           filter.classes.includes(drug.drug_class)
+         );
+       }
+     }
    }
     
     // Filter by subtype (approved_indications)
@@ -273,7 +291,7 @@ export default function DrugsPage() {
     }
     
     return result;
-  }, [drugs, category, selectedSubtype, selectedStage]);
+  }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory]);
 
   // Separate combination regimens from individual drugs
   const { combinationDrugs, individualDrugs } = useMemo(() => {
@@ -312,10 +330,21 @@ export default function DrugsPage() {
     setSearchParams(newParams);
   };
 
+  const handleSubcategoryClick = (subcategoryKey: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (selectedSubcategory === subcategoryKey) {
+      newParams.delete('subcategory');
+    } else {
+      newParams.set('subcategory', subcategoryKey);
+    }
+    setSearchParams(newParams);
+  };
+
   const clearCategoryFilters = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('subtype');
     newParams.delete('stage');
+    newParams.delete('subcategory');
     setSearchParams(newParams);
   };
 
@@ -428,7 +457,7 @@ export default function DrugsPage() {
         </div>
 
         {/* Active filter indicator */}
-        {(selectedSubtype || selectedStage) && (
+        {(selectedSubtype || selectedStage || selectedSubcategory) && (
           <div className="mb-4 flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Actief filter:</span>
             {selectedSubtype && (
@@ -445,6 +474,14 @@ export default function DrugsPage() {
                   ? (categoryConfig as any).stages.find((s: any) => s.key === selectedStage)?.label
                   : selectedStage}
                 <button onClick={() => handleStageClick(selectedStage)} className="ml-1 hover:text-destructive">×</button>
+              </Badge>
+            )}
+            {selectedSubcategory && (
+              <Badge variant="secondary" className="gap-1">
+                {category === 'other' && 'subcategories' in (categoryConfig || {})
+                  ? (categoryConfig as any).subcategories.find((s: any) => s.key === selectedSubcategory)?.label
+                  : selectedSubcategory}
+                <button onClick={() => handleSubcategoryClick(selectedSubcategory)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
@@ -538,7 +575,10 @@ export default function DrugsPage() {
                   {categoryConfig.subcategories.map((subcat) => (
                     <Card 
                       key={subcat.key}
-                      className="cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all"
+                      onClick={() => handleSubcategoryClick(subcat.key)}
+                      className={`cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all ${
+                        selectedSubcategory === subcat.key ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : ''
+                      }`}
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium text-emerald-700 dark:text-emerald-400">{subcat.label}</h4>
