@@ -78,6 +78,11 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
             <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
               Combinatieschema
             </Badge>
+            {drug.is_on_zvz && (
+              <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
+                ✓ RIZIV
+              </Badge>
+            )}
           </CardHeader>
           <CardContent>
             {drug.approved_indications && drug.approved_indications.length > 0 && (
@@ -126,9 +131,16 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
                 </CardDescription>
               )}
             </div>
-            <Badge className={getDrugClassColor(drug.drug_class)}>
-              {drug.drug_class}
-            </Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge className={getDrugClassColor(drug.drug_class)}>
+                {drug.drug_class}
+              </Badge>
+              {drug.is_on_zvz && (
+                <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
+                  ✓ RIZIV
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
