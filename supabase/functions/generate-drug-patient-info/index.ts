@@ -101,11 +101,10 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
       color: #1a1a1a;
       width: 210mm;
       min-height: 297mm;
-      max-height: 297mm;
       margin: 0 auto;
       padding: 12mm;
       background: white;
-      overflow: hidden;
+       overflow: auto;
     }
     .logo-header {
       display: flex;
