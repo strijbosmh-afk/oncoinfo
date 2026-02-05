@@ -1,0 +1,298 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  PatientFolderContent, 
+  usePatientFolderContent, 
+  useSavePatientFolderContent,
+  useResetPatientFolderContent 
+} from '@/hooks/usePatientFolderContent';
+import { Drug } from '@/types/drug';
+import { Loader2, Save, RotateCcw, Edit, Eye, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+interface PatientFolderEditorProps {
+  drug: Drug;
+  previewHtml: string | null;
+  iframeRef: React.RefObject<HTMLIFrameElement>;
+  onRefreshPreview: () => void;
+}
+
+export function PatientFolderEditor({ 
+  drug, 
+  previewHtml, 
+  iframeRef,
+  onRefreshPreview 
+}: PatientFolderEditorProps) {
+  const { data: savedContent, isLoading } = usePatientFolderContent(drug.id);
+  const saveMutation = useSavePatientFolderContent();
+  const resetMutation = useResetPatientFolderContent();
+  
+  const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
+  const [formData, setFormData] = useState<Partial<PatientFolderContent>>({});
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Helper to format array to bullet list
+  const formatArrayToBullets = (arr: string[] | undefined | null): string => {
+    if (!arr || arr.length === 0) return '';
+    return arr.map(item => `• ${item}`).join('\n');
+  };
+
+  // Initialize form data from saved content or drug defaults
+  useEffect(() => {
+    if (savedContent) {
+      setFormData({
+        introduction: savedContent.introduction ?? drug.mechanism_of_action ?? '',
+        usage_info: savedContent.usage_info ?? formatArrayToBullets(drug.approved_indications),
+        dosing_info: savedContent.dosing_info ?? formatDosingInfo(drug),
+        contraindications: savedContent.contraindications ?? formatArrayToBullets(drug.contraindications),
+        side_effects_common: savedContent.side_effects_common ?? formatArrayToBullets(drug.side_effects?.common),
+        side_effects_serious: savedContent.side_effects_serious ?? formatArrayToBullets(drug.side_effects?.serious),
+        tips: savedContent.tips ?? formatArrayToBullets(drug.patient_counseling_points),
+        monitoring: savedContent.monitoring ?? formatArrayToBullets(drug.monitoring_requirements),
+      });
+    } else {
+      setFormData({
+        introduction: drug.mechanism_of_action ?? '',
+        usage_info: formatArrayToBullets(drug.approved_indications),
+        dosing_info: formatDosingInfo(drug),
+        contraindications: formatArrayToBullets(drug.contraindications),
+        side_effects_common: formatArrayToBullets(drug.side_effects?.common),
+        side_effects_serious: formatArrayToBullets(drug.side_effects?.serious),
+        tips: formatArrayToBullets(drug.patient_counseling_points),
+        monitoring: formatArrayToBullets(drug.monitoring_requirements),
+      });
+    }
+    setHasChanges(false);
+  }, [savedContent, drug]);
+
+  function formatDosingInfo(drug: Drug): string {
+    const parts: string[] = [];
+    if (drug.dosing_info?.standard_dose) parts.push(`Dosering: ${drug.dosing_info.standard_dose}`);
+    if (drug.dosing_info?.frequency) parts.push(`Frequentie: ${drug.dosing_info.frequency}`);
+    if (drug.dosing_info?.duration) parts.push(`Duur: ${drug.dosing_info.duration}`);
+    if (drug.cycle_length_days) parts.push(`Cyclus: ${drug.cycle_length_days} dagen`);
+    return parts.join('\n');
+  }
+
+  const handleChange = (field: keyof PatientFolderContent, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await saveMutation.mutateAsync({
+        drug_id: drug.id,
+        ...formData,
+      });
+      toast.success('Tekst opgeslagen');
+      setHasChanges(false);
+      // Refresh the preview
+      onRefreshPreview();
+    } catch (error) {
+      console.error('Error saving content:', error);
+      toast.error('Fout bij opslaan');
+    }
+  };
+
+  const handleReset = async () => {
+    if (!confirm('Weet u zeker dat u alle aanpassingen wilt verwijderen en terug wilt naar de standaard tekst?')) {
+      return;
+    }
+    
+    try {
+      await resetMutation.mutateAsync(drug.id);
+      toast.success('Tekst gereset naar standaard');
+      setHasChanges(false);
+      onRefreshPreview();
+    } catch (error) {
+      console.error('Error resetting content:', error);
+      toast.error('Fout bij resetten');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'preview' | 'edit')} className="flex-1 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <TabsList>
+            <TabsTrigger value="preview" className="gap-2">
+              <Eye className="h-4 w-4" />
+              Voorbeeld
+            </TabsTrigger>
+            <TabsTrigger value="edit" className="gap-2">
+              <Edit className="h-4 w-4" />
+              Bewerken
+            </TabsTrigger>
+          </TabsList>
+          
+          {activeTab === 'edit' && (
+            <div className="flex items-center gap-2">
+              {savedContent && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleReset}
+                  disabled={resetMutation.isPending}
+                  className="gap-2"
+                >
+                  {resetMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" />
+                  )}
+                  Reset
+                </Button>
+              )}
+              <Button 
+                size="sm"
+                onClick={handleSave}
+                disabled={saveMutation.isPending || !hasChanges}
+                className="gap-2"
+              >
+                {saveMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Opslaan
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <TabsContent value="preview" className="flex-1 m-0">
+          <div className="bg-muted rounded-md overflow-hidden" style={{ height: '60vh' }}>
+            {previewHtml && (
+              <iframe
+                ref={iframeRef}
+                srcDoc={previewHtml}
+                className="w-full h-full border-0"
+                title="Patiëntenfolder preview"
+              />
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="edit" className="flex-1 m-0">
+          <ScrollArea className="h-[60vh] pr-4">
+            <div className="space-y-4">
+              {hasChanges && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    U heeft onopgeslagen wijzigingen. Klik op "Opslaan" om deze te bewaren.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="introduction">Wat is {drug.generic_name}? (Introductie)</Label>
+                <Textarea
+                  id="introduction"
+                  value={formData.introduction ?? ''}
+                  onChange={(e) => handleChange('introduction', e.target.value)}
+                  rows={3}
+                  placeholder="Beschrijf het werkingsmechanisme..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="usage_info">Waarvoor wordt het gebruikt?</Label>
+                <Textarea
+                  id="usage_info"
+                  value={formData.usage_info ?? ''}
+                  onChange={(e) => handleChange('usage_info', e.target.value)}
+                  rows={3}
+                  placeholder="• Indicatie 1&#10;• Indicatie 2"
+                />
+                <p className="text-xs text-muted-foreground">Gebruik • voor een lijst</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dosing_info">Hoe wordt het gegeven? (Dosering)</Label>
+                <Textarea
+                  id="dosing_info"
+                  value={formData.dosing_info ?? ''}
+                  onChange={(e) => handleChange('dosing_info', e.target.value)}
+                  rows={3}
+                  placeholder="Dosering: ...&#10;Frequentie: ...&#10;Duur: ..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contraindications">Wanneer niet gebruiken (Contra-indicaties)</Label>
+                <Textarea
+                  id="contraindications"
+                  value={formData.contraindications ?? ''}
+                  onChange={(e) => handleChange('contraindications', e.target.value)}
+                  rows={3}
+                  placeholder="• Contra-indicatie 1&#10;• Contra-indicatie 2"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="side_effects_common">Veel voorkomende bijwerkingen</Label>
+                  <Textarea
+                    id="side_effects_common"
+                    value={formData.side_effects_common ?? ''}
+                    onChange={(e) => handleChange('side_effects_common', e.target.value)}
+                    rows={4}
+                    placeholder="• Bijwerking 1&#10;• Bijwerking 2"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="side_effects_serious">Ernstige bijwerkingen</Label>
+                  <Textarea
+                    id="side_effects_serious"
+                    value={formData.side_effects_serious ?? ''}
+                    onChange={(e) => handleChange('side_effects_serious', e.target.value)}
+                    rows={4}
+                    placeholder="• Ernstige bijwerking 1&#10;• Ernstige bijwerking 2"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tips">Belangrijke tips (Patiëntvoorlichting)</Label>
+                <Textarea
+                  id="tips"
+                  value={formData.tips ?? ''}
+                  onChange={(e) => handleChange('tips', e.target.value)}
+                  rows={3}
+                  placeholder="• Tip 1&#10;• Tip 2"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="monitoring">Controles (Monitoring)</Label>
+                <Textarea
+                  id="monitoring"
+                  value={formData.monitoring ?? ''}
+                  onChange={(e) => handleChange('monitoring', e.target.value)}
+                  rows={3}
+                  placeholder="• Controle 1&#10;• Controle 2"
+                />
+              </div>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
