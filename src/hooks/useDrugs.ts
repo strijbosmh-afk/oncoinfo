@@ -38,7 +38,12 @@ export function useDrugs(filters?: DrugFilters) {
       let query = supabase.from('drugs').select('*');
 
       if (filters?.drug_class?.length) {
-        query = query.in('drug_class', filters.drug_class);
+        // Include Combinatietherapie when Chemotherapie is selected
+        const classesToFilter = [...filters.drug_class];
+        if (classesToFilter.includes('Chemotherapie') && !classesToFilter.includes('Combinatietherapie')) {
+          classesToFilter.push('Combinatietherapie');
+        }
+        query = query.in('drug_class', classesToFilter);
       }
 
       if (filters?.disease_area?.length) {
