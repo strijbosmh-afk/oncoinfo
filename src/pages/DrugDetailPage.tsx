@@ -466,14 +466,23 @@ export default function DrugDetailPage() {
             )}
 
             {drug.drug_interactions && drug.drug_interactions.length > 0 && (
-              <Card>
+               <Card className="border-orange-500/50 bg-orange-50/50 dark:bg-orange-950/20">
                 <CardHeader>
-                  <CardTitle>Medicijninteracties</CardTitle>
+                   <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                     <AlertTriangle className="h-5 w-5" />
+                     Medicijninteracties
+                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                 <CardContent className="space-y-3">
+                   <div className="flex items-start gap-2 p-3 bg-orange-100/80 dark:bg-orange-900/30 rounded-md border border-orange-200 dark:border-orange-800">
+                     <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                     <p className="text-sm text-orange-800 dark:text-orange-300">
+                       <strong>Let op:</strong> Controleer altijd op interacties met huidige medicatie van de patiënt.
+                     </p>
+                   </div>
+                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     {drug.drug_interactions.map((interaction, i) => (
-                      <li key={i}>{interaction}</li>
+                       <li key={i} className="leading-relaxed">{interaction}</li>
                     ))}
                   </ul>
                 </CardContent>
