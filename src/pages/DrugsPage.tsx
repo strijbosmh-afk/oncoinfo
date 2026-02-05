@@ -107,8 +107,10 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
 };
 
 export default function DrugsPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') as DrugCategoryKey | null;
+  const selectedSubtype = searchParams.get('subtype');
+  const selectedStage = searchParams.get('stage');
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
   const [filters, setFilters] = useState<DrugFilters>({});
@@ -125,6 +127,53 @@ export default function DrugsPage() {
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
 
+  // Filter drugs based on selected subtype/stage
+  const filteredDrugs = useMemo(() => {
+    if (!drugs) return [];
+    
+    let result = drugs;
+    
+    // Filter by category disease area
+    if (category === 'breast') {
+      result = result.filter(drug => drug.disease_areas.includes('Borstkanker'));
+    }
+    
+    // Filter by subtype (approved_indications)
+    if (selectedSubtype) {
+      const subtypeFilters: Record<string, string[]> = {
+        'hr_positive': ['HR+', 'HR-positief', 'Hormoongevoelig', 'ER+', 'PR+'],
+        'her2_positive': ['HER2+', 'HER2-positief', 'HER2 positief'],
+        'triple_negative': ['TNBC', 'Triple negatief', 'triple negatief']
+      };
+      const keywords = subtypeFilters[selectedSubtype] || [];
+      if (keywords.length > 0) {
+        result = result.filter(drug => 
+          drug.approved_indications?.some(ind => 
+            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
+          )
+        );
+      }
+    }
+    
+    // Filter by stage
+    if (selectedStage) {
+      const stageFilters: Record<string, string[]> = {
+        'neoadjuvant_adjuvant': ['Neoadjuvant', 'Adjuvant', 'neoadjuvant', 'adjuvant'],
+        'metastatic': ['Gemetastaseerd', 'gemetastaseerd', 'metastatic', 'Stadium IV']
+      };
+      const keywords = stageFilters[selectedStage] || [];
+      if (keywords.length > 0) {
+        result = result.filter(drug => 
+          drug.approved_indications?.some(ind => 
+            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
+          )
+        );
+      }
+    }
+    
+    return result;
+  }, [drugs, category, selectedSubtype, selectedStage]);
+
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
     if (categoryConfig && 'drugClasses' in categoryConfig) {
@@ -132,6 +181,35 @@ export default function DrugsPage() {
     }
     return DRUG_CLASSES;
   }, [categoryConfig]);
+
+  const handleSubtypeClick = (subtypeKey: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (selectedSubtype === subtypeKey) {
+      newParams.delete('subtype');
+    } else {
+      newParams.set('subtype', subtypeKey);
+    }
+    newParams.delete('stage'); // Clear stage when selecting subtype
+    setSearchParams(newParams);
+  };
+
+  const handleStageClick = (stageKey: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (selectedStage === stageKey) {
+      newParams.delete('stage');
+    } else {
+      newParams.set('stage', stageKey);
+    }
+    newParams.delete('subtype'); // Clear subtype when selecting stage
+    setSearchParams(newParams);
+  };
+
+  const clearCategoryFilters = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('subtype');
+    newParams.delete('stage');
+    setSearchParams(newParams);
+  };
 
   const handleExportFavorites = async () => {
     if (favorites.length === 0) {
@@ -196,7 +274,7 @@ export default function DrugsPage() {
     (filters.disease_area?.length || 0);
 
   // Get favorite drugs from the loaded drugs list
-  const favoriteDrugs = drugs?.filter(drug => favorites.includes(drug.id)) || [];
+  const favoriteDrugs = filteredDrugs?.filter(drug => favorites.includes(drug.id)) || [];
 
   return (
     <Layout>
@@ -241,6 +319,32 @@ export default function DrugsPage() {
           )}
         </div>
 
+        {/* Active filter indicator */}
+        {(selectedSubtype || selectedStage) && (
+          <div className="mb-4 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Actief filter:</span>
+            {selectedSubtype && (
+              <Badge variant="secondary" className="gap-1">
+                {category === 'breast' && 'subtypes' in (categoryConfig || {}) 
+                  ? (categoryConfig as any).subtypes.find((s: any) => s.key === selectedSubtype)?.label 
+                  : selectedSubtype}
+                <button onClick={() => handleSubtypeClick(selectedSubtype)} className="ml-1 hover:text-destructive">×</button>
+              </Badge>
+            )}
+            {selectedStage && (
+              <Badge variant="secondary" className="gap-1">
+                {category === 'breast' && 'stages' in (categoryConfig || {})
+                  ? (categoryConfig as any).stages.find((s: any) => s.key === selectedStage)?.label
+                  : selectedStage}
+                <button onClick={() => handleStageClick(selectedStage)} className="ml-1 hover:text-destructive">×</button>
+              </Badge>
+            )}
+            <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
+              Wis filter
+            </Button>
+          </div>
+        )}
+
         {/* Category-specific navigation cards */}
         {categoryConfig && (
           <div className="mb-8">
@@ -254,7 +358,10 @@ export default function DrugsPage() {
                   {categoryConfig.subtypes.map((subtype) => (
                     <Card 
                       key={subtype.key}
-                      className="cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all"
+                      onClick={() => handleSubtypeClick(subtype.key)}
+                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
+                        selectedSubtype === subtype.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
+                      }`}
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium text-pink-700 dark:text-pink-400">{subtype.label}</h4>
@@ -268,7 +375,10 @@ export default function DrugsPage() {
                   {categoryConfig.stages.map((stage) => (
                     <Card 
                       key={stage.key}
-                      className="cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all"
+                      onClick={() => handleStageClick(stage.key)}
+                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
+                        selectedStage === stage.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
+                      }`}
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium">{stage.label}</h4>
@@ -501,26 +611,28 @@ export default function DrugsPage() {
                   Er is een fout opgetreden bij het laden van medicijnen.
                 </CardContent>
               </Card>
-            ) : drugs?.length === 0 ? (
+            ) : filteredDrugs?.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">Geen medicijnen gevonden</h3>
                   <p className="text-muted-foreground mb-4">
-                    Pas uw zoekopdracht of filters aan om resultaten te zien.
+                    {(selectedSubtype || selectedStage) 
+                      ? 'Geen medicijnen gevonden voor dit filter. Probeer een ander subtype of stadium.'
+                      : 'Pas uw zoekopdracht of filters aan om resultaten te zien.'}
                   </p>
-                  <Button variant="outline" onClick={clearFilters}>
-                    Filters wissen
+                  <Button variant="outline" onClick={() => { clearFilters(); clearCategoryFilters(); }}>
+                    Alle filters wissen
                   </Button>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  {drugs?.length} medicijn{drugs?.length !== 1 ? 'en' : ''} gevonden
+                  {filteredDrugs?.length} medicijn{filteredDrugs?.length !== 1 ? 'en' : ''} gevonden
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {drugs?.map((drug) => (
+                  {filteredDrugs?.map((drug) => (
                     <DrugCard
                       key={drug.id}
                       drug={drug}
