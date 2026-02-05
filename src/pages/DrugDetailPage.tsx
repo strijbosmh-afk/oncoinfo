@@ -522,14 +522,14 @@ export default function DrugDetailPage() {
                 Patiëntenfolder - {drug.generic_name}
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-hidden bg-muted rounded-md min-h-[500px]">
+            <div className="flex-1 overflow-auto bg-muted rounded-md" style={{ maxHeight: '70vh' }}>
               {previewHtml && (
                 <iframe
                   ref={iframeRef}
                   srcDoc={previewHtml}
-                  className="w-full h-full border-0"
+                  className="w-full border-0"
                   title="Patiëntenfolder preview"
-                  style={{ minHeight: '500px' }}
+                  style={{ minHeight: '600px', height: '100%' }}
                 />
               )}
             </div>

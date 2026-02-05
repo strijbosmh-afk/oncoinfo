@@ -95,8 +95,8 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 11px;
-      line-height: 1.4;
+      font-size: 14px;
+      line-height: 1.5;
       color: #1a1a1a;
       width: 210mm;
       min-height: 297mm;
@@ -110,12 +110,12 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
       border-bottom: 2px solid #6b2d5b;
     }
     .logo-header img {
-      max-height: 40px;
+      max-height: 50px;
       width: auto;
     }
     .header-title {
@@ -123,81 +123,81 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     }
     .header-title h1 {
       color: #6b2d5b;
-      font-size: 18px;
-      margin-bottom: 2px;
+      font-size: 22px;
+      margin-bottom: 4px;
     }
     .header-title .subtitle {
       color: #666;
-      font-size: 10px;
+      font-size: 13px;
     }
     .drug-class {
       display: inline-block;
       background: #f5e6f0;
       color: #6b2d5b;
-      padding: 2px 8px;
+      padding: 4px 10px;
       border-radius: 3px;
-      font-size: 9px;
+      font-size: 12px;
       margin-top: 4px;
     }
     .content {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 14px;
+      margin-top: 14px;
     }
     .section {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .section h2 {
       color: #6b2d5b;
-      font-size: 12px;
-      margin-bottom: 4px;
+      font-size: 15px;
+      margin-bottom: 6px;
       padding-bottom: 2px;
       border-bottom: 1px solid #e0e0e0;
     }
     .section p {
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       color: #333;
-      font-size: 10px;
+      font-size: 13px;
     }
     .section ul {
       margin-left: 14px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
     .section li {
-      margin-bottom: 2px;
+      margin-bottom: 3px;
       color: #333;
-      font-size: 10px;
+      font-size: 13px;
     }
     .warning-box {
       background: #fff8e6;
       border-left: 3px solid #e87722;
-      padding: 6px 8px;
-      margin: 4px 0;
+      padding: 8px 10px;
+      margin: 6px 0;
       border-radius: 0 3px 3px 0;
     }
     .warning-box h3 {
       color: #cc7a00;
-      font-size: 10px;
-      margin-bottom: 3px;
+      font-size: 13px;
+      margin-bottom: 4px;
     }
     .danger-box {
       background: #ffe6e6;
       border-left: 3px solid #cc0000;
-      padding: 6px 8px;
-      margin: 4px 0;
+      padding: 8px 10px;
+      margin: 6px 0;
       border-radius: 0 3px 3px 0;
     }
     .danger-box h3 {
       color: #cc0000;
-      font-size: 10px;
-      margin-bottom: 3px;
+      font-size: 13px;
+      margin-bottom: 4px;
     }
     .info-box {
       background: #f5e6f0;
       border-left: 3px solid #6b2d5b;
-      padding: 6px 8px;
-      margin: 4px 0;
+      padding: 8px 10px;
+      margin: 6px 0;
       border-radius: 0 3px 3px 0;
     }
     .full-width {
@@ -205,25 +205,25 @@ function generatePatientInfoHtml(drug: any, includeDosing: boolean, includeSideE
     }
     .contact-section {
       background: #f5f5f5;
-      padding: 8px 10px;
+      padding: 10px 12px;
       border-radius: 4px;
-      margin-top: 8px;
+      margin-top: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 8px;
-      font-size: 9px;
+      gap: 10px;
+      font-size: 12px;
     }
     .contact-section h2 {
       grid-column: 1 / -1;
-      font-size: 11px;
-      margin-bottom: 2px;
+      font-size: 14px;
+      margin-bottom: 4px;
       color: #6b2d5b;
     }
     .footer {
-      margin-top: 8px;
-      padding-top: 6px;
+      margin-top: 12px;
+      padding-top: 8px;
       border-top: 1px solid #e0e0e0;
-      font-size: 8px;
+      font-size: 11px;
       color: #666;
       text-align: center;
     }
