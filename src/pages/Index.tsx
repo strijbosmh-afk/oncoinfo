@@ -61,7 +61,7 @@ const Index = () => {
       <section className="py-12 md:py-16">
         <div className="container">
           <h2 className="text-2xl font-bold text-center mb-10">
-            Kies uw Specialisme
+            Kies Specialiteit
           </h2>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
