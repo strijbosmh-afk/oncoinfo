@@ -11,41 +11,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-     // Authenticate user
-     const authHeader = req.headers.get('Authorization');
-     if (!authHeader?.startsWith('Bearer ')) {
-       return new Response(
-         JSON.stringify({ error: 'Unauthorized' }),
-         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-       );
-     }
-
-     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    // No authentication required - this generates public drug information
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
  
-     const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-       global: { headers: { Authorization: authHeader } },
-     });
+    const { drug_id, include_dosing = true, include_side_effects = true } = await req.json();
  
-     const { data: { user }, error: authError } = await authClient.auth.getUser();
-     if (authError || !user) {
+    if (!drug_id) {
       return new Response(
-         JSON.stringify({ error: 'Unauthorized' }),
-         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'drug_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-     const supabase = createClient(supabaseUrl, supabaseServiceKey);
- 
-     const { drug_id, include_dosing = true, include_side_effects = true } = await req.json();
- 
-     if (!drug_id) {
-       return new Response(
-         JSON.stringify({ error: 'drug_id is required' }),
-         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-       );
-     }
 
     // Fetch drug data
     const { data: drug, error: drugError } = await supabase
