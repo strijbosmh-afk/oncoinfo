@@ -277,22 +277,24 @@ export default function DrugsPage() {
        otherClasses.includes(drug.drug_class)
      );
      
-     // Filter by subcategory
-     if (selectedSubcategory) {
-       const subcategoryFilters: Record<string, { areas: string[], classes: string[] }> = {
-         'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
-         'antiemetic': { areas: ['Anti-emetica'], classes: [] },
-         'gcsf': { areas: ['Groeifactoren'], classes: [] },
-         'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'] }
-       };
-       const filter = subcategoryFilters[selectedSubcategory];
-       if (filter) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => filter.areas.includes(area)) ||
-           filter.classes.includes(drug.drug_class)
-         );
-       }
-     }
+      // Filter by subcategory
+      if (selectedSubcategory) {
+        const subcategoryFilters: Record<string, { areas: string[], classes: string[] }> = {
+          'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
+          'antiemetic': { areas: ['Anti-emetica'], classes: [] },
+          'gcsf': { areas: ['Groeifactoren'], classes: [] },
+          'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
+          'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
+          'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'] }
+        };
+        const filter = subcategoryFilters[selectedSubcategory];
+        if (filter) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => filter.areas.includes(area)) ||
+            filter.classes.includes(drug.drug_class)
+          );
+        }
+      }
    }
     
     // Filter by subtype (approved_indications)
