@@ -75,14 +75,16 @@ export default function DrugDetailPage() {
     
     setIsDownloading(true);
     try {
-      const html2pdf = (await import('html2pdf.js')).default;
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas')
+      ]);
       
-      // Create a temporary container with the HTML content
-      const container = document.createElement('div');
-      container.innerHTML = previewHtml;
+      // Parse the HTML content safely using DOMParser
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(previewHtml, 'text/html');
+      const bodyContent = doc.body;
       
-      // Extract just the body content
-      const bodyContent = container.querySelector('body');
       if (!bodyContent) {
         throw new Error('Could not parse HTML content');
       }
@@ -90,18 +92,45 @@ export default function DrugDetailPage() {
       // Apply inline styles for PDF generation
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = bodyContent.innerHTML;
-      tempDiv.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; line-height: 1.4; color: #1a1a1a; padding: 12mm; background: white;';
+      tempDiv.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; color: #1a1a1a; padding: 12mm; background: white; width: 210mm; box-sizing: border-box;';
       document.body.appendChild(tempDiv);
       
-      const opt = {
-        margin: 0,
-        filename: `patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      // Convert HTML to canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
       
-      await html2pdf().set(opt).from(tempDiv).save();
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Handle multi-page PDFs if content is longer than one page
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       
       document.body.removeChild(tempDiv);
       toast.success('PDF gedownload');
