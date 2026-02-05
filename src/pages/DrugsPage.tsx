@@ -194,8 +194,9 @@ export default function DrugsPage() {
   const selectedDiseaseArea = searchParams.get('diseaseArea');
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
+  const urlSearchQuery = searchParams.get('search') || '';
   const [filters, setFilters] = useState<DrugFilters>({});
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
@@ -204,7 +205,7 @@ export default function DrugsPage() {
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
-    search: searchQuery || undefined,
+    search: searchQuery || urlSearchQuery || undefined,
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
