@@ -240,6 +240,59 @@ export type Database = {
           },
         ]
       }
+      patient_folder_content: {
+        Row: {
+          contraindications: string | null
+          created_at: string
+          dosing_info: string | null
+          drug_id: string
+          id: string
+          introduction: string | null
+          monitoring: string | null
+          side_effects_common: string | null
+          side_effects_serious: string | null
+          tips: string | null
+          updated_at: string
+          usage_info: string | null
+        }
+        Insert: {
+          contraindications?: string | null
+          created_at?: string
+          dosing_info?: string | null
+          drug_id: string
+          id?: string
+          introduction?: string | null
+          monitoring?: string | null
+          side_effects_common?: string | null
+          side_effects_serious?: string | null
+          tips?: string | null
+          updated_at?: string
+          usage_info?: string | null
+        }
+        Update: {
+          contraindications?: string | null
+          created_at?: string
+          dosing_info?: string | null
+          drug_id?: string
+          id?: string
+          introduction?: string | null
+          monitoring?: string | null
+          side_effects_common?: string | null
+          side_effects_serious?: string | null
+          tips?: string | null
+          updated_at?: string
+          usage_info?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_folder_content_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: true
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

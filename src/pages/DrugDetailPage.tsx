@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
 import { 
   ArrowLeft, 
   Pill, 
@@ -33,6 +35,7 @@ export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { user } = useAuth();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
@@ -41,7 +44,7 @@ export default function DrugDetailPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const handleGeneratePatientInfo = async () => {
+  const fetchPatientInfo = useCallback(async () => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
@@ -51,16 +54,18 @@ export default function DrugDetailPage() {
       });
 
       if (error) throw error;
-
-      // Show preview dialog
       setPreviewHtml(data.html);
-      setIsPreviewOpen(true);
     } catch (err) {
       console.error('Error generating patient info:', err);
       toast.error('Fout bij genereren patiëntenfolder');
     } finally {
       setIsGeneratingPdf(false);
     }
+  }, [drug, includeDosing, includeSideEffects]);
+
+  const handleGeneratePatientInfo = async () => {
+    await fetchPatientInfo();
+    setIsPreviewOpen(true);
   };
 
   const handlePrint = () => {
@@ -553,24 +558,35 @@ export default function DrugDetailPage() {
 
         {/* Patient Info Preview Dialog */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Patiëntenfolder - {drug.generic_name}
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-auto bg-muted rounded-md" style={{ maxHeight: '70vh' }}>
-              {previewHtml && (
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={previewHtml}
-                  className="w-full border-0"
-                  title="Patiëntenfolder preview"
-                  style={{ minHeight: '600px', height: '100%' }}
-                />
-              )}
-            </div>
+            
+            {user ? (
+              <PatientFolderEditor 
+                drug={drug}
+                previewHtml={previewHtml}
+                iframeRef={iframeRef}
+                onRefreshPreview={fetchPatientInfo}
+              />
+            ) : (
+              <div className="flex-1 overflow-auto bg-muted rounded-md" style={{ maxHeight: '70vh' }}>
+                {previewHtml && (
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={previewHtml}
+                    className="w-full border-0"
+                    title="Patiëntenfolder preview"
+                    style={{ minHeight: '600px', height: '100%' }}
+                  />
+                )}
+              </div>
+            )}
+            
             <DialogFooter className="flex gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
                 Sluiten
