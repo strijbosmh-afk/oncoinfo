@@ -289,16 +289,21 @@ function generatePatientInfoHtml(
       padding: 10px 12px;
       border-radius: 4px;
       margin-top: 12px;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 10px;
       font-size: 12px;
     }
     .contact-section h2 {
-      grid-column: 1 / -1;
       font-size: 14px;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
       color: #6b2d5b;
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .contact-grid p {
+      margin: 0;
+      white-space: nowrap;
     }
     .footer {
       margin-top: 12px;
@@ -399,10 +404,12 @@ function generatePatientInfoHtml(
 
   <div class="contact-section full-width">
     <h2>Contact</h2>
-    <p><strong>Arts:</strong> _________________</p>
-    <p><strong>Verpleegkundige:</strong> _________________</p>
-    <p><strong>Apotheek:</strong> _________________</p>
-    <p><strong>Tel:</strong> 016 80 90 11</p>
+    <div class="contact-grid">
+      <p><strong>Arts:</strong> _________________</p>
+      <p><strong>Verpleegkundige:</strong> _______</p>
+      <p><strong>Apotheek:</strong> _____________</p>
+      <p><strong>Tel:</strong> 016 80 90 11</p>
+    </div>
   </div>
 
   <div class="footer">
