@@ -189,6 +189,7 @@ export default function DrugsPage() {
   const selectedSubtype = searchParams.get('subtype');
   const selectedStage = searchParams.get('stage');
   const selectedSubcategory = searchParams.get('subcategory');
+  const selectedDiseaseArea = searchParams.get('diseaseArea');
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
   const [filters, setFilters] = useState<DrugFilters>({});
@@ -222,6 +223,23 @@ export default function DrugsPage() {
      result = result.filter(drug => 
        drug.disease_areas.some(area => urologyAreas.includes(area))
      );
+     
+     // Filter by specific urology disease area
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'prostate': ['Prostaatkanker'],
+         'bladder': ['Blaaskanker'],
+         'kidney': ['Niercelcarcinoom'],
+         'testis': ['Testiskanker'],
+         'penile': ['Peniskanker']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
    }
    
    if (category === 'gynecology') {
@@ -229,6 +247,22 @@ export default function DrugsPage() {
      result = result.filter(drug => 
        drug.disease_areas.some(area => gynecologyAreas.includes(area))
      );
+     
+     // Filter by specific gynecology disease area
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'ovarian': ['Ovariumkanker'],
+         'endometrial': ['Endometriumkanker'],
+         'cervical': ['Cervixkanker'],
+         'vulvar': ['Vulvakanker']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
    }
    
    if (category === 'other') {
@@ -291,7 +325,7 @@ export default function DrugsPage() {
     }
     
     return result;
-  }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory]);
+  }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
 
   // Separate combination regimens from individual drugs
   const { combinationDrugs, individualDrugs } = useMemo(() => {
@@ -340,11 +374,22 @@ export default function DrugsPage() {
     setSearchParams(newParams);
   };
 
+  const handleDiseaseAreaClick = (areaKey: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (selectedDiseaseArea === areaKey) {
+      newParams.delete('diseaseArea');
+    } else {
+      newParams.set('diseaseArea', areaKey);
+    }
+    setSearchParams(newParams);
+  };
+
   const clearCategoryFilters = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('subtype');
     newParams.delete('stage');
     newParams.delete('subcategory');
+    newParams.delete('diseaseArea');
     setSearchParams(newParams);
   };
 
@@ -457,7 +502,7 @@ export default function DrugsPage() {
         </div>
 
         {/* Active filter indicator */}
-        {(selectedSubtype || selectedStage || selectedSubcategory) && (
+        {(selectedSubtype || selectedStage || selectedSubcategory || selectedDiseaseArea) && (
           <div className="mb-4 flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Actief filter:</span>
             {selectedSubtype && (
@@ -482,6 +527,14 @@ export default function DrugsPage() {
                   ? (categoryConfig as any).subcategories.find((s: any) => s.key === selectedSubcategory)?.label
                   : selectedSubcategory}
                 <button onClick={() => handleSubcategoryClick(selectedSubcategory)} className="ml-1 hover:text-destructive">×</button>
+              </Badge>
+            )}
+            {selectedDiseaseArea && (
+              <Badge variant="secondary" className="gap-1">
+                {(category === 'urology' || category === 'gynecology') && 'diseaseAreas' in (categoryConfig || {})
+                  ? (categoryConfig as any).diseaseAreas.find((s: any) => s.key === selectedDiseaseArea)?.label
+                  : selectedDiseaseArea}
+                <button onClick={() => handleDiseaseAreaClick(selectedDiseaseArea)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
@@ -541,7 +594,10 @@ export default function DrugsPage() {
                   {categoryConfig.diseaseAreas.map((area) => (
                     <Card 
                       key={area.key}
-                      className="cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all"
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : ''
+                      }`}
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium text-blue-700 dark:text-blue-400">{area.label}</h4>
@@ -558,7 +614,10 @@ export default function DrugsPage() {
                   {categoryConfig.diseaseAreas.map((area) => (
                     <Card 
                       key={area.key}
-                      className="cursor-pointer hover:border-purple-300 hover:shadow-sm transition-all"
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-purple-300 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : ''
+                      }`}
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium text-purple-700 dark:text-purple-400">{area.label}</h4>
