@@ -54,18 +54,24 @@ export function useDrugs(filters?: DrugFilters) {
         query = query.in('administration_route', filters.administration_route);
       }
 
-      if (filters?.search) {
-        // Search by generic_name and brand_names (cast array to text for partial matching)
-        const searchTerm = `%${filters.search}%`;
-        query = query.or(`generic_name.ilike.${searchTerm},brand_names::text.ilike.${searchTerm}`);
-      }
-
       query = query.order('display_order').order('generic_name');
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return (data || []).map(convertDrug);
+      
+      let results = (data || []).map(convertDrug);
+      
+      // Client-side search filtering on generic_name, brand_names, and drug schema names
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        results = results.filter(drug => 
+          drug.generic_name.toLowerCase().includes(searchLower) ||
+          drug.brand_names.some(bn => bn.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      return results;
     },
   });
 }
