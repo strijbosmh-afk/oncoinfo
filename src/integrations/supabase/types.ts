@@ -103,6 +103,7 @@ export type Database = {
           created_at: string
           cycle_length_days: number | null
           disease_areas: string[] | null
+          display_order: number | null
           dosing_info: Json | null
           drug_class: string
           drug_interactions: string[] | null
@@ -129,6 +130,7 @@ export type Database = {
           created_at?: string
           cycle_length_days?: number | null
           disease_areas?: string[] | null
+          display_order?: number | null
           dosing_info?: Json | null
           drug_class: string
           drug_interactions?: string[] | null
@@ -155,6 +157,7 @@ export type Database = {
           created_at?: string
           cycle_length_days?: number | null
           disease_areas?: string[] | null
+          display_order?: number | null
           dosing_info?: Json | null
           drug_class?: string
           drug_interactions?: string[] | null

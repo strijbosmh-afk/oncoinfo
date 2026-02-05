@@ -60,7 +60,7 @@ export function useDrugs(filters?: DrugFilters) {
         query = query.ilike('generic_name', `%${filters.search}%`);
       }
 
-      query = query.order('generic_name');
+      query = query.order('display_order').order('generic_name');
 
       const { data, error } = await query;
 
