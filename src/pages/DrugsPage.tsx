@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -24,6 +25,14 @@ const getDrugClassColor = (drugClass: string) => {
     'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
     'Radioligand Therapie': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'Hormonale Therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'Combinatietherapie': 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-amber-300',
+    'CDK4/6i': 'bg-rose-100 text-rose-800 border-rose-200',
+    'HER2-remmers': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    'Immunotherapie': 'bg-violet-100 text-violet-800 border-violet-200',
+    'SERM': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+    'Aromataseremmers': 'bg-lime-100 text-lime-800 border-lime-200',
+    'SERD': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'LHRH agonist': 'bg-sky-100 text-sky-800 border-sky-200',
   };
   return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
@@ -35,6 +44,62 @@ interface DrugCardProps {
 }
 
 function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
+  const isCombo = drug.drug_class === 'Combinatietherapie';
+  
+  if (isCombo) {
+    return (
+      <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
+        <button
+          onClick={onToggleFavorite}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+          aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+        >
+          <Star
+            className={`h-5 w-5 transition-colors ${
+              isFavorite
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-muted-foreground hover:text-yellow-400'
+            }`}
+          />
+        </button>
+        <Link to={`/drugs/${drug.id}`}>
+          <CardHeader className="pb-2 pr-12">
+            <div className="flex items-start gap-2 mb-1">
+              <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <CardTitle className="text-lg text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
+                {drug.brand_names.length > 0 && (
+                  <CardDescription className="text-amber-700/70">
+                    {drug.brand_names.join(', ')}
+                  </CardDescription>
+                )}
+              </div>
+            </div>
+            <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+              Combinatieschema
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            {drug.approved_indications && drug.approved_indications.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {drug.approved_indications.slice(0, 3).map((ind) => (
+                  <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200">
+                    {ind}
+                  </Badge>
+                ))}
+                {drug.approved_indications.length > 3 && (
+                  <Badge variant="outline" className="text-xs border-amber-200">
+                    +{drug.approved_indications.length - 3}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Link>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
       <button
@@ -173,6 +238,13 @@ export default function DrugsPage() {
     
     return result;
   }, [drugs, category, selectedSubtype, selectedStage]);
+
+  // Separate combination regimens from individual drugs
+  const { combinationDrugs, individualDrugs } = useMemo(() => {
+    const combinations = filteredDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
+    const individuals = filteredDrugs.filter(drug => drug.drug_class !== 'Combinatietherapie');
+    return { combinationDrugs: combinations, individualDrugs: individuals };
+  }, [filteredDrugs]);
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
@@ -628,23 +700,59 @@ export default function DrugsPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {filteredDrugs?.length} medicijn{filteredDrugs?.length !== 1 ? 'en' : ''} gevonden
+                {/* Combination Regimens Section */}
+                {combinationDrugs.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Layers className="h-5 w-5 text-amber-600" />
+                      <h2 className="text-xl font-semibold">Combinatieschema's</h2>
+                      <Badge className="bg-amber-100 text-amber-800 border-amber-200">{combinationDrugs.length}</Badge>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {combinationDrugs.map((drug) => (
+                        <DrugCard
+                          key={drug.id}
+                          drug={drug}
+                          isFavorite={isFavorite(drug.id)}
+                          onToggleFavorite={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleFavorite(drug.id);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Individual Drugs Section */}
+                {individualDrugs.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Pill className="h-5 w-5 text-primary" />
+                      <h2 className="text-xl font-semibold">Individuele Medicijnen</h2>
+                      <Badge variant="secondary">{individualDrugs.length}</Badge>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {individualDrugs.map((drug) => (
+                        <DrugCard
+                          key={drug.id}
+                          drug={drug}
+                          isFavorite={isFavorite(drug.id)}
+                          onToggleFavorite={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleFavorite(drug.id);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground pt-2">
+                  Totaal: {filteredDrugs?.length} item{filteredDrugs?.length !== 1 ? 's' : ''} gevonden
                 </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {filteredDrugs?.map((drug) => (
-                    <DrugCard
-                      key={drug.id}
-                      drug={drug}
-                      isFavorite={isFavorite(drug.id)}
-                      onToggleFavorite={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleFavorite(drug.id);
-                      }}
-                    />
-                  ))}
-                </div>
               </div>
             )}
           </div>
