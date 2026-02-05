@@ -88,3 +88,53 @@ export const DRUG_DISEASE_AREAS = [
   'Testiskanker',
   'Peniskanker'
 ] as const;
+
+// Category configurations for the drug library
+export const DRUG_CATEGORIES = {
+  breast: {
+    name: 'Borstkanker',
+    subtypes: [
+      { key: 'hr_positive', label: 'Hormoongevoelig (HR+)', description: 'ER+ en/of PR+ tumoren' },
+      { key: 'her2_positive', label: 'HER2-positief', description: 'HER2-overexpressie of -amplificatie' },
+      { key: 'triple_negative', label: 'Triple negatief', description: 'ER-, PR-, HER2-' }
+    ],
+    stages: [
+      { key: 'neoadjuvant_adjuvant', label: 'Neoadjuvant/Adjuvant', description: 'Vroeg stadium' },
+      { key: 'metastatic', label: 'Gemetastaseerd', description: 'Stadium IV' }
+    ],
+    drugClasses: ['Chemotherapie', 'Hormoontherapie', 'HER2-remmers', 'CDK4/6i', 'IO/ICI', 'ADC', 'PARPi']
+  },
+  urology: {
+    name: 'Urologie',
+    diseaseAreas: [
+      { key: 'prostate', label: 'Prostaatkanker', description: 'mCRPC, mHSPC, gelokaliseerd' },
+      { key: 'bladder', label: 'Blaaskanker', description: 'NMIBC, MIBC, gemetastaseerd' },
+      { key: 'kidney', label: 'Niercelcarcinoom', description: 'Heldercellig, niet-heldercellig' },
+      { key: 'testis', label: 'Testiskanker', description: 'Seminoom, non-seminoom' },
+      { key: 'penile', label: 'Peniskanker', description: 'Plaveiselcelcarcinoom' }
+    ],
+    drugClasses: ['ARPI', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Hormonale Therapie', 'Antiresorptiva']
+  },
+  gynecology: {
+    name: 'Gynaecologie',
+    diseaseAreas: [
+      { key: 'ovarian', label: 'Ovariumcarcinoom', description: 'Epitheliaal, kiemcel' },
+      { key: 'endometrial', label: 'Endometriumcarcinoom', description: 'Type I en II' },
+      { key: 'cervical', label: 'Cervixcarcinoom', description: 'Plaveiselcel, adenocarcinoom' },
+      { key: 'vulvar', label: 'Vulvacarcinoom', description: 'Plaveiselcelcarcinoom' }
+    ],
+    drugClasses: ['Chemotherapie', 'PARPi', 'Antiangiogenese', 'IO/ICI', 'Hormoontherapie']
+  },
+  other: {
+    name: 'Overige',
+    subcategories: [
+      { key: 'antiresorptive', label: 'Antiresorptiva', description: 'Botbeschermende medicatie' },
+      { key: 'antiemetic', label: 'Anti-emetica', description: 'Misselijkheidsbehandeling' },
+      { key: 'gcsf', label: 'G-CSF', description: 'Groeifactoren' },
+      { key: 'supportive', label: 'Overige supportive care', description: 'Ondersteunende medicatie' }
+    ],
+    drugClasses: ['Antiresorptiva', 'Supportive Care']
+  }
+} as const;
+
+export type DrugCategoryKey = keyof typeof DRUG_CATEGORIES;
