@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, Utensils, Wind, Sun, CircleUser, Lock } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, Utensils, Wind, Sun, CircleUser, Lock, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useDrugs } from '@/hooks/useDrugs';
 
 const drugLibraries = [
   {
@@ -71,6 +74,22 @@ const upcomingLibraries = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data: searchResults } = useDrugs(searchQuery.length >= 2 ? { search: searchQuery } : undefined);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/drugs?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleResultClick = (drugId: string) => {
+    navigate(`/drugs/${drugId}`);
+    setSearchQuery('');
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -140,6 +159,62 @@ const Index = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mt-12">
+            <form onSubmit={handleSearchSubmit} className="relative">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Zoek op stofnaam, merknaam of schema..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 focus:border-primary"
+                />
+              </div>
+              
+              {/* Search Results Dropdown */}
+              {searchQuery.length >= 2 && searchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto">
+                  {searchResults.slice(0, 8).map((drug) => (
+                    <button
+                      key={drug.id}
+                      type="button"
+                      onClick={() => handleResultClick(drug.id)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted/50 flex items-center justify-between border-b last:border-b-0"
+                    >
+                      <div>
+                        <p className="font-medium">{drug.generic_name}</p>
+                        {drug.brand_names && drug.brand_names.length > 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {drug.brand_names.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                        {drug.drug_class}
+                      </span>
+                    </button>
+                  ))}
+                  {searchResults.length > 8 && (
+                    <button
+                      type="submit"
+                      className="w-full px-4 py-3 text-center text-primary hover:bg-muted/50 font-medium"
+                    >
+                      Bekijk alle {searchResults.length} resultaten →
+                    </button>
+                  )}
+                </div>
+              )}
+              
+              {searchQuery.length >= 2 && searchResults && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 p-4 text-center text-muted-foreground">
+                  Geen resultaten gevonden voor "{searchQuery}"
+                </div>
+              )}
+            </form>
           </div>
         </div>
       </section>
