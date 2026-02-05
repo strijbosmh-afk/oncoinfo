@@ -11,8 +11,7 @@ const drugLibraries = [
     icon: Heart,
     href: '/drugs?category=breast',
     color: 'text-pink-500',
-    bgColor: 'bg-pink-500/10',
-    enabled: true
+    bgColor: 'bg-pink-500/10'
   },
   {
     title: 'Urologie',
@@ -20,8 +19,7 @@ const drugLibraries = [
     icon: Stethoscope,
     href: '/drugs?category=urology',
     color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10',
-    enabled: true
+    bgColor: 'bg-blue-500/10'
   },
   {
     title: 'Gynaecologie',
@@ -29,8 +27,7 @@ const drugLibraries = [
     icon: Baby,
     href: '/drugs?category=gynecology',
     color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10',
-    enabled: true
+    bgColor: 'bg-purple-500/10'
   },
   {
     title: 'Overige',
@@ -38,8 +35,7 @@ const drugLibraries = [
     icon: MoreHorizontal,
     href: '/drugs?category=other',
     color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10',
-    enabled: true
+    bgColor: 'bg-emerald-500/10'
   }
 ];
 
@@ -89,6 +85,39 @@ const Index = () => {
               Compleet geneesmiddelenoverzicht voor oncologie
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Drug Library Cards */}
+      <section className="py-12 md:py-16">
+        <div className="container">
+          <h2 className="text-2xl font-bold text-center mb-10">
+            Kies Specialiteit
+          </h2>
+
+          {/* Available specialties */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {drugLibraries.map((library) => (
+              <Link key={library.title} to={library.href}>
+                <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardHeader className="relative pb-2">
+                    <div className={`h-14 w-14 rounded-xl ${library.bgColor} flex items-center justify-center mb-4`}>
+                      <library.icon className={`h-7 w-7 ${library.color}`} />
+                    </div>
+                    <CardTitle className="text-xl">{library.title}</CardTitle>
+                    <CardDescription>{library.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="relative pt-0">
+                    <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                      Bekijk medicijnen
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
 
           {/* Upcoming specialties - second row */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mt-6">
@@ -110,38 +139,6 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Drug Library Cards */}
-      <section className="py-12 md:py-16">
-        <div className="container">
-          <h2 className="text-2xl font-bold text-center mb-10">
-            Kies Specialiteit
-          </h2>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {drugLibraries.map((library) => (
-              <Link key={library.title} to={library.href}>
-                <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardHeader className="relative pb-2">
-                    <div className={`h-14 w-14 rounded-xl ${library.bgColor} flex items-center justify-center mb-4`}>
-                      <library.icon className={`h-7 w-7 ${library.color}`} />
-                    </div>
-                    <CardTitle className="text-xl">{library.title}</CardTitle>
-                    <CardDescription>{library.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative pt-0">
-                    <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
-                      Bekijk medicijnen
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
             ))}
           </div>
         </div>
