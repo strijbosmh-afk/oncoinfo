@@ -52,7 +52,7 @@ export interface DrugFilters {
 }
 
 export const DRUG_CLASSES = [
-  'IO/ICI',
+  'Immunotherapie (IO/ICI)',
   'PARPi',
   'ARPI',
   'Chemotherapie',
