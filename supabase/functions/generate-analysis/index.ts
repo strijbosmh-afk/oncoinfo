@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -12,8 +12,55 @@ serve(async (req) => {
   }
 
   try {
-    const { trial_id, analysis_type = "full" } = await req.json();
+     // Authenticate and authorize admin user
+     const authHeader = req.headers.get("Authorization");
+     if (!authHeader?.startsWith("Bearer ")) {
+       return new Response(
+         JSON.stringify({ error: "Unauthorized" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+ 
+     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+       throw new Error("Supabase configuration is missing");
+     }
+ 
+     const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+       global: { headers: { Authorization: authHeader } },
+     });
+ 
+     const { data: { user }, error: authError } = await authClient.auth.getUser();
+     if (authError || !user) {
+       return new Response(
+         JSON.stringify({ error: "Unauthorized" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error("Service role key not configured");
+     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+ 
+     // Check admin role
+     const { data: profile } = await supabase
+       .from("profiles")
+       .select("role")
+       .eq("user_id", user.id)
+       .single();
+ 
+     if (profile?.role !== "admin") {
+       return new Response(
+         JSON.stringify({ error: "Admin access required" }),
+         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
 
+     const { trial_id, analysis_type = "full" } = await req.json();
+     
     if (!trial_id) {
       return new Response(
         JSON.stringify({ error: "trial_id is required" }),
@@ -21,14 +68,7 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase not configured");
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Fetch trial data with arms and endpoints
     const { data: trial, error: trialError } = await supabase
