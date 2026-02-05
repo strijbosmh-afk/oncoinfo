@@ -51,8 +51,7 @@ const Index = () => {
               OncoInfo
             </h1>
             <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-              Uw complete medicijnbibliotheek voor oncologie. Patiëntvriendelijke informatie 
-              over medicijnen, doseringen en bijwerkingen.
+              Compleet geneesmiddelenoverzicht voor oncologie
             </p>
           </div>
         </div>
