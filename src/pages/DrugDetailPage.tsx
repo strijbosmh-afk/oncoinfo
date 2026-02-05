@@ -26,6 +26,7 @@ import {
   Settings2,
   Printer
 } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function DrugDetailPage() {
@@ -37,6 +38,7 @@ export default function DrugDetailPage() {
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleGeneratePatientInfo = async () => {
@@ -65,6 +67,49 @@ export default function DrugDetailPage() {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.focus();
       iframeRef.current.contentWindow.print();
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!previewHtml || !drug) return;
+    
+    setIsDownloading(true);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      
+      // Create a temporary container with the HTML content
+      const container = document.createElement('div');
+      container.innerHTML = previewHtml;
+      
+      // Extract just the body content
+      const bodyContent = container.querySelector('body');
+      if (!bodyContent) {
+        throw new Error('Could not parse HTML content');
+      }
+      
+      // Apply inline styles for PDF generation
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = bodyContent.innerHTML;
+      tempDiv.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11px; line-height: 1.4; color: #1a1a1a; padding: 12mm; background: white;';
+      document.body.appendChild(tempDiv);
+      
+      const opt = {
+        margin: 0,
+        filename: `patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      
+      await html2pdf().set(opt).from(tempDiv).save();
+      
+      document.body.removeChild(tempDiv);
+      toast.success('PDF gedownload');
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      toast.error('Fout bij downloaden PDF');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -491,6 +536,19 @@ export default function DrugDetailPage() {
             <DialogFooter className="flex gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
                 Sluiten
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadPdf} 
+                disabled={isDownloading}
+                className="gap-2"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download PDF
               </Button>
               <Button onClick={handlePrint} className="gap-2">
                 <Printer className="h-4 w-4" />
