@@ -440,7 +440,7 @@ export default function DrugDetailPage() {
 
           <TabsContent value="side-effects" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
-              {drug.side_effects?.common && drug.side_effects.common.length > 0 && (
+              {(drug.side_effects?.common || drug.side_effects?.veel_voorkomend) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -450,7 +450,7 @@ export default function DrugDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {drug.side_effects.common.map((effect, i) => (
+                      {(drug.side_effects.common || drug.side_effects.veel_voorkomend)?.map((effect: string, i: number) => (
                         <li key={i}>{effect}</li>
                       ))}
                     </ul>
@@ -458,7 +458,7 @@ export default function DrugDetailPage() {
                 </Card>
               )}
 
-              {drug.side_effects?.serious && drug.side_effects.serious.length > 0 && (
+              {(drug.side_effects?.serious || drug.side_effects?.ernstig) && (
                 <Card className="border-destructive/50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
@@ -468,7 +468,7 @@ export default function DrugDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {drug.side_effects.serious.map((effect, i) => (
+                      {(drug.side_effects.serious || drug.side_effects.ernstig)?.map((effect: string, i: number) => (
                         <li key={i}>{effect}</li>
                       ))}
                     </ul>
