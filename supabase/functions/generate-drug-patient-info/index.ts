@@ -46,18 +46,17 @@ Deno.serve(async (req) => {
       .eq('drug_id', drug_id)
       .single();
 
-    // Fetch logo as base64 so it works in preview and print without needing publish
+    // Fetch logo from Supabase Storage as base64 for reliable embedding in HTML
     let logoDataUri = '';
-    const logoUrls = [
-      'https://uroinfo.lovable.app/images/logo-rzt.png',
-      'https://id-preview--d32536bf-b42e-46f3-8713-2b5a1895d5d6.lovable.app/images/logo-rzt.png'
-    ];
-    for (const url of logoUrls) {
-      try {
-        const logoResponse = await fetch(url);
-        if (logoResponse.ok) {
+    const supabaseStorageLogoUrl = `${supabaseUrl}/storage/v1/object/public/public-assets/logo-rzt.png`;
+    try {
+      const logoResponse = await fetch(supabaseStorageLogoUrl);
+      if (logoResponse.ok) {
+        const contentType = logoResponse.headers.get('content-type') || 'image/png';
+        // Only proceed if it's actually an image
+        if (contentType.startsWith('image/')) {
           const logoBuffer = new Uint8Array(await logoResponse.arrayBuffer());
-          // Character-by-character loop to avoid call stack overflow with spread operator
+          // Character-by-character loop to avoid call stack overflow
           let binary = '';
           const chunkSize = 8192;
           for (let i = 0; i < logoBuffer.length; i += chunkSize) {
@@ -66,13 +65,14 @@ Deno.serve(async (req) => {
               binary += String.fromCharCode(chunk[j]);
             }
           }
-          logoDataUri = `data:image/png;base64,${btoa(binary)}`;
-          console.log(`Logo fetched successfully from ${url}, size: ${logoBuffer.length} bytes, dataUri length: ${logoDataUri.length}`);
-          break;
+          logoDataUri = `data:${contentType};base64,${btoa(binary)}`;
+          console.log(`Logo fetched successfully, size: ${logoBuffer.length} bytes`);
+        } else {
+          console.error(`Logo URL returned non-image content-type: ${contentType}`);
         }
-      } catch (e) {
-        console.error(`Could not fetch logo from ${url}:`, e);
       }
+    } catch (e) {
+      console.error('Could not fetch logo:', e);
     }
     
     // Generate patient-friendly HTML with optional custom content
