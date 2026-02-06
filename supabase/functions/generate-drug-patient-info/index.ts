@@ -48,15 +48,29 @@ Deno.serve(async (req) => {
 
     // Fetch logo as base64 so it works in preview and print without needing publish
     let logoDataUri = '';
-    try {
-      const logoResponse = await fetch('https://uroinfo.lovable.app/images/logo-rzt.png');
-      if (logoResponse.ok) {
-        const logoBuffer = await logoResponse.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
-        logoDataUri = `data:image/png;base64,${base64}`;
+    const logoUrls = [
+      'https://uroinfo.lovable.app/images/logo-rzt.png',
+      'https://id-preview--d32536bf-b42e-46f3-8713-2b5a1895d5d6.lovable.app/images/logo-rzt.png'
+    ];
+    for (const url of logoUrls) {
+      try {
+        const logoResponse = await fetch(url);
+        if (logoResponse.ok) {
+          const logoBuffer = new Uint8Array(await logoResponse.arrayBuffer());
+          // Chunk the conversion to avoid call stack overflow
+          let binary = '';
+          const chunkSize = 8192;
+          for (let i = 0; i < logoBuffer.length; i += chunkSize) {
+            const chunk = logoBuffer.subarray(i, i + chunkSize);
+            binary += String.fromCharCode(...chunk);
+          }
+          logoDataUri = `data:image/png;base64,${btoa(binary)}`;
+          
+          break;
+        }
+      } catch (e) {
+        console.error(`Could not fetch logo from ${url}:`, e);
       }
-    } catch (e) {
-      console.error('Could not fetch logo:', e);
     }
     
     // Generate patient-friendly HTML with optional custom content
@@ -327,8 +341,15 @@ function generatePatientInfoHtml(
     }
     @media print {
       body {
+        width: auto;
+        min-height: auto;
+        padding: 0;
+        margin: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+      }
+      .logo-header img {
+        max-height: 50px !important;
       }
     }
   </style>
