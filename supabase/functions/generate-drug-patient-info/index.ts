@@ -57,15 +57,17 @@ Deno.serve(async (req) => {
         const logoResponse = await fetch(url);
         if (logoResponse.ok) {
           const logoBuffer = new Uint8Array(await logoResponse.arrayBuffer());
-          // Chunk the conversion to avoid call stack overflow
+          // Character-by-character loop to avoid call stack overflow with spread operator
           let binary = '';
           const chunkSize = 8192;
           for (let i = 0; i < logoBuffer.length; i += chunkSize) {
-            const chunk = logoBuffer.subarray(i, i + chunkSize);
-            binary += String.fromCharCode(...chunk);
+            const chunk = logoBuffer.subarray(i, Math.min(i + chunkSize, logoBuffer.length));
+            for (let j = 0; j < chunk.length; j++) {
+              binary += String.fromCharCode(chunk[j]);
+            }
           }
           logoDataUri = `data:image/png;base64,${btoa(binary)}`;
-          
+          console.log(`Logo fetched successfully from ${url}, size: ${logoBuffer.length} bytes, dataUri length: ${logoDataUri.length}`);
           break;
         }
       } catch (e) {
