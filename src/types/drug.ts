@@ -133,7 +133,9 @@ export const DRUG_CATEGORIES = {
       { key: 'antiresorptive', label: 'Antiresorptiva', description: 'Botbeschermende medicatie' },
       { key: 'antiemetic', label: 'Anti-emetica', description: 'Misselijkheidsbehandeling' },
       { key: 'gcsf', label: 'G-CSF', description: 'Groeifactoren' },
-      { key: 'supportive', label: 'Overige supportive care', description: 'Ondersteunende medicatie' }
+      { key: 'erythropoietin', label: 'Erytropoietines', description: 'Erytropoëse-stimulerende middelen' },
+      { key: 'thrombopoietin', label: 'Trombopoietine-agonisten', description: 'Trombocytenstimulatie' },
+      { key: 'supportive', label: 'Overige supportive care', description: 'Overige ondersteunende medicatie' }
     ],
     drugClasses: ['Antiresorptiva', 'Supportive Care']
   }
