@@ -67,7 +67,8 @@ export function useDrugs(filters?: DrugFilters) {
         const searchLower = filters.search.toLowerCase();
         results = results.filter(drug => 
           drug.generic_name.toLowerCase().includes(searchLower) ||
-          drug.brand_names.some(bn => bn.toLowerCase().includes(searchLower))
+          drug.brand_names.some(bn => bn.toLowerCase().includes(searchLower)) ||
+          (drug.common_regimens && drug.common_regimens.some(r => r.toLowerCase().includes(searchLower)))
         );
       }
       
