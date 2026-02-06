@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '' } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl' } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -76,14 +76,15 @@ Deno.serve(async (req) => {
     }
     
     // Generate patient-friendly HTML with optional custom content
-    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoDataUri, customContent, physician_name, nurse_name);
+    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoDataUri, customContent, physician_name, nurse_name, language);
 
     return new Response(
       JSON.stringify({ 
         html,
         drug_name: drug.generic_name,
         brand_names: drug.brand_names,
-        custom_content: customContent
+        custom_content: customContent,
+        language
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -116,8 +117,56 @@ function generatePatientInfoHtml(
   logoUrl: string,
   customContent?: CustomContent | null,
   physicianName?: string,
-  nurseName?: string
+  nurseName?: string,
+  language: string = 'nl'
 ): string {
+  const isFr = language === 'fr';
+  
+  // Translation labels
+  const labels = isFr ? {
+    title: 'Information pour les patients',
+    whatIs: `Qu'est-ce que ${drug.generic_name} ?`,
+    usedFor: 'À quoi sert-il ?',
+    howGiven: 'Comment est-il administré ?',
+    whenNot: 'Quand ne pas utiliser',
+    sideEffects: 'Effets secondaires possibles',
+    commonSE: 'Fréquents',
+    seriousSE: 'Graves - Contactez immédiatement votre médecin',
+    tips: 'Conseils importants',
+    monitoring: 'Contrôles',
+    contact: 'Contact',
+    physician: 'Médecin',
+    nurse: 'Infirmier(ère)',
+    phone: 'Tél',
+    dosage: 'Posologie',
+    frequency: 'Fréquence',
+    duration: 'Durée',
+    cycle: 'Cycle',
+    days: 'jours',
+    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
+  } : {
+    title: 'Informatie voor patiënten',
+    whatIs: `Wat is ${drug.generic_name}?`,
+    usedFor: 'Waarvoor wordt het gebruikt?',
+    howGiven: 'Hoe wordt het gegeven?',
+    whenNot: 'Wanneer niet gebruiken',
+    sideEffects: 'Mogelijke bijwerkingen',
+    commonSE: 'Veel voorkomend',
+    seriousSE: 'Ernstig - Neem direct contact op',
+    tips: 'Belangrijke tips',
+    monitoring: 'Controles',
+    contact: 'Contact',
+    physician: 'Arts',
+    nurse: 'Verpleegkundige',
+    phone: 'Tel',
+    dosage: 'Dosering',
+    frequency: 'Frequentie',
+    duration: 'Duur',
+    cycle: 'Cyclus',
+    days: 'dagen',
+    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
+  };
+
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
     : '';
@@ -186,13 +235,15 @@ function generatePatientInfoHtml(
     }).join('')}</ul>`;
   };
 
+  const htmlLang = isFr ? 'fr' : 'nl';
+
   return `
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patiëntinformatie - ${drug.generic_name}</title>
+  <title>${isFr ? 'Information patient' : 'Patiëntinformatie'} - ${drug.generic_name}</title>
   <style>
     @page {
       size: A4;
@@ -361,57 +412,57 @@ function generatePatientInfoHtml(
     <img src="${logoUrl}" alt="RZ Tienen Logo" />
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
-      <p class="subtitle">Informatie voor patiënten</p>
+      <p class="subtitle">${labels.title}</p>
     </div>
   </div>
 
   <div class="content">
     ${introductionText ? `
     <div class="section">
-      <h2>Wat is ${drug.generic_name}?</h2>
+      <h2>${labels.whatIs}</h2>
       <p>${introductionText}</p>
     </div>
     ` : ''}
 
     ${usageText ? `
     <div class="section">
-      <h2>Waarvoor wordt het gebruikt?</h2>
+      <h2>${labels.usedFor}</h2>
       ${customContent?.usage_info ? formatAsList(usageText) : `<ul>${drug.approved_indications.slice(0, maxIndications).map((ind: string) => `<li>${ind}</li>`).join('')}</ul>`}
     </div>
     ` : ''}
 
     ${includeDosing && (dosingText || drug.dosing_info) ? `
     <div class="section">
-      <h2>Hoe wordt het gegeven?</h2>
+      <h2>${labels.howGiven}</h2>
       ${dosingText ? `<p>${dosingText.replace(/\n/g, '<br>')}</p>` : `
-        ${drug.dosing_info.standard_dose ? `<p><strong>Dosering:</strong> ${drug.dosing_info.standard_dose}</p>` : ''}
-        ${drug.dosing_info.frequency ? `<p><strong>Frequentie:</strong> ${drug.dosing_info.frequency}</p>` : ''}
-        ${drug.dosing_info.duration ? `<p><strong>Duur:</strong> ${drug.dosing_info.duration}</p>` : ''}
-        ${drug.cycle_length_days ? `<p><strong>Cyclus:</strong> ${drug.cycle_length_days} dagen</p>` : ''}
+        ${drug.dosing_info.standard_dose ? `<p><strong>${labels.dosage}:</strong> ${drug.dosing_info.standard_dose}</p>` : ''}
+        ${drug.dosing_info.frequency ? `<p><strong>${labels.frequency}:</strong> ${drug.dosing_info.frequency}</p>` : ''}
+        ${drug.dosing_info.duration ? `<p><strong>${labels.duration}:</strong> ${drug.dosing_info.duration}</p>` : ''}
+        ${drug.cycle_length_days ? `<p><strong>${labels.cycle}:</strong> ${drug.cycle_length_days} ${labels.days}</p>` : ''}
       `}
     </div>
     ` : ''}
 
     ${contraindicationsText ? `
     <div class="section">
-      <h2>Wanneer niet gebruiken</h2>
+      <h2>${labels.whenNot}</h2>
       ${customContent?.contraindications ? formatAsList(contraindicationsText) : `<ul>${drug.contraindications.slice(0, maxContraindications).map((contra: string) => `<li>${contra}</li>`).join('')}</ul>`}
     </div>
     ` : ''}
 
     ${includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText) ? `
     <div class="section full-width">
-      <h2>Mogelijke bijwerkingen</h2>
+      <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         ${sideEffectsCommonText ? `
         <div class="warning-box">
-          <h3>Veel voorkomend</h3>
+          <h3>${labels.commonSE}</h3>
           ${customContent?.side_effects_common ? formatAsList(sideEffectsCommonText) : `<ul style="margin-left: 14px;">${drug.side_effects.common.slice(0, maxCommonSideEffects).map((effect: string) => `<li>${effect}</li>`).join('')}</ul>`}
         </div>
         ` : ''}
         ${sideEffectsSeriousText ? `
         <div class="danger-box">
-          <h3>Ernstig - Neem direct contact op</h3>
+          <h3>${labels.seriousSE}</h3>
           ${customContent?.side_effects_serious ? formatAsList(sideEffectsSeriousText) : `<ul style="margin-left: 14px;">${drug.side_effects.serious.slice(0, maxSeriousSideEffects).map((effect: string) => `<li>${effect}</li>`).join('')}</ul>`}
         </div>
         ` : ''}
@@ -421,7 +472,7 @@ function generatePatientInfoHtml(
 
     ${tipsText ? `
     <div class="section">
-      <h2>Belangrijke tips</h2>
+      <h2>${labels.tips}</h2>
       <div class="info-box">
         ${customContent?.tips ? formatAsList(tipsText) : `<ul style="margin-left: 14px;">${drug.patient_counseling_points.slice(0, maxCounselingPoints).map((point: string) => `<li>${point}</li>`).join('')}</ul>`}
       </div>
@@ -430,23 +481,23 @@ function generatePatientInfoHtml(
 
     ${monitoringText ? `
     <div class="section">
-      <h2>Controles</h2>
+      <h2>${labels.monitoring}</h2>
       ${customContent?.monitoring ? formatAsList(monitoringText) : `<ul>${drug.monitoring_requirements.slice(0, maxMonitoring).map((req: string) => `<li>${req}</li>`).join('')}</ul>`}
     </div>
     ` : ''}
   </div>
 
   <div class="contact-section full-width">
-    <h2>Contact</h2>
+    <h2>${labels.contact}</h2>
     <div class="contact-grid">
-      <p><strong>Arts:</strong> ${physicianName || '_________________'}</p>
-      <p><strong>Verpleegkundige:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>Tel:</strong> 016 80 90 11</p>
+      <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
+      <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+      <p><strong>${labels.phone}:</strong> 016 80 90 11</p>
     </div>
   </div>
 
   <div class="footer">
-    <p>RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.</p>
+    <p>${labels.footer}</p>
   </div>
 </body>
 </html>
