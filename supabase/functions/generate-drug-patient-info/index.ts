@@ -5,13 +5,78 @@ const corsHeaders = {
    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function translateToFrench(textsMap: Record<string, string | null>): Promise<Record<string, string | null>> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) {
+    console.error('LOVABLE_API_KEY not configured, skipping translation');
+    return textsMap;
+  }
+
+  // Filter out null/empty values
+  const toTranslate: Record<string, string> = {};
+  for (const [key, val] of Object.entries(textsMap)) {
+    if (val && val.trim()) toTranslate[key] = val;
+  }
+
+  if (Object.keys(toTranslate).length === 0) return textsMap;
+
+  const prompt = `You are a medical translator. Translate the following Dutch medical patient information texts to clear, correct French suitable for patients. Keep medical terms accurate. Preserve bullet point format (lines starting with •). Do NOT add any explanation, just return the translations.
+
+Return a JSON object with the same keys, each value being the French translation.
+
+Texts to translate:
+${JSON.stringify(toTranslate, null, 2)}`;
+
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: 'You are a professional medical translator specializing in Dutch to French translation for oncology patient information. Always return valid JSON only, no markdown formatting.' },
+          { role: 'user', content: prompt }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('AI translation error:', response.status, await response.text());
+      return textsMap;
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) return textsMap;
+
+    // Parse the JSON response, stripping markdown code fences if present
+    let cleaned = content.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    const translated = JSON.parse(cleaned);
+
+    // Merge back
+    const result: Record<string, string | null> = { ...textsMap };
+    for (const key of Object.keys(toTranslate)) {
+      if (translated[key]) result[key] = translated[key];
+    }
+    return result;
+  } catch (e) {
+    console.error('Translation failed:', e);
+    return textsMap;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // No authentication required - this generates public drug information
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -25,7 +90,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch drug data
     const { data: drug, error: drugError } = await supabase
       .from('drugs')
       .select('*')
@@ -39,24 +103,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch custom folder content if exists
     const { data: customContent } = await supabase
       .from('patient_folder_content')
       .select('*')
       .eq('drug_id', drug_id)
       .single();
 
-    // Fetch logo from Supabase Storage as base64 for reliable embedding in HTML
+    // Fetch logo
     let logoDataUri = '';
     const supabaseStorageLogoUrl = `${supabaseUrl}/storage/v1/object/public/public-assets/logo-rzt.png`;
     try {
       const logoResponse = await fetch(supabaseStorageLogoUrl);
       if (logoResponse.ok) {
         const contentType = logoResponse.headers.get('content-type') || 'image/png';
-        // Only proceed if it's actually an image
         if (contentType.startsWith('image/')) {
           const logoBuffer = new Uint8Array(await logoResponse.arrayBuffer());
-          // Character-by-character loop to avoid call stack overflow
           let binary = '';
           const chunkSize = 8192;
           for (let i = 0; i < logoBuffer.length; i += chunkSize) {
@@ -67,25 +128,99 @@ Deno.serve(async (req) => {
           }
           logoDataUri = `data:${contentType};base64,${btoa(binary)}`;
           console.log(`Logo fetched successfully, size: ${logoBuffer.length} bytes`);
-        } else {
-          console.error(`Logo URL returned non-image content-type: ${contentType}`);
         }
       }
     } catch (e) {
       console.error('Could not fetch logo:', e);
     }
-    
-    // Generate patient-friendly HTML with optional custom content
-    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoDataUri, customContent, physician_name, nurse_name, language);
+
+    // Prepare content texts
+    const maxIndications = 4;
+    const maxCommonSideEffects = 5;
+    const maxSeriousSideEffects = 3;
+    const maxCounselingPoints = 4;
+    const maxContraindications = 4;
+    const maxMonitoring = 4;
+
+    let introductionText = customContent?.introduction || drug.mechanism_of_action || null;
+    let usageText = customContent?.usage_info || 
+      (drug.approved_indications?.length > 0 
+        ? drug.approved_indications.slice(0, maxIndications).map((ind: string) => `• ${ind}`).join('\n')
+        : null);
+    let dosingText = customContent?.dosing_info || null;
+    let contraindicationsText = customContent?.contraindications ||
+      (drug.contraindications?.length > 0
+        ? drug.contraindications.slice(0, maxContraindications).map((c: string) => `• ${c}`).join('\n')
+        : null);
+    let sideEffectsCommonText = customContent?.side_effects_common ||
+      (drug.side_effects?.common?.length > 0
+        ? drug.side_effects.common.slice(0, maxCommonSideEffects).map((e: string) => `• ${e}`).join('\n')
+        : null);
+    let sideEffectsSeriousText = customContent?.side_effects_serious ||
+      (drug.side_effects?.serious?.length > 0
+        ? drug.side_effects.serious.slice(0, maxSeriousSideEffects).map((e: string) => `• ${e}`).join('\n')
+        : null);
+    let tipsText = customContent?.tips ||
+      (drug.patient_counseling_points?.length > 0
+        ? drug.patient_counseling_points.slice(0, maxCounselingPoints).map((p: string) => `• ${p}`).join('\n')
+        : null);
+    let monitoringText = customContent?.monitoring ||
+      (drug.monitoring_requirements?.length > 0
+        ? drug.monitoring_requirements.slice(0, maxMonitoring).map((r: string) => `• ${r}`).join('\n')
+        : null);
+
+    // Build dosing text from structured data if no custom content
+    let dosingStructured = '';
+    if (!dosingText && drug.dosing_info) {
+      const parts: string[] = [];
+      if (drug.dosing_info.standard_dose) parts.push(`Dosering: ${drug.dosing_info.standard_dose}`);
+      if (drug.dosing_info.frequency) parts.push(`Frequentie: ${drug.dosing_info.frequency}`);
+      if (drug.dosing_info.duration) parts.push(`Duur: ${drug.dosing_info.duration}`);
+      if (drug.cycle_length_days) parts.push(`Cyclus: ${drug.cycle_length_days} dagen`);
+      dosingStructured = parts.join('\n');
+    }
+
+    // Translate content if French
+    if (language === 'fr') {
+      const textsToTranslate: Record<string, string | null> = {
+        introduction: introductionText,
+        usage: usageText,
+        dosing: dosingText || dosingStructured || null,
+        contraindications: contraindicationsText,
+        side_effects_common: sideEffectsCommonText,
+        side_effects_serious: sideEffectsSeriousText,
+        tips: tipsText,
+        monitoring: monitoringText,
+      };
+
+      console.log('Translating content to French...');
+      const translated = await translateToFrench(textsToTranslate);
+      
+      introductionText = translated.introduction ?? introductionText;
+      usageText = translated.usage ?? usageText;
+      if (dosingText) {
+        dosingText = translated.dosing ?? dosingText;
+      } else if (dosingStructured) {
+        dosingStructured = translated.dosing ?? dosingStructured;
+      }
+      contraindicationsText = translated.contraindications ?? contraindicationsText;
+      sideEffectsCommonText = translated.side_effects_common ?? sideEffectsCommonText;
+      sideEffectsSeriousText = translated.side_effects_serious ?? sideEffectsSeriousText;
+      tipsText = translated.tips ?? tipsText;
+      monitoringText = translated.monitoring ?? monitoringText;
+      console.log('Translation complete');
+    }
+
+    const html = generatePatientInfoHtml(
+      drug, include_dosing, include_side_effects, logoDataUri, 
+      physician_name, nurse_name, language,
+      introductionText, usageText, dosingText, dosingStructured,
+      contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
+      tipsText, monitoringText
+    );
 
     return new Response(
-      JSON.stringify({ 
-        html,
-        drug_name: drug.generic_name,
-        brand_names: drug.brand_names,
-        custom_content: customContent,
-        language
-      }),
+      JSON.stringify({ html, drug_name: drug.generic_name, brand_names: drug.brand_names, language }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -99,30 +234,26 @@ Deno.serve(async (req) => {
   }
 });
 
-interface CustomContent {
-  introduction?: string;
-  usage_info?: string;
-  dosing_info?: string;
-  contraindications?: string;
-  side_effects_common?: string;
-  side_effects_serious?: string;
-  tips?: string;
-  monitoring?: string;
-}
-
 function generatePatientInfoHtml(
   drug: any, 
   includeDosing: boolean, 
   includeSideEffects: boolean, 
   logoUrl: string,
-  customContent?: CustomContent | null,
-  physicianName?: string,
-  nurseName?: string,
-  language: string = 'nl'
+  physicianName: string,
+  nurseName: string,
+  language: string,
+  introductionText: string | null,
+  usageText: string | null,
+  dosingText: string | null,
+  dosingStructured: string,
+  contraindicationsText: string | null,
+  sideEffectsCommonText: string | null,
+  sideEffectsSeriousText: string | null,
+  tipsText: string | null,
+  monitoringText: string | null,
 ): string {
   const isFr = language === 'fr';
   
-  // Translation labels
   const labels = isFr ? {
     title: 'Information pour les patients',
     whatIs: `Qu'est-ce que ${drug.generic_name} ?`,
@@ -138,11 +269,6 @@ function generatePatientInfoHtml(
     physician: 'Médecin',
     nurse: 'Infirmier(ère)',
     phone: 'Tél',
-    dosage: 'Posologie',
-    frequency: 'Fréquence',
-    duration: 'Durée',
-    cycle: 'Cycle',
-    days: 'jours',
     footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
   } : {
     title: 'Informatie voor patiënten',
@@ -159,70 +285,12 @@ function generatePatientInfoHtml(
     physician: 'Arts',
     nurse: 'Verpleegkundige',
     phone: 'Tel',
-    dosage: 'Dosering',
-    frequency: 'Frequentie',
-    duration: 'Duur',
-    cycle: 'Cyclus',
-    days: 'dagen',
     footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
   };
 
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
     : '';
-
-  // Limit items to fit A4
-  const maxIndications = 4;
-  const maxCommonSideEffects = 5;
-  const maxSeriousSideEffects = 3;
-  const maxCounselingPoints = 4;
-  const maxContraindications = 4;
-  const maxMonitoring = 4;
-
-  // Use custom content if available, otherwise use drug data
-  const introductionText = customContent?.introduction || drug.mechanism_of_action;
-  const usageText = customContent?.usage_info || 
-    (drug.approved_indications?.length > 0 
-      ? drug.approved_indications.slice(0, maxIndications).map((ind: string) => `• ${ind}`).join('\n')
-      : null);
-  
-  const dosingText = customContent?.dosing_info || null;
-  const contraindicationsText = customContent?.contraindications ||
-    (drug.contraindications?.length > 0
-      ? drug.contraindications.slice(0, maxContraindications).map((c: string) => `• ${c}`).join('\n')
-      : null);
-  
-  const sideEffectsCommonText = customContent?.side_effects_common ||
-    (drug.side_effects?.common?.length > 0
-      ? drug.side_effects.common.slice(0, maxCommonSideEffects).map((e: string) => `• ${e}`).join('\n')
-      : null);
-  
-  const sideEffectsSeriousText = customContent?.side_effects_serious ||
-    (drug.side_effects?.serious?.length > 0
-      ? drug.side_effects.serious.slice(0, maxSeriousSideEffects).map((e: string) => `• ${e}`).join('\n')
-      : null);
-  
-  const tipsText = customContent?.tips ||
-    (drug.patient_counseling_points?.length > 0
-      ? drug.patient_counseling_points.slice(0, maxCounselingPoints).map((p: string) => `• ${p}`).join('\n')
-      : null);
-  
-  const monitoringText = customContent?.monitoring ||
-    (drug.monitoring_requirements?.length > 0
-      ? drug.monitoring_requirements.slice(0, maxMonitoring).map((r: string) => `• ${r}`).join('\n')
-      : null);
-
-  // Helper to format text with line breaks
-  const formatText = (text: string | null) => {
-    if (!text) return '';
-    return text.split('\n').map(line => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('•')) {
-        return `<li>${trimmed.substring(1).trim()}</li>`;
-      }
-      return trimmed ? `<p>${trimmed}</p>` : '';
-    }).join('');
-  };
 
   const formatAsList = (text: string | null) => {
     if (!text) return '';
@@ -245,165 +313,39 @@ function generatePatientInfoHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${isFr ? 'Information patient' : 'Patiëntinformatie'} - ${drug.generic_name}</title>
   <style>
-    @page {
-      size: A4;
-      margin: 12mm;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    @page { size: A4; margin: 12mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #1a1a1a;
-      width: 210mm;
-      min-height: 297mm;
-      margin: 0 auto;
-      padding: 12mm;
-      background: white;
-       overflow: auto;
+      font-size: 14px; line-height: 1.5; color: #1a1a1a;
+      width: 210mm; min-height: 297mm; margin: 0 auto; padding: 12mm;
+      background: white; overflow: auto;
     }
-    .logo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #6b2d5b;
-    }
-    .logo-header img {
-      max-height: 50px;
-      width: auto;
-    }
-    .header-title {
-      text-align: right;
-    }
-    .header-title h1 {
-      color: #6b2d5b;
-      font-size: 22px;
-      margin-bottom: 4px;
-    }
-    .header-title .subtitle {
-      color: #666;
-      font-size: 13px;
-    }
-    .drug-class {
-      display: inline-block;
-      background: #f5e6f0;
-      color: #6b2d5b;
-      padding: 4px 10px;
-      border-radius: 3px;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-    .content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 14px;
-    }
-    .section {
-      margin-bottom: 10px;
-    }
-    .section h2 {
-      color: #6b2d5b;
-      font-size: 15px;
-      margin-bottom: 6px;
-      padding-bottom: 2px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    .section p {
-      margin-bottom: 4px;
-      color: #333;
-      font-size: 13px;
-    }
-    .section ul {
-      margin-left: 14px;
-      margin-bottom: 6px;
-    }
-    .section li {
-      margin-bottom: 3px;
-      color: #333;
-      font-size: 13px;
-    }
-    .warning-box {
-      background: #fff8e6;
-      border-left: 3px solid #e87722;
-      padding: 8px 10px;
-      margin: 6px 0;
-      border-radius: 0 3px 3px 0;
-    }
-    .warning-box h3 {
-      color: #cc7a00;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-    .danger-box {
-      background: #ffe6e6;
-      border-left: 3px solid #cc0000;
-      padding: 8px 10px;
-      margin: 6px 0;
-      border-radius: 0 3px 3px 0;
-    }
-    .danger-box h3 {
-      color: #cc0000;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-    .info-box {
-      background: #f5e6f0;
-      border-left: 3px solid #6b2d5b;
-      padding: 8px 10px;
-      margin: 6px 0;
-      border-radius: 0 3px 3px 0;
-    }
-    .full-width {
-      grid-column: 1 / -1;
-    }
-    .contact-section {
-      background: #f5f5f5;
-      padding: 10px 12px;
-      border-radius: 4px;
-      margin-top: 12px;
-      font-size: 12px;
-    }
-    .contact-section h2 {
-      font-size: 14px;
-      margin-bottom: 8px;
-      color: #6b2d5b;
-    }
-    .contact-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-    .contact-grid p {
-      margin: 0;
-      white-space: nowrap;
-    }
-    .footer {
-      margin-top: 12px;
-      padding-top: 8px;
-      border-top: 1px solid #e0e0e0;
-      font-size: 11px;
-      color: #666;
-      text-align: center;
-    }
+    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #6b2d5b; }
+    .logo-header img { max-height: 50px; width: auto; }
+    .header-title { text-align: right; }
+    .header-title h1 { color: #6b2d5b; font-size: 22px; margin-bottom: 4px; }
+    .header-title .subtitle { color: #666; font-size: 13px; }
+    .content { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .section { margin-bottom: 10px; }
+    .section h2 { color: #6b2d5b; font-size: 15px; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+    .section p { margin-bottom: 4px; color: #333; font-size: 13px; }
+    .section ul { margin-left: 14px; margin-bottom: 6px; }
+    .section li { margin-bottom: 3px; color: #333; font-size: 13px; }
+    .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .warning-box h3 { color: #cc7a00; font-size: 13px; margin-bottom: 4px; }
+    .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 4px; }
+    .info-box { background: #f5e6f0; border-left: 3px solid #6b2d5b; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .full-width { grid-column: 1 / -1; }
+    .contact-section { background: #f5f5f5; padding: 10px 12px; border-radius: 4px; margin-top: 12px; font-size: 12px; }
+    .contact-section h2 { font-size: 14px; margin-bottom: 8px; color: #6b2d5b; }
+    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .contact-grid p { margin: 0; white-space: nowrap; }
+    .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
     @media print {
-      body {
-        width: auto;
-        min-height: auto;
-        padding: 0;
-        margin: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .logo-header img {
-        max-height: 50px !important;
-      }
+      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .logo-header img { max-height: 50px !important; }
     }
   </style>
 </head>
@@ -427,26 +369,23 @@ function generatePatientInfoHtml(
     ${usageText ? `
     <div class="section">
       <h2>${labels.usedFor}</h2>
-      ${customContent?.usage_info ? formatAsList(usageText) : `<ul>${drug.approved_indications.slice(0, maxIndications).map((ind: string) => `<li>${ind}</li>`).join('')}</ul>`}
+      ${formatAsList(usageText)}
     </div>
     ` : ''}
 
-    ${includeDosing && (dosingText || drug.dosing_info) ? `
+    ${includeDosing && (dosingText || dosingStructured || drug.dosing_info) ? `
     <div class="section">
       <h2>${labels.howGiven}</h2>
-      ${dosingText ? `<p>${dosingText.replace(/\n/g, '<br>')}</p>` : `
-        ${drug.dosing_info.standard_dose ? `<p><strong>${labels.dosage}:</strong> ${drug.dosing_info.standard_dose}</p>` : ''}
-        ${drug.dosing_info.frequency ? `<p><strong>${labels.frequency}:</strong> ${drug.dosing_info.frequency}</p>` : ''}
-        ${drug.dosing_info.duration ? `<p><strong>${labels.duration}:</strong> ${drug.dosing_info.duration}</p>` : ''}
-        ${drug.cycle_length_days ? `<p><strong>${labels.cycle}:</strong> ${drug.cycle_length_days} ${labels.days}</p>` : ''}
-      `}
+      ${dosingText ? `<p>${dosingText.replace(/\n/g, '<br>')}</p>` 
+        : dosingStructured ? `<p>${dosingStructured.replace(/\n/g, '<br>')}</p>`
+        : ''}
     </div>
     ` : ''}
 
     ${contraindicationsText ? `
     <div class="section">
       <h2>${labels.whenNot}</h2>
-      ${customContent?.contraindications ? formatAsList(contraindicationsText) : `<ul>${drug.contraindications.slice(0, maxContraindications).map((contra: string) => `<li>${contra}</li>`).join('')}</ul>`}
+      ${formatAsList(contraindicationsText)}
     </div>
     ` : ''}
 
@@ -457,13 +396,13 @@ function generatePatientInfoHtml(
         ${sideEffectsCommonText ? `
         <div class="warning-box">
           <h3>${labels.commonSE}</h3>
-          ${customContent?.side_effects_common ? formatAsList(sideEffectsCommonText) : `<ul style="margin-left: 14px;">${drug.side_effects.common.slice(0, maxCommonSideEffects).map((effect: string) => `<li>${effect}</li>`).join('')}</ul>`}
+          ${formatAsList(sideEffectsCommonText)}
         </div>
         ` : ''}
         ${sideEffectsSeriousText ? `
         <div class="danger-box">
           <h3>${labels.seriousSE}</h3>
-          ${customContent?.side_effects_serious ? formatAsList(sideEffectsSeriousText) : `<ul style="margin-left: 14px;">${drug.side_effects.serious.slice(0, maxSeriousSideEffects).map((effect: string) => `<li>${effect}</li>`).join('')}</ul>`}
+          ${formatAsList(sideEffectsSeriousText)}
         </div>
         ` : ''}
       </div>
@@ -474,7 +413,7 @@ function generatePatientInfoHtml(
     <div class="section">
       <h2>${labels.tips}</h2>
       <div class="info-box">
-        ${customContent?.tips ? formatAsList(tipsText) : `<ul style="margin-left: 14px;">${drug.patient_counseling_points.slice(0, maxCounselingPoints).map((point: string) => `<li>${point}</li>`).join('')}</ul>`}
+        ${formatAsList(tipsText)}
       </div>
     </div>
     ` : ''}
@@ -482,7 +421,7 @@ function generatePatientInfoHtml(
     ${monitoringText ? `
     <div class="section">
       <h2>${labels.monitoring}</h2>
-      ${customContent?.monitoring ? formatAsList(monitoringText) : `<ul>${drug.monitoring_requirements.slice(0, maxMonitoring).map((req: string) => `<li>${req}</li>`).join('')}</ul>`}
+      ${formatAsList(monitoringText)}
     </div>
     ` : ''}
   </div>
