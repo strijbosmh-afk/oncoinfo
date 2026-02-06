@@ -1,9 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, User, LogOut, Shield, Pill } from 'lucide-react';
+import { User, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +12,6 @@ import {
 
 export function Header() {
   const { user, isAdmin, signOut, loading } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/drugs?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -32,19 +21,6 @@ export function Header() {
             OncoInfo
           </span>
         </Link>
-
-        <form onSubmit={handleSearch} className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Zoek medicijnen..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </form>
 
         <nav className="flex items-center gap-2">
           <Button variant="ghost" asChild>

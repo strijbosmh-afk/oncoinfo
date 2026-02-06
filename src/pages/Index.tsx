@@ -146,8 +146,12 @@ const Index = () => {
             ))}
           </div>
 
+          <h2 className="text-2xl font-bold text-center mt-12 mb-6">
+            Of kies direct een geneesmiddel of schema
+          </h2>
+
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mt-12">
+          <div className="max-w-2xl mx-auto">
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
