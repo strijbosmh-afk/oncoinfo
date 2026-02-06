@@ -665,24 +665,22 @@ export default function DrugDetailPage() {
                   type="button"
                   variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
                   onClick={() => setSelectedLanguage('nl')}
-                  className="flex-1 gap-2"
+                  className="flex-1"
                 >
-                  <span className="text-base leading-none">🇧🇪</span>
                   Nederlands
                 </Button>
                 <Button
                   type="button"
                   variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
                   onClick={() => setSelectedLanguage('fr')}
-                  className="flex-1 gap-2"
+                  className="flex-1"
                 >
-                  <span className="text-base leading-none">🇫🇷</span>
                   Frans
                 </Button>
               </div>
             </div>
             
-            <DialogFooter className="pt-2">
+            <DialogFooter className="pt-2 flex justify-center sm:justify-center gap-2">
               <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
                 Annuleren
               </Button>
@@ -691,11 +689,7 @@ export default function DrugDetailPage() {
                 disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
                 className="gap-2"
               >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <span className="text-base leading-none">{selectedLanguage === 'nl' ? '🇧🇪' : '🇫🇷'}</span>
-                )}
+                {isGeneratingPdf && <Loader2 className="h-4 w-4 animate-spin" />}
                 Genereer folder
               </Button>
             </DialogFooter>
