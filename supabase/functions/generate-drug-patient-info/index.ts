@@ -300,7 +300,7 @@ function generatePatientInfoHtml(
     }
     .contact-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
     }
     .contact-grid p {
@@ -409,7 +409,6 @@ function generatePatientInfoHtml(
     <div class="contact-grid">
       <p><strong>Arts:</strong> ${physicianName || '_________________'}</p>
       <p><strong>Verpleegkundige:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>Apotheek:</strong> _________________</p>
       <p><strong>Tel:</strong> 016 80 90 11</p>
     </div>
   </div>
