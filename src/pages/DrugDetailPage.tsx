@@ -666,7 +666,7 @@ export default function DrugDetailPage() {
                 {isGeneratingPdf ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4" />
+                  <span className="text-base leading-none">🇧🇪</span>
                 )}
                 Genereer folder NL
               </Button>
@@ -679,7 +679,7 @@ export default function DrugDetailPage() {
                 {isGeneratingPdf ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4" />
+                  <span className="text-base leading-none">🇫🇷</span>
                 )}
                 Genereer folder FR
               </Button>
