@@ -470,7 +470,7 @@ export default function DrugsPage() {
         {/* Back to categories link */}
         {category && (
           <Link 
-            to="/" 
+            to="/home" 
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
