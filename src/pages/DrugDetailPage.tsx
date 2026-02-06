@@ -57,7 +57,7 @@ export default function DrugDetailPage() {
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
 
-  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string) => {
+  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl') => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
@@ -68,7 +68,8 @@ export default function DrugDetailPage() {
           include_dosing: includeDosing, 
           include_side_effects: includeSideEffects,
           physician_name: physicianName || '',
-          nurse_name: nurseName || ''
+          nurse_name: nurseName || '',
+          language
         }
       });
 
@@ -86,10 +87,10 @@ export default function DrugDetailPage() {
     setIsStaffDialogOpen(true);
   };
 
-  const handleConfirmStaff = async () => {
+  const handleConfirmStaff = async (language: 'nl' | 'fr' = 'nl') => {
     setIsStaffDialogOpen(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
-    await fetchPatientInfo(selectedPhysician, nurseName);
+    await fetchPatientInfo(selectedPhysician, nurseName, language);
     setIsPreviewOpen(true);
   };
 
@@ -596,7 +597,7 @@ export default function DrugDetailPage() {
 
         {/* Staff Selection Dialog */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Stethoscope className="h-5 w-5" />
@@ -604,7 +605,7 @@ export default function DrugDetailPage() {
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-6 py-2">
+            <div className="grid grid-cols-2 gap-6 py-2">
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
                 <RadioGroup value={selectedPhysician} onValueChange={setSelectedPhysician}>
@@ -653,12 +654,12 @@ export default function DrugDetailPage() {
               </div>
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="flex gap-2 sm:gap-2">
               <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
                 Annuleren
               </Button>
               <Button 
-                onClick={handleConfirmStaff} 
+                onClick={() => handleConfirmStaff('nl')} 
                 disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
                 className="gap-2"
               >
@@ -667,7 +668,20 @@ export default function DrugDetailPage() {
                 ) : (
                   <FileText className="h-4 w-4" />
                 )}
-                Genereer folder
+                Genereer folder NL
+              </Button>
+              <Button 
+                onClick={() => handleConfirmStaff('fr')} 
+                disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
+                variant="secondary"
+                className="gap-2"
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                Genereer folder FR
               </Button>
             </DialogFooter>
           </DialogContent>
