@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
 import { 
@@ -31,6 +34,9 @@ import {
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
+const PHYSICIANS = ['Dr. M. Strijbos', 'Dr. A. Caeyman'] as const;
+const NURSES = ['Mireille Pycke'] as const;
+
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
@@ -44,13 +50,26 @@ export default function DrugDetailPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const fetchPatientInfo = useCallback(async () => {
+  // Staff selection state
+  const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false);
+  const [selectedPhysician, setSelectedPhysician] = useState<string>(PHYSICIANS[0]);
+  const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
+  const [customNurse, setCustomNurse] = useState('');
+  const [isNurseCustom, setIsNurseCustom] = useState(false);
+
+  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string) => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-drug-patient-info', {
-        body: { drug_id: drug.id, include_dosing: includeDosing, include_side_effects: includeSideEffects }
+        body: { 
+          drug_id: drug.id, 
+          include_dosing: includeDosing, 
+          include_side_effects: includeSideEffects,
+          physician_name: physicianName || '',
+          nurse_name: nurseName || ''
+        }
       });
 
       if (error) throw error;
@@ -63,8 +82,14 @@ export default function DrugDetailPage() {
     }
   }, [drug, includeDosing, includeSideEffects]);
 
-  const handleGeneratePatientInfo = async () => {
-    await fetchPatientInfo();
+  const handleOpenStaffDialog = () => {
+    setIsStaffDialogOpen(true);
+  };
+
+  const handleConfirmStaff = async () => {
+    setIsStaffDialogOpen(false);
+    const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
+    await fetchPatientInfo(selectedPhysician, nurseName);
     setIsPreviewOpen(true);
   };
 
@@ -269,7 +294,7 @@ export default function DrugDetailPage() {
                 </PopoverContent>
               </Popover>
               <Button 
-                onClick={handleGeneratePatientInfo} 
+                onClick={handleOpenStaffDialog} 
                 disabled={isGeneratingPdf}
                 variant="outline"
                 className="gap-2"
@@ -555,6 +580,85 @@ export default function DrugDetailPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Staff Selection Dialog */}
+        <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Gegevens patiëntenfolder
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-2">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Arts</Label>
+                <RadioGroup value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                  {PHYSICIANS.map((doc) => (
+                    <div key={doc} className="flex items-center gap-2">
+                      <RadioGroupItem value={doc} id={`doc-${doc}`} />
+                      <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer">{doc}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Verpleegkundige</Label>
+                <RadioGroup 
+                  value={isNurseCustom ? '__custom__' : nurseSelection} 
+                  onValueChange={(val) => {
+                    if (val === '__custom__') {
+                      setIsNurseCustom(true);
+                    } else {
+                      setIsNurseCustom(false);
+                      setNurseSelection(val);
+                    }
+                  }}
+                >
+                  {NURSES.map((nurse) => (
+                    <div key={nurse} className="flex items-center gap-2">
+                      <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
+                      <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer">{nurse}</Label>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="__custom__" id="nurse-custom" />
+                    <Label htmlFor="nurse-custom" className="font-normal cursor-pointer">Andere</Label>
+                  </div>
+                </RadioGroup>
+                {isNurseCustom && (
+                  <Input
+                    placeholder="Naam verpleegkundige"
+                    value={customNurse}
+                    onChange={(e) => setCustomNurse(e.target.value)}
+                    className="mt-2"
+                    autoFocus
+                  />
+                )}
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
+                Annuleren
+              </Button>
+              <Button 
+                onClick={handleConfirmStaff} 
+                disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
+                className="gap-2"
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4" />
+                )}
+                Genereer folder
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Patient Info Preview Dialog */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
