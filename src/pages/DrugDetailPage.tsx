@@ -110,31 +110,44 @@ export default function DrugDetailPage() {
         import('html2canvas')
       ]);
       
-      // Parse the HTML content safely using DOMParser
+      // Parse the full HTML to extract both styles and body content
       const parser = new DOMParser();
       const doc = parser.parseFromString(previewHtml, 'text/html');
-      const bodyContent = doc.body;
       
-      if (!bodyContent) {
+      if (!doc.body) {
         throw new Error('Could not parse HTML content');
       }
       
-      // Apply inline styles for PDF generation
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = bodyContent.innerHTML;
-      tempDiv.style.cssText = 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; color: #1a1a1a; padding: 12mm; background: white; width: 210mm; box-sizing: border-box;';
-      document.body.appendChild(tempDiv);
+      // Create a container with an iframe to render the full HTML with styles
+      const tempIframe = document.createElement('iframe');
+      tempIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: auto; border: none;';
+      document.body.appendChild(tempIframe);
       
-      // Convert HTML to canvas
-      const canvas = await html2canvas(tempDiv, {
+      const iframeDoc = tempIframe.contentDocument || tempIframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Could not access iframe document');
+      
+      // Write the complete HTML (with styles) into the iframe
+      iframeDoc.open();
+      iframeDoc.write(previewHtml);
+      iframeDoc.close();
+      
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const iframeBody = iframeDoc.body;
+      
+      // Convert the fully styled content to canvas
+      const canvas = await html2canvas(iframeBody, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: iframeBody.scrollWidth,
+        windowHeight: iframeBody.scrollHeight,
       });
       
       // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -150,19 +163,19 @@ export default function DrugDetailPage() {
       let heightLeft = imgHeight;
       let position = 0;
       
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
       
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
       
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       
-      document.body.removeChild(tempDiv);
+      document.body.removeChild(tempIframe);
       toast.success('PDF gedownload');
     } catch (err) {
       console.error('Error downloading PDF:', err);
