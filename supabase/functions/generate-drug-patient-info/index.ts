@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
  
-    const { drug_id, include_dosing = true, include_side_effects = true } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '' } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const logoUrl = 'https://uroinfo.lovable.app/images/logo-rzt.png';
     
     // Generate patient-friendly HTML with optional custom content
-    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoUrl, customContent);
+    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoUrl, customContent, physician_name, nurse_name);
 
     return new Response(
       JSON.stringify({ 
@@ -88,7 +88,9 @@ function generatePatientInfoHtml(
   includeDosing: boolean, 
   includeSideEffects: boolean, 
   logoUrl: string,
-  customContent?: CustomContent | null
+  customContent?: CustomContent | null,
+  physicianName?: string,
+  nurseName?: string
 ): string {
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
@@ -405,8 +407,8 @@ function generatePatientInfoHtml(
   <div class="contact-section full-width">
     <h2>Contact</h2>
     <div class="contact-grid">
-      <p><strong>Arts:</strong> _________________</p>
-      <p><strong>Verpleegkundige:</strong> _________________</p>
+      <p><strong>Arts:</strong> ${physicianName || '_________________'}</p>
+      <p><strong>Verpleegkundige:</strong> ${nurseName || '_________________'}</p>
       <p><strong>Apotheek:</strong> _________________</p>
       <p><strong>Tel:</strong> 016 80 90 11</p>
     </div>
