@@ -406,8 +406,8 @@ function generatePatientInfoHtml(
     <h2>Contact</h2>
     <div class="contact-grid">
       <p><strong>Arts:</strong> _________________</p>
-      <p><strong>Verpleegkundige:</strong> _______</p>
-      <p><strong>Apotheek:</strong> _____________</p>
+      <p><strong>Verpleegkundige:</strong> _________________</p>
+      <p><strong>Apotheek:</strong> _________________</p>
       <p><strong>Tel:</strong> 016 80 90 11</p>
     </div>
   </div>
