@@ -1,31 +1,8 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
-const TIMER_SECONDS = 4;
-
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const [secondsLeft, setSecondsLeft] = useState(TIMER_SECONDS);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          navigate('/home');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [navigate]);
-
-  const handleStart = () => {
-    navigate('/home');
-  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
@@ -45,13 +22,9 @@ const WelcomePage = () => {
           </p>
         </div>
 
-        <Button size="lg" className="px-10 text-lg h-12" onClick={handleStart}>
+        <Button size="lg" className="px-10 text-lg h-12" onClick={() => navigate('/home')}>
           Start
         </Button>
-
-        <p className="text-sm text-muted-foreground">
-          Automatisch verder over {secondsLeft} seconde{secondsLeft !== 1 ? 'n' : ''}…
-        </p>
       </div>
     </div>
   );
