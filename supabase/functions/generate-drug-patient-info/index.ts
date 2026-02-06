@@ -46,11 +46,21 @@ Deno.serve(async (req) => {
       .eq('drug_id', drug_id)
       .single();
 
-    // Logo URL from the published site
-    const logoUrl = 'https://uroinfo.lovable.app/images/logo-rzt.png';
+    // Fetch logo as base64 so it works in preview and print without needing publish
+    let logoDataUri = '';
+    try {
+      const logoResponse = await fetch('https://uroinfo.lovable.app/images/logo-rzt.png');
+      if (logoResponse.ok) {
+        const logoBuffer = await logoResponse.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
+        logoDataUri = `data:image/png;base64,${base64}`;
+      }
+    } catch (e) {
+      console.error('Could not fetch logo:', e);
+    }
     
     // Generate patient-friendly HTML with optional custom content
-    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoUrl, customContent, physician_name, nurse_name);
+    const html = generatePatientInfoHtml(drug, include_dosing, include_side_effects, logoDataUri, customContent, physician_name, nurse_name);
 
     return new Response(
       JSON.stringify({ 
@@ -329,7 +339,6 @@ function generatePatientInfoHtml(
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
       <p class="subtitle">Informatie voor patiënten</p>
-      <span class="drug-class">${drug.drug_class}${drug.administration_route ? ` • ${drug.administration_route}` : ''}</span>
     </div>
   </div>
 
