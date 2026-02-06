@@ -39,6 +39,8 @@ export interface DosingInfo {
 export interface SideEffects {
   common?: string[];
   serious?: string[];
+  veel_voorkomend?: string[];
+  ernstig?: string[];
   management?: {
     [key: string]: string;
   };
