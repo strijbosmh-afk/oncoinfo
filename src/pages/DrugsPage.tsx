@@ -13,9 +13,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal } from 'lucide-react';
 import { Layers } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SortableDrugList } from '@/components/drugs/SortableDrugList';
+
+const DRUG_CLASS_FULL_NAMES: Record<string, string> = {
+  'IO/ICI': 'Immune Checkpoint Inhibitor',
+  'PARPi': 'Poly (ADP-ribose) Polymerase Inhibitor',
+  'ARPI': 'Androgen Receptor Pathway Inhibitor',
+  'TKI': 'Tyrosine Kinase Inhibitor',
+  'ADC': 'Antibody-Drug Conjugate',
+  'CDK4/6i': 'Cycline-Dependent Kinase 4/6 Inhibitor',
+  'HER2-remmers': 'Humane Epidermale Groeifactor Receptor 2 Remmers',
+  'SERM': 'Selectieve Estrogeen Receptor Modulator',
+  'SERD': 'Selectieve Estrogeen Receptor Degradator',
+  'LHRH agonist': 'Luteinizing Hormone-Releasing Hormone Agonist',
+  'G-CSF': 'Granulocyte Colony-Stimulating Factor',
+};
 
 const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
@@ -108,6 +123,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
   }
   
   return (
+    <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
       <button
         onClick={onToggleFavorite}
@@ -134,9 +150,22 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
               )}
             </div>
             <div className="flex flex-col items-end gap-1">
-              <Badge className={getDrugClassColor(drug.drug_class)}>
-                {drug.drug_class}
-              </Badge>
+              {DRUG_CLASS_FULL_NAMES[drug.drug_class] ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge className={getDrugClassColor(drug.drug_class)}>
+                      {drug.drug_class}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{DRUG_CLASS_FULL_NAMES[drug.drug_class]}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Badge className={getDrugClassColor(drug.drug_class)}>
+                  {drug.drug_class}
+                </Badge>
+              )}
               {drug.is_on_zvz && (
                 <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
                   ✓ RIZIV
@@ -168,6 +197,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
         </CardContent>
       </Link>
     </Card>
+    </TooltipProvider>
   );
 }
 
@@ -802,23 +832,42 @@ export default function DrugsPage() {
                   <div>
                     <h4 className="font-medium mb-3">Medicijnklasse</h4>
                     <div className="space-y-2">
-                      {displayDrugClasses.map((drugClass) => (
-                        <div key={drugClass} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`class-${drugClass}`}
-                            checked={filters.drug_class?.includes(drugClass) ?? false}
-                            onCheckedChange={(checked) =>
-                              handleClassFilter(drugClass, checked as boolean)
-                            }
-                          />
-                          <label
-                            htmlFor={`class-${drugClass}`}
-                            className="text-sm cursor-pointer"
-                          >
-                            {drugClass}
-                          </label>
-                        </div>
-                      ))}
+                      <TooltipProvider delayDuration={300}>
+                        {displayDrugClasses.map((drugClass) => {
+                          const fullName = DRUG_CLASS_FULL_NAMES[drugClass];
+                          const label = (
+                            <label
+                              htmlFor={`class-${drugClass}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {drugClass}
+                            </label>
+                          );
+                          return (
+                            <div key={drugClass} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`class-${drugClass}`}
+                                checked={filters.drug_class?.includes(drugClass) ?? false}
+                                onCheckedChange={(checked) =>
+                                  handleClassFilter(drugClass, checked as boolean)
+                                }
+                              />
+                              {fullName ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    {label}
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p>{fullName}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                label
+                              )}
+                            </div>
+                          );
+                        })}
+                      </TooltipProvider>
                     </div>
                   </div>
 
