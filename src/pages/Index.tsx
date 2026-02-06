@@ -92,21 +92,6 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative py-8 md:py-12 overflow-hidden">
-        <div className="absolute inset-0 gradient-medical opacity-5" />
-        <div className="container relative z-10">
-          <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-primary">
-              OncoInfo
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-              Compleet geneesmiddelenoverzicht voor oncologie
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Drug Library Cards */}
       <section className="py-12 md:py-16">
         <div className="container">
