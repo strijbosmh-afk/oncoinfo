@@ -56,6 +56,7 @@ export default function DrugDetailPage() {
   const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr'>('nl');
 
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl') => {
     if (!drug) return;
@@ -87,10 +88,10 @@ export default function DrugDetailPage() {
     setIsStaffDialogOpen(true);
   };
 
-  const handleConfirmStaff = async (language: 'nl' | 'fr' = 'nl') => {
+  const handleConfirmStaff = async () => {
     setIsStaffDialogOpen(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
-    await fetchPatientInfo(selectedPhysician, nurseName, language);
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage);
     setIsPreviewOpen(true);
   };
 
@@ -600,9 +601,12 @@ export default function DrugDetailPage() {
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Stethoscope className="h-5 w-5" />
-                Gegevens patiëntenfolder
+                <FileText className="h-5 w-5" />
+                Patiëntenfolder genereren
               </DialogTitle>
+              <p className="text-sm text-muted-foreground pt-1">
+                Selecteer de behandelende arts, verpleegkundige en de gewenste taal voor de folder.
+              </p>
             </DialogHeader>
             
             <div className="grid grid-cols-2 gap-6 py-2">
@@ -653,35 +657,46 @@ export default function DrugDetailPage() {
                 )}
               </div>
             </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-sm font-medium">Taal van de folder</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
+                  onClick={() => setSelectedLanguage('nl')}
+                  className="flex-1 gap-2"
+                >
+                  <span className="text-base leading-none">🇧🇪</span>
+                  Nederlands
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
+                  onClick={() => setSelectedLanguage('fr')}
+                  className="flex-1 gap-2"
+                >
+                  <span className="text-base leading-none">🇫🇷</span>
+                  Frans
+                </Button>
+              </div>
+            </div>
             
-            <DialogFooter className="flex gap-2 sm:gap-2">
+            <DialogFooter className="pt-2">
               <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
                 Annuleren
               </Button>
               <Button 
-                onClick={() => handleConfirmStaff('nl')} 
+                onClick={handleConfirmStaff} 
                 disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
                 className="gap-2"
               >
                 {isGeneratingPdf ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <span className="text-base leading-none">🇧🇪</span>
+                  <span className="text-base leading-none">{selectedLanguage === 'nl' ? '🇧🇪' : '🇫🇷'}</span>
                 )}
-                Genereer folder NL
-              </Button>
-              <Button 
-                onClick={() => handleConfirmStaff('fr')} 
-                disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
-                variant="secondary"
-                className="gap-2"
-              >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <span className="text-base leading-none">🇫🇷</span>
-                )}
-                Genereer folder FR
+                Genereer folder
               </Button>
             </DialogFooter>
           </DialogContent>
