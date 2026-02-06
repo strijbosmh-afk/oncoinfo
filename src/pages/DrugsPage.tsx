@@ -309,20 +309,28 @@ export default function DrugsPage() {
      
       // Filter by subcategory
       if (selectedSubcategory) {
-        const subcategoryFilters: Record<string, { areas: string[], classes: string[] }> = {
+        const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
+        const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
           'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
           'antiemetic': { areas: ['Anti-emetica'], classes: [] },
           'gcsf': { areas: ['Groeifactoren'], classes: [] },
           'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
           'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
-          'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'] }
+          'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
         };
         const filter = subcategoryFilters[selectedSubcategory];
         if (filter) {
-          result = result.filter(drug => 
-            drug.disease_areas.some(area => filter.areas.includes(area)) ||
-            filter.classes.includes(drug.drug_class)
-          );
+          result = result.filter(drug => {
+            const matchesArea = drug.disease_areas.some(area => filter.areas.includes(area)) ||
+              filter.classes.includes(drug.drug_class);
+            // For 'supportive' catch-all, exclude drugs that belong to a specific subcategory
+            if (filter.exclude && matchesArea) {
+              const belongsToSpecific = drug.disease_areas.some(area => filter.exclude!.includes(area)) ||
+                filter.exclude.includes(drug.drug_class);
+              return !belongsToSpecific;
+            }
+            return matchesArea;
+          });
         }
       }
    }
