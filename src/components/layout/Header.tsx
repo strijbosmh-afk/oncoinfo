@@ -18,7 +18,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link to="/home" className="flex items-center gap-2">
           <span className="text-xl font-bold text-primary sm:text-2xl">
-            OncoInfo
+            OncoInfo – RZ Tienen
           </span>
         </Link>
 
