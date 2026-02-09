@@ -47,7 +47,7 @@ const DISCIPLINES = [
 ];
 
 const DRUG_TYPES = [
-  { value: '', label: 'Alle typen' },
+  { value: 'all', label: 'Alle typen' },
   { value: 'chemotherapy', label: 'Chemotherapie' },
   { value: 'immunotherapy', label: 'Immunotherapie (IO)' },
   { value: 'targeted therapy', label: 'Targeted therapie' },
@@ -79,7 +79,7 @@ export function RegimenSearch() {
   const searchMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke('search-regimens', {
-        body: { discipline, drug_type: drugType || undefined, source },
+        body: { discipline, drug_type: drugType && drugType !== 'all' ? drugType : undefined, source },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
