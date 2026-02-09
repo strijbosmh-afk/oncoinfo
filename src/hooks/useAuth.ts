@@ -146,20 +146,20 @@ export function useAuth() {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
-      toast({
-        title: 'Sign out failed',
-        description: error.message,
-        variant: 'destructive'
-      });
-      throw error;
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // Even if server-side signout fails, clear local state
     }
     
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setIsAdmin(false);
+    
     toast({
-      title: 'Signed out',
-      description: 'You have been signed out successfully.'
+      title: 'Uitgelogd',
+      description: 'U bent succesvol uitgelogd.'
     });
   };
 
