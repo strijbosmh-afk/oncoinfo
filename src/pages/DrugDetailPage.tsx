@@ -37,11 +37,11 @@ import { toast } from 'sonner';
 const PHYSICIAN_GROUPS = [
   {
     label: 'Oncologie',
-    physicians: ['Dr. M. Strijbos', 'Dr. A. Caeyman'],
+    physicians: ['Dr. A. Caeyman', 'Dr. M. Strijbos'],
   },
   {
     label: 'Urologie',
-    physicians: ['Dr. J. Van Nuffel', 'Dr. K. Slabbaert', 'Dr. L. Van Wynsberge', 'Dr. A. Claikens', 'Dr. E. Baten', 'Dr. K. Peeters', 'Dr. J. Berkers', 'Dr. L. Del Favero'],
+    physicians: ['Dr. E. Baten', 'Dr. J. Berkers', 'Dr. A. Claikens', 'Dr. L. Del Favero', 'Dr. K. Peeters', 'Dr. K. Slabbaert', 'Dr. J. Van Nuffel', 'Dr. L. Van Wynsberge'],
   },
   {
     label: 'Gynaecologie',
