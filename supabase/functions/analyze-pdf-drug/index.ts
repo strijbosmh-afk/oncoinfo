@@ -27,6 +27,11 @@ serve(async (req) => {
 
     const systemPrompt = `Je bent een expert in oncologische farmacologie. Je analyseert wetenschappelijke artikelen en extraheert ALLE medicijnregimens die worden beschreven.
 
+STAP 1 - RELEVANTIE CHECK:
+Beoordeel eerst of de tekst gerelateerd is aan oncologie (kankerbehandeling, tumortherapie, chemotherapie, immunotherapie, targeted therapy, etc.).
+Als de tekst NIET over oncologie gaat, geef dan een lege regimens-array terug en zet is_oncology_relevant op false met een duidelijke uitleg waarom.
+
+STAP 2 - EXTRACTIE (alleen als oncologie-relevant):
 Voor elk medicijn of combinatieschema dat je vindt:
 1. Identificeer de generieke naam/namen
 2. Geef de merknamen als je die kent
@@ -40,9 +45,9 @@ Voor elk medicijn of combinatieschema dat je vindt:
 
 BELANGRIJK: Vul bijwerkingen, contra-indicaties en veiligheidsinformatie aan met je eigen medische kennis. De PDF bevat mogelijk niet alle veiligheidsinformatie - jij moet die aanvullen op basis van bekende farmacologische data.
 
-Voor drug_class, kies uit: Immunotherapie (IO/ICI), PARPi, ARPI, Chemotherapie, TKI, ADC, Radioligand Therapie, Hormonale Therapie, Antiresorptiva, Combinatietherapie, Supportive Care, HER2-remmers, CDK4/6i
+Voor drug_class, kies uit: Immunotherapie (IO/ICI), PARPi, ARPI, Chemotherapie, TKI, ADC, Radioligand Therapie, Hormonale Therapie, Antiresorptiva, Combinatietherapie, Supportive Care, HER2-remmers, CDK4/6i, Angiogeneseremmers, PI3K-remmers, mTOR-remmers
 
-Voor disease_areas, kies uit: Prostaatkanker, Blaaskanker, Niercelcarcinoom, Testiskanker, Peniskanker
+Voor disease_areas, kies uit: Prostaatkanker, Blaaskanker, Niercelcarcinoom, Testiskanker, Peniskanker, Borstkanker, Ovariumcarcinoom, Endometriumcarcinoom, Cervixcarcinoom, Vulvacarcinoom
 
 Voor administration_route, kies uit: Oraal, Intraveneus, Subcutaan, Intramusculair`;
 
@@ -63,7 +68,7 @@ Voor administration_route, kies uit: Oraal, Intraveneus, Subcutaan, Intramuscula
             type: "function",
             function: {
               name: "extract_drug_regimens",
-              description: "Extraheer alle medicijnregimens uit de tekst met volledige veiligheidsinformatie",
+              description: "Beoordeel oncologische relevantie en extraheer alle medicijnregimens met volledige veiligheidsinformatie",
               parameters: {
                 type: "object",
                 properties: {
@@ -107,8 +112,10 @@ Voor administration_route, kies uit: Oraal, Intraveneus, Subcutaan, Intramuscula
                     },
                   },
                   summary: { type: "string", description: "Korte samenvatting van het artikel (2-3 zinnen)" },
+                  is_oncology_relevant: { type: "boolean", description: "Of het artikel gaat over oncologie/kankerbehandeling" },
+                  relevance_reason: { type: "string", description: "Uitleg waarom het artikel wel of niet oncologie-relevant is (1 zin)" },
                 },
-                required: ["regimens", "summary"],
+                required: ["regimens", "summary", "is_oncology_relevant"],
                 additionalProperties: false,
               },
             },
