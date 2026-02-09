@@ -149,18 +149,11 @@ export function useAuth() {
     try {
       await supabase.auth.signOut({ scope: 'local' });
     } catch {
-      // Even if server-side signout fails, clear local state
+      // Even if server-side signout fails, local storage is cleared
     }
     
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setIsAdmin(false);
-    
-    toast({
-      title: 'Uitgelogd',
-      description: 'U bent succesvol uitgelogd.'
-    });
+    // Force reload to clear all component state and redirect to login
+    window.location.href = '/';
   };
 
   return {
