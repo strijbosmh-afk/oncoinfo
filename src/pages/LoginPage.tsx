@@ -63,9 +63,7 @@ export default function LoginPage() {
       <div className="container flex items-center justify-center py-16 min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold mx-auto mb-4">
-              OI
-            </div>
+            <img src="/images/logo-rzt.png" alt="RZ Tienen" className="h-12 w-auto mx-auto mb-4" />
             <CardTitle className="text-2xl">Welkom bij OncoInfo</CardTitle>
             <CardDescription>
               Log in om toegang te krijgen tot de medicijnbibliotheek
