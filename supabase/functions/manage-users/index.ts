@@ -1,0 +1,259 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+function jsonResponse(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader: string) {
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+
+  if (error || !user) {
+    throw { message: 'Unauthorized', status: 401 };
+  }
+
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (!roleData) {
+    throw { message: 'Forbidden: Admin access required', status: 403 };
+  }
+
+  return user;
+}
+
+async function sendCredentialsEmail(email: string, password: string, loginUrl: string) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) {
+    throw new Error('RESEND_API_KEY niet geconfigureerd');
+  }
+
+  const { Resend } = await import("npm:resend@2.0.0");
+  const resend = new Resend(resendApiKey);
+
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: #6b2d5b; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">RZ Tienen - Oncologie</p>
+      </div>
+      <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+        <h2 style="color: #333; margin-top: 0;">Welkom bij OncoInfo</h2>
+        <p style="color: #555; line-height: 1.6;">Er is een account voor u aangemaakt op OncoInfo. Hieronder vindt u uw inloggegevens:</p>
+        
+        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0 0 10px;"><strong>E-mail:</strong> ${email}</p>
+          <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
+          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: #6b2d5b;">${loginUrl}</a></p>
+        </div>
+
+        <p style="color: #555; line-height: 1.6;">Bewaar deze gegevens veilig en deel ze niet met anderen.</p>
+        
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="${loginUrl}" style="background: #6b2d5b; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
+        </div>
+      </div>
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
+        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
+      </p>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: 'OncoInfo <onboarding@resend.dev>',
+    to: [email],
+    subject: 'Uw OncoInfo account - Inloggegevens',
+    html: htmlContent,
+  });
+
+  if (result.error) {
+    console.error('Resend error:', result.error);
+    throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
+  }
+
+  return result;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return jsonResponse({ error: 'Authorization header required' }, 401);
+    }
+
+    const adminUser = await verifyAdmin(supabase, authHeader);
+    const body = await req.json();
+    const { action, ...params } = body;
+
+    switch (action) {
+      case 'list': {
+        const { data: { users }, error } = await supabase.auth.admin.listUsers();
+        if (error) throw error;
+
+        const { data: profiles } = await supabase.from('profiles').select('*');
+        const { data: roles } = await supabase.from('user_roles').select('*');
+
+        const enrichedUsers = users.map((u: any) => {
+          const profile = profiles?.find((p: any) => p.user_id === u.id);
+          const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
+          return {
+            id: u.id,
+            email: u.email,
+            created_at: u.created_at,
+            last_sign_in_at: u.last_sign_in_at,
+            role: userRoles.includes('admin') ? 'admin' : 'viewer',
+            profile_id: profile?.id,
+          };
+        });
+
+        return jsonResponse({ users: enrichedUsers });
+      }
+
+      case 'create': {
+        const { email, password, role, send_email, login_url } = params;
+
+        if (!email || !password || !role) {
+          return jsonResponse({ error: 'email, password en role zijn verplicht' }, 400);
+        }
+
+        // Create user via Admin API (auto-confirms email)
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+        });
+
+        if (createError) throw createError;
+
+        // The trigger creates a default 'viewer' role. Update if needed.
+        if (role === 'admin') {
+          await supabase.from('user_roles').delete().eq('user_id', newUser.user.id);
+          await supabase.from('user_roles').insert({ user_id: newUser.user.id, role: 'admin' });
+          await supabase.from('profiles').update({ role: 'admin' }).eq('user_id', newUser.user.id);
+        }
+
+        // Send credentials email if requested
+        let emailSent = false;
+        let emailError = null;
+        if (send_email && login_url) {
+          try {
+            await sendCredentialsEmail(email, password, login_url);
+            emailSent = true;
+          } catch (err: any) {
+            console.error('Failed to send credentials email:', err);
+            emailError = err.message;
+          }
+        }
+
+        return jsonResponse({
+          user: { id: newUser.user.id, email: newUser.user.email },
+          email_sent: emailSent,
+          email_error: emailError,
+        });
+      }
+
+      case 'update': {
+        const { user_id, email, password, role } = params;
+
+        if (!user_id) {
+          return jsonResponse({ error: 'user_id is verplicht' }, 400);
+        }
+
+        // Prevent self-demotion
+        if (user_id === adminUser.id && role === 'viewer') {
+          return jsonResponse({ error: 'U kunt uw eigen admin-rol niet verwijderen' }, 400);
+        }
+
+        // Update auth user if email or password changed
+        const updateData: Record<string, string> = {};
+        if (email) updateData.email = email;
+        if (password) updateData.password = password;
+
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase.auth.admin.updateUserById(user_id, updateData);
+          if (updateError) throw updateError;
+        }
+
+        // Update email in profiles if changed
+        if (email) {
+          await supabase.from('profiles').update({ email }).eq('user_id', user_id);
+        }
+
+        // Update role if changed
+        if (role) {
+          await supabase.from('user_roles').delete().eq('user_id', user_id);
+          await supabase.from('user_roles').insert({ user_id, role });
+          await supabase.from('profiles').update({ role }).eq('user_id', user_id);
+        }
+
+        return jsonResponse({ success: true });
+      }
+
+      case 'delete': {
+        const { user_id } = params;
+
+        if (!user_id) {
+          return jsonResponse({ error: 'user_id is verplicht' }, 400);
+        }
+
+        if (user_id === adminUser.id) {
+          return jsonResponse({ error: 'U kunt uw eigen account niet verwijderen' }, 400);
+        }
+
+        // Clean up profiles and roles first
+        await supabase.from('user_roles').delete().eq('user_id', user_id);
+        await supabase.from('profiles').delete().eq('user_id', user_id);
+
+        // Delete auth user
+        const { error: deleteError } = await supabase.auth.admin.deleteUser(user_id);
+        if (deleteError) throw deleteError;
+
+        return jsonResponse({ success: true });
+      }
+
+      case 'send-credentials': {
+        const { user_id, email, password, login_url } = params;
+
+        if (!email || !password || !login_url) {
+          return jsonResponse({ error: 'email, password en login_url zijn verplicht' }, 400);
+        }
+
+        // Also update the password so it matches what we send
+        if (user_id) {
+          const { error: pwError } = await supabase.auth.admin.updateUserById(user_id, { password });
+          if (pwError) throw pwError;
+        }
+
+        await sendCredentialsEmail(email, password, login_url);
+        return jsonResponse({ success: true, email_sent: true });
+      }
+
+      default:
+        return jsonResponse({ error: `Onbekende actie: ${action}` }, 400);
+    }
+  } catch (error: any) {
+    console.error('Error in manage-users:', error);
+    const status = error.status || 500;
+    return jsonResponse({ error: error.message || 'Interne serverfout' }, status);
+  }
+});

@@ -14,6 +14,7 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -31,6 +32,22 @@ export function useAuth() {
     return data as Profile;
   }, []);
 
+  const checkAdminRole = useCallback(async (userId: string) => {
+    // Query user_roles table (the authoritative source for roles)
+    const { data, error } = await (supabase as any)
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking admin role:', error);
+      return false;
+    }
+    return !!data;
+  }, []);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -40,8 +57,11 @@ export function useAuth() {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id);
           setProfile(profile);
+          const admin = await checkAdminRole(session.user.id);
+          setIsAdmin(admin);
         } else {
           setProfile(null);
+          setIsAdmin(false);
         }
         
         setLoading(false);
@@ -55,13 +75,15 @@ export function useAuth() {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
         setProfile(profile);
+        const admin = await checkAdminRole(session.user.id);
+        setIsAdmin(admin);
       }
       
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchProfile]);
+  }, [fetchProfile, checkAdminRole]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -125,8 +147,6 @@ export function useAuth() {
       description: 'You have been signed out successfully.'
     });
   };
-
-  const isAdmin = profile?.role === 'admin';
 
   return {
     user,
