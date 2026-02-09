@@ -508,7 +508,7 @@ export default function DrugsPage() {
 
   return (
     <Layout>
-      <div className="container py-8">
+      <div className="container py-4">
         {/* Back to categories link */}
         {category && (
           <Link 
@@ -520,7 +520,7 @@ export default function DrugsPage() {
           </Link>
         )}
 
-        <div className="mb-8">
+        <div className="mb-4">
           {categoryConfig ? (
             <>
               <div className="flex items-center gap-3 mb-2">
@@ -594,7 +594,7 @@ export default function DrugsPage() {
 
         {/* Category-specific navigation cards */}
         {categoryConfig && (
-          <div className="mb-8">
+          <div className="mb-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (
@@ -750,7 +750,7 @@ export default function DrugsPage() {
 
         {/* Favorites Section */}
         {favoriteDrugs.length > 0 && (
-          <div className="mb-8">
+          <div className="mb-4">
             <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -966,6 +966,7 @@ export default function DrugsPage() {
                 <p className="text-sm text-muted-foreground pt-2">
                   Totaal: {filteredDrugs?.length} item{filteredDrugs?.length !== 1 ? 's' : ''} gevonden
                 </p>
+                <p className="text-xs text-muted-foreground mt-1">© Michiel Strijbos</p>
               </div>
             )}
           </div>
