@@ -50,11 +50,11 @@ export default function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold mx-auto mb-4">
-              GU
+              OI
             </div>
-            <CardTitle className="text-2xl">Welkom bij GU Studies Database</CardTitle>
+            <CardTitle className="text-2xl">Welkom bij OncoInfo</CardTitle>
             <CardDescription>
-              Log in om toegang te krijgen tot beheerfuncties of bekijk studies als gast
+              Log in om toegang te krijgen tot de medicijnbibliotheek
             </CardDescription>
           </CardHeader>
           <CardContent>
