@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText } from 'lucide-react';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine } from 'lucide-react';
 import { DRUG_CLASSES, DRUG_DISEASE_AREAS } from '@/types/drug';
 
 interface PubMedResult {
@@ -121,11 +121,46 @@ export function RegimenSearch() {
       return data;
     },
     onSuccess: (data) => {
-      setPdfResults(data.text || '');
-      toast({ title: 'PDF verwerkt', description: `${data.pages || 0} pagina's geëxtraheerd.` });
+      const text = data.text || '';
+      setPdfResults(text);
+      toast({ title: 'PDF verwerkt', description: `${data.pages || 0} pagina's geëxtraheerd. AI-analyse wordt gestart...` });
+      // Automatically trigger AI analysis
+      if (text && text.length > 20) {
+        analyzeMutation.mutate(text);
+      }
     },
     onError: (error: Error) => {
       toast({ title: 'PDF fout', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const analyzeMutation = useMutation({
+    mutationFn: async (text: string) => {
+      const { data, error } = await supabase.functions.invoke('analyze-pdf-drug', {
+        body: { text },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      const ext = data.extracted;
+      if (ext) {
+        setEditingDrug({
+          generic_name: ext.generic_name || '',
+          drug_class: ext.drug_class || '',
+          disease_areas: ext.disease_areas || [],
+          mechanism_of_action: ext.mechanism_of_action || '',
+          brand_names: ext.brand_names || '',
+          administration_route: ext.administration_route || '',
+          study_name: ext.study_name || '',
+        });
+        setAddDialogOpen(true);
+        toast({ title: 'AI-analyse voltooid', description: 'Velden zijn automatisch ingevuld. Controleer en pas aan.' });
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: 'AI-analyse mislukt', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -256,14 +291,26 @@ export function RegimenSearch() {
               />
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={pdfMutation.isPending}
+                disabled={pdfMutation.isPending || analyzeMutation.isPending}
                 className="gap-2"
               >
-                {pdfMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                PDF uploaden & extraheren
+                {pdfMutation.isPending || analyzeMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {pdfMutation.isPending ? 'PDF extraheren...' : analyzeMutation.isPending ? 'AI analyseert...' : 'PDF uploaden & analyseren'}
               </Button>
             </>
           )}
+          <Button
+            variant="outline"
+            onClick={() => openAddDialog()}
+            className="gap-2"
+          >
+            <PenLine className="h-4 w-4" />
+            Handmatig toevoegen
+          </Button>
         </div>
 
         {/* PDF Results */}
@@ -273,17 +320,21 @@ export function RegimenSearch() {
               <FileText className="h-4 w-4 text-primary" />
               <h3 className="font-semibold text-sm">Geëxtraheerde PDF-inhoud</h3>
             </div>
-            <div className="border rounded-lg p-4 max-h-[400px] overflow-y-auto">
+            <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto">
               <pre className="text-sm whitespace-pre-wrap font-sans text-muted-foreground">{pdfResults}</pre>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1"
-              onClick={() => openAddDialog({ title: '', disease: discipline })}
-            >
-              <Plus className="h-3 w-3" /> Therapie toevoegen op basis van PDF
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => analyzeMutation.mutate(pdfResults)}
+                disabled={analyzeMutation.isPending}
+              >
+                {analyzeMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                AI opnieuw analyseren
+              </Button>
+            </div>
           </div>
         )}
 
