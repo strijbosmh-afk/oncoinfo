@@ -241,7 +241,10 @@ export function RegimenSearch() {
     <Card>
       <CardHeader>
         <CardTitle>Nieuwe Regimens Zoeken</CardTitle>
-        <CardDescription>Zoek in PubMed en ClinicalTrials.gov naar nieuwe behandelregimens</CardDescription>
+        <CardDescription>
+          Zoek in PubMed en ClinicalTrials.gov naar nieuwe behandelregimens, of importeer direct vanuit een PDF{' '}
+          <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 align-middle border-amber-500/50 text-amber-600">Beta</Badge>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Search form */}
