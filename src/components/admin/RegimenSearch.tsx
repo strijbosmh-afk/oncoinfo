@@ -74,6 +74,7 @@ export function RegimenSearch() {
     mechanism_of_action: '',
     brand_names: '',
     administration_route: '',
+    study_name: '',
   });
 
   const searchMutation = useMutation({
@@ -106,6 +107,7 @@ export function RegimenSearch() {
         mechanism_of_action: editingDrug.mechanism_of_action || null,
         brand_names: editingDrug.brand_names ? editingDrug.brand_names.split(',').map(b => b.trim()) : [],
         administration_route: editingDrug.administration_route || null,
+        common_regimens: editingDrug.study_name ? [editingDrug.study_name.trim()] : [],
       });
       if (error) throw error;
     },
@@ -126,6 +128,7 @@ export function RegimenSearch() {
       mechanism_of_action: '',
       brand_names: '',
       administration_route: '',
+      study_name: '',
     });
     setAddDialogOpen(true);
   };
@@ -300,6 +303,14 @@ export function RegimenSearch() {
                   value={editingDrug.brand_names}
                   onChange={(e) => setEditingDrug({ ...editingDrug, brand_names: e.target.value })}
                   placeholder="Bijv. Keytruda"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Studienaam</Label>
+                <Input
+                  value={editingDrug.study_name}
+                  onChange={(e) => setEditingDrug({ ...editingDrug, study_name: e.target.value })}
+                  placeholder="Bijv. KEYNOTE-426, CheckMate 214"
                 />
               </div>
               <div className="space-y-2">
