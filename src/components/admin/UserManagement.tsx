@@ -32,9 +32,10 @@ export function UserManagement() {
   const [credentialsPassword, setCredentialsPassword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredUsers = users?.filter((u) =>
-    u.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) ?? [];
+  const filteredUsers = users?.filter((u) => {
+    const q = searchQuery.toLowerCase();
+    return u.email?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q);
+  }) ?? [];
 
   const handleCreate = () => {
     setDialogMode('create');
@@ -72,8 +73,9 @@ export function UserManagement() {
       sendCredentials.mutate({
         user_id: credentialsUser.id,
         email: credentialsUser.email,
+        username: credentialsUser.username || undefined,
         password: credentialsPassword.trim(),
-        login_url: `${window.location.origin}/login`,
+        login_url: `${window.location.origin}`,
       });
       setCredentialsDialogOpen(false);
     }
@@ -115,7 +117,7 @@ export function UserManagement() {
         </CardHeader>
         <CardContent>
           <Input
-            placeholder="Zoek op e-mail..."
+            placeholder="Zoek op naam of e-mail..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="mb-4"
@@ -142,7 +144,7 @@ export function UserManagement() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium truncate">{user.email}</p>
+                        <p className="font-medium truncate">{user.username || user.email}</p>
                         <Badge
                           variant={user.role === 'admin' ? 'default' : 'secondary'}
                           className="text-xs flex-shrink-0"
@@ -156,7 +158,7 @@ export function UserManagement() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Laatst ingelogd: {formatDate(user.last_sign_in_at)}
+                        {user.email} · Laatst ingelogd: {formatDate(user.last_sign_in_at)}
                       </p>
                     </div>
                   </div>

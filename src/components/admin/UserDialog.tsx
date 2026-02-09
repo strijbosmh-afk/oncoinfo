@@ -12,7 +12,7 @@ interface UserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'edit';
-  user?: { id: string; email: string; role: 'admin' | 'viewer' } | null;
+  user?: { id: string; email: string; username?: string; role: 'admin' | 'viewer' } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
 }
@@ -28,6 +28,7 @@ function generatePassword(length = 12): string {
 
 export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading }: UserDialogProps) {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'viewer'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
@@ -38,11 +39,13 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
     if (open) {
       if (mode === 'edit' && user) {
         setEmail(user.email);
+        setUsername(user.username || '');
         setRole(user.role);
         setPassword('');
         setShowPassword(false);
       } else {
         setEmail('');
+        setUsername('');
         setPassword(generatePassword());
         setRole('viewer');
         setSendEmail(true);
@@ -57,20 +60,22 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   };
 
   const handleSubmit = () => {
-    if (!email.trim()) return;
+    if (!email.trim() || !username.trim()) return;
 
     if (mode === 'create') {
       if (!password.trim()) return;
       onSubmit({
         email: email.trim(),
+        username: username.trim(),
         password: password.trim(),
         role,
         send_email: sendEmail,
-        login_url: `${window.location.origin}/login`,
+        login_url: `${window.location.origin}`,
       });
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
       if (email.trim() !== user!.email) changes.email = email.trim();
+      if (username.trim() !== (user!.username || '')) changes.username = username.trim();
       if (password.trim()) changes.password = password.trim();
       if (role !== user!.role) changes.role = role;
 
@@ -93,6 +98,17 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="user-username">Gebruikersnaam</Label>
+            <Input
+              id="user-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="bijv. jansen"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="user-email">E-mailadres</Label>
             <Input
@@ -177,7 +193,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !email.trim() || (mode === 'create' && !password.trim())}
+            disabled={isLoading || !email.trim() || !username.trim() || (mode === 'create' && !password.trim())}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             {mode === 'create' ? 'Aanmaken' : 'Opslaan'}
