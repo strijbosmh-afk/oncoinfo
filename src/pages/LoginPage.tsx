@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -23,32 +22,28 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      // Look up email by username using the security definer function
-      const { data: email, error: lookupError } = await supabase.rpc('get_email_by_username', {
-        _username: username.trim(),
+      // Use server-side edge function for username login
+      // This prevents email enumeration by never exposing emails to the client
+      const { data, error } = await supabase.functions.invoke('login-with-username', {
+        body: { username: username.trim(), password },
       });
 
-      if (lookupError || !email) {
+      if (error || data?.error) {
         toast({
           title: 'Inloggen mislukt',
-          description: 'Gebruikersnaam of wachtwoord is onjuist.',
+          description: data?.error || 'Gebruikersnaam of wachtwoord is onjuist.',
           variant: 'destructive',
         });
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        toast({
-          title: 'Inloggen mislukt',
-          description: 'Gebruikersnaam of wachtwoord is onjuist.',
-          variant: 'destructive',
+      // Set the session from the server response
+      const { session } = data;
+      if (session?.access_token && session?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
         });
-        return;
       }
 
       navigate('/home');
