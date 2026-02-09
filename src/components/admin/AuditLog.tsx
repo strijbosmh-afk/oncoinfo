@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, LogIn, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Loader2, LogIn, Plus, Pencil, Trash2, Download } from 'lucide-react';
 import { useState } from 'react';
 
 interface AuditEntry {
@@ -98,6 +99,32 @@ export function AuditLog() {
     );
   };
 
+  const exportCsv = () => {
+    if (!logs || logs.length === 0) return;
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const header = ['Datum', 'Gebruiker', 'Actie', 'Type', 'Naam', 'Details'];
+    const rows = logs.map((e) => {
+      const detailStr = e.details ? JSON.stringify(e.details) : '';
+      const entityLabel = e.entity_type === 'drug' ? 'Medicijn' : e.entity_type === 'patient_folder' ? 'Patiëntenfolder' : e.entity_type === 'trial' ? 'Studie' : e.entity_type === 'session' ? 'Login' : (e.entity_type || '');
+      return [
+        formatDate(e.created_at),
+        e.username || 'Onbekend',
+        ACTION_LABELS[e.action] || e.action,
+        entityLabel,
+        e.entity_name || '',
+        detailStr,
+      ].map(escape).join(',');
+    });
+    const csv = [header.join(','), ...rows].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `activiteitenlog-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -106,18 +133,30 @@ export function AuditLog() {
             <CardTitle>Activiteitenlog</CardTitle>
             <CardDescription>Overzicht van logins, wijzigingen en toevoegingen</CardDescription>
           </div>
-          <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-popover">
-              <SelectItem value="all">Alle activiteiten</SelectItem>
-              <SelectItem value="login">Logins</SelectItem>
-              <SelectItem value="create">Aangemaakt</SelectItem>
-              <SelectItem value="update">Bijgewerkt</SelectItem>
-              <SelectItem value="delete">Verwijderd</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={filterAction} onValueChange={setFilterAction}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="all">Alle activiteiten</SelectItem>
+                <SelectItem value="login">Logins</SelectItem>
+                <SelectItem value="create">Aangemaakt</SelectItem>
+                <SelectItem value="update">Bijgewerkt</SelectItem>
+                <SelectItem value="delete">Verwijderd</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={exportCsv}
+              disabled={!logs || logs.length === 0}
+            >
+              <Download className="h-4 w-4" />
+              CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
