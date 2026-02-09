@@ -615,7 +615,7 @@ export default function DrugDetailPage() {
 
         {/* Staff Selection Dialog */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -629,7 +629,7 @@ export default function DrugDetailPage() {
             <div className="space-y-4 py-2">
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {PHYSICIAN_GROUPS.map((group) => (
                     <div key={group.label} className="space-y-1.5">
                       <Label className="text-xs text-muted-foreground">{group.label}</Label>
@@ -651,7 +651,7 @@ export default function DrugDetailPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 border-t pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t pt-4">
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Verpleegkundige</Label>
                   <RadioGroup 
