@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText } from 'lucide-react';
 import { DRUG_CLASSES, DRUG_DISEASE_AREAS } from '@/types/drug';
 
 interface PubMedResult {
@@ -63,10 +63,13 @@ export function RegimenSearch() {
   const [discipline, setDiscipline] = useState('');
   const [drugType, setDrugType] = useState('');
   const [source, setSource] = useState('pubmed');
+  const [studyName, setStudyName] = useState('');
   const [pubmedResults, setPubmedResults] = useState<PubMedResult[]>([]);
   const [ctgovResults, setCtgovResults] = useState<CTGovResult[]>([]);
+  const [pdfResults, setPdfResults] = useState<string>('');
   const [expandedPmid, setExpandedPmid] = useState<string | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingDrug, setEditingDrug] = useState({
     generic_name: '',
     drug_class: '',
@@ -80,7 +83,7 @@ export function RegimenSearch() {
   const searchMutation = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke('search-regimens', {
-        body: { discipline, drug_type: drugType && drugType !== 'all' ? drugType : undefined, source },
+        body: { discipline, drug_type: drugType && drugType !== 'all' ? drugType : undefined, source, study_name: studyName || undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -97,6 +100,46 @@ export function RegimenSearch() {
       toast({ title: 'Zoekfout', description: error.message, variant: 'destructive' });
     },
   });
+
+  const pdfMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke('extract-pdf', {
+        body: { pdf_base64: base64, filename: file.name },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      setPdfResults(data.text || '');
+      toast({ title: 'PDF verwerkt', description: `${data.pages || 0} pagina's geëxtraheerd.` });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'PDF fout', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast({ title: 'Bestand te groot', description: 'Maximaal 20MB.', variant: 'destructive' });
+        return;
+      }
+      pdfMutation.mutate(file);
+    }
+    e.target.value = '';
+  };
 
   const addDrugMutation = useMutation({
     mutationFn: async () => {
@@ -141,7 +184,15 @@ export function RegimenSearch() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Search form */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Studienaam (optioneel)</Label>
+            <Input
+              value={studyName}
+              onChange={(e) => setStudyName(e.target.value)}
+              placeholder="Bijv. KEYNOTE-426, CheckMate 214"
+            />
+          </div>
           <div className="space-y-2">
             <Label>Discipline *</Label>
             <Select value={discipline} onValueChange={setDiscipline}>
@@ -178,19 +229,63 @@ export function RegimenSearch() {
                 <SelectItem value="pubmed">PubMed</SelectItem>
                 <SelectItem value="ctgov">ClinicalTrials.gov</SelectItem>
                 <SelectItem value="both">Beide</SelectItem>
+                <SelectItem value="pdf">PDF uploaden</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <Button
-          onClick={() => searchMutation.mutate()}
-          disabled={!discipline || searchMutation.isPending}
-          className="gap-2"
-        >
-          {searchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          Zoeken
-        </Button>
+        <div className="flex gap-3 flex-wrap">
+          {source !== 'pdf' ? (
+            <Button
+              onClick={() => searchMutation.mutate()}
+              disabled={!discipline || searchMutation.isPending}
+              className="gap-2"
+            >
+              {searchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              Zoeken
+            </Button>
+          ) : (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={handlePdfUpload}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={pdfMutation.isPending}
+                className="gap-2"
+              >
+                {pdfMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                PDF uploaden & extraheren
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* PDF Results */}
+        {pdfResults && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Geëxtraheerde PDF-inhoud</h3>
+            </div>
+            <div className="border rounded-lg p-4 max-h-[400px] overflow-y-auto">
+              <pre className="text-sm whitespace-pre-wrap font-sans text-muted-foreground">{pdfResults}</pre>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={() => openAddDialog({ title: '', disease: discipline })}
+            >
+              <Plus className="h-3 w-3" /> Therapie toevoegen op basis van PDF
+            </Button>
+          </div>
+        )}
 
         {/* PubMed Results */}
         {pubmedResults.length > 0 && (
