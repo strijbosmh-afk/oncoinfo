@@ -144,7 +144,7 @@ export function AuditLog() {
                     </Badge>
                     {entry.entity_type && entry.entity_type !== 'session' && (
                       <span className="text-xs text-muted-foreground">
-                        {entry.entity_type === 'drug' ? 'Medicijn' : entry.entity_type === 'patient_folder' ? 'Patiëntenfolder' : entry.entity_type}
+                        {entry.entity_type === 'drug' ? 'Medicijn' : entry.entity_type === 'patient_folder' ? 'Patiëntenfolder' : entry.entity_type === 'trial' ? 'Studie' : entry.entity_type}
                         {entry.entity_name && `: ${entry.entity_name}`}
                       </span>
                     )}
