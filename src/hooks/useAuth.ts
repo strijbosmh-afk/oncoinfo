@@ -146,12 +146,18 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    // Clear all Supabase auth storage manually to guarantee logout
+    const storageKeys = Object.keys(localStorage).filter(
+      (key) => key.startsWith('sb-') && key.endsWith('-auth-token')
+    );
+    storageKeys.forEach((key) => localStorage.removeItem(key));
+
     try {
       await supabase.auth.signOut({ scope: 'local' });
     } catch {
-      // Even if server-side signout fails, local storage is cleared
+      // Server signout may fail if session doesn't exist server-side
     }
-    
+
     // Force reload to clear all component state and redirect to login
     window.location.href = '/';
   };
