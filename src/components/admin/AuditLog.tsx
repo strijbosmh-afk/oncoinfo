@@ -3,9 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, LogIn, Plus, Pencil, Trash2, Download } from 'lucide-react';
+import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
+import { format, startOfDay, endOfDay } from 'date-fns';
+import { nl } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface AuditEntry {
   id: string;
@@ -42,18 +47,26 @@ const ACTION_COLORS: Record<string, string> = {
 
 export function AuditLog() {
   const [filterAction, setFilterAction] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const { data: logs, isLoading } = useQuery({
-    queryKey: ['audit-log', filterAction],
+    queryKey: ['audit-log', filterAction, dateFrom?.toISOString(), dateTo?.toISOString()],
     queryFn: async () => {
       let query = supabase
         .from('audit_log')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(500);
 
       if (filterAction !== 'all') {
         query = query.eq('action', filterAction);
+      }
+      if (dateFrom) {
+        query = query.gte('created_at', startOfDay(dateFrom).toISOString());
+      }
+      if (dateTo) {
+        query = query.lte('created_at', endOfDay(dateTo).toISOString());
       }
 
       const { data, error } = await query;
@@ -134,6 +147,33 @@ export function AuditLog() {
             <CardDescription>Overzicht van logins, wijzigingen en toevoegingen</CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("gap-1.5 w-[150px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4" />
+                  {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Van'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus locale={nl} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("gap-1.5 w-[150px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
+                  <CalendarIcon className="h-4 w-4" />
+                  {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Tot'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus locale={nl} className={cn("p-3 pointer-events-auto")} />
+              </PopoverContent>
+            </Popover>
+            {(dateFrom || dateTo) && (
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                Reset
+              </Button>
+            )}
             <Select value={filterAction} onValueChange={setFilterAction}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
