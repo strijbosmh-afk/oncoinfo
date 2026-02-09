@@ -21,7 +21,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signIn(email, password);
-      navigate('/');
+      navigate('/home');
     } catch {
       // Error handled in hook
     } finally {
@@ -36,7 +36,7 @@ export default function LoginPage() {
       await signUp(email, password);
       // Auto login after signup since auto-confirm is enabled
       await signIn(email, password);
-      navigate('/');
+      navigate('/home');
     } catch {
       // Error handled in hook
     } finally {
@@ -129,7 +129,7 @@ export default function LoginPage() {
             </Tabs>
 
             <div className="mt-6 text-center">
-              <Link to="/trials" className="text-sm text-muted-foreground hover:text-primary">
+              <Link to="/home" className="text-sm text-muted-foreground hover:text-primary">
                 Verder bladeren als gast →
               </Link>
             </div>
