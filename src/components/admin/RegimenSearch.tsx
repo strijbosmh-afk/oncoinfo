@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine } from 'lucide-react';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe } from 'lucide-react';
 import { DRUG_CLASSES, DRUG_DISEASE_AREAS } from '@/types/drug';
 
 interface PubMedResult {
@@ -87,6 +87,7 @@ export function RegimenSearch() {
   const [expandedPmid, setExpandedPmid] = useState<string | null>(null);
   const [expandedRegimen, setExpandedRegimen] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [articleUrl, setArticleUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingDrug, setEditingDrug] = useState({
     generic_name: '',
@@ -177,6 +178,27 @@ export function RegimenSearch() {
     },
   });
 
+  const urlMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const { data, error } = await supabase.functions.invoke('scrape-article', {
+        body: { url },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      const text = data.text || '';
+      toast({ title: 'Artikel opgehaald', description: `${data.chars || 0} tekens geëxtraheerd van ${data.source}. AI-analyse wordt gestart...` });
+      if (text && text.length > 20) {
+        analyzeMutation.mutate(text);
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: 'URL fout', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -242,7 +264,7 @@ export function RegimenSearch() {
       <CardHeader>
         <CardTitle>Nieuwe Regimens Zoeken</CardTitle>
         <CardDescription>
-          Zoek in PubMed en ClinicalTrials.gov naar nieuwe behandelregimens, of importeer direct vanuit een PDF{' '}
+          Zoek in PubMed en ClinicalTrials.gov naar nieuwe behandelregimens, of importeer direct vanuit een PDF of URL{' '}
           <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0 align-middle border-amber-500/50 text-amber-600">Beta</Badge>
         </CardDescription>
       </CardHeader>
@@ -294,22 +316,28 @@ export function RegimenSearch() {
                 <SelectItem value="ctgov">ClinicalTrials.gov</SelectItem>
                 <SelectItem value="both">Beide</SelectItem>
                 <SelectItem value="pdf">PDF uploaden</SelectItem>
+                <SelectItem value="url">URL / artikel link</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
+        {/* URL input when source is url */}
+        {source === 'url' && (
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 space-y-2">
+              <Label>Artikel URL</Label>
+              <Input
+                value={articleUrl}
+                onChange={(e) => setArticleUrl(e.target.value)}
+                placeholder="https://pubmed.ncbi.nlm.nih.gov/12345678 of andere URL"
+              />
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3 flex-wrap">
-          {source !== 'pdf' ? (
-            <Button
-              onClick={() => searchMutation.mutate()}
-              disabled={!discipline || searchMutation.isPending}
-              className="gap-2"
-            >
-              {searchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              Zoeken
-            </Button>
-          ) : (
+          {source === 'pdf' ? (
             <>
               <input
                 ref={fileInputRef}
@@ -331,6 +359,28 @@ export function RegimenSearch() {
                 {pdfMutation.isPending ? 'PDF extraheren...' : analyzeMutation.isPending ? 'AI analyseert...' : 'PDF uploaden & analyseren'}
               </Button>
             </>
+          ) : source === 'url' ? (
+            <Button
+              onClick={() => articleUrl && urlMutation.mutate(articleUrl)}
+              disabled={!articleUrl || urlMutation.isPending || analyzeMutation.isPending}
+              className="gap-2"
+            >
+              {urlMutation.isPending || analyzeMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Globe className="h-4 w-4" />
+              )}
+              {urlMutation.isPending ? 'Artikel ophalen...' : analyzeMutation.isPending ? 'AI analyseert...' : 'Artikel analyseren'}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => searchMutation.mutate()}
+              disabled={!discipline || searchMutation.isPending}
+              className="gap-2"
+            >
+              {searchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              Zoeken
+            </Button>
           )}
           <Button
             variant="outline"
@@ -343,12 +393,12 @@ export function RegimenSearch() {
         </div>
 
         {/* AI Loading State */}
-        {(pdfMutation.isPending || analyzeMutation.isPending) && !pdfResults && (
+        {(pdfMutation.isPending || analyzeMutation.isPending || urlMutation.isPending) && !pdfResults && (
           <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             <div>
               <p className="text-sm font-medium">
-                {pdfMutation.isPending ? 'PDF wordt verwerkt...' : 'AI analyseert regimens en zoekt veiligheidsinformatie...'}
+                {pdfMutation.isPending ? 'PDF wordt verwerkt...' : urlMutation.isPending ? 'Artikel wordt opgehaald...' : 'AI analyseert regimens en zoekt veiligheidsinformatie...'}
               </p>
               <p className="text-xs text-muted-foreground">Dit kan enkele seconden duren</p>
             </div>

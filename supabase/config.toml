@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.search-regimens]
 verify_jwt = false
+
+[functions.scrape-article]
+verify_jwt = false
+
+[functions.analyze-pdf-drug]
+verify_jwt = false
