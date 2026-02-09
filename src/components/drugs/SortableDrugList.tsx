@@ -31,6 +31,8 @@ interface SortableDrugListProps {
   isFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
   isAdmin: boolean;
+  isEditMode: boolean;
+  onEditModeChange: (editing: boolean) => void;
 }
 
 export function SortableDrugList({
@@ -40,8 +42,9 @@ export function SortableDrugList({
   isFavorite,
   toggleFavorite,
   isAdmin,
+  isEditMode,
+  onEditModeChange,
 }: SortableDrugListProps) {
-  const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [localCombinations, setLocalCombinations] = useState<Drug[]>(combinationDrugs);
   const [localIndividuals, setLocalIndividuals] = useState<Drug[]>(individualDrugs);
@@ -126,7 +129,7 @@ export function SortableDrugList({
       }
       
       toast.success('Volgorde opgeslagen');
-      setIsEditMode(false);
+      onEditModeChange(false);
     } catch (err) {
       console.error('Error saving order:', err);
       toast.error('Fout bij opslaan volgorde');
@@ -141,7 +144,7 @@ export function SortableDrugList({
       await saveOrder.mutateAsync([]);
       await queryClient.invalidateQueries({ queryKey: ['drugs'] });
       toast.success('Volgorde hersteld naar standaard');
-      setIsEditMode(false);
+      onEditModeChange(false);
     } catch (err) {
       console.error('Error resetting order:', err);
       toast.error('Fout bij herstellen volgorde');
@@ -153,7 +156,7 @@ export function SortableDrugList({
   const handleCancel = () => {
     setLocalCombinations(combinationDrugs);
     setLocalIndividuals(individualDrugs);
-    setIsEditMode(false);
+    onEditModeChange(false);
   };
 
   const showCombinations = viewMode === 'all' || viewMode === 'combinations';
@@ -161,10 +164,10 @@ export function SortableDrugList({
 
   return (
     <div className="space-y-4">
-      {/* Edit mode controls - available to all authenticated users */}
-      <div className="flex items-center justify-end gap-2 mb-4">
-        {isEditMode ? (
-          <>
+      {/* Edit mode save/cancel controls */}
+      {isEditMode && (
+        <>
+          <div className="flex items-center justify-end gap-2 mb-4">
             {!isAdmin && hasCustomOrder && (
               <Button
                 variant="ghost"
@@ -200,27 +203,14 @@ export function SortableDrugList({
               )}
               Opslaan
             </Button>
-          </>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditMode(true)}
-            className="gap-2"
-          >
-            <GripVertical className="h-4 w-4" />
-            Volgorde aanpassen
-          </Button>
-        )}
-      </div>
-
-      {isEditMode && (
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
-          <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
-            <GripVertical className="h-4 w-4" />
-            Sleep de kaarten om de volgorde aan te passen. Klik op "Opslaan" om de wijzigingen te bewaren.
-          </p>
-        </div>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <GripVertical className="h-4 w-4" />
+              Sleep de kaarten om de volgorde aan te passen. Klik op "Opslaan" om de wijzigingen te bewaren.
+            </p>
+          </div>
+        </>
       )}
 
       {/* Combination Regimens Section */}

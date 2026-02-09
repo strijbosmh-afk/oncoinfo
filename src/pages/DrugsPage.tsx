@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -233,6 +233,7 @@ export default function DrugsPage() {
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'individual'>('all');
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
@@ -733,6 +734,16 @@ export default function DrugsPage() {
                   {individualDrugs.length}
                 </Badge>
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditMode(true)}
+                className="gap-2 ml-auto"
+                disabled={isEditMode}
+              >
+                <GripVertical className="h-4 w-4" />
+                Volgorde aanpassen
+              </Button>
             </div>
           </div>
         )}
@@ -948,6 +959,8 @@ export default function DrugsPage() {
                   isFavorite={isFavorite}
                   toggleFavorite={toggleFavorite}
                   isAdmin={isAdmin}
+                  isEditMode={isEditMode}
+                  onEditModeChange={setIsEditMode}
                 />
 
                 <p className="text-sm text-muted-foreground pt-2">
