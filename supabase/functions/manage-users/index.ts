@@ -34,7 +34,7 @@ async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader
   return user;
 }
 
-async function sendCredentialsEmail(email: string, password: string, loginUrl: string) {
+async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string) {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY niet geconfigureerd');
@@ -54,7 +54,7 @@ async function sendCredentialsEmail(email: string, password: string, loginUrl: s
         <p style="color: #555; line-height: 1.6;">Er is een account voor u aangemaakt op OncoInfo. Hieronder vindt u uw inloggegevens:</p>
         
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <p style="margin: 0 0 10px;"><strong>E-mail:</strong> ${email}</p>
+          <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
           <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
           <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: #6b2d5b;">${loginUrl}</a></p>
         </div>
@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
           return {
             id: u.id,
             email: u.email,
+            username: profile?.username || null,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
             role: userRoles.includes('admin') ? 'admin' : 'viewer',
@@ -130,10 +131,10 @@ Deno.serve(async (req) => {
       }
 
       case 'create': {
-        const { email, password, role, send_email, login_url } = params;
+        const { email, username, password, role, send_email, login_url } = params;
 
-        if (!email || !password || !role) {
-          return jsonResponse({ error: 'email, password en role zijn verplicht' }, 400);
+        if (!email || !username || !password || !role) {
+          return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
         }
 
         // Create user via Admin API (auto-confirms email)
@@ -144,6 +145,9 @@ Deno.serve(async (req) => {
         });
 
         if (createError) throw createError;
+
+        // Set username in profiles
+        await supabase.from('profiles').update({ username }).eq('user_id', newUser.user.id);
 
         // The trigger creates a default 'viewer' role. Update if needed.
         if (role === 'admin') {
@@ -157,7 +161,7 @@ Deno.serve(async (req) => {
         let emailError = null;
         if (send_email && login_url) {
           try {
-            await sendCredentialsEmail(email, password, login_url);
+            await sendCredentialsEmail(email, username, password, login_url);
             emailSent = true;
           } catch (err: any) {
             console.error('Failed to send credentials email:', err);
@@ -166,14 +170,14 @@ Deno.serve(async (req) => {
         }
 
         return jsonResponse({
-          user: { id: newUser.user.id, email: newUser.user.email },
+          user: { id: newUser.user.id, email: newUser.user.email, username },
           email_sent: emailSent,
           email_error: emailError,
         });
       }
 
       case 'update': {
-        const { user_id, email, password, role } = params;
+        const { user_id, email, username, password, role } = params;
 
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
@@ -194,16 +198,20 @@ Deno.serve(async (req) => {
           if (updateError) throw updateError;
         }
 
-        // Update email in profiles if changed
-        if (email) {
-          await supabase.from('profiles').update({ email }).eq('user_id', user_id);
+        // Update profile fields
+        const profileUpdate: Record<string, string> = {};
+        if (email) profileUpdate.email = email;
+        if (username) profileUpdate.username = username;
+        if (role) profileUpdate.role = role;
+
+        if (Object.keys(profileUpdate).length > 0) {
+          await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);
         }
 
         // Update role if changed
         if (role) {
           await supabase.from('user_roles').delete().eq('user_id', user_id);
           await supabase.from('user_roles').insert({ user_id, role });
-          await supabase.from('profiles').update({ role }).eq('user_id', user_id);
         }
 
         return jsonResponse({ success: true });
@@ -232,7 +240,7 @@ Deno.serve(async (req) => {
       }
 
       case 'send-credentials': {
-        const { user_id, email, password, login_url } = params;
+        const { user_id, email, username, password, login_url } = params;
 
         if (!email || !password || !login_url) {
           return jsonResponse({ error: 'email, password en login_url zijn verplicht' }, 400);
@@ -244,7 +252,7 @@ Deno.serve(async (req) => {
           if (pwError) throw pwError;
         }
 
-        await sendCredentialsEmail(email, password, login_url);
+        await sendCredentialsEmail(email, username || '', password, login_url);
         return jsonResponse({ success: true, email_sent: true });
       }
 

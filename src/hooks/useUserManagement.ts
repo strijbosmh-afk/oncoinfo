@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface ManagedUser {
   id: string;
   email: string;
+  username: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   role: 'admin' | 'viewer';
@@ -43,6 +44,7 @@ export function useUserManagement() {
   const createUser = useMutation({
     mutationFn: (params: {
       email: string;
+      username: string;
       password: string;
       role: 'admin' | 'viewer';
       send_email: boolean;
@@ -68,6 +70,7 @@ export function useUserManagement() {
     mutationFn: (params: {
       user_id: string;
       email?: string;
+      username?: string;
       password?: string;
       role?: 'admin' | 'viewer';
     }) => callManageUsers('update', params),
@@ -92,7 +95,7 @@ export function useUserManagement() {
   });
 
   const sendCredentials = useMutation({
-    mutationFn: (params: { user_id: string; email: string; password: string; login_url: string }) =>
+    mutationFn: (params: { user_id: string; email: string; username?: string; password: string; login_url: string }) =>
       callManageUsers('send-credentials', params),
     onSuccess: () => {
       toast({ title: 'E-mail verstuurd', description: 'De inloggegevens zijn per e-mail verstuurd.' });
