@@ -612,7 +612,7 @@ export default function DrugDetailPage() {
 
         {/* Staff Selection Dialog */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -623,81 +623,86 @@ export default function DrugDetailPage() {
               </p>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-6 py-2">
+            <div className="space-y-4 py-2">
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
                 <RadioGroup value={selectedPhysician} onValueChange={setSelectedPhysician}>
-                  {PHYSICIAN_GROUPS.map((group) => (
-                    <div key={group.label} className="space-y-1.5">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-1">{group.label}</p>
-                      {group.physicians.map((doc) => (
-                        <div key={doc} className="flex items-center gap-2">
-                          <RadioGroupItem value={doc} id={`doc-${doc}`} />
-                          <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer text-sm">{doc}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Verpleegkundige</Label>
-                <RadioGroup 
-                  value={isNurseCustom ? '__custom__' : nurseSelection} 
-                  onValueChange={(val) => {
-                    if (val === '__custom__') {
-                      setIsNurseCustom(true);
-                    } else {
-                      setIsNurseCustom(false);
-                      setNurseSelection(val);
-                    }
-                  }}
-                >
-                  {NURSES.map((nurse) => (
-                    <div key={nurse} className="flex items-center gap-2">
-                      <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
-                      <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer">{nurse}</Label>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="__custom__" id="nurse-custom" />
-                    <Label htmlFor="nurse-custom" className="font-normal cursor-pointer">Andere</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {PHYSICIAN_GROUPS.map((group) => (
+                      <div key={group.label} className="rounded-lg border p-3 space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b pb-1.5">{group.label}</p>
+                        {group.physicians.map((doc) => (
+                          <div key={doc} className="flex items-center gap-2">
+                            <RadioGroupItem value={doc} id={`doc-${doc}`} />
+                            <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer text-sm">{doc}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </RadioGroup>
-                {isNurseCustom && (
-                  <Input
-                    placeholder="Naam verpleegkundige"
-                    value={customNurse}
-                    onChange={(e) => setCustomNurse(e.target.value)}
-                    className="mt-2"
-                    autoFocus
-                  />
-                )}
               </div>
-            </div>
 
-            <div className="space-y-3 border-t pt-4">
-              <Label className="text-sm font-medium">Taal van de folder</Label>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
-                  onClick={() => setSelectedLanguage('nl')}
-                  className="flex-1"
-                >
-                  Nederlands
-                </Button>
-                <Button
-                  type="button"
-                  variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
-                  onClick={() => setSelectedLanguage('fr')}
-                  className="flex-1"
-                >
-                  Frans
-                </Button>
+              <div className="grid grid-cols-2 gap-6 border-t pt-4">
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Verpleegkundige</Label>
+                  <RadioGroup 
+                    value={isNurseCustom ? '__custom__' : nurseSelection} 
+                    onValueChange={(val) => {
+                      if (val === '__custom__') {
+                        setIsNurseCustom(true);
+                      } else {
+                        setIsNurseCustom(false);
+                        setNurseSelection(val);
+                      }
+                    }}
+                  >
+                    {NURSES.map((nurse) => (
+                      <div key={nurse} className="flex items-center gap-2">
+                        <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
+                        <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer">{nurse}</Label>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="__custom__" id="nurse-custom" />
+                      <Label htmlFor="nurse-custom" className="font-normal cursor-pointer">Andere</Label>
+                    </div>
+                  </RadioGroup>
+                  {isNurseCustom && (
+                    <Input
+                      placeholder="Naam verpleegkundige"
+                      value={customNurse}
+                      onChange={(e) => setCustomNurse(e.target.value)}
+                      className="mt-2"
+                      autoFocus
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Taal van de folder</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
+                      onClick={() => setSelectedLanguage('nl')}
+                      className="flex-1"
+                    >
+                      Nederlands
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
+                      onClick={() => setSelectedLanguage('fr')}
+                      className="flex-1"
+                    >
+                      Frans
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
+              <Label className="text-sm font-medium">Taal van de folder</Label>
             
             <DialogFooter className="pt-2 flex justify-center sm:justify-center gap-2">
               <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
