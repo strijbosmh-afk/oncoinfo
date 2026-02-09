@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users } from 'lucide-react';
 import { DRUG_CLASSES } from '@/types/drug';
+import { UserManagement } from '@/components/admin/UserManagement';
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -114,6 +115,10 @@ export default function AdminPage() {
           <TabsList>
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
             <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5">
+              <Users className="h-4 w-4" />
+              Gebruikers
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
@@ -194,6 +199,10 @@ export default function AdminPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="users" className="mt-6">
+            <UserManagement />
           </TabsContent>
         </Tabs>
       </div>

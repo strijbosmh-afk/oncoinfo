@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.fetch-ctgov-data]
 verify_jwt = false
+
+[functions.manage-users]
+verify_jwt = false
