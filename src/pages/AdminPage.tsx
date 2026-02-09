@@ -16,7 +16,7 @@ export default function AdminPage() {
   const { data: drugs, isLoading: drugsLoading } = useDrugs({});
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterClass, setFilterClass] = useState<string>('');
+  const [filterClass, setFilterClass] = useState<string>('all');
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -30,7 +30,7 @@ export default function AdminPage() {
       const matchesSearch = !searchQuery || 
         drug.generic_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         drug.brand_names?.some(b => b.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesClass = !filterClass || drug.drug_class === filterClass;
+      const matchesClass = filterClass === 'all' || drug.drug_class === filterClass;
       return matchesSearch && matchesClass;
     });
   }, [drugs, searchQuery, filterClass]);
@@ -157,7 +157,7 @@ export default function AdminPage() {
                       <SelectValue placeholder="Alle klassen" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
-                      <SelectItem value="">Alle klassen</SelectItem>
+                      <SelectItem value="all">Alle klassen</SelectItem>
                       {DRUG_CLASSES.map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
