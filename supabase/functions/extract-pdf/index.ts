@@ -1,11 +1,9 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -20,100 +18,89 @@ serve(async (req) => {
       );
     }
 
-    // Decode base64 to binary
-    const binaryString = atob(pdf_base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Extract text from PDF by parsing the raw content
-    // We look for text between BT (begin text) and ET (end text) operators
-    // and also extract readable strings from the PDF stream
-    const rawText = new TextDecoder("latin1").decode(bytes);
-    
-    const extractedTexts: string[] = [];
-    
-    // Method 1: Extract text from BT...ET blocks (PDF text objects)
-    const btEtRegex = /BT\s([\s\S]*?)ET/g;
-    let match;
-    while ((match = btEtRegex.exec(rawText)) !== null) {
-      const block = match[1];
-      // Extract text from Tj and TJ operators
-      const tjRegex = /\(([^)]*)\)\s*Tj/g;
-      let tjMatch;
-      while ((tjMatch = tjRegex.exec(block)) !== null) {
-        const text = tjMatch[1].replace(/\\([nrt\\()])/g, (_, c) => {
-          switch (c) {
-            case 'n': return '\n';
-            case 'r': return '\r';
-            case 't': return '\t';
-            default: return c;
-          }
-        });
-        if (text.trim()) extractedTexts.push(text);
+    console.log(`Processing PDF: ${filename || "unknown.pdf"}, base64 length: ${pdf_base64.length}`);
+
+    // Use Gemini Flash to extract text from the PDF via vision
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Extract ALL text content from this PDF document. Return the complete text as-is, preserving the structure (headings, paragraphs, tables, lists). Do not summarize or interpret - just extract the raw text faithfully. If there are tables, format them as readable text. Include all sections: title, authors, abstract, methods, results, discussion, references, etc.",
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${pdf_base64}`,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Te veel verzoeken, probeer het later opnieuw." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
-      
-      // Extract text from TJ arrays
-      const tjArrayRegex = /\[(.*?)\]\s*TJ/g;
-      let tjArrMatch;
-      while ((tjArrMatch = tjArrayRegex.exec(block)) !== null) {
-        const innerRegex = /\(([^)]*)\)/g;
-        let innerMatch;
-        let lineText = '';
-        while ((innerMatch = innerRegex.exec(tjArrMatch[1])) !== null) {
-          lineText += innerMatch[1];
-        }
-        if (lineText.trim()) extractedTexts.push(lineText);
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Krediet op, voeg tegoed toe aan je workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      throw new Error("PDF extractie via AI mislukt");
     }
 
-    // Method 2: If BT/ET extraction yields little, try extracting readable strings
-    if (extractedTexts.join('').length < 100) {
-      // Find stream objects and decode them
-      const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
-      while ((match = streamRegex.exec(rawText)) !== null) {
-        const streamContent = match[1];
-        // Try to find readable ASCII text sequences
-        const readableRegex = /[A-Za-z0-9\s.,;:!?()@#$%&*\-+='"\/\\]{10,}/g;
-        let readableMatch;
-        while ((readableMatch = readableRegex.exec(streamContent)) !== null) {
-          const cleaned = readableMatch[0].trim();
-          if (cleaned.length > 10 && /[a-zA-Z]{3,}/.test(cleaned)) {
-            extractedTexts.push(cleaned);
-          }
-        }
-      }
-    }
+    const data = await response.json();
+    const extractedText = data.choices?.[0]?.message?.content || "";
 
-    // Count approximate pages
-    const pageCount = (rawText.match(/\/Type\s*\/Page[^s]/g) || []).length;
-
-    const resultText = extractedTexts.join('\n').trim();
-
-    if (!resultText) {
+    if (!extractedText || extractedText.length < 20) {
       return new Response(
         JSON.stringify({
-          text: "Kon geen tekst extraheren uit deze PDF. Het bestand bevat mogelijk alleen gescande afbeeldingen. Probeer een PDF met doorzoekbare tekst.",
-          pages: pageCount,
+          text: "Kon geen tekst extraheren uit deze PDF.",
+          pages: 0,
           filename: filename || "unknown.pdf",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log(`Extracted ${extractedText.length} chars from PDF`);
+
     return new Response(
       JSON.stringify({
-        text: resultText.slice(0, 50000), // Limit output size
-        pages: pageCount,
+        text: extractedText.slice(0, 50000),
+        pages: Math.max(1, Math.ceil(extractedText.length / 3000)), // Approximate page count
         filename: filename || "unknown.pdf",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("PDF extraction error:", error);
+    const msg = error instanceof Error ? error.message : "Onbekende fout";
     return new Response(
-      JSON.stringify({ error: `Fout bij verwerken PDF: ${error.message}` }),
+      JSON.stringify({ error: `Fout bij verwerken PDF: ${msg}` }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
