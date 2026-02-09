@@ -37,10 +37,15 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    // Service role client for profile lookup (bypasses RLS)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // Anon client for auth sign-in (service role doesn't work for signInWithPassword)
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
 
     // Look up email by username server-side (never exposed to client)
-    const { data: profileData, error: lookupError } = await supabase
+    const { data: profileData, error: lookupError } = await supabaseAdmin
       .from('profiles')
       .select('email')
       .eq('username', username.trim())
@@ -55,7 +60,7 @@ Deno.serve(async (req) => {
     }
 
     // Attempt sign-in with the looked-up email
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabaseAuth.auth.signInWithPassword({
       email: profileData.email,
       password,
     });
