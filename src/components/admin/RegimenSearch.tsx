@@ -33,6 +33,21 @@ interface CTGovResult {
   enrollment: number | null;
 }
 
+interface ExtractedRegimen {
+  generic_name: string;
+  brand_names?: string;
+  drug_class: string;
+  disease_areas?: string[];
+  mechanism_of_action?: string;
+  administration_route?: string;
+  study_name?: string;
+  dosing?: string;
+  side_effects_common?: string[];
+  side_effects_serious?: string[];
+  contraindications?: string[];
+  monitoring?: string;
+}
+
 const DISCIPLINES = [
   'Prostaatkanker',
   'Blaaskanker',
@@ -67,7 +82,10 @@ export function RegimenSearch() {
   const [pubmedResults, setPubmedResults] = useState<PubMedResult[]>([]);
   const [ctgovResults, setCtgovResults] = useState<CTGovResult[]>([]);
   const [pdfResults, setPdfResults] = useState<string>('');
+  const [extractedRegimens, setExtractedRegimens] = useState<ExtractedRegimen[]>([]);
+  const [pdfSummary, setPdfSummary] = useState<string>('');
   const [expandedPmid, setExpandedPmid] = useState<string | null>(null);
+  const [expandedRegimen, setExpandedRegimen] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingDrug, setEditingDrug] = useState({
@@ -144,19 +162,14 @@ export function RegimenSearch() {
       return data;
     },
     onSuccess: (data) => {
-      const ext = data.extracted;
-      if (ext) {
-        setEditingDrug({
-          generic_name: ext.generic_name || '',
-          drug_class: ext.drug_class || '',
-          disease_areas: ext.disease_areas || [],
-          mechanism_of_action: ext.mechanism_of_action || '',
-          brand_names: ext.brand_names || '',
-          administration_route: ext.administration_route || '',
-          study_name: ext.study_name || '',
-        });
-        setAddDialogOpen(true);
-        toast({ title: 'AI-analyse voltooid', description: 'Velden zijn automatisch ingevuld. Controleer en pas aan.' });
+      const regimens = data.regimens || [];
+      setExtractedRegimens(regimens);
+      setPdfSummary(data.summary || '');
+      setPdfResults(''); // Hide raw text once analysis is done
+      if (regimens.length > 0) {
+        toast({ title: 'AI-analyse voltooid', description: `${regimens.length} regimen(s) gevonden met veiligheidsinformatie.` });
+      } else {
+        toast({ title: 'Geen regimens gevonden', description: 'Probeer een ander PDF-bestand.' });
       }
     },
     onError: (error: Error) => {
@@ -207,6 +220,19 @@ export function RegimenSearch() {
       brand_names: '',
       administration_route: '',
       study_name: '',
+    });
+    setAddDialogOpen(true);
+  };
+
+  const openAddFromRegimen = (regimen: ExtractedRegimen) => {
+    setEditingDrug({
+      generic_name: regimen.generic_name || '',
+      drug_class: regimen.drug_class || '',
+      disease_areas: regimen.disease_areas || [],
+      mechanism_of_action: regimen.mechanism_of_action || '',
+      brand_names: regimen.brand_names || '',
+      administration_route: regimen.administration_route || '',
+      study_name: regimen.study_name || '',
     });
     setAddDialogOpen(true);
   };
@@ -313,27 +339,128 @@ export function RegimenSearch() {
           </Button>
         </div>
 
-        {/* PDF Results */}
-        {pdfResults && (
-          <div className="space-y-3">
+        {/* AI Loading State */}
+        {(pdfMutation.isPending || analyzeMutation.isPending) && !pdfResults && (
+          <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="text-sm font-medium">
+                {pdfMutation.isPending ? 'PDF wordt verwerkt...' : 'AI analyseert regimens en zoekt veiligheidsinformatie...'}
+              </p>
+              <p className="text-xs text-muted-foreground">Dit kan enkele seconden duren</p>
+            </div>
+          </div>
+        )}
+
+        {/* Extracted Regimens */}
+        {extractedRegimens.length > 0 && (
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              <h3 className="font-semibold text-sm">Geëxtraheerde PDF-inhoud</h3>
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Gevonden regimens ({extractedRegimens.length})</h3>
             </div>
-            <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto">
-              <pre className="text-sm whitespace-pre-wrap font-sans text-muted-foreground">{pdfResults}</pre>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => analyzeMutation.mutate(pdfResults)}
-                disabled={analyzeMutation.isPending}
-              >
-                {analyzeMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                AI opnieuw analyseren
-              </Button>
+            {pdfSummary && (
+              <p className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-3">{pdfSummary}</p>
+            )}
+            <div className="space-y-3">
+              {extractedRegimens.map((regimen, idx) => (
+                <div key={idx} className="border rounded-lg overflow-hidden">
+                  <div
+                    className="flex items-start justify-between gap-3 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedRegimen(expandedRegimen === idx ? null : idx)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm">{regimen.generic_name}</p>
+                        {regimen.brand_names && (
+                          <span className="text-xs text-muted-foreground">({regimen.brand_names})</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-xs">{regimen.drug_class}</Badge>
+                        {regimen.study_name && <Badge variant="outline" className="text-xs">{regimen.study_name}</Badge>}
+                        {regimen.administration_route && (
+                          <span className="text-xs text-muted-foreground">{regimen.administration_route}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={(e) => { e.stopPropagation(); openAddFromRegimen(regimen); }}
+                      >
+                        <Plus className="h-3 w-3" /> Toevoegen
+                      </Button>
+                      {expandedRegimen === idx ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </div>
+                  </div>
+
+                  {expandedRegimen === idx && (
+                    <div className="px-4 pb-4 space-y-3 border-t bg-muted/10">
+                      {regimen.mechanism_of_action && (
+                        <div className="pt-3">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Werkingsmechanisme</p>
+                          <p className="text-sm">{regimen.mechanism_of_action}</p>
+                        </div>
+                      )}
+                      {regimen.dosing && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Dosering</p>
+                          <p className="text-sm">{regimen.dosing}</p>
+                        </div>
+                      )}
+                      {regimen.side_effects_common && regimen.side_effects_common.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Veel voorkomende bijwerkingen</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {regimen.side_effects_common.map((se, i) => (
+                              <Badge key={i} variant="outline" className="text-xs font-normal">{se}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {regimen.side_effects_serious && regimen.side_effects_serious.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-destructive uppercase tracking-wide mb-1">Ernstige bijwerkingen</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {regimen.side_effects_serious.map((se, i) => (
+                              <Badge key={i} variant="destructive" className="text-xs font-normal">{se}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {regimen.contraindications && regimen.contraindications.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Contra-indicaties</p>
+                          <ul className="text-sm list-disc list-inside space-y-0.5">
+                            {regimen.contraindications.map((ci, i) => (
+                              <li key={i}>{ci}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {regimen.monitoring && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Monitoring</p>
+                          <p className="text-sm">{regimen.monitoring}</p>
+                        </div>
+                      )}
+                      {regimen.disease_areas && regimen.disease_areas.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Ziektegebieden</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {regimen.disease_areas.map((da, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">{da}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
