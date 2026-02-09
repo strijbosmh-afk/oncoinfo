@@ -71,8 +71,9 @@ export default function DrugDetailPage() {
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr'>('nl');
+  const [customPhone, setCustomPhone] = useState('');
 
-  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl') => {
+  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl', phoneNumber?: string) => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
@@ -84,7 +85,8 @@ export default function DrugDetailPage() {
           include_side_effects: includeSideEffects,
           physician_name: physicianName || '',
           nurse_name: nurseName || '',
-          language
+          language,
+          phone_number: phoneNumber || ''
         }
       });
 
@@ -105,7 +107,7 @@ export default function DrugDetailPage() {
   const handleConfirmStaff = async () => {
     setIsStaffDialogOpen(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
-    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage);
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, customPhone.trim());
     setIsPreviewOpen(true);
   };
 
@@ -700,9 +702,17 @@ export default function DrugDetailPage() {
                     </Button>
                   </div>
                 </div>
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Telefoonnummer (optioneel)</Label>
+                  <Input
+                    placeholder="bv. 016 80 90 11"
+                    value={customPhone}
+                    onChange={(e) => setCustomPhone(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Wordt vermeld op de folder als contactnummer.</p>
+                </div>
               </div>
             </div>
-              <Label className="text-sm font-medium">Taal van de folder</Label>
             
             <DialogFooter className="pt-2 flex justify-center sm:justify-center gap-2">
               <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>

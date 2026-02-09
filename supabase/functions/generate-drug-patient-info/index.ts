@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
     const supabase = authClient;
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl' } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '' } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
       physician_name, nurse_name, language,
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
-      tipsText, monitoringText
+      tipsText, monitoringText, phone_number
     );
 
     return new Response(
@@ -271,6 +271,7 @@ function generatePatientInfoHtml(
   sideEffectsSeriousText: string | null,
   tipsText: string | null,
   monitoringText: string | null,
+  phoneNumber: string = '',
 ): string {
   const isFr = language === 'fr';
   
@@ -451,7 +452,7 @@ function generatePatientInfoHtml(
     <div class="contact-grid">
       <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
       <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>${labels.phone}:</strong> 016 80 90 11</p>
+      <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
     </div>
   </div>
 
