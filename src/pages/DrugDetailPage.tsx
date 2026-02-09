@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
 import { 
@@ -628,21 +629,21 @@ export default function DrugDetailPage() {
             <div className="space-y-4 py-2">
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
-                <RadioGroup value={selectedPhysician} onValueChange={setSelectedPhysician}>
-                  <div className="grid grid-cols-3 gap-4">
+                <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer een arts" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {PHYSICIAN_GROUPS.map((group) => (
-                      <div key={group.label} className="rounded-lg border p-3 space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b pb-1.5">{group.label}</p>
+                      <SelectGroup key={group.label}>
+                        <SelectLabel>{group.label}</SelectLabel>
                         {group.physicians.map((doc) => (
-                          <div key={doc} className="flex items-center gap-2">
-                            <RadioGroupItem value={doc} id={`doc-${doc}`} />
-                            <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer text-sm">{doc}</Label>
-                          </div>
+                          <SelectItem key={doc} value={doc}>{doc}</SelectItem>
                         ))}
-                      </div>
+                      </SelectGroup>
                     ))}
-                  </div>
-                </RadioGroup>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-6 border-t pt-4">
