@@ -103,11 +103,6 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <Link to="/home" className="text-sm text-muted-foreground hover:text-primary">
-                Verder bladeren als gast →
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
