@@ -629,21 +629,26 @@ export default function DrugDetailPage() {
             <div className="space-y-4 py-2">
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
-                <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer een arts" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PHYSICIAN_GROUPS.map((group) => (
-                      <SelectGroup key={group.label}>
-                        <SelectLabel>{group.label}</SelectLabel>
-                        {group.physicians.map((doc) => (
-                          <SelectItem key={doc} value={doc}>{doc}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-3 gap-3">
+                  {PHYSICIAN_GROUPS.map((group) => (
+                    <div key={group.label} className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">{group.label}</Label>
+                      <Select
+                        value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
+                        onValueChange={setSelectedPhysician}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Selecteer ${group.label.toLowerCase()}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {group.physicians.map((doc) => (
+                            <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6 border-t pt-4">
