@@ -25,9 +25,20 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Je bent een expert in oncologische farmacologie. Analyseer de gegeven tekst (uit een wetenschappelijk artikel of PDF) en extraheer gestructureerde informatie over het medicijn of de therapie.
+    const systemPrompt = `Je bent een expert in oncologische farmacologie. Je analyseert wetenschappelijke artikelen en extraheert ALLE medicijnregimens die worden beschreven.
 
-Gebruik tool calling om de geëxtraheerde informatie te retourneren. Vul alleen velden in waarvan je zeker bent op basis van de tekst. Laat velden leeg als de informatie niet beschikbaar is.
+Voor elk medicijn of combinatieschema dat je vindt:
+1. Identificeer de generieke naam/namen
+2. Geef de merknamen als je die kent
+3. Classificeer het type therapie
+4. Beschrijf het werkingsmechanisme
+5. Geef de belangrijkste bijwerkingen (veel voorkomend EN ernstig) - gebruik je medische kennis om deze aan te vullen
+6. Geef contra-indicaties
+7. Geef de toedieningsweg en dosering als beschikbaar
+8. Noem de studienaam als die in de tekst staat
+9. Geef de relevante ziektegebieden
+
+BELANGRIJK: Vul bijwerkingen, contra-indicaties en veiligheidsinformatie aan met je eigen medische kennis. De PDF bevat mogelijk niet alle veiligheidsinformatie - jij moet die aanvullen op basis van bekende farmacologische data.
 
 Voor drug_class, kies uit: Immunotherapie (IO/ICI), PARPi, ARPI, Chemotherapie, TKI, ADC, Radioligand Therapie, Hormonale Therapie, Antiresorptiva, Combinatietherapie, Supportive Care, HER2-remmers, CDK4/6i
 
@@ -45,36 +56,65 @@ Voor administration_route, kies uit: Oraal, Intraveneus, Subcutaan, Intramuscula
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Analyseer deze tekst en extraheer medicijninformatie:\n\n${text.slice(0, 15000)}` },
+          { role: "user", content: `Analyseer deze tekst uit een wetenschappelijk artikel. Extraheer ALLE medicijnregimens en vul de veiligheidsinformatie aan met je kennis:\n\n${text.slice(0, 20000)}` },
         ],
         tools: [
           {
             type: "function",
             function: {
-              name: "extract_drug_info",
-              description: "Extraheer medicijninformatie uit de tekst",
+              name: "extract_drug_regimens",
+              description: "Extraheer alle medicijnregimens uit de tekst met volledige veiligheidsinformatie",
               parameters: {
                 type: "object",
                 properties: {
-                  generic_name: { type: "string", description: "Generieke naam van het medicijn" },
-                  brand_names: { type: "string", description: "Merknamen, kommagescheiden" },
-                  drug_class: { type: "string", description: "Medicijnklasse" },
-                  disease_areas: {
+                  regimens: {
                     type: "array",
-                    items: { type: "string" },
-                    description: "Ziektegebieden",
+                    description: "Lijst van geëxtraheerde medicijnregimens",
+                    items: {
+                      type: "object",
+                      properties: {
+                        generic_name: { type: "string", description: "Generieke naam van het medicijn of combinatie" },
+                        brand_names: { type: "string", description: "Merknamen, kommagescheiden" },
+                        drug_class: { type: "string", description: "Medicijnklasse" },
+                        disease_areas: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Ziektegebieden",
+                        },
+                        mechanism_of_action: { type: "string", description: "Werkingsmechanisme in 1-2 zinnen" },
+                        administration_route: { type: "string", description: "Toedieningsweg" },
+                        study_name: { type: "string", description: "Studienaam (bijv. KEYNOTE-426)" },
+                        dosing: { type: "string", description: "Dosering en schema" },
+                        side_effects_common: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Veel voorkomende bijwerkingen (top 5-8)",
+                        },
+                        side_effects_serious: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Ernstige/levensbedreigende bijwerkingen (top 3-5)",
+                        },
+                        contraindications: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Belangrijkste contra-indicaties",
+                        },
+                        monitoring: { type: "string", description: "Belangrijkste monitoringvereisten" },
+                      },
+                      required: ["generic_name", "drug_class"],
+                      additionalProperties: false,
+                    },
                   },
-                  mechanism_of_action: { type: "string", description: "Werkingsmechanisme" },
-                  administration_route: { type: "string", description: "Toedieningsweg" },
-                  study_name: { type: "string", description: "Studienaam (bijv. KEYNOTE-426)" },
+                  summary: { type: "string", description: "Korte samenvatting van het artikel (2-3 zinnen)" },
                 },
-                required: ["generic_name"],
+                required: ["regimens", "summary"],
                 additionalProperties: false,
               },
             },
           },
         ],
-        tool_choice: { type: "function", function: { name: "extract_drug_info" } },
+        tool_choice: { type: "function", function: { name: "extract_drug_regimens" } },
       }),
     });
 
@@ -106,7 +146,7 @@ Voor administration_route, kies uit: Oraal, Intraveneus, Subcutaan, Intramuscula
     const extracted = JSON.parse(toolCall.function.arguments);
 
     return new Response(
-      JSON.stringify({ extracted }),
+      JSON.stringify(extracted),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
