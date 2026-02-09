@@ -34,7 +34,21 @@ import {
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PHYSICIANS = ['Dr. M. Strijbos', 'Dr. A. Caeyman'] as const;
+const PHYSICIAN_GROUPS = [
+  {
+    label: 'Oncologie',
+    physicians: ['Dr. M. Strijbos', 'Dr. A. Caeyman'],
+  },
+  {
+    label: 'Urologie',
+    physicians: ['Dr. J. Van Nuffel', 'Dr. K. Slabbaert', 'Dr. L. Van Wynsberge', 'Dr. A. Claikens', 'Dr. Baten', 'Dr. Peeters', 'Dr. Berkers', 'Dr. Del Favero'],
+  },
+  {
+    label: 'Gynaecologie',
+    physicians: ['Dr. L. Claes', 'Dr. M. Van Goitsenhoven'],
+  },
+] as const;
+
 const NURSES = ['Mireille Pycke'] as const;
 
 export default function DrugDetailPage() {
@@ -52,7 +66,7 @@ export default function DrugDetailPage() {
 
   // Staff selection state
   const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false);
-  const [selectedPhysician, setSelectedPhysician] = useState<string>(PHYSICIANS[0]);
+  const [selectedPhysician, setSelectedPhysician] = useState<string>(PHYSICIAN_GROUPS[0].physicians[0]);
   const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
@@ -613,10 +627,15 @@ export default function DrugDetailPage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Arts</Label>
                 <RadioGroup value={selectedPhysician} onValueChange={setSelectedPhysician}>
-                  {PHYSICIANS.map((doc) => (
-                    <div key={doc} className="flex items-center gap-2">
-                      <RadioGroupItem value={doc} id={`doc-${doc}`} />
-                      <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer">{doc}</Label>
+                  {PHYSICIAN_GROUPS.map((group) => (
+                    <div key={group.label} className="space-y-1.5">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pt-1">{group.label}</p>
+                      {group.physicians.map((doc) => (
+                        <div key={doc} className="flex items-center gap-2">
+                          <RadioGroupItem value={doc} id={`doc-${doc}`} />
+                          <Label htmlFor={`doc-${doc}`} className="font-normal cursor-pointer text-sm">{doc}</Label>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </RadioGroup>
