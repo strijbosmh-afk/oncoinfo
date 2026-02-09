@@ -73,6 +73,20 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Log login to audit_log
+    try {
+      await supabaseAdmin.from('audit_log').insert({
+        user_id: signInData.user.id,
+        username: username.trim(),
+        action: 'login',
+        entity_type: 'session',
+        entity_name: username.trim(),
+        details: { ip: req.headers.get('x-forwarded-for') || 'unknown' },
+      });
+    } catch (logErr) {
+      console.error('Audit log error:', logErr);
+    }
+
     // Return session tokens to the client
     return new Response(
       JSON.stringify({

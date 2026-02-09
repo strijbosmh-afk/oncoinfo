@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.generate-drug-patient-info]
 verify_jwt = false
+
+[functions.search-regimens]
+verify_jwt = false

@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Search, ClipboardList } from 'lucide-react';
 import { DRUG_CLASSES } from '@/types/drug';
 import { UserManagement } from '@/components/admin/UserManagement';
+import { AuditLog } from '@/components/admin/AuditLog';
+import { RegimenSearch } from '@/components/admin/RegimenSearch';
 
 export default function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
@@ -112,12 +114,20 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="overview">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="overview">Overzicht</TabsTrigger>
             <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
+            <TabsTrigger value="search" className="gap-1.5">
+              <Search className="h-4 w-4" />
+              Zoek Regimens
+            </TabsTrigger>
             <TabsTrigger value="users" className="gap-1.5">
               <Users className="h-4 w-4" />
               Gebruikers
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-1.5">
+              <ClipboardList className="h-4 w-4" />
+              Activiteiten
             </TabsTrigger>
           </TabsList>
 
@@ -201,8 +211,16 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="search" className="mt-6">
+            <RegimenSearch />
+          </TabsContent>
+
           <TabsContent value="users" className="mt-6">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="audit" className="mt-6">
+            <AuditLog />
           </TabsContent>
         </Tabs>
       </div>
