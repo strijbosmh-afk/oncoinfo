@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserDrugOrder } from '@/hooks/useUserDrugOrder';
 import { DrugFilters, DRUG_CLASSES, DRUG_DISEASE_AREAS, Drug, DRUG_CATEGORIES, DrugCategoryKey } from '@/types/drug';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -240,6 +241,7 @@ export default function DrugsPage() {
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const { isAdmin } = useAuth();
+  const { applyUserOrder } = useUserDrugOrder();
 
   // Filter drugs based on selected subtype/stage
   const filteredDrugs = useMemo(() => {
@@ -373,10 +375,11 @@ export default function DrugsPage() {
 
   // Separate combination regimens from individual drugs
   const { combinationDrugs, individualDrugs } = useMemo(() => {
-    const combinations = filteredDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
-    const individuals = filteredDrugs.filter(drug => drug.drug_class !== 'Combinatietherapie');
+    const orderedDrugs = applyUserOrder(filteredDrugs);
+    const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
+    const individuals = orderedDrugs.filter(drug => drug.drug_class !== 'Combinatietherapie');
     return { combinationDrugs: combinations, individualDrugs: individuals };
-  }, [filteredDrugs]);
+  }, [filteredDrugs, applyUserOrder]);
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {

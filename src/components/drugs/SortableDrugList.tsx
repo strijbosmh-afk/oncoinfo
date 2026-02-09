@@ -18,10 +18,11 @@ import { Drug } from '@/types/drug';
 import { SortableDrugCard } from './SortableDrugCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Layers, Pill, GripVertical, Check, X, Loader2 } from 'lucide-react';
+import { Layers, Pill, GripVertical, Check, X, Loader2, RotateCcw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUserDrugOrder } from '@/hooks/useUserDrugOrder';
 
 interface SortableDrugListProps {
   combinationDrugs: Drug[];
@@ -45,6 +46,7 @@ export function SortableDrugList({
   const [localCombinations, setLocalCombinations] = useState<Drug[]>(combinationDrugs);
   const [localIndividuals, setLocalIndividuals] = useState<Drug[]>(individualDrugs);
   const queryClient = useQueryClient();
+  const { saveOrder, hasCustomOrder } = useUserDrugOrder();
 
   // Sync local state when props change (but not during edit mode)
   if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs)) {
@@ -86,35 +88,63 @@ export function SortableDrugList({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Create update array with new display_order values
-      const updates: { id: string; display_order: number }[] = [];
-      
-      localCombinations.forEach((drug, index) => {
-        updates.push({ id: drug.id, display_order: index });
-      });
-      
-      localIndividuals.forEach((drug, index) => {
-        updates.push({ id: drug.id, display_order: 1000 + index }); // Offset individuals
-      });
-
-      // Update each drug's display_order
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('drugs')
-          .update({ display_order: update.display_order })
-          .eq('id', update.id);
+      if (isAdmin) {
+        // Admin: save to drugs table (global order)
+        const updates: { id: string; display_order: number }[] = [];
         
-        if (error) throw error;
-      }
+        localCombinations.forEach((drug, index) => {
+          updates.push({ id: drug.id, display_order: index });
+        });
+        
+        localIndividuals.forEach((drug, index) => {
+          updates.push({ id: drug.id, display_order: 1000 + index });
+        });
 
-      // Invalidate cache to refetch with new order
-      await queryClient.invalidateQueries({ queryKey: ['drugs'] });
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('drugs')
+            .update({ display_order: update.display_order })
+            .eq('id', update.id);
+          
+          if (error) throw error;
+        }
+
+        await queryClient.invalidateQueries({ queryKey: ['drugs'] });
+      } else {
+        // Regular user: save to user_drug_order table (personal order)
+        const orders: { drug_id: string; display_order: number }[] = [];
+        
+        localCombinations.forEach((drug, index) => {
+          orders.push({ drug_id: drug.id, display_order: index });
+        });
+        
+        localIndividuals.forEach((drug, index) => {
+          orders.push({ drug_id: drug.id, display_order: 1000 + index });
+        });
+
+        await saveOrder.mutateAsync(orders);
+      }
       
       toast.success('Volgorde opgeslagen');
       setIsEditMode(false);
     } catch (err) {
       console.error('Error saving order:', err);
       toast.error('Fout bij opslaan volgorde');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResetOrder = async () => {
+    setIsSaving(true);
+    try {
+      await saveOrder.mutateAsync([]);
+      await queryClient.invalidateQueries({ queryKey: ['drugs'] });
+      toast.success('Volgorde hersteld naar standaard');
+      setIsEditMode(false);
+    } catch (err) {
+      console.error('Error resetting order:', err);
+      toast.error('Fout bij herstellen volgorde');
     } finally {
       setIsSaving(false);
     }
@@ -131,48 +161,58 @@ export function SortableDrugList({
 
   return (
     <div className="space-y-4">
-      {/* Edit mode controls */}
-      {isAdmin && (
-        <div className="flex items-center justify-end gap-2 mb-4">
-          {isEditMode ? (
-            <>
+      {/* Edit mode controls - available to all authenticated users */}
+      <div className="flex items-center justify-end gap-2 mb-4">
+        {isEditMode ? (
+          <>
+            {!isAdmin && hasCustomOrder && (
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={handleCancel}
+                onClick={handleResetOrder}
                 disabled={isSaving}
-                className="gap-2"
+                className="gap-2 text-muted-foreground"
               >
-                <X className="h-4 w-4" />
-                Annuleren
+                <RotateCcw className="h-4 w-4" />
+                Standaard herstellen
               </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="gap-2"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-                Opslaan
-              </Button>
-            </>
-          ) : (
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsEditMode(true)}
+              onClick={handleCancel}
+              disabled={isSaving}
               className="gap-2"
             >
-              <GripVertical className="h-4 w-4" />
-              Volgorde aanpassen
+              <X className="h-4 w-4" />
+              Annuleren
             </Button>
-          )}
-        </div>
-      )}
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="gap-2"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Opslaan
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditMode(true)}
+            className="gap-2"
+          >
+            <GripVertical className="h-4 w-4" />
+            Volgorde aanpassen
+          </Button>
+        )}
+      </div>
 
       {isEditMode && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
