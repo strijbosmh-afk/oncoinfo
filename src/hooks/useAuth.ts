@@ -49,40 +49,55 @@ export function useAuth() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Listener for ONGOING auth changes (does NOT control loading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        if (!isMounted) return;
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setProfile(profile);
-          const admin = await checkAdminRole(session.user.id);
-          setIsAdmin(admin);
+          fetchProfile(session.user.id).then(p => { if (isMounted) setProfile(p); });
+          checkAdminRole(session.user.id).then(a => { if (isMounted) setIsAdmin(a); });
         } else {
           setProfile(null);
           setIsAdmin(false);
         }
-        
-        setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        setProfile(profile);
-        const admin = await checkAdminRole(session.user.id);
-        setIsAdmin(admin);
-      }
-      
-      setLoading(false);
-    });
+    // INITIAL load (controls loading state)
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
 
-    return () => subscription.unsubscribe();
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          const [p, a] = await Promise.all([
+            fetchProfile(session.user.id),
+            checkAdminRole(session.user.id),
+          ]);
+          if (isMounted) {
+            setProfile(p);
+            setIsAdmin(a);
+          }
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchProfile, checkAdminRole]);
 
   const signIn = async (email: string, password: string) => {
