@@ -41,7 +41,7 @@ const PHYSICIAN_GROUPS = [
   },
   {
     label: 'Urologie',
-    physicians: ['Dr. J. Van Nuffel', 'Dr. K. Slabbaert', 'Dr. L. Van Wynsberge', 'Dr. A. Claikens', 'Dr. Baten', 'Dr. Peeters', 'Dr. Berkers', 'Dr. Del Favero'],
+    physicians: ['Dr. J. Van Nuffel', 'Dr. K. Slabbaert', 'Dr. L. Van Wynsberge', 'Dr. A. Claikens', 'Dr. E. Baten', 'Dr. K. Peeters', 'Dr. J. Berkers', 'Dr. L. Del Favero'],
   },
   {
     label: 'Gynaecologie',
