@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Search, ClipboardList } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DRUG_CLASSES } from '@/types/drug';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { AuditLog } from '@/components/admin/AuditLog';
@@ -19,6 +21,7 @@ export default function AdminPage() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
+  const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -114,22 +117,24 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="overview">
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Overzicht</TabsTrigger>
-            <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
-            <TabsTrigger value="search" className="gap-1.5">
-              <Search className="h-4 w-4" />
-              Zoek Regimens
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5">
-              <Users className="h-4 w-4" />
-              Gebruikers
-            </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-1.5">
-              <ClipboardList className="h-4 w-4" />
-              Activiteiten
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <TabsList className="flex-wrap">
+              <TabsTrigger value="overview">Overzicht</TabsTrigger>
+              <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
+              <TabsTrigger value="users" className="gap-1.5">
+                <Users className="h-4 w-4" />
+                Gebruikers
+              </TabsTrigger>
+              <TabsTrigger value="audit" className="gap-1.5">
+                <ClipboardList className="h-4 w-4" />
+                Activiteiten
+              </TabsTrigger>
+            </TabsList>
+            <Button onClick={() => setRegimenDialogOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nieuwe therapie toevoegen
+            </Button>
+          </div>
 
           <TabsContent value="overview" className="mt-6">
             <Card>
@@ -211,10 +216,6 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="search" className="mt-6">
-            <RegimenSearch />
-          </TabsContent>
-
           <TabsContent value="users" className="mt-6">
             <UserManagement />
           </TabsContent>
@@ -223,6 +224,16 @@ export default function AdminPage() {
             <AuditLog />
           </TabsContent>
         </Tabs>
+
+        {/* Nieuwe therapie dialog */}
+        <Dialog open={regimenDialogOpen} onOpenChange={setRegimenDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nieuwe Therapie Toevoegen</DialogTitle>
+            </DialogHeader>
+            <RegimenSearch />
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
