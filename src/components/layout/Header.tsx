@@ -23,9 +23,11 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-2">
-          <Button variant="ghost" asChild>
-            <Link to="/drugs">Medicijnen</Link>
-          </Button>
+          {user && (
+            <Button variant="ghost" asChild>
+              <Link to="/drugs">Medicijnen</Link>
+            </Button>
+          )}
           
           {loading ? (
             <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />
