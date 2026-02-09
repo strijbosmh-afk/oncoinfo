@@ -143,10 +143,13 @@ export function RegimenSearch() {
     onSuccess: (data) => {
       const text = data.text || '';
       setPdfResults(text);
-      toast({ title: 'PDF verwerkt', description: `${data.pages || 0} pagina's geëxtraheerd. AI-analyse wordt gestart...` });
-      // Automatically trigger AI analysis
+      setExtractedRegimens([]);
+      setPdfSummary('');
+      setRelevanceWarning(null);
       if (text && text.length > 20) {
-        analyzeMutation.mutate(text);
+        toast({ title: 'PDF verwerkt', description: `${data.pages || 0} pagina's geëxtraheerd. Bekijk de preview en start de analyse.` });
+      } else {
+        toast({ title: 'Geen tekst gevonden', description: 'Kon geen bruikbare tekst uit de PDF extraheren.', variant: 'destructive' });
       }
     },
     onError: (error: Error) => {
@@ -167,7 +170,7 @@ export function RegimenSearch() {
       const regimens = data.regimens || [];
       setExtractedRegimens(regimens);
       setPdfSummary(data.summary || '');
-      setPdfResults('');
+      // Keep pdfResults visible as preview
       setRelevanceWarning(null);
 
       if (data.is_oncology_relevant === false) {
@@ -195,9 +198,14 @@ export function RegimenSearch() {
     },
     onSuccess: (data) => {
       const text = data.text || '';
-      toast({ title: 'Artikel opgehaald', description: `${data.chars || 0} tekens geëxtraheerd van ${data.source}. AI-analyse wordt gestart...` });
+      setPdfResults(text);
+      setExtractedRegimens([]);
+      setPdfSummary('');
+      setRelevanceWarning(null);
       if (text && text.length > 20) {
-        analyzeMutation.mutate(text);
+        toast({ title: 'Artikel opgehaald', description: `${data.chars || 0} tekens geëxtraheerd van ${data.source}. Bekijk de preview en start de analyse.` });
+      } else {
+        toast({ title: 'Geen tekst gevonden', description: 'Kon geen bruikbare tekst ophalen.', variant: 'destructive' });
       }
     },
     onError: (error: Error) => {
@@ -411,7 +419,39 @@ export function RegimenSearch() {
           </div>
         )}
 
-        {/* Relevance Warning */}
+        {/* Extracted Text Preview */}
+        {pdfResults && pdfResults.length > 20 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-semibold text-sm">Geëxtraheerde tekst preview</h3>
+                <span className="text-xs text-muted-foreground">({pdfResults.length.toLocaleString()} tekens)</span>
+              </div>
+              <Button
+                onClick={() => analyzeMutation.mutate(pdfResults)}
+                disabled={analyzeMutation.isPending}
+                size="sm"
+                className="gap-2"
+              >
+                {analyzeMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {analyzeMutation.isPending ? 'Analyseren...' : 'Start AI-analyse'}
+              </Button>
+            </div>
+            <div className="relative border rounded-lg bg-muted/20 max-h-64 overflow-y-auto">
+              <pre className="p-4 text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">
+                {pdfResults.slice(0, 5000)}
+                {pdfResults.length > 5000 && '\n\n... (tekst ingekort voor preview)'}
+              </pre>
+            </div>
+          </div>
+        )}
+
+
         {relevanceWarning && (
           <div className="flex items-start gap-3 p-4 border rounded-lg border-destructive/30 bg-destructive/5">
             <span className="text-destructive text-lg mt-0.5">⚠</span>
