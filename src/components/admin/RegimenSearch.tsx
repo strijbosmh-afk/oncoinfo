@@ -84,6 +84,7 @@ export function RegimenSearch() {
   const [pdfResults, setPdfResults] = useState<string>('');
   const [extractedRegimens, setExtractedRegimens] = useState<ExtractedRegimen[]>([]);
   const [pdfSummary, setPdfSummary] = useState<string>('');
+  const [relevanceWarning, setRelevanceWarning] = useState<string | null>(null);
   const [expandedPmid, setExpandedPmid] = useState<string | null>(null);
   const [expandedRegimen, setExpandedRegimen] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -166,11 +167,16 @@ export function RegimenSearch() {
       const regimens = data.regimens || [];
       setExtractedRegimens(regimens);
       setPdfSummary(data.summary || '');
-      setPdfResults(''); // Hide raw text once analysis is done
-      if (regimens.length > 0) {
+      setPdfResults('');
+      setRelevanceWarning(null);
+
+      if (data.is_oncology_relevant === false) {
+        setRelevanceWarning(data.relevance_reason || 'Dit artikel lijkt niet over oncologie te gaan.');
+        toast({ title: 'Geen oncologische content', description: data.relevance_reason || 'Dit artikel bevat geen kankerbehandelingen.', variant: 'destructive' });
+      } else if (regimens.length > 0) {
         toast({ title: 'AI-analyse voltooid', description: `${regimens.length} regimen(s) gevonden met veiligheidsinformatie.` });
       } else {
-        toast({ title: 'Geen regimens gevonden', description: 'Probeer een ander PDF-bestand.' });
+        toast({ title: 'Geen regimens gevonden', description: 'Het artikel is oncologie-gerelateerd maar er werden geen specifieke regimens geëxtraheerd.' });
       }
     },
     onError: (error: Error) => {
@@ -401,6 +407,17 @@ export function RegimenSearch() {
                 {pdfMutation.isPending ? 'PDF wordt verwerkt...' : urlMutation.isPending ? 'Artikel wordt opgehaald...' : 'AI analyseert regimens en zoekt veiligheidsinformatie...'}
               </p>
               <p className="text-xs text-muted-foreground">Dit kan enkele seconden duren</p>
+            </div>
+          </div>
+        )}
+
+        {/* Relevance Warning */}
+        {relevanceWarning && (
+          <div className="flex items-start gap-3 p-4 border rounded-lg border-destructive/30 bg-destructive/5">
+            <span className="text-destructive text-lg mt-0.5">⚠</span>
+            <div>
+              <p className="text-sm font-medium text-destructive">Geen oncologische content gedetecteerd</p>
+              <p className="text-sm text-muted-foreground mt-1">{relevanceWarning}</p>
             </div>
           </div>
         )}
