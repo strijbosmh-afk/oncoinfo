@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.login-with-username]
 verify_jwt = false
+
+[functions.generate-drug-patient-info]
+verify_jwt = false

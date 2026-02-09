@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import WelcomePage from "./pages/WelcomePage";
 import Index from "./pages/Index";
 import DrugsPage from "./pages/DrugsPage";
@@ -21,12 +22,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/welcome" element={<WelcomePage />} />
-          <Route path="/home" element={<Index />} />
-          <Route path="/drugs" element={<DrugsPage />} />
-          <Route path="/drugs/:id" element={<DrugDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
+          <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/drugs" element={<ProtectedRoute><DrugsPage /></ProtectedRoute>} />
+          <Route path="/drugs/:id" element={<ProtectedRoute><DrugDetailPage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
