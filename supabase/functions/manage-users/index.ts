@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
             username: profile?.username || null,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
-            role: userRoles.includes('admin') ? 'admin' : 'viewer',
+            role: userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',
             profile_id: profile?.id,
             is_physician: perm?.is_physician ?? false,
             can_add_treatments: perm?.can_add_treatments ?? false,

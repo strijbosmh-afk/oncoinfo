@@ -16,7 +16,7 @@ interface UserDialogProps {
     id: string;
     email: string;
     username?: string;
-    role: 'admin' | 'viewer';
+    role: 'admin' | 'viewer' | 'apotheker';
     is_physician?: boolean;
     can_add_treatments?: boolean;
     can_delete_treatments?: boolean;
@@ -39,7 +39,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'viewer'>('viewer');
+  const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isPhysician, setIsPhysician] = useState(false);
@@ -187,12 +187,13 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
           <div className="space-y-2">
             <Label>Rol</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'viewer')}>
+            <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'viewer' | 'apotheker')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-popover">
                 <SelectItem value="viewer">Viewer — alleen lezen</SelectItem>
+                <SelectItem value="apotheker">Apotheker — apotheek toegang</SelectItem>
                 <SelectItem value="admin">Admin — volledig beheer</SelectItem>
               </SelectContent>
             </Select>
