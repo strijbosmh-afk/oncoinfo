@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
+import { generateStaticPreviewHtml } from '@/components/drugs/PatientFolderPreviewStatic';
 import { 
   ArrowLeft, 
   Pill, 
@@ -61,7 +62,6 @@ export default function DrugDetailPage() {
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -101,15 +101,21 @@ export default function DrugDetailPage() {
     }
   }, [drug, includeDosing, includeSideEffects]);
 
+  const currentNurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
+
+  const staticPreviewHtml = drug ? generateStaticPreviewHtml(
+    drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
+    includeDosing, includeSideEffects
+  ) : '';
+
   const handleOpenStaffDialog = () => {
+    setPreviewHtml(null);
     setIsStaffDialogOpen(true);
   };
 
   const handleConfirmStaff = async () => {
-    setIsStaffDialogOpen(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
     await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, customPhone.trim());
-    setIsPreviewOpen(true);
   };
 
   const handlePrint = () => {
@@ -613,49 +619,47 @@ export default function DrugDetailPage() {
           </TabsContent>
         </Tabs>
 
-        {/* Staff Selection Dialog */}
+        {/* Patient Folder Dialog – settings + live preview */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full">
-            <DialogHeader>
+          <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col w-[95vw] sm:w-full p-0">
+            <DialogHeader className="px-6 pt-5 pb-0">
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Patiëntenfolder genereren
+                Patiëntenfolder - {drug.generic_name}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground pt-1">
-                Selecteer de behandelende arts, verpleegkundige en de gewenste taal voor de folder.
-              </p>
             </DialogHeader>
-            
-            <div className="space-y-4 py-2">
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Arts</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {PHYSICIAN_GROUPS.map((group) => (
-                    <div key={group.label} className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">{group.label}</Label>
-                      <Select
-                        value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
-                        onValueChange={setSelectedPhysician}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={`Selecteer ${group.label.toLowerCase()}`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {group.physicians.map((doc) => (
-                            <SelectItem key={doc} value={doc}>{doc}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t pt-4">
+            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+              {/* Left: settings */}
+              <div className="lg:w-[380px] shrink-0 p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r space-y-4">
                 <div className="space-y-3">
+                  <Label className="text-sm font-medium">Arts</Label>
+                  <div className="grid grid-cols-1 gap-3">
+                    {PHYSICIAN_GROUPS.map((group) => (
+                      <div key={group.label} className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">{group.label}</Label>
+                        <Select
+                          value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
+                          onValueChange={setSelectedPhysician}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={`Selecteer ${group.label.toLowerCase()}`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {group.physicians.map((doc) => (
+                              <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3 border-t pt-4">
                   <Label className="text-sm font-medium">Verpleegkundige</Label>
-                  <RadioGroup 
-                    value={isNurseCustom ? '__custom__' : nurseSelection} 
+                  <RadioGroup
+                    value={isNurseCustom ? '__custom__' : nurseSelection}
                     onValueChange={(val) => {
                       if (val === '__custom__') {
                         setIsNurseCustom(true);
@@ -687,7 +691,7 @@ export default function DrugDetailPage() {
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 border-t pt-4">
                   <Label className="text-sm font-medium">Taal van de folder</Label>
                   <div className="flex gap-2">
                     <Button
@@ -695,6 +699,7 @@ export default function DrugDetailPage() {
                       variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
                       onClick={() => setSelectedLanguage('nl')}
                       className="flex-1"
+                      size="sm"
                     >
                       Nederlands
                     </Button>
@@ -703,92 +708,95 @@ export default function DrugDetailPage() {
                       variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
                       onClick={() => setSelectedLanguage('fr')}
                       className="flex-1"
+                      size="sm"
                     >
                       Frans
                     </Button>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Telefoonnummer (optioneel)</Label>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Telefoonnummer</Label>
                   <Input
                     placeholder="bv. 016 80 90 11"
                     value={customPhone}
                     onChange={(e) => setCustomPhone(e.target.value)}
                   />
-                  <p className="text-xs text-muted-foreground">Wordt vermeld op de folder als contactnummer.</p>
                 </div>
+
+                <Button
+                  onClick={handleConfirmStaff}
+                  disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
+                  className="w-full gap-2 mt-2"
+                >
+                  {isGeneratingPdf ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  {previewHtml ? 'Opnieuw genereren' : 'Genereer definitieve folder'}
+                </Button>
+              </div>
+
+              {/* Right: preview */}
+              <div className="flex-1 flex flex-col min-h-0">
+                {previewHtml ? (
+                  user ? (
+                    <div className="flex-1 overflow-auto p-4">
+                      <PatientFolderEditor
+                        drug={drug}
+                        previewHtml={previewHtml}
+                        iframeRef={iframeRef}
+                        onRefreshPreview={fetchPatientInfo}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex-1 overflow-auto bg-muted">
+                      <iframe
+                        ref={iframeRef}
+                        srcDoc={previewHtml}
+                        className="w-full border-0"
+                        title="Patiëntenfolder preview"
+                        style={{ minHeight: '600px', height: '100%' }}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="flex-1 overflow-auto bg-muted">
+                    <iframe
+                      srcDoc={staticPreviewHtml}
+                      className="w-full border-0"
+                      title="Patiëntenfolder voorbeeld"
+                      style={{ minHeight: '600px', height: '100%' }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
-            
-            <DialogFooter className="pt-2 flex justify-center sm:justify-center gap-2">
-              <Button variant="outline" onClick={() => setIsStaffDialogOpen(false)}>
-                Annuleren
-              </Button>
-              <Button 
-                onClick={handleConfirmStaff} 
-                disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
-                className="gap-2"
-              >
-                {isGeneratingPdf && <Loader2 className="h-4 w-4 animate-spin" />}
-                Genereer folder
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
-        {/* Patient Info Preview Dialog */}
-        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Patiëntenfolder - {drug.generic_name}
-              </DialogTitle>
-            </DialogHeader>
-            
-            {user ? (
-              <PatientFolderEditor 
-                drug={drug}
-                previewHtml={previewHtml}
-                iframeRef={iframeRef}
-                onRefreshPreview={fetchPatientInfo}
-              />
-            ) : (
-              <div className="flex-1 overflow-auto bg-muted rounded-md" style={{ maxHeight: '70vh' }}>
-                {previewHtml && (
-                  <iframe
-                    ref={iframeRef}
-                    srcDoc={previewHtml}
-                    className="w-full border-0"
-                    title="Patiëntenfolder preview"
-                    style={{ minHeight: '600px', height: '100%' }}
-                  />
-                )}
+            {/* Footer with actions */}
+            {previewHtml && (
+              <div className="flex justify-end gap-2 px-6 py-3 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={isDownloading}
+                  className="gap-2"
+                  size="sm"
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Download PDF
+                </Button>
+                <Button onClick={handlePrint} className="gap-2" size="sm">
+                  <Printer className="h-4 w-4" />
+                  Afdrukken
+                </Button>
               </div>
             )}
-            
-            <DialogFooter className="flex gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
-                Sluiten
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleDownloadPdf} 
-                disabled={isDownloading}
-                className="gap-2"
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-                Download PDF
-              </Button>
-              <Button onClick={handlePrint} className="gap-2">
-                <Printer className="h-4 w-4" />
-                Afdrukken
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
