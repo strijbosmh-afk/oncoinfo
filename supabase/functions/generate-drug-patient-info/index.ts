@@ -285,7 +285,7 @@ Deno.serve(async (req) => {
 
     // Humanize side effects with AI (skip if custom self_care_tips provided)
     let selfCareTips: string | null = customContent?.self_care_tips || null;
-    if (includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText)) {
+    if (include_side_effects && (sideEffectsCommonText || sideEffectsSeriousText)) {
       console.log('Humanizing side effects...');
       const humanized = await humanizeSideEffects(
         sideEffectsCommonText, sideEffectsSeriousText, drug.generic_name, language
