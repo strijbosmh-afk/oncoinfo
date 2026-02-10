@@ -5,6 +5,89 @@ const corsHeaders = {
    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function humanizeSideEffects(
+  commonText: string | null,
+  seriousText: string | null,
+  drugName: string,
+  language: string,
+): Promise<{ commonHumanized: string | null; seriousHumanized: string | null; selfCareTips: string | null }> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY || (!commonText && !seriousText)) {
+    return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
+  }
+
+  const lang = language === 'fr' ? 'French' : 'Dutch';
+
+  const prompt = `You are writing patient-friendly information about the medication "${drugName}" in ${lang}.
+
+Given these side effects, do THREE things:
+
+1. "common_friendly": Rewrite the common side effects as a short, reassuring paragraph in ${lang}. Don't just list them — describe what the patient might experience in everyday language. Example style: "U kunt zich moe voelen of last krijgen van misselijkheid. Sommige patiënten merken dat..." Keep it warm and human.
+
+2. "serious_friendly": Rewrite the serious side effects as a clear warning paragraph in ${lang}. Be direct but not alarming. Example: "In zeldzame gevallen kunnen ernstigere reacties optreden, zoals..."
+
+3. "self_care": Write 4-6 practical self-care tips in ${lang} that patients can do themselves to manage side effects. Format as bullet points starting with "•". Be specific and actionable. Examples: "• Drink minstens 1,5 liter water per dag om uitdroging te voorkomen", "• Eet kleine, frequente maaltijden als u last heeft van misselijkheid"
+
+Common side effects:
+${commonText || 'None provided'}
+
+Serious side effects:
+${seriousText || 'None provided'}`;
+
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: `You are a compassionate medical writer creating patient information in ${lang}. Return only valid JSON.` },
+          { role: 'user', content: prompt }
+        ],
+        tools: [{
+          type: 'function',
+          function: {
+            name: 'format_side_effects',
+            description: 'Return humanized side effects and self-care tips',
+            parameters: {
+              type: 'object',
+              properties: {
+                common_friendly: { type: 'string', description: `Patient-friendly paragraph about common side effects in ${lang}` },
+                serious_friendly: { type: 'string', description: `Patient-friendly paragraph about serious side effects in ${lang}` },
+                self_care: { type: 'string', description: `Bullet-point self-care tips (each line starting with •) in ${lang}` },
+              },
+              required: ['common_friendly', 'serious_friendly', 'self_care'],
+            },
+          },
+        }],
+        tool_choice: { type: 'function', function: { name: 'format_side_effects' } },
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('AI humanize error:', response.status);
+      return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
+    }
+
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall) return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
+
+    const result = JSON.parse(toolCall.function.arguments);
+    return {
+      commonHumanized: result.common_friendly || commonText,
+      seriousHumanized: result.serious_friendly || seriousText,
+      selfCareTips: result.self_care || null,
+    };
+  } catch (e) {
+    console.error('Humanize failed:', e);
+    return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
+  }
+}
+
 async function translateToFrench(textsMap: Record<string, string | null>): Promise<Record<string, string | null>> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
@@ -200,15 +283,26 @@ Deno.serve(async (req) => {
       dosingStructured = parts.join('\n');
     }
 
-    // Translate content if French
+    // Humanize side effects with AI
+    let selfCareTips: string | null = null;
+    if (includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText)) {
+      console.log('Humanizing side effects...');
+      const humanized = await humanizeSideEffects(
+        sideEffectsCommonText, sideEffectsSeriousText, drug.generic_name, language
+      );
+      sideEffectsCommonText = humanized.commonHumanized;
+      sideEffectsSeriousText = humanized.seriousHumanized;
+      selfCareTips = humanized.selfCareTips;
+      console.log('Side effects humanized');
+    }
+
+    // Translate content if French (skip side effects — already generated in French by humanize)
     if (language === 'fr') {
       const textsToTranslate: Record<string, string | null> = {
         introduction: introductionText,
         usage: usageText,
         dosing: dosingText || dosingStructured || null,
         contraindications: contraindicationsText,
-        side_effects_common: sideEffectsCommonText,
-        side_effects_serious: sideEffectsSeriousText,
         tips: tipsText,
         monitoring: monitoringText,
       };
@@ -224,8 +318,6 @@ Deno.serve(async (req) => {
         dosingStructured = translated.dosing ?? dosingStructured;
       }
       contraindicationsText = translated.contraindications ?? contraindicationsText;
-      sideEffectsCommonText = translated.side_effects_common ?? sideEffectsCommonText;
-      sideEffectsSeriousText = translated.side_effects_serious ?? sideEffectsSeriousText;
       tipsText = translated.tips ?? tipsText;
       monitoringText = translated.monitoring ?? monitoringText;
       console.log('Translation complete');
@@ -236,7 +328,7 @@ Deno.serve(async (req) => {
       physician_name, nurse_name, language,
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
-      tipsText, monitoringText, phone_number
+      tipsText, monitoringText, phone_number, selfCareTips
     );
 
     return new Response(
@@ -272,6 +364,7 @@ function generatePatientInfoHtml(
   tipsText: string | null,
   monitoringText: string | null,
   phoneNumber: string = '',
+  selfCareTips: string | null = null,
 ): string {
   const isFr = language === 'fr';
   
@@ -284,6 +377,7 @@ function generatePatientInfoHtml(
     sideEffects: 'Effets secondaires possibles',
     commonSE: 'Fréquents',
     seriousSE: 'Graves - Contactez immédiatement votre médecin',
+    selfCare: 'Ce que vous pouvez faire vous-même',
     tips: 'Conseils importants',
     monitoring: 'Contrôles',
     contact: 'Contact',
@@ -300,6 +394,7 @@ function generatePatientInfoHtml(
     sideEffects: 'Mogelijke bijwerkingen',
     commonSE: 'Veel voorkomend',
     seriousSE: 'Ernstig - Neem direct contact op',
+    selfCare: 'Wat kunt u zelf doen?',
     tips: 'Belangrijke tips',
     monitoring: 'Controles',
     contact: 'Contact',
@@ -358,6 +453,8 @@ function generatePatientInfoHtml(
     .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
     .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 4px; }
     .info-box { background: #f5e6f0; border-left: 3px solid #6b2d5b; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .selfcare-box h3 { color: #2e7d32; font-size: 13px; margin-bottom: 4px; }
     .full-width { grid-column: 1 / -1; }
     .contact-section { background: #f5f5f5; padding: 10px 12px; border-radius: 4px; margin-top: 12px; font-size: 12px; }
     .contact-section h2 { font-size: 14px; margin-bottom: 8px; color: #6b2d5b; }
@@ -417,15 +514,24 @@ function generatePatientInfoHtml(
         ${sideEffectsCommonText ? `
         <div class="warning-box">
           <h3>${labels.commonSE}</h3>
-          ${formatAsList(sideEffectsCommonText)}
+          <p style="font-size: 13px;">${sideEffectsCommonText.replace(/\n/g, '<br>')}</p>
         </div>
         ` : ''}
         ${sideEffectsSeriousText ? `
         <div class="danger-box">
           <h3>${labels.seriousSE}</h3>
-          ${formatAsList(sideEffectsSeriousText)}
+          <p style="font-size: 13px;">${sideEffectsSeriousText.replace(/\n/g, '<br>')}</p>
         </div>
         ` : ''}
+      </div>
+    </div>
+    ` : ''}
+
+    ${selfCareTips ? `
+    <div class="section full-width">
+      <h2>${labels.selfCare}</h2>
+      <div class="selfcare-box">
+        ${formatAsList(selfCareTips)}
       </div>
     </div>
     ` : ''}
