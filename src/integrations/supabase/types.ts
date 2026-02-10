@@ -508,6 +508,39 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          can_add_treatments: boolean
+          can_delete_treatments: boolean
+          can_modify_treatments: boolean
+          created_at: string
+          id: string
+          is_physician: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          can_add_treatments?: boolean
+          can_delete_treatments?: boolean
+          can_modify_treatments?: boolean
+          created_at?: string
+          id?: string
+          is_physician?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          can_add_treatments?: boolean
+          can_delete_treatments?: boolean
+          can_modify_treatments?: boolean
+          created_at?: string
+          id?: string
+          is_physician?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -112,10 +112,12 @@ Deno.serve(async (req) => {
 
         const { data: profiles } = await supabase.from('profiles').select('*');
         const { data: roles } = await supabase.from('user_roles').select('*');
+        const { data: permissions } = await supabase.from('user_permissions').select('*');
 
         const enrichedUsers = users.map((u: any) => {
           const profile = profiles?.find((p: any) => p.user_id === u.id);
           const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
+          const perm = permissions?.find((p: any) => p.user_id === u.id);
           return {
             id: u.id,
             email: u.email,
@@ -124,6 +126,10 @@ Deno.serve(async (req) => {
             last_sign_in_at: u.last_sign_in_at,
             role: userRoles.includes('admin') ? 'admin' : 'viewer',
             profile_id: profile?.id,
+            is_physician: perm?.is_physician ?? false,
+            can_add_treatments: perm?.can_add_treatments ?? false,
+            can_delete_treatments: perm?.can_delete_treatments ?? false,
+            can_modify_treatments: perm?.can_modify_treatments ?? false,
           };
         });
 
@@ -131,7 +137,8 @@ Deno.serve(async (req) => {
       }
 
       case 'create': {
-        const { email, username, password, role, send_email, login_url } = params;
+        const { email, username, password, role, send_email, login_url,
+          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
         if (!email || !username || !password || !role) {
           return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
@@ -156,6 +163,15 @@ Deno.serve(async (req) => {
           await supabase.from('profiles').update({ role: 'admin' }).eq('user_id', newUser.user.id);
         }
 
+        // Create or update permissions
+        await supabase.from('user_permissions').upsert({
+          user_id: newUser.user.id,
+          is_physician: is_physician ?? false,
+          can_add_treatments: can_add_treatments ?? false,
+          can_delete_treatments: can_delete_treatments ?? false,
+          can_modify_treatments: can_modify_treatments ?? false,
+        }, { onConflict: 'user_id' });
+
         // Send credentials email if requested
         let emailSent = false;
         let emailError = null;
@@ -177,7 +193,8 @@ Deno.serve(async (req) => {
       }
 
       case 'update': {
-        const { user_id, email, username, password, role } = params;
+        const { user_id, email, username, password, role,
+          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
@@ -212,6 +229,21 @@ Deno.serve(async (req) => {
         if (role) {
           await supabase.from('user_roles').delete().eq('user_id', user_id);
           await supabase.from('user_roles').insert({ user_id, role });
+        }
+
+        // Update permissions if any provided
+        if (is_physician !== undefined || can_add_treatments !== undefined || can_delete_treatments !== undefined || can_modify_treatments !== undefined) {
+          const permUpdate: Record<string, boolean> = {};
+          if (is_physician !== undefined) permUpdate.is_physician = is_physician;
+          if (can_add_treatments !== undefined) permUpdate.can_add_treatments = can_add_treatments;
+          if (can_delete_treatments !== undefined) permUpdate.can_delete_treatments = can_delete_treatments;
+          if (can_modify_treatments !== undefined) permUpdate.can_modify_treatments = can_modify_treatments;
+
+          // Upsert to handle users that don't have a permissions row yet
+          await supabase.from('user_permissions').upsert({
+            user_id,
+            ...permUpdate,
+          }, { onConflict: 'user_id' });
         }
 
         return jsonResponse({ success: true });

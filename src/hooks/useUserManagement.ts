@@ -9,6 +9,10 @@ export interface ManagedUser {
   created_at: string;
   last_sign_in_at: string | null;
   role: 'admin' | 'viewer';
+  is_physician: boolean;
+  can_add_treatments: boolean;
+  can_delete_treatments: boolean;
+  can_modify_treatments: boolean;
 }
 
 async function callManageUsers(action: string, params: Record<string, unknown> = {}) {
