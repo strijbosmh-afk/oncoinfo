@@ -53,6 +53,7 @@ export function PatientFolderEditor({
         side_effects_common: savedContent.side_effects_common ?? formatArrayToBullets(drug.side_effects?.common),
         side_effects_serious: savedContent.side_effects_serious ?? formatArrayToBullets(drug.side_effects?.serious),
         tips: savedContent.tips ?? formatArrayToBullets(drug.patient_counseling_points),
+        self_care_tips: savedContent.self_care_tips ?? '',
         monitoring: savedContent.monitoring ?? formatArrayToBullets(drug.monitoring_requirements),
       });
     } else {
@@ -64,6 +65,7 @@ export function PatientFolderEditor({
         side_effects_common: formatArrayToBullets(drug.side_effects?.common),
         side_effects_serious: formatArrayToBullets(drug.side_effects?.serious),
         tips: formatArrayToBullets(drug.patient_counseling_points),
+        self_care_tips: '',
         monitoring: formatArrayToBullets(drug.monitoring_requirements),
       });
     }
@@ -277,6 +279,18 @@ export function PatientFolderEditor({
                   rows={3}
                   placeholder="• Tip 1&#10;• Tip 2"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="self_care_tips">Wat kunt u zelf doen? (Zelfzorgtips)</Label>
+                <Textarea
+                  id="self_care_tips"
+                  value={formData.self_care_tips ?? ''}
+                  onChange={(e) => handleChange('self_care_tips', e.target.value)}
+                  rows={4}
+                  placeholder="• Drink voldoende water&#10;• Gebruik een zachte tandenborstel&#10;• Vermijd direct zonlicht"
+                />
+                <p className="text-xs text-muted-foreground">Deze tips verschijnen in het groene kader op de folder</p>
               </div>
 
               <div className="space-y-2">

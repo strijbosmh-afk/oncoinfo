@@ -283,8 +283,8 @@ Deno.serve(async (req) => {
       dosingStructured = parts.join('\n');
     }
 
-    // Humanize side effects with AI
-    let selfCareTips: string | null = null;
+    // Humanize side effects with AI (skip if custom self_care_tips provided)
+    let selfCareTips: string | null = customContent?.self_care_tips || null;
     if (includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText)) {
       console.log('Humanizing side effects...');
       const humanized = await humanizeSideEffects(
@@ -292,7 +292,9 @@ Deno.serve(async (req) => {
       );
       sideEffectsCommonText = humanized.commonHumanized;
       sideEffectsSeriousText = humanized.seriousHumanized;
-      selfCareTips = humanized.selfCareTips;
+      if (!selfCareTips) {
+        selfCareTips = humanized.selfCareTips;
+      }
       console.log('Side effects humanized');
     }
 

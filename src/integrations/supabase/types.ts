@@ -288,6 +288,7 @@ export type Database = {
           id: string
           introduction: string | null
           monitoring: string | null
+          self_care_tips: string | null
           side_effects_common: string | null
           side_effects_serious: string | null
           tips: string | null
@@ -302,6 +303,7 @@ export type Database = {
           id?: string
           introduction?: string | null
           monitoring?: string | null
+          self_care_tips?: string | null
           side_effects_common?: string | null
           side_effects_serious?: string | null
           tips?: string | null
@@ -316,6 +318,7 @@ export type Database = {
           id?: string
           introduction?: string | null
           monitoring?: string | null
+          self_care_tips?: string | null
           side_effects_common?: string | null
           side_effects_serious?: string | null
           tips?: string | null
