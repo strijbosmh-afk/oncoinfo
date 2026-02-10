@@ -74,8 +74,39 @@ export function generateStaticPreviewHtml(
     dosingHtml = parts.join('<br>');
   }
 
-  const commonSE = drug.side_effects?.common?.slice(0, 5) || [];
-  const seriousSE = drug.side_effects?.serious?.slice(0, 3) || [];
+  const humanize = (term: string): string => {
+    const map: Record<string, { nl: string; fr: string }> = {
+      'cardiotoxicity': { nl: 'Mogelijke belasting van het hart – uw arts volgt dit op via regelmatige controles', fr: 'Risque cardiaque possible – votre médecin surveille cela régulièrement' },
+      'febrile neutropenia': { nl: 'Verhoogd risico op infecties met koorts door verlaagde witte bloedcellen – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Risque accru d\'infections avec fièvre dû à une baisse des globules blancs – contactez immédiatement en cas de fièvre supérieure à 38°C' },
+      'neutropenia': { nl: 'Verlaagde witte bloedcellen, waardoor u vatbaarder bent voor infecties', fr: 'Baisse des globules blancs, vous rendant plus sensible aux infections' },
+      'anemia': { nl: 'Verlaagde rode bloedcellen, waardoor u zich moe of kortademig kunt voelen', fr: 'Baisse des globules rouges, pouvant causer fatigue ou essoufflement' },
+      'thrombocytopenia': { nl: 'Verlaagde bloedplaatjes, waardoor u sneller blauwe plekken of bloedingen kunt krijgen', fr: 'Baisse des plaquettes, pouvant causer des bleus ou saignements plus facilement' },
+      'nausea': { nl: 'Misselijkheid – er bestaan goede medicijnen om dit te verminderen', fr: 'Nausées – des médicaments efficaces existent pour les réduire' },
+      'vomiting': { nl: 'Braken – meld dit aan uw arts, er zijn oplossingen', fr: 'Vomissements – signalez-le à votre médecin, des solutions existent' },
+      'alopecia': { nl: 'Tijdelijk haarverlies – uw haar groeit na de behandeling weer aan', fr: 'Perte de cheveux temporaire – vos cheveux repousseront après le traitement' },
+      'fatigue': { nl: 'Vermoeidheid – luister naar uw lichaam en rust voldoende', fr: 'Fatigue – écoutez votre corps et reposez-vous suffisamment' },
+      'diarrhea': { nl: 'Diarree – drink voldoende en meld het als het aanhoudt', fr: 'Diarrhée – buvez suffisamment et signalez si cela persiste' },
+      'mucositis': { nl: 'Ontstekingen in de mond – goed mondspoelen helpt dit te voorkomen', fr: 'Inflammations buccales – bien rincer la bouche aide à les prévenir' },
+      'stomatitis': { nl: 'Pijnlijke mondwondjes – uw arts kan een mondverzorgingsadvies geven', fr: 'Aphtes douloureux – votre médecin peut conseiller des soins buccaux' },
+      'peripheral neuropathy': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit tijdig aan uw arts', fr: 'Picotements ou engourdissements dans les mains/pieds – signalez-le à votre médecin' },
+      'neuropathy': { nl: 'Tintelingen of gevoelloosheid in handen/voeten', fr: 'Picotements ou engourdissements dans les mains/pieds' },
+      'hand-foot syndrome': { nl: 'Roodheid of pijn aan handpalmen/voetzolen – goed insmeren helpt', fr: 'Rougeur ou douleur aux paumes/plantes – bien hydrater aide' },
+      'rash': { nl: 'Huiduitslag – meld dit aan uw arts', fr: 'Éruption cutanée – signalez-le à votre médecin' },
+      'constipation': { nl: 'Verstopping – voldoende drinken en vezelrijk eten helpt', fr: 'Constipation – boire suffisamment et manger des fibres aide' },
+      'hepatotoxicity': { nl: 'Mogelijke belasting van de lever – wordt gevolgd via bloedonderzoek', fr: 'Risque hépatique possible – suivi par analyses sanguines' },
+      'nephrotoxicity': { nl: 'Mogelijke belasting van de nieren – wordt gevolgd via bloedonderzoek', fr: 'Risque rénal possible – suivi par analyses sanguines' },
+      'infusion reactions': { nl: 'Mogelijke reactie tijdens het infuus (koorts, rillingen) – het team is hierop voorbereid', fr: 'Réaction possible pendant la perfusion (fièvre, frissons) – l\'équipe y est préparée' },
+      'hypertension': { nl: 'Verhoogde bloeddruk – wordt regelmatig gecontroleerd', fr: 'Hypertension artérielle – contrôlée régulièrement' },
+      'hypothyroidism': { nl: 'Vertraagde werking van de schildklier – wordt gevolgd via bloedonderzoek', fr: 'Ralentissement de la thyroïde – suivi par analyses sanguines' },
+      'pneumonitis': { nl: 'Ontsteking van de longen – meld kortademigheid of aanhoudende hoest', fr: 'Inflammation des poumons – signalez essoufflement ou toux persistante' },
+    };
+    const key = term.toLowerCase().trim();
+    if (map[key]) return isFr ? map[key].fr : map[key].nl;
+    return term;
+  };
+
+  const commonSE = (drug.side_effects?.common?.slice(0, 5) || []).map(humanize);
+  const seriousSE = (drug.side_effects?.serious?.slice(0, 3) || []).map(humanize);
   const contraItems = drug.contraindications?.slice(0, 4) || [];
   const tipItems = drug.patient_counseling_points?.slice(0, 4) || [];
   const monitorItems = drug.monitoring_requirements?.slice(0, 4) || [];
