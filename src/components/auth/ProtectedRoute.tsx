@@ -1,6 +1,8 @@
+import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { ChangePasswordDialog } from './ChangePasswordDialog';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,7 +10,12 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isApotheker } = useAuth();
+  const { user, loading, isAdmin, isApotheker, profile } = useAuth();
+  const [passwordChanged, setPasswordChanged] = useState(false);
+
+  const handlePasswordChanged = useCallback(() => {
+    setPasswordChanged(true);
+  }, []);
 
   if (loading) {
     return (
@@ -26,5 +33,18 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/home" replace />;
   }
 
-  return <>{children}</>;
+  const needsPasswordChange = profile && !profile.password_changed && !passwordChanged;
+
+  return (
+    <>
+      {needsPasswordChange && (
+        <ChangePasswordDialog
+          open={true}
+          onSuccess={handlePasswordChanged}
+          userId={user.id}
+        />
+      )}
+      {children}
+    </>
+  );
 }
