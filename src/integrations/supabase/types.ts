@@ -340,6 +340,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          password_changed: boolean
           role: string
           updated_at: string
           user_id: string
@@ -349,6 +350,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          password_changed?: boolean
           role?: string
           updated_at?: string
           user_id: string
@@ -358,6 +360,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          password_changed?: boolean
           role?: string
           updated_at?: string
           user_id?: string

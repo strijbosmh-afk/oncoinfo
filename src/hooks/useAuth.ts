@@ -8,6 +8,7 @@ interface Profile {
   user_id: string;
   email: string;
   role: 'admin' | 'viewer';
+  password_changed: boolean;
 }
 
 export function useAuth() {
