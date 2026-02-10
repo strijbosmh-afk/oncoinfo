@@ -67,10 +67,9 @@ export function generateStaticPreviewHtml(
   let dosingHtml = '';
   if (includeDosing && drug.dosing_info) {
     const parts: string[] = [];
-    if (drug.dosing_info.standard_dose) parts.push(`Dosering: ${drug.dosing_info.standard_dose}`);
-    if (drug.dosing_info.frequency) parts.push(`Frequentie: ${drug.dosing_info.frequency}`);
-    if (drug.dosing_info.duration) parts.push(`Duur: ${drug.dosing_info.duration}`);
-    if (drug.cycle_length_days) parts.push(`Cyclus: ${drug.cycle_length_days} dagen`);
+    if (drug.dosing_info.frequency) parts.push(drug.dosing_info.frequency);
+    if (drug.cycle_length_days) parts.push(`${isFr ? 'Cycle' : 'Cyclus'}: ${drug.cycle_length_days} ${isFr ? 'jours' : 'dagen'}`);
+    if (drug.dosing_info.duration) parts.push(`${isFr ? 'Durée' : 'Duur'}: ${drug.dosing_info.duration}`);
     dosingHtml = parts.join('<br>');
   }
 
