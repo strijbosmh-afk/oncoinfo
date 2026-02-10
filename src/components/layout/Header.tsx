@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function Header() {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, isAdmin, isApotheker, signOut, loading } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -36,7 +36,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <User className="h-5 w-5" />
-                  {isAdmin && (
+                  {(isAdmin || isApotheker) && (
                     <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />
                   )}
                 </Button>
@@ -46,7 +46,7 @@ export function Header() {
                   {user.email}
                 </div>
                 <DropdownMenuSeparator />
-                {isAdmin && (
+                {(isAdmin || isApotheker) && (
                   <>
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
