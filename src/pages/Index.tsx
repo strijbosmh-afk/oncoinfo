@@ -100,7 +100,7 @@ const Index = () => {
             Kies Specialiteit
           </h2>
 
-          {/* Available specialties */}
+          {/* All specialties in one grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {drugLibraries.map((library) => (
               <Link key={library.title} to={library.href}>
@@ -122,10 +122,6 @@ const Index = () => {
                 </Card>
               </Link>
             ))}
-          </div>
-
-          {/* Upcoming specialties - second row */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mt-6">
             {upcomingLibraries.map((library) => (
               <Card key={library.title} className="h-full relative overflow-hidden border-2 border-dashed border-muted-foreground/30 opacity-60">
                 <div className="absolute top-3 right-3">
