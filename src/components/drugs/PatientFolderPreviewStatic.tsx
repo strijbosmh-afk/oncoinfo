@@ -9,6 +9,7 @@ interface Drug {
   contraindications?: string[] | null;
   patient_counseling_points?: string[] | null;
   monitoring_requirements?: string[] | null;
+  common_regimens?: string[] | null;
 }
 
 export function generateStaticPreviewHtml(
@@ -64,13 +65,26 @@ export function generateStaticPreviewHtml(
   const introText = drug.mechanism_of_action || '';
   const usageItems = drug.approved_indications?.slice(0, 4) || [];
   
-  let dosingHtml = '';
-  if (includeDosing && drug.dosing_info) {
-    const parts: string[] = [];
-    if (drug.dosing_info.frequency) parts.push(drug.dosing_info.frequency);
-    if (drug.cycle_length_days) parts.push(`${isFr ? 'Cycle' : 'Cyclus'}: ${drug.cycle_length_days} ${isFr ? 'jours' : 'dagen'}`);
-    if (drug.dosing_info.duration) parts.push(`${isFr ? 'Durée' : 'Duur'}: ${drug.dosing_info.duration}`);
-    dosingHtml = parts.join('<br>');
+  let dosingItems: string[] = [];
+  if (includeDosing) {
+    const di = drug.dosing_info;
+    if (di) {
+      // Multi-phase schemas
+      if (di.neoadjuvant_phase1) dosingItems.push(`${di.neoadjuvant_phase1}${di.neoadjuvant_phase1_duration ? ` (${di.neoadjuvant_phase1_duration})` : ''}`);
+      if (di.neoadjuvant_phase2) dosingItems.push(`${di.neoadjuvant_phase2}${di.neoadjuvant_phase2_duration ? ` (${di.neoadjuvant_phase2_duration})` : ''}`);
+      if (di.adjuvant) dosingItems.push(`${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
+      // Simple schemas
+      if (dosingItems.length === 0) {
+        if (di.frequency) dosingItems.push(di.frequency);
+        if (drug.cycle_length_days) dosingItems.push(`${isFr ? 'Cycle' : 'Cyclus'}: ${drug.cycle_length_days} ${isFr ? 'jours' : 'dagen'}`);
+        if (di.duration) dosingItems.push(`${isFr ? 'Durée' : 'Duur'}: ${di.duration}`);
+      }
+      if (di.notes) dosingItems.push(di.notes);
+    }
+    // Fallback to common_regimens
+    if (dosingItems.length === 0 && drug.common_regimens?.length > 0) {
+      dosingItems = drug.common_regimens.slice(0, 3);
+    }
   }
 
   const humanize = (term: string): string => {
@@ -212,7 +226,7 @@ export function generateStaticPreviewHtml(
   <div class="content">
     ${introText ? `<div class="section"><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
     ${usageItems.length > 0 ? `<div class="section"><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
-    ${includeDosing && dosingHtml ? `<div class="section"><h2>${labels.howGiven}</h2><p>${dosingHtml}</p></div>` : ''}
+    ${includeDosing && dosingItems.length > 0 ? `<div class="section"><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
     ${contraItems.length > 0 ? `<div class="section"><h2>${labels.whenNot}</h2>${listHtml(contraItems)}</div>` : ''}
 
     ${includeSideEffects && (commonSE.length > 0 || seriousSE.length > 0) ? `
