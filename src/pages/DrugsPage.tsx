@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,9 @@ const getDrugClassColor = (drugClass: string) => {
     'Aromataseremmers': 'bg-lime-100 text-lime-800 border-lime-200',
     'SERD': 'bg-emerald-100 text-emerald-800 border-emerald-200',
     'LHRH agonist': 'bg-sky-100 text-sky-800 border-sky-200',
+    'ALK-remmer': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    'EGFR-remmer': 'bg-lime-100 text-lime-800 border-lime-200',
+    'Angiogeneseremmer': 'bg-emerald-100 text-emerald-800 border-emerald-200',
   };
   return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
@@ -206,6 +209,7 @@ const categoryIcons: Record<DrugCategoryKey, React.ElementType> = {
   breast: Heart,
   urology: Stethoscope,
   gynecology: Baby,
+  respiratory: Wind,
   other: MoreHorizontal
 };
 
@@ -213,6 +217,7 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
   breast: { text: 'text-pink-500', bg: 'bg-pink-500/10' },
   urology: { text: 'text-blue-500', bg: 'bg-blue-500/10' },
   gynecology: { text: 'text-purple-500', bg: 'bg-purple-500/10' },
+  respiratory: { text: 'text-sky-500', bg: 'bg-sky-500/10' },
   other: { text: 'text-emerald-500', bg: 'bg-emerald-500/10' }
 };
 
@@ -292,6 +297,27 @@ export default function DrugsPage() {
          'endometrial': ['Endometriumkanker'],
          'cervical': ['Cervixkanker'],
          'vulvar': ['Vulvakanker']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
+   }
+   
+   if (category === 'respiratory') {
+     const respiratoryAreas = ['Longkanker', 'NSCLC', 'SCLC', 'Mesothelioom'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => respiratoryAreas.includes(area))
+     );
+     
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'nsclc': ['NSCLC'],
+         'sclc': ['SCLC'],
+         'mesothelioma': ['Mesothelioom']
        };
        const areas = diseaseAreaMap[selectedDiseaseArea];
        if (areas) {
@@ -579,7 +605,7 @@ export default function DrugsPage() {
             )}
             {selectedDiseaseArea && (
               <Badge variant="secondary" className="gap-1">
-                {(category === 'urology' || category === 'gynecology') && 'diseaseAreas' in (categoryConfig || {})
+                {(category === 'urology' || category === 'gynecology' || category === 'respiratory') && 'diseaseAreas' in (categoryConfig || {})
                   ? (categoryConfig as any).diseaseAreas.find((s: any) => s.key === selectedDiseaseArea)?.label
                   : selectedDiseaseArea}
                 <button onClick={() => handleDiseaseAreaClick(selectedDiseaseArea)} className="ml-1 hover:text-destructive">×</button>
@@ -669,6 +695,26 @@ export default function DrugsPage() {
                     >
                       <CardContent className="p-4">
                         <h4 className="font-medium text-purple-700 dark:text-purple-400">{area.label}</h4>
+                        <p className="text-xs text-muted-foreground">{area.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Respiratory disease areas */}
+              {category === 'respiratory' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-sky-300 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/30' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-sky-700 dark:text-sky-400">{area.label}</h4>
                         <p className="text-xs text-muted-foreground">{area.description}</p>
                       </CardContent>
                     </Card>

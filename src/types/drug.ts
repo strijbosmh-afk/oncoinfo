@@ -66,7 +66,10 @@ export const DRUG_CLASSES = [
   'Combinatietherapie',
   'Supportive Care',
   'HER2-remmers',
-  'CDK4/6i'
+  'CDK4/6i',
+  'ALK-remmer',
+  'EGFR-remmer',
+  'Angiogeneseremmer',
 ] as const;
 
 export const COMBINATION_SUBTYPES = [
@@ -90,7 +93,11 @@ export const DRUG_DISEASE_AREAS = [
   'Blaaskanker',
   'Niercelcarcinoom',
   'Testiskanker',
-  'Peniskanker'
+  'Peniskanker',
+  'Longkanker',
+  'NSCLC',
+  'SCLC',
+  'Mesothelioom'
 ] as const;
 
 // Category configurations for the drug library
@@ -128,6 +135,15 @@ export const DRUG_CATEGORIES = {
       { key: 'vulvar', label: 'Vulvacarcinoom', description: 'Plaveiselcelcarcinoom' }
     ],
     drugClasses: ['Chemotherapie', 'PARPi', 'Antiangiogenese', 'IO/ICI', 'Hormoontherapie']
+  },
+  respiratory: {
+    name: 'Respiratoire',
+    diseaseAreas: [
+      { key: 'nsclc', label: 'NSCLC', description: 'Niet-kleincellig longcarcinoom' },
+      { key: 'sclc', label: 'SCLC', description: 'Kleincellig longcarcinoom' },
+      { key: 'mesothelioma', label: 'Mesothelioom', description: 'Pleuraal mesothelioom' }
+    ],
+    drugClasses: ['Chemotherapie', 'IO/ICI', 'ALK-remmer', 'EGFR-remmer', 'TKI', 'Angiogeneseremmer', 'Combinatietherapie']
   },
   other: {
     name: 'Overige',
