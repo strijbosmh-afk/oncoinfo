@@ -33,6 +33,14 @@ const drugLibraries = [
     bgColor: 'bg-purple-500/10'
   },
   {
+    title: 'Respiratoire',
+    description: 'Long- en luchtwegentumoren',
+    icon: Wind,
+    href: '/drugs?category=respiratory',
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10'
+  },
+  {
     title: 'Overige',
     description: 'Ondersteunende en overige medicatie',
     icon: MoreHorizontal,
@@ -49,13 +57,6 @@ const upcomingLibraries = [
     icon: Utensils,
     color: 'text-orange-500',
     bgColor: 'bg-orange-500/10'
-  },
-  {
-    title: 'Respiratoire',
-    description: 'Long- en luchtwegentumoren',
-    icon: Wind,
-    color: 'text-sky-500',
-    bgColor: 'bg-sky-500/10'
   },
   {
     title: 'Huid',
