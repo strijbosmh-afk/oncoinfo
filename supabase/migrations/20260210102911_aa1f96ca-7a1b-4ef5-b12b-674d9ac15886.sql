@@ -1,0 +1,1 @@
+ALTER TABLE public.patient_folder_content ADD COLUMN self_care_tips text NULL;

@@ -11,6 +11,7 @@ export interface PatientFolderContent {
   side_effects_common?: string | null;
   side_effects_serious?: string | null;
   tips?: string | null;
+  self_care_tips?: string | null;
   monitoring?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -57,6 +58,7 @@ export function useSavePatientFolderContent() {
             side_effects_common: content.side_effects_common,
             side_effects_serious: content.side_effects_serious,
             tips: content.tips,
+            self_care_tips: content.self_care_tips,
             monitoring: content.monitoring,
           })
           .eq('drug_id', content.drug_id)
@@ -78,6 +80,7 @@ export function useSavePatientFolderContent() {
             side_effects_common: content.side_effects_common,
             side_effects_serious: content.side_effects_serious,
             tips: content.tips,
+            self_care_tips: content.self_care_tips,
             monitoring: content.monitoring,
           })
           .select()
