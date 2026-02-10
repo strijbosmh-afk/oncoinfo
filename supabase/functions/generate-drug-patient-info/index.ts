@@ -275,11 +275,23 @@ Deno.serve(async (req) => {
     // Build dosing text from structured data if no custom content
     let dosingStructured = '';
     if (!dosingText && drug.dosing_info) {
+      const di = drug.dosing_info;
       const parts: string[] = [];
-      if (drug.dosing_info.standard_dose) parts.push(`Dosering: ${drug.dosing_info.standard_dose}`);
-      if (drug.dosing_info.frequency) parts.push(`Frequentie: ${drug.dosing_info.frequency}`);
-      if (drug.dosing_info.duration) parts.push(`Duur: ${drug.dosing_info.duration}`);
-      if (drug.cycle_length_days) parts.push(`Cyclus: ${drug.cycle_length_days} dagen`);
+      // Support complex multi-phase schemas (e.g. KEYNOTE-522)
+      if (di.neoadjuvant_phase1) parts.push(`• ${di.neoadjuvant_phase1}${di.neoadjuvant_phase1_duration ? ` (${di.neoadjuvant_phase1_duration})` : ''}`);
+      if (di.neoadjuvant_phase2) parts.push(`• ${di.neoadjuvant_phase2}${di.neoadjuvant_phase2_duration ? ` (${di.neoadjuvant_phase2_duration})` : ''}`);
+      if (di.adjuvant) parts.push(`• ${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
+      // Simple schemas
+      if (parts.length === 0) {
+        if (di.frequency) parts.push(`• ${di.frequency}`);
+        if (drug.cycle_length_days) parts.push(`• Cyclus: ${drug.cycle_length_days} dagen`);
+        if (di.duration) parts.push(`• Duur: ${di.duration}`);
+      }
+      // Common regimens as fallback
+      if (parts.length === 0 && drug.common_regimens?.length > 0) {
+        drug.common_regimens.forEach((r: string) => parts.push(`• ${r}`));
+      }
+      if (di.notes) parts.push(`• ${di.notes}`);
       dosingStructured = parts.join('\n');
     }
 
@@ -493,11 +505,12 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${includeDosing && (dosingText || dosingStructured || drug.dosing_info) ? `
+    ${includeDosing && (dosingText || dosingStructured || drug.dosing_info || drug.common_regimens?.length > 0) ? `
     <div class="section">
       <h2>${labels.howGiven}</h2>
-      ${dosingText ? `<p>${dosingText.replace(/\n/g, '<br>')}</p>` 
-        : dosingStructured ? `<p>${dosingStructured.replace(/\n/g, '<br>')}</p>`
+      ${dosingText ? formatAsList(dosingText) 
+        : dosingStructured ? formatAsList(dosingStructured)
+        : drug.common_regimens?.length > 0 ? formatAsList(drug.common_regimens.map((r: string) => `• ${r}`).join('\n'))
         : ''}
     </div>
     ` : ''}
@@ -516,13 +529,13 @@ function generatePatientInfoHtml(
         ${sideEffectsCommonText ? `
         <div class="warning-box">
           <h3>${labels.commonSE}</h3>
-          <p style="font-size: 13px;">${sideEffectsCommonText.replace(/\n/g, '<br>')}</p>
+          ${formatAsList(sideEffectsCommonText)}
         </div>
         ` : ''}
         ${sideEffectsSeriousText ? `
         <div class="danger-box">
           <h3>${labels.seriousSE}</h3>
-          <p style="font-size: 13px;">${sideEffectsSeriousText.replace(/\n/g, '<br>')}</p>
+          ${formatAsList(sideEffectsSeriousText)}
         </div>
         ` : ''}
       </div>
