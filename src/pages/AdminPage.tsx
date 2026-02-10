@@ -16,7 +16,7 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 
 export default function AdminPage() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, isApotheker, loading } = useAuth();
   const { data: drugs, isLoading: drugsLoading } = useDrugs({});
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,12 +54,12 @@ export default function AdminPage() {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isApotheker) {
     return (
       <Layout>
         <div className="container py-16 text-center">
           <h1 className="text-2xl font-bold mb-4">Toegang Geweigerd</h1>
-          <p className="text-muted-foreground">Je hebt admin-rechten nodig om deze pagina te bekijken.</p>
+          <p className="text-muted-foreground">Je hebt admin- of apothekersrechten nodig om deze pagina te bekijken.</p>
         </div>
       </Layout>
     );
@@ -121,10 +121,12 @@ export default function AdminPage() {
             <TabsList className="flex-wrap">
               <TabsTrigger value="overview">Overzicht</TabsTrigger>
               <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
-              <TabsTrigger value="users" className="gap-1.5">
-                <Users className="h-4 w-4" />
-                Gebruikers
-              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="users" className="gap-1.5">
+                  <Users className="h-4 w-4" />
+                  Gebruikers
+                </TabsTrigger>
+              )}
               <TabsTrigger value="audit" className="gap-1.5">
                 <ClipboardList className="h-4 w-4" />
                 Activiteiten
@@ -216,9 +218,11 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="users" className="mt-6">
-            <UserManagement />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="users" className="mt-6">
+              <UserManagement />
+            </TabsContent>
+          )}
 
           <TabsContent value="audit" className="mt-6">
             <AuditLog />

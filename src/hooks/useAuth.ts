@@ -15,6 +15,7 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isApotheker, setIsApotheker] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -32,20 +33,21 @@ export function useAuth() {
     return data as Profile;
   }, []);
 
-  const checkAdminRole = useCallback(async (userId: string) => {
-    // Query user_roles table (the authoritative source for roles)
+  const checkRoles = useCallback(async (userId: string) => {
     const { data, error } = await (supabase as any)
       .from('user_roles')
       .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
+      .eq('user_id', userId);
 
     if (error) {
-      console.error('Error checking admin role:', error);
-      return false;
+      console.error('Error checking roles:', error);
+      return { admin: false, apotheker: false };
     }
-    return !!data;
+    const roles = (data || []).map((r: any) => r.role);
+    return {
+      admin: roles.includes('admin'),
+      apotheker: roles.includes('apotheker'),
+    };
   }, []);
 
   useEffect(() => {
@@ -60,10 +62,16 @@ export function useAuth() {
 
         if (session?.user) {
           fetchProfile(session.user.id).then(p => { if (isMounted) setProfile(p); });
-          checkAdminRole(session.user.id).then(a => { if (isMounted) setIsAdmin(a); });
+          checkRoles(session.user.id).then(r => {
+            if (isMounted) {
+              setIsAdmin(r.admin);
+              setIsApotheker(r.apotheker);
+            }
+          });
         } else {
           setProfile(null);
           setIsAdmin(false);
+          setIsApotheker(false);
         }
       }
     );
@@ -78,13 +86,14 @@ export function useAuth() {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const [p, a] = await Promise.all([
+          const [p, r] = await Promise.all([
             fetchProfile(session.user.id),
-            checkAdminRole(session.user.id),
+            checkRoles(session.user.id),
           ]);
           if (isMounted) {
             setProfile(p);
-            setIsAdmin(a);
+            setIsAdmin(r.admin);
+            setIsApotheker(r.apotheker);
           }
         }
       } finally {
@@ -98,7 +107,7 @@ export function useAuth() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile, checkAdminRole]);
+  }, [fetchProfile, checkRoles]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -168,6 +177,7 @@ export function useAuth() {
     profile,
     loading,
     isAdmin,
+    isApotheker,
     signIn,
     signUp,
     signOut
