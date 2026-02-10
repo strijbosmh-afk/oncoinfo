@@ -146,10 +146,10 @@ export function UserManagement() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium truncate">{user.username || user.email}</p>
                         <Badge
-                          variant={user.role === 'admin' ? 'default' : 'secondary'}
-                          className="text-xs flex-shrink-0"
+                          variant={user.role === 'admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
+                          className={`text-xs flex-shrink-0 ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
                         >
-                          {user.role === 'admin' ? 'Admin' : 'Viewer'}
+                          {user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
                         </Badge>
                         {user.is_physician && (
                           <Badge variant="outline" className="text-xs flex-shrink-0 gap-1">

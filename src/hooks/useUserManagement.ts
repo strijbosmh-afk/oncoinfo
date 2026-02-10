@@ -8,7 +8,7 @@ export interface ManagedUser {
   username: string | null;
   created_at: string;
   last_sign_in_at: string | null;
-  role: 'admin' | 'viewer';
+  role: 'admin' | 'viewer' | 'apotheker';
   is_physician: boolean;
   can_add_treatments: boolean;
   can_delete_treatments: boolean;
