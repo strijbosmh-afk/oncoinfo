@@ -12,7 +12,16 @@ interface UserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: 'create' | 'edit';
-  user?: { id: string; email: string; username?: string; role: 'admin' | 'viewer' } | null;
+  user?: {
+    id: string;
+    email: string;
+    username?: string;
+    role: 'admin' | 'viewer';
+    is_physician?: boolean;
+    can_add_treatments?: boolean;
+    can_delete_treatments?: boolean;
+    can_modify_treatments?: boolean;
+  } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
 }
@@ -33,6 +42,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [role, setRole] = useState<'admin' | 'viewer'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isPhysician, setIsPhysician] = useState(false);
+  const [canAdd, setCanAdd] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
+  const [canModify, setCanModify] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,6 +56,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setRole(user.role);
         setPassword('');
         setShowPassword(false);
+        setIsPhysician(user.is_physician ?? false);
+        setCanAdd(user.can_add_treatments ?? false);
+        setCanDelete(user.can_delete_treatments ?? false);
+        setCanModify(user.can_modify_treatments ?? false);
       } else {
         setEmail('');
         setUsername('');
@@ -50,6 +67,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setRole('viewer');
         setSendEmail(true);
         setShowPassword(true);
+        setIsPhysician(false);
+        setCanAdd(false);
+        setCanDelete(false);
+        setCanModify(false);
       }
     }
   }, [open, mode, user]);
@@ -71,6 +92,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         role,
         send_email: sendEmail,
         login_url: `${window.location.origin}`,
+        is_physician: isPhysician,
+        can_add_treatments: canAdd,
+        can_delete_treatments: canDelete,
+        can_modify_treatments: canModify,
       });
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
@@ -78,12 +103,12 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       if (username.trim() !== (user!.username || '')) changes.username = username.trim();
       if (password.trim()) changes.password = password.trim();
       if (role !== user!.role) changes.role = role;
+      // Always send permissions so they can be updated
+      changes.is_physician = isPhysician;
+      changes.can_add_treatments = canAdd;
+      changes.can_delete_treatments = canDelete;
+      changes.can_modify_treatments = canModify;
 
-      // Only submit if there are actual changes
-      if (Object.keys(changes).length <= 1) {
-        onOpenChange(false);
-        return;
-      }
       onSubmit(changes);
     }
   };
@@ -171,6 +196,50 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 <SelectItem value="admin">Admin — volledig beheer</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t">
+            <Label className="text-sm font-medium">Eigenschappen & rechten</Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is-physician"
+                checked={isPhysician}
+                onCheckedChange={(checked) => setIsPhysician(checked as boolean)}
+              />
+              <Label htmlFor="is-physician" className="text-sm font-normal cursor-pointer">
+                Arts (physician)
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="can-add"
+                checked={canAdd}
+                onCheckedChange={(checked) => setCanAdd(checked as boolean)}
+              />
+              <Label htmlFor="can-add" className="text-sm font-normal cursor-pointer">
+                Kan behandelingen toevoegen
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="can-modify"
+                checked={canModify}
+                onCheckedChange={(checked) => setCanModify(checked as boolean)}
+              />
+              <Label htmlFor="can-modify" className="text-sm font-normal cursor-pointer">
+                Kan behandelingen wijzigen
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="can-delete"
+                checked={canDelete}
+                onCheckedChange={(checked) => setCanDelete(checked as boolean)}
+              />
+              <Label htmlFor="can-delete" className="text-sm font-normal cursor-pointer">
+                Kan behandelingen verwijderen
+              </Label>
+            </div>
           </div>
 
           {mode === 'create' && (

@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Stethoscope } from 'lucide-react';
 
 export function UserManagement() {
   const { user: currentUser } = useAuth();
@@ -151,6 +151,12 @@ export function UserManagement() {
                         >
                           {user.role === 'admin' ? 'Admin' : 'Viewer'}
                         </Badge>
+                        {user.is_physician && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0 gap-1">
+                            <Stethoscope className="h-3 w-3" />
+                            Arts
+                          </Badge>
+                        )}
                         {user.id === currentUser?.id && (
                           <Badge variant="outline" className="text-xs flex-shrink-0">
                             Jij
@@ -160,6 +166,13 @@ export function UserManagement() {
                       <p className="text-xs text-muted-foreground">
                         {user.email} · Laatst ingelogd: {formatDate(user.last_sign_in_at)}
                       </p>
+                      {(user.can_add_treatments || user.can_modify_treatments || user.can_delete_treatments) && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">+toevoegen</Badge>}
+                          {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">✎wijzigen</Badge>}
+                          {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">×verwijderen</Badge>}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
