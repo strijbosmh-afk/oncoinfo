@@ -72,7 +72,7 @@ async function sendCredentialsEmail(email: string, username: string, password: s
   `;
 
   const result = await resend.emails.send({
-    from: 'OncoInfo <onboarding@resend.dev>',
+    from: 'OncoInfo <admin@oncoinfo.be>',
     to: [email],
     subject: 'Uw OncoInfo account - Inloggegevens',
     html: htmlContent,
