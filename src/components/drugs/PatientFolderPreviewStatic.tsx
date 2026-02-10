@@ -75,32 +75,80 @@ export function generateStaticPreviewHtml(
 
   const humanize = (term: string): string => {
     const map: Record<string, { nl: string; fr: string }> = {
+      // Dutch terms (as stored in DB)
+      'cardiotoxiciteit': { nl: 'Mogelijke belasting van het hart – uw arts volgt dit op via regelmatige controles', fr: 'Risque cardiaque possible – votre médecin surveille cela régulièrement' },
+      'cardiotoxiciteit (her2-therapie)': { nl: 'Mogelijke belasting van het hart door de HER2-behandeling – wordt nauwkeurig gevolgd met echo\'s', fr: 'Risque cardiaque lié au traitement HER2 – suivi attentivement par échographies' },
+      'febriele neutropenie': { nl: 'Koorts door verlaagde afweer – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Fièvre due à une baisse de l\'immunité – contactez immédiatement si fièvre supérieure à 38°C' },
+      'neutropene koorts': { nl: 'Koorts door verlaagde afweer – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Fièvre due à une baisse de l\'immunité – contactez immédiatement si fièvre supérieure à 38°C' },
+      'neutropenie': { nl: 'Verlaagde witte bloedcellen, waardoor u vatbaarder bent voor infecties', fr: 'Baisse des globules blancs, vous rendant plus sensible aux infections' },
+      'ernstige neutropenie (graad 4)': { nl: 'Sterk verlaagde witte bloedcellen – wordt nauwlettend gecontroleerd via bloedonderzoek', fr: 'Baisse importante des globules blancs – suivi attentif par analyses sanguines' },
+      'leukopenie': { nl: 'Verlaagde witte bloedcellen – wordt gecontroleerd via bloedonderzoek', fr: 'Baisse des globules blancs – contrôlée par analyses sanguines' },
+      'anemie': { nl: 'Verlaagde rode bloedcellen, waardoor u zich moe of kortademig kunt voelen', fr: 'Baisse des globules rouges, pouvant causer fatigue ou essoufflement' },
+      'trombocytopenie': { nl: 'Verlaagde bloedplaatjes – u kunt sneller blauwe plekken krijgen', fr: 'Baisse des plaquettes – vous pouvez avoir des bleus plus facilement' },
+      'myelosuppressie': { nl: 'Tijdelijk verminderde aanmaak van bloedcellen – wordt gevolgd via bloedonderzoek', fr: 'Production temporairement réduite de cellules sanguines – suivie par analyses sanguines' },
+      'ernstige myelosuppressie': { nl: 'Sterk verminderde aanmaak van bloedcellen – wordt nauwlettend gevolgd', fr: 'Production fortement réduite de cellules sanguines – suivi attentif' },
+      'misselijkheid': { nl: 'Misselijkheid – er bestaan goede medicijnen om dit te verminderen', fr: 'Nausées – des médicaments efficaces existent pour les réduire' },
+      'braken': { nl: 'Braken – meld dit aan uw arts, er zijn oplossingen', fr: 'Vomissements – signalez-le à votre médecin, des solutions existent' },
+      'alopecia': { nl: 'Tijdelijk haarverlies – uw haar groeit na de behandeling weer aan', fr: 'Perte de cheveux temporaire – vos cheveux repousseront après le traitement' },
+      'alopecia (mild)': { nl: 'Licht haarverlies – meestal beperkt en tijdelijk', fr: 'Légère perte de cheveux – généralement limitée et temporaire' },
+      'vermoeidheid': { nl: 'Vermoeidheid – luister naar uw lichaam en rust voldoende', fr: 'Fatigue – écoutez votre corps et reposez-vous suffisamment' },
+      'diarree': { nl: 'Diarree – drink voldoende en meld het als het aanhoudt', fr: 'Diarrhée – buvez suffisamment et signalez si cela persiste' },
+      'diarree (pertuzumab)': { nl: 'Diarree (kan voorkomen bij pertuzumab) – drink voldoende en meld het als het aanhoudt', fr: 'Diarrhée (possible avec pertuzumab) – buvez suffisamment et signalez si cela persiste' },
+      'ernstige diarree': { nl: 'Ernstige diarree – neem contact op als het niet stopt', fr: 'Diarrhée sévère – contactez si cela ne s\'arrête pas' },
+      'stomatitis': { nl: 'Pijnlijke mondwondjes – goed mondspoelen helpt', fr: 'Aphtes douloureux – bien rincer la bouche aide' },
+      'mucositis': { nl: 'Ontstekingen in de mond – goed mondspoelen helpt dit te voorkomen', fr: 'Inflammations buccales – bien rincer la bouche aide à les prévenir' },
+      'neuropathie': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit tijdig', fr: 'Picotements ou engourdissements dans les mains/pieds – signalez-le' },
+      'perifere neuropathie': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit tijdig aan uw arts', fr: 'Picotements ou engourdissements dans les mains/pieds – signalez-le à votre médecin' },
+      'ernstige perifere neuropathie': { nl: 'Sterke tintelingen of gevoelloosheid in handen/voeten – meld dit onmiddellijk', fr: 'Picotements ou engourdissements importants – signalez immédiatement' },
+      'ernstige neuropathie': { nl: 'Sterke tintelingen of gevoelloosheid – meld dit onmiddellijk', fr: 'Picotements ou engourdissements importants – signalez immédiatement' },
+      'nagelveranderingen': { nl: 'Veranderingen aan de nagels – meestal tijdelijk', fr: 'Modifications des ongles – généralement temporaires' },
+      'oedeem': { nl: 'Vochtophoping (zwelling) – meld het als het toeneemt', fr: 'Rétention d\'eau (gonflement) – signalez si cela augmente' },
+      'obstipatie': { nl: 'Verstopping – voldoende drinken en vezelrijk eten helpt', fr: 'Constipation – boire suffisamment et manger des fibres aide' },
+      'buikpijn': { nl: 'Buikpijn – meld het als het aanhoudt', fr: 'Douleurs abdominales – signalez si cela persiste' },
+      'hoofdpijn': { nl: 'Hoofdpijn – meestal mild en tijdelijk', fr: 'Maux de tête – généralement légers et temporaires' },
+      'huiduitslag': { nl: 'Huiduitslag – meld dit aan uw arts', fr: 'Éruption cutanée – signalez-le à votre médecin' },
+      'hand-voetsyndroom': { nl: 'Roodheid of pijn aan handpalmen/voetzolen – goed insmeren helpt', fr: 'Rougeur ou douleur aux paumes/plantes – bien hydrater aide' },
+      'hypersensitiviteit': { nl: 'Mogelijke overgevoeligheidsreactie – het team is hierop voorbereid', fr: 'Réaction d\'hypersensibilité possible – l\'équipe y est préparée' },
+      'interstitiële longziekte': { nl: 'Zeldzame longontsteking – meld kortademigheid of aanhoudende hoest', fr: 'Inflammation pulmonaire rare – signalez essoufflement ou toux persistante' },
+      'pneumonitis': { nl: 'Ontsteking van de longen – meld kortademigheid of aanhoudende hoest', fr: 'Inflammation des poumons – signalez essoufflement ou toux persistante' },
+      'levertoxiciteit': { nl: 'Mogelijke belasting van de lever – wordt gevolgd via bloedonderzoek', fr: 'Risque hépatique possible – suivi par analyses sanguines' },
+      'hepatitis': { nl: 'Leverontsteking – wordt gevolgd via bloedonderzoek', fr: 'Hépatite – suivie par analyses sanguines' },
+      'nierinsufficiëntie': { nl: 'Mogelijke belasting van de nieren – wordt gevolgd via bloedonderzoek', fr: 'Risque rénal possible – suivi par analyses sanguines' },
+      'nefritis': { nl: 'Nierontsteking – wordt gevolgd via bloedonderzoek', fr: 'Néphrite – suivie par analyses sanguines' },
+      'veneuze trombo-embolie': { nl: 'Verhoogd risico op bloedstolsels – meld pijn/zwelling in benen of kortademigheid', fr: 'Risque accru de caillots sanguins – signalez douleur/gonflement des jambes ou essoufflement' },
+      'longembolie': { nl: 'Bloedstolsel in de longen – meld onmiddellijk kortademigheid of pijn op de borst', fr: 'Caillot sanguin dans les poumons – signalez immédiatement essoufflement ou douleur thoracique' },
+      'immuungerelateerde pneumonitis': { nl: 'Longontsteking door het immuunsysteem – meld kortademigheid of hoest', fr: 'Pneumonite liée au système immunitaire – signalez essoufflement ou toux' },
+      'colitis': { nl: 'Darmontsteking – meld aanhoudende diarree of buikpijn', fr: 'Inflammation intestinale – signalez diarrhée persistante ou douleurs abdominales' },
+      'endocrinopathieën': { nl: 'Verstoring van de hormoonhuishouding – wordt gevolgd via bloedonderzoek', fr: 'Perturbation hormonale – suivie par analyses sanguines' },
+      'mds/aml': { nl: 'Zeer zeldzame bloedafwijking – wordt gevolgd via bloedonderzoek', fr: 'Anomalie sanguine très rare – suivie par analyses sanguines' },
+      'myelodysplastisch syndroom': { nl: 'Zeer zeldzame bloedafwijking – wordt gevolgd via bloedonderzoek', fr: 'Anomalie sanguine très rare – suivie par analyses sanguines' },
+      'acute leukemie': { nl: 'Zeer zeldzame bloedafwijking – wordt gevolgd via bloedonderzoek', fr: 'Anomalie sanguine très rare – suivie par analyses sanguines' },
+      'bovenste luchtweginfecties': { nl: 'Luchtweginfecties (verkoudheid, keelpijn) – meld koorts', fr: 'Infections des voies respiratoires – signalez la fièvre' },
+      'paralytische ileus': { nl: 'Ernstige darmstilstand – meld onmiddellijk aanhoudende buikpijn en braken', fr: 'Arrêt intestinal grave – signalez immédiatement douleurs abdominales persistantes et vomissements' },
+      'fracturen': { nl: 'Verhoogd risico op botbreuken', fr: 'Risque accru de fractures' },
+      // English terms (fallback)
       'cardiotoxicity': { nl: 'Mogelijke belasting van het hart – uw arts volgt dit op via regelmatige controles', fr: 'Risque cardiaque possible – votre médecin surveille cela régulièrement' },
-      'febrile neutropenia': { nl: 'Verhoogd risico op infecties met koorts door verlaagde witte bloedcellen – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Risque accru d\'infections avec fièvre dû à une baisse des globules blancs – contactez immédiatement en cas de fièvre supérieure à 38°C' },
+      'febrile neutropenia': { nl: 'Koorts door verlaagde afweer – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Fièvre due à une baisse de l\'immunité – contactez immédiatement si fièvre supérieure à 38°C' },
       'neutropenia': { nl: 'Verlaagde witte bloedcellen, waardoor u vatbaarder bent voor infecties', fr: 'Baisse des globules blancs, vous rendant plus sensible aux infections' },
       'anemia': { nl: 'Verlaagde rode bloedcellen, waardoor u zich moe of kortademig kunt voelen', fr: 'Baisse des globules rouges, pouvant causer fatigue ou essoufflement' },
-      'thrombocytopenia': { nl: 'Verlaagde bloedplaatjes, waardoor u sneller blauwe plekken of bloedingen kunt krijgen', fr: 'Baisse des plaquettes, pouvant causer des bleus ou saignements plus facilement' },
+      'thrombocytopenia': { nl: 'Verlaagde bloedplaatjes – u kunt sneller blauwe plekken krijgen', fr: 'Baisse des plaquettes – vous pouvez avoir des bleus plus facilement' },
       'nausea': { nl: 'Misselijkheid – er bestaan goede medicijnen om dit te verminderen', fr: 'Nausées – des médicaments efficaces existent pour les réduire' },
       'vomiting': { nl: 'Braken – meld dit aan uw arts, er zijn oplossingen', fr: 'Vomissements – signalez-le à votre médecin, des solutions existent' },
-      'alopecia': { nl: 'Tijdelijk haarverlies – uw haar groeit na de behandeling weer aan', fr: 'Perte de cheveux temporaire – vos cheveux repousseront après le traitement' },
       'fatigue': { nl: 'Vermoeidheid – luister naar uw lichaam en rust voldoende', fr: 'Fatigue – écoutez votre corps et reposez-vous suffisamment' },
       'diarrhea': { nl: 'Diarree – drink voldoende en meld het als het aanhoudt', fr: 'Diarrhée – buvez suffisamment et signalez si cela persiste' },
-      'mucositis': { nl: 'Ontstekingen in de mond – goed mondspoelen helpt dit te voorkomen', fr: 'Inflammations buccales – bien rincer la bouche aide à les prévenir' },
-      'stomatitis': { nl: 'Pijnlijke mondwondjes – uw arts kan een mondverzorgingsadvies geven', fr: 'Aphtes douloureux – votre médecin peut conseiller des soins buccaux' },
-      'peripheral neuropathy': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit tijdig aan uw arts', fr: 'Picotements ou engourdissements dans les mains/pieds – signalez-le à votre médecin' },
-      'neuropathy': { nl: 'Tintelingen of gevoelloosheid in handen/voeten', fr: 'Picotements ou engourdissements dans les mains/pieds' },
-      'hand-foot syndrome': { nl: 'Roodheid of pijn aan handpalmen/voetzolen – goed insmeren helpt', fr: 'Rougeur ou douleur aux paumes/plantes – bien hydrater aide' },
       'rash': { nl: 'Huiduitslag – meld dit aan uw arts', fr: 'Éruption cutanée – signalez-le à votre médecin' },
       'constipation': { nl: 'Verstopping – voldoende drinken en vezelrijk eten helpt', fr: 'Constipation – boire suffisamment et manger des fibres aide' },
       'hepatotoxicity': { nl: 'Mogelijke belasting van de lever – wordt gevolgd via bloedonderzoek', fr: 'Risque hépatique possible – suivi par analyses sanguines' },
       'nephrotoxicity': { nl: 'Mogelijke belasting van de nieren – wordt gevolgd via bloedonderzoek', fr: 'Risque rénal possible – suivi par analyses sanguines' },
-      'infusion reactions': { nl: 'Mogelijke reactie tijdens het infuus (koorts, rillingen) – het team is hierop voorbereid', fr: 'Réaction possible pendant la perfusion (fièvre, frissons) – l\'équipe y est préparée' },
       'hypertension': { nl: 'Verhoogde bloeddruk – wordt regelmatig gecontroleerd', fr: 'Hypertension artérielle – contrôlée régulièrement' },
       'hypothyroidism': { nl: 'Vertraagde werking van de schildklier – wordt gevolgd via bloedonderzoek', fr: 'Ralentissement de la thyroïde – suivi par analyses sanguines' },
-      'pneumonitis': { nl: 'Ontsteking van de longen – meld kortademigheid of aanhoudende hoest', fr: 'Inflammation des poumons – signalez essoufflement ou toux persistante' },
     };
-    const key = term.toLowerCase().trim();
-    if (map[key]) return isFr ? map[key].fr : map[key].nl;
+    // Strip percentages and parenthetical details for matching, e.g. "Neutropenie (80%)" -> "neutropenie"
+    const cleaned = term.toLowerCase().trim();
+    if (map[cleaned]) return isFr ? map[cleaned].fr : map[cleaned].nl;
+    // Try without parenthetical suffix
+    const withoutParens = cleaned.replace(/\s*\(.*?\)\s*$/, '').trim();
+    if (withoutParens !== cleaned && map[withoutParens]) return isFr ? map[withoutParens].fr : map[withoutParens].nl;
     return term;
   };
 
