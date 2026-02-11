@@ -159,9 +159,11 @@ export default function HospitalManagementPage() {
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [formName, setFormName] = useState('');
   const [formSlug, setFormSlug] = useState('');
+  const [formSlugManual, setFormSlugManual] = useState(false);
   const [formPrimaryColor, setFormPrimaryColor] = useState('#6b2d5b');
   const [formIsActive, setFormIsActive] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [formLogoUrl, setFormLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Staff
@@ -235,13 +237,45 @@ export default function HospitalManagementPage() {
   }, []);
 
   // Hospital CRUD
+  // Generate a unique color based on existing hospitals
+  const generateUniqueColor = () => {
+    const palette = [
+      '#6b2d5b', '#1e6f9f', '#2d6b3f', '#9f5b1e', '#5b2d6b',
+      '#1e9f6f', '#9f1e3f', '#3f5b9f', '#6b9f1e', '#9f3f1e',
+      '#2d5b6b', '#6b1e9f', '#1e3f9f', '#9f6b1e', '#3f9f5b',
+    ];
+    const usedColors = hospitals.map(h => h.branding?.primary_color?.toLowerCase());
+    return palette.find(c => !usedColors.includes(c)) || `#${Math.floor(Math.random()*16777215).toString(16).padStart(6,'0')}`;
+  };
+
+  const slugify = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const suggestLogoUrl = (name: string) => {
+    // Try to find a logo via Clearbit (common for organizations)
+    const domain = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') + '.be';
+    return `https://logo.clearbit.com/${domain}`;
+  };
+
+  const handleNameChange = (name: string) => {
+    setFormName(name);
+    if (!formSlugManual && !editingHospital) {
+      setFormSlug(slugify(name));
+    }
+    if (!editingHospital && name.trim()) {
+      setFormLogoUrl(suggestLogoUrl(name));
+    }
+  };
+
   const openCreate = () => {
     setEditingHospital(null);
     setFormName('');
     setFormSlug('');
-    setFormPrimaryColor('#6b2d5b');
+    setFormSlugManual(false);
+    setFormPrimaryColor(generateUniqueColor());
     setFormIsActive(true);
     setLogoFile(null);
+    setFormLogoUrl('');
     setDialogOpen(true);
   };
 
@@ -249,9 +283,11 @@ export default function HospitalManagementPage() {
     setEditingHospital(h);
     setFormName(h.name);
     setFormSlug(h.slug);
+    setFormSlugManual(true);
     setFormPrimaryColor(h.branding?.primary_color || '#6b2d5b');
     setFormIsActive(h.is_active);
     setLogoFile(null);
+    setFormLogoUrl(h.logo_url || '');
     setDialogOpen(true);
   };
 
@@ -277,6 +313,8 @@ export default function HospitalManagementPage() {
       }
       const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(path);
       logoUrl = urlData.publicUrl;
+    } else if (formLogoUrl.trim()) {
+      logoUrl = formLogoUrl.trim();
     }
 
     const payload = {
@@ -892,16 +930,40 @@ export default function HospitalManagementPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Naam</Label>
-                <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="bijv. RZ Tienen" />
+                <Input value={formName} onChange={e => handleNameChange(e.target.value)} placeholder="bijv. RZ Tienen" />
               </div>
               <div className="space-y-2">
                 <Label>Slug (URL-vriendelijk)</Label>
-                <Input value={formSlug} onChange={e => setFormSlug(e.target.value)} placeholder="bijv. rztienen" />
+                <Input
+                  value={formSlug}
+                  onChange={e => { setFormSlug(e.target.value); setFormSlugManual(true); }}
+                  placeholder="bijv. rz-tienen"
+                />
+                {!formSlugManual && formSlug && (
+                  <p className="text-xs text-muted-foreground">Automatisch gegenereerd uit naam</p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Logo uploaden</Label>
+                <Label>Logo</Label>
+                {formLogoUrl && (
+                  <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+                    <img
+                      src={formLogoUrl}
+                      alt="Logo preview"
+                      className="h-10 w-10 object-contain rounded"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="text-xs text-muted-foreground flex-1 truncate">{formLogoUrl}</span>
+                  </div>
+                )}
+                <Input
+                  value={formLogoUrl}
+                  onChange={e => setFormLogoUrl(e.target.value)}
+                  placeholder="Logo URL (optioneel)"
+                />
+                <p className="text-xs text-muted-foreground">Of upload een bestand:</p>
                 <Input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
-                {editingHospital?.logo_url && !logoFile && (
+                {editingHospital?.logo_url && !logoFile && !formLogoUrl && (
                   <p className="text-xs text-muted-foreground">Huidig logo behouden</p>
                 )}
               </div>
@@ -915,6 +977,12 @@ export default function HospitalManagementPage() {
                     className="h-10 w-14 rounded cursor-pointer border"
                   />
                   <Input value={formPrimaryColor} onChange={e => setFormPrimaryColor(e.target.value)} className="w-32" />
+                  <div
+                    className="h-10 px-3 rounded flex items-center text-xs font-medium text-white"
+                    style={{ backgroundColor: formPrimaryColor }}
+                  >
+                    Preview
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
