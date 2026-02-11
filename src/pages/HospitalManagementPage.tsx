@@ -1158,7 +1158,7 @@ export default function HospitalManagementPage() {
               (() => {
                 const filtered = hospitals.filter(h =>
                   !hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase())
-                );
+                ).sort((a, b) => (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1));
                 return filtered.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">Geen resultaten voor "{hospitalFilter}"</p>
                 ) : filtered.map(h => {
