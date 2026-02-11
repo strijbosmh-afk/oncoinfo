@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -65,6 +66,7 @@ interface DrugCardProps {
 }
 
 function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
+  const { t } = useTranslation();
   const isCombo = drug.drug_class === 'Combinatietherapie';
   
   if (isCombo) {
@@ -73,7 +75,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
         <button
           onClick={onToggleFavorite}
           className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-amber-100 transition-colors"
-          aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+          aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
         >
           <Star
             className={`h-5 w-5 transition-colors ${
@@ -97,7 +99,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
               </div>
             </div>
             <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-              Combinatieschema
+              {t('drugs.combinationRegimen')}
             </Badge>
             {drug.is_on_zvz && (
               <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
@@ -132,7 +134,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
       <button
         onClick={onToggleFavorite}
         className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
-        aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+        aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
       >
         <Star
           className={`h-5 w-5 transition-colors ${
@@ -222,6 +224,7 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
 };
 
 export default function DrugsPage() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') as DrugCategoryKey | null;
   const selectedSubtype = searchParams.get('subtype');
@@ -469,7 +472,7 @@ export default function DrugsPage() {
 
   const handleExportFavorites = async () => {
     if (favorites.length === 0) {
-      toast.error('Geen favorieten om te exporteren');
+      toast.error(t('drugs.noFavoritesToExport'));
       return;
     }
 
@@ -494,7 +497,7 @@ export default function DrugsPage() {
       }
     } catch (err) {
       console.error('Error exporting favorites:', err);
-      toast.error('Fout bij exporteren favorieten');
+      toast.error(t('drugs.exportError'));
     } finally {
       setIsExporting(false);
     }
@@ -542,7 +545,7 @@ export default function DrugsPage() {
             className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ChevronLeft className="h-4 w-4" />
-            Terug naar categorieën
+            {t('drugs.backToCategories')}
           </Link>
         )}
 
@@ -562,14 +565,14 @@ export default function DrugsPage() {
                 <h1 className="text-3xl font-bold">{categoryConfig.name}</h1>
               </div>
               <p className="text-muted-foreground">
-                Doorzoek medicijnen voor {categoryConfig.name.toLowerCase()}. Klik op een medicijn voor gedetailleerde informatie.
+                {t('drugs.browseFor', { category: categoryConfig.name.toLowerCase() })}
               </p>
             </>
           ) : (
             <>
-              <h1 className="text-3xl font-bold mb-2">Medicijnbibliotheek</h1>
+              <h1 className="text-3xl font-bold mb-2">{t('drugs.library')}</h1>
               <p className="text-muted-foreground">
-                Doorzoek alle medicijnen. Klik op een medicijn voor gedetailleerde informatie en patiëntfolders.
+                {t('drugs.browseAll')}
               </p>
             </>
           )}
@@ -578,7 +581,7 @@ export default function DrugsPage() {
         {/* Active filter indicator */}
         {(selectedSubtype || selectedStage || selectedSubcategory || selectedDiseaseArea) && (
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Actief filter:</span>
+            <span className="text-sm text-muted-foreground">{t('drugs.activeFilter')}</span>
             {selectedSubtype && (
               <Badge variant="secondary" className="gap-1">
                 {category === 'breast' && 'subtypes' in (categoryConfig || {}) 
@@ -612,7 +615,7 @@ export default function DrugsPage() {
               </Badge>
             )}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
-              Wis filter
+              {t('drugs.clearFilter')}
             </Button>
           </div>
         )}
@@ -626,7 +629,7 @@ export default function DrugsPage() {
               {category === 'breast' && 'subtypes' in categoryConfig && (
                 <>
                   <div className="col-span-full">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Subtypen</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.subtypes')}</h3>
                   </div>
                   {categoryConfig.subtypes.map((subtype) => (
                     <Card 
@@ -643,7 +646,7 @@ export default function DrugsPage() {
                     </Card>
                   ))}
                   <div className="col-span-full mt-2">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Stadia</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.stages')}</h3>
                   </div>
                   {categoryConfig.stages.map((stage) => (
                     <Card 
@@ -751,7 +754,7 @@ export default function DrugsPage() {
                 onClick={() => setViewMode('all')}
                 className="gap-2"
               >
-                Alles
+                {t('common.all')}
                 <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
                   {filteredDrugs.length}
                 </Badge>
@@ -763,7 +766,7 @@ export default function DrugsPage() {
                 className="gap-2"
               >
                 <Layers className="h-4 w-4" />
-                Combinatieschema's
+                {t('drugs.combinations')}
                 <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
                   {combinationDrugs.length}
                 </Badge>
@@ -775,7 +778,7 @@ export default function DrugsPage() {
                 className="gap-2"
               >
                 <Pill className="h-4 w-4" />
-                Individuele Medicijnen
+                {t('drugs.individualDrugs')}
                 <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
                   {individualDrugs.length}
                 </Badge>
@@ -788,7 +791,7 @@ export default function DrugsPage() {
                 disabled={isEditMode}
               >
                 <GripVertical className="h-4 w-4" />
-                Volgorde aanpassen
+                {t('drugs.adjustOrder')}
               </Button>
             </div>
           </div>
@@ -800,7 +803,7 @@ export default function DrugsPage() {
             <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                <h2 className="text-xl font-semibold">Favorieten</h2>
+                <h2 className="text-xl font-semibold">{t('drugs.favorites')}</h2>
                 <Badge variant="secondary">{favoriteDrugs.length}</Badge>
               </div>
               <div className="flex items-center gap-4 flex-wrap">
@@ -810,14 +813,14 @@ export default function DrugsPage() {
                       checked={exportIncludeDosing}
                       onCheckedChange={(checked) => setExportIncludeDosing(checked as boolean)}
                     />
-                    Dosering
+                    {t('drugs.dosing')}
                   </label>
                   <label className="flex items-center gap-1.5">
                     <Checkbox
                       checked={exportIncludeSideEffects}
                       onCheckedChange={(checked) => setExportIncludeSideEffects(checked as boolean)}
                     />
-                    Bijwerkingen
+                    {t('drugs.sideEffects')}
                   </label>
                 </div>
                 <Button
@@ -832,7 +835,7 @@ export default function DrugsPage() {
                   ) : (
                     <FileText className="h-4 w-4" />
                   )}
-                  Exporteer als PDF
+                  {t('drugs.exportPdf')}
                 </Button>
               </div>
             </div>
@@ -859,7 +862,7 @@ export default function DrugsPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Zoek op medicijnnaam of merknaam..."
+              placeholder={t('drugs.searchByName')}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -871,7 +874,7 @@ export default function DrugsPage() {
             className="gap-2"
           >
             <Filter className="h-4 w-4" />
-            Filters
+            {t('drugs.filters')}
             {activeFilterCount > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {activeFilterCount}
@@ -887,10 +890,10 @@ export default function DrugsPage() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Filters</CardTitle>
+                    <CardTitle className="text-lg">{t('drugs.filters')}</CardTitle>
                     {activeFilterCount > 0 && (
                       <Button variant="ghost" size="sm" onClick={clearFilters}>
-                        Wissen
+                        {t('drugs.clear')}
                       </Button>
                     )}
                   </div>
@@ -898,7 +901,7 @@ export default function DrugsPage() {
                 <CardContent className="space-y-6">
                   {/* Drug Class Filter */}
                   <div>
-                    <h4 className="font-medium mb-3">Medicijnklasse</h4>
+                    <h4 className="font-medium mb-3">{t('drugs.drugClass')}</h4>
                     <div className="space-y-2">
                       <TooltipProvider delayDuration={300}>
                         {displayDrugClasses.map((drugClass) => {
@@ -942,7 +945,7 @@ export default function DrugsPage() {
                   {/* Disease Area Filter - only show when not in a category */}
                   {!category && (
                     <div>
-                      <h4 className="font-medium mb-3">Ziektegebied</h4>
+                      <h4 className="font-medium mb-3">{t('drugs.diseaseArea')}</h4>
                       <div className="space-y-2">
                         {DRUG_DISEASE_AREAS.map((disease) => (
                           <div key={disease} className="flex items-center space-x-2">
@@ -978,21 +981,21 @@ export default function DrugsPage() {
             ) : error ? (
               <Card>
                 <CardContent className="py-8 text-center text-destructive">
-                  Er is een fout opgetreden bij het laden van medicijnen.
+                  {t('drugs.loadError')}
                 </CardContent>
               </Card>
             ) : filteredDrugs?.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">Geen medicijnen gevonden</h3>
+                  <h3 className="text-lg font-medium mb-2">{t('drugs.noDrugsFound')}</h3>
                   <p className="text-muted-foreground mb-4">
                     {(selectedSubtype || selectedStage) 
-                      ? 'Geen medicijnen gevonden voor dit filter. Probeer een ander subtype of stadium.'
-                      : 'Pas uw zoekopdracht of filters aan om resultaten te zien.'}
+                      ? t('drugs.noFilterResults')
+                      : t('drugs.adjustFilters')}
                   </p>
                   <Button variant="outline" onClick={() => { clearFilters(); clearCategoryFilters(); }}>
-                    Alle filters wissen
+                    {t('drugs.clearAllFilters')}
                   </Button>
                 </CardContent>
               </Card>
@@ -1010,7 +1013,7 @@ export default function DrugsPage() {
                 />
 
                 <p className="text-sm text-muted-foreground pt-2">
-                  Totaal: {filteredDrugs?.length} item{filteredDrugs?.length !== 1 ? 's' : ''} gevonden
+                  {t('drugs.totalFound', { count: filteredDrugs?.length })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">© Michiel Strijbos</p>
               </div>
