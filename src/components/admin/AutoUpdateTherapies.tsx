@@ -182,7 +182,7 @@ export function AutoUpdateTherapies() {
         <div className="flex items-center gap-2">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
-            Auto-update Therapieën
+            Auto-Update Geneesmiddelenlijst
           </CardTitle>
           <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0">
             BETA
