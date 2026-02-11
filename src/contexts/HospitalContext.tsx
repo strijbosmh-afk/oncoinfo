@@ -43,7 +43,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
         .from('hospitals')
         .select('*')
         .eq('id', profile.hospital_id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setHospital({
