@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ function generatePassword(length = 12): string {
 }
 
 export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin }: UserDialogProps) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -98,7 +100,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
   const handleCopyPassword = () => {
     navigator.clipboard.writeText(password);
-    toast({ title: 'Gekopieerd', description: 'Wachtwoord is naar het klembord gekopieerd.' });
+    toast({ title: t('userDialog.copied'), description: t('userDialog.copiedDesc') });
   };
 
   const handleSubmit = () => {
@@ -143,87 +145,87 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? 'Nieuwe gebruiker aanmaken' : 'Gebruiker bewerken'}
+            {mode === 'create' ? t('userDialog.createTitle') : t('userDialog.editTitle')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="user-firstname">Voornaam *</Label>
+              <Label htmlFor="user-firstname">{t('userDialog.firstName')} *</Label>
               <Input
                 id="user-firstname"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="bijv. Jan"
+                placeholder={t('userDialog.firstNamePlaceholder')}
                 required
                 className={attempted && !firstName.trim() ? 'border-destructive' : ''}
               />
               {attempted && !firstName.trim() && (
-                <p className="text-xs text-destructive">Voornaam is verplicht</p>
+                <p className="text-xs text-destructive">{t('userDialog.firstNameRequired')}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user-lastname">Naam *</Label>
+              <Label htmlFor="user-lastname">{t('userDialog.lastName')} *</Label>
               <Input
                 id="user-lastname"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="bijv. Jansen"
+                placeholder={t('userDialog.lastNamePlaceholder')}
                 required
                 className={attempted && !lastName.trim() ? 'border-destructive' : ''}
               />
               {attempted && !lastName.trim() && (
-                <p className="text-xs text-destructive">Naam is verplicht</p>
+                <p className="text-xs text-destructive">{t('userDialog.lastNameRequired')}</p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user-function">Functie *</Label>
+            <Label htmlFor="user-function">{t('userDialog.function')} *</Label>
             <Select value={userFunction} onValueChange={setUserFunction}>
               <SelectTrigger className={attempted && !userFunction ? 'border-destructive' : ''}>
-                <SelectValue placeholder="Selecteer functie" />
+                <SelectValue placeholder={t('userDialog.functionPlaceholder')} />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="arts">Arts</SelectItem>
-                <SelectItem value="apotheek">Apotheek</SelectItem>
-                <SelectItem value="verpleegkundige">Verpleegkundige</SelectItem>
-                <SelectItem value="overige">Overige</SelectItem>
+                <SelectItem value="arts">{t('userDialog.functionArts')}</SelectItem>
+                <SelectItem value="apotheek">{t('userDialog.functionApotheek')}</SelectItem>
+                <SelectItem value="verpleegkundige">{t('userDialog.functionVerpleegkundige')}</SelectItem>
+                <SelectItem value="overige">{t('userDialog.functionOverige')}</SelectItem>
               </SelectContent>
             </Select>
             {attempted && !userFunction && (
-              <p className="text-xs text-destructive">Functie is verplicht</p>
+              <p className="text-xs text-destructive">{t('userDialog.functionRequired')}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user-username">Gebruikersnaam</Label>
+            <Label htmlFor="user-username">{t('userDialog.username')}</Label>
             <Input
               id="user-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="bijv. jansen"
+              placeholder={t('userDialog.usernamePlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user-email">E-mailadres</Label>
+            <Label htmlFor="user-email">{t('userDialog.email')}</Label>
             <Input
               id="user-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="naam@voorbeeld.be"
+              placeholder={t('userDialog.emailPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="user-password">
-              {mode === 'create' ? 'Wachtwoord' : 'Nieuw wachtwoord (optioneel)'}
+              {mode === 'create' ? t('userDialog.password') : t('userDialog.passwordEdit')}
             </Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -232,7 +234,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'edit' ? 'Laat leeg om niet te wijzigen' : ''}
+                  placeholder={mode === 'edit' ? t('userDialog.passwordEditPlaceholder') : ''}
                   className="pr-10"
                 />
                 <button
@@ -243,7 +245,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <Button type="button" variant="outline" size="icon" onClick={handleCopyPassword} title="Kopieer wachtwoord">
+              <Button type="button" variant="outline" size="icon" onClick={handleCopyPassword} title={t('userDialog.copyPassword')}>
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
@@ -256,30 +258,30 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 className="text-xs gap-1"
               >
                 <RefreshCw className="h-3 w-3" />
-                Genereer nieuw wachtwoord
+                {t('userDialog.generatePassword')}
               </Button>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label>Rol</Label>
+            <Label>{t('userDialog.role')}</Label>
             <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'viewer' | 'apotheker' | 'super_admin')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="viewer">Viewer — alleen lezen</SelectItem>
-                <SelectItem value="apotheker">Apotheker — apotheek toegang</SelectItem>
-                <SelectItem value="admin">Admin — volledig beheer</SelectItem>
+                <SelectItem value="viewer">{t('userDialog.roleViewer')}</SelectItem>
+                <SelectItem value="apotheker">{t('userDialog.roleApotheker')}</SelectItem>
+                <SelectItem value="admin">{t('userDialog.roleAdmin')}</SelectItem>
                 {callerIsSuperAdmin && (
-                  <SelectItem value="super_admin">Super Admin — platform beheer</SelectItem>
+                  <SelectItem value="super_admin">{t('userDialog.roleSuperAdmin')}</SelectItem>
                 )}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-3 pt-2 border-t">
-            <Label className="text-sm font-medium">Rechten</Label>
+            <Label className="text-sm font-medium">{t('userDialog.permissions')}</Label>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="can-add"
@@ -287,7 +289,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onCheckedChange={(checked) => setCanAdd(checked as boolean)}
               />
               <Label htmlFor="can-add" className="text-sm font-normal cursor-pointer">
-                Kan behandelingen toevoegen
+                {t('userDialog.canAdd')}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -297,7 +299,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onCheckedChange={(checked) => setCanModify(checked as boolean)}
               />
               <Label htmlFor="can-modify" className="text-sm font-normal cursor-pointer">
-                Kan behandelingen wijzigen
+                {t('userDialog.canModify')}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -307,7 +309,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onCheckedChange={(checked) => setCanDelete(checked as boolean)}
               />
               <Label htmlFor="can-delete" className="text-sm font-normal cursor-pointer">
-                Kan behandelingen verwijderen
+                {t('userDialog.canDelete')}
               </Label>
             </div>
           </div>
@@ -320,7 +322,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onCheckedChange={(checked) => setSendEmail(checked as boolean)}
               />
               <Label htmlFor="send-email" className="text-sm font-normal cursor-pointer">
-                Inloggegevens per e-mail versturen
+                {t('userDialog.sendEmail')}
               </Label>
             </div>
           )}
@@ -328,14 +330,14 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Annuleren
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || (mode === 'create' && !password.trim())}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-            {mode === 'create' ? 'Aanmaken' : 'Opslaan'}
+            {mode === 'create' ? t('userDialog.create') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>
