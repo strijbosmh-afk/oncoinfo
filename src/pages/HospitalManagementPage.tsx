@@ -307,6 +307,213 @@ function CollapsibleSection({
   );
 }
 
+function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
+  hospital: Hospital;
+  hospitalFeatureCounts: Record<string, number>;
+  onSaved: (updated: Hospital) => void;
+}) {
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(hospital.logo_url || '');
+  const [language, setLanguage] = useState(hospital.default_language || 'nl');
+  const [country, setCountry] = useState(hospital.billing_country || '');
+  const [color, setColor] = useState(hospital.branding?.primary_color || '#6b2d5b');
+  const [active, setActive] = useState(hospital.is_active);
+  const [slug, setSlug] = useState(hospital.slug);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLogoUrl(hospital.logo_url || '');
+    setLanguage(hospital.default_language || 'nl');
+    setCountry(hospital.billing_country || '');
+    setColor(hospital.branding?.primary_color || '#6b2d5b');
+    setActive(hospital.is_active);
+    setSlug(hospital.slug);
+    setEditing(false);
+  }, [hospital.id]);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from('hospitals')
+      .update({
+        logo_url: logoUrl || null,
+        default_language: language,
+        billing_country: country || null,
+        branding: { primary_color: color },
+        is_active: active,
+        slug,
+      })
+      .eq('id', hospital.id);
+    if (error) {
+      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Opgeslagen', description: 'Algemene informatie bijgewerkt.' });
+      onSaved({
+        ...hospital,
+        logo_url: logoUrl || null,
+        default_language: language,
+        billing_country: country || null,
+        branding: { primary_color: color },
+        is_active: active,
+        slug,
+      });
+      setEditing(false);
+    }
+    setSaving(false);
+  };
+
+  return (
+    <CollapsibleSection
+      title="Algemene Informatie"
+      icon={Info}
+      defaultOpen={false}
+      actions={
+        !editing ? (
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => setEditing(true)}>
+            <Pencil className="h-3.5 w-3.5" /> Bewerken
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <Button size="sm" className="gap-1" onClick={save} disabled={saving}>
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Opslaan
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setEditing(false)}>Annuleren</Button>
+          </div>
+        )
+      }
+    >
+      {!editing ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              {hospital.logo_url ? (
+                <img src={hospital.logo_url} alt={hospital.name} className="h-16 w-auto max-w-[100px] object-contain rounded-lg border p-1" />
+              ) : (
+                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                  <Building2 className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-medium">{hospital.name}</p>
+                <p className="text-xs text-muted-foreground">/{hospital.slug}</p>
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Standaardtaal</span>
+                <span className="font-medium flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5" />
+                  {LANGUAGE_OPTIONS.find(l => l.value === hospital.default_language)?.label || hospital.default_language}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Land</span>
+                <span className="font-medium">
+                  {hospital.billing_country ? (COUNTRY_NAMES[hospital.billing_country] || hospital.billing_country) : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Huisstijlkleur</span>
+                <span className="font-medium flex items-center gap-2">
+                  {hospital.branding?.primary_color && (
+                    <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: hospital.branding.primary_color }} />
+                  )}
+                  {hospital.branding?.primary_color || '—'}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant={hospital.is_active ? 'default' : 'secondary'} className="text-[10px]">
+                  {hospital.is_active ? 'Actief' : 'Inactief'}
+                </Badge>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Premium</span>
+                <Badge variant={(hospitalFeatureCounts[hospital.id] || 0) > 0 ? 'default' : 'secondary'} className="text-[10px]">
+                  {(hospitalFeatureCounts[hospital.id] || 0) > 0
+                    ? `${hospitalFeatureCounts[hospital.id]} functie(s) actief`
+                    : 'Standaard'}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">Logo URL</p>
+            {hospital.logo_url ? (
+              <p className="text-xs text-muted-foreground break-all bg-muted/50 p-2 rounded">{hospital.logo_url}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Geen logo ingesteld</p>
+            )}
+            <p className="text-sm font-semibold mt-4">Aangemaakt</p>
+            <p className="text-xs text-muted-foreground">{new Date(hospital.created_at).toLocaleDateString('nl-BE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Slug</Label>
+              <Input value={slug} onChange={e => setSlug(e.target.value)} placeholder="ziekenhuis-slug" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Standaardtaal</Label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LANGUAGE_OPTIONS.map(l => (
+                    <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Land</Label>
+              <Select value={country} onValueChange={setCountry}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer land" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map(code => (
+                    <SelectItem key={code} value={code}>{COUNTRY_NAMES[code]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Huisstijlkleur</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={color}
+                  onChange={e => setColor(e.target.value)}
+                  className="h-9 w-12 rounded border cursor-pointer"
+                />
+                <Input value={color} onChange={e => setColor(e.target.value)} className="flex-1" />
+              </div>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Logo URL</Label>
+            <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://logo.clearbit.com/hospital.be" />
+            {logoUrl && (
+              <LogoPreview logoUrl={logoUrl} hospitalName={hospital.name} primaryColor={color} />
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch checked={active} onCheckedChange={setActive} />
+            <Label className="text-sm">{active ? 'Actief' : 'Inactief'}</Label>
+          </div>
+        </div>
+      )}
+    </CollapsibleSection>
+  );
+}
+
 export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -948,75 +1155,15 @@ export default function HospitalManagementPage() {
                   </CardContent>
                 </Card>
 
-                {/* General Info section */}
-                <CollapsibleSection title="Algemene Informatie" icon={Info} defaultOpen={false}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        {selectedHospital.logo_url ? (
-                          <img src={selectedHospital.logo_url} alt={selectedHospital.name} className="h-16 w-auto max-w-[100px] object-contain rounded-lg border p-1" />
-                        ) : (
-                          <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
-                            <Building2 className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">{selectedHospital.name}</p>
-                          <p className="text-xs text-muted-foreground">/{selectedHospital.slug}</p>
-                        </div>
-                      </div>
-                      <Separator />
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Standaardtaal</span>
-                          <span className="font-medium flex items-center gap-1.5">
-                            <Globe className="h-3.5 w-3.5" />
-                            {LANGUAGE_OPTIONS.find(l => l.value === selectedHospital.default_language)?.label || selectedHospital.default_language}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Land</span>
-                          <span className="font-medium">
-                            {selectedHospital.billing_country ? (COUNTRY_NAMES[selectedHospital.billing_country] || selectedHospital.billing_country) : '—'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Huisstijlkleur</span>
-                          <span className="font-medium flex items-center gap-2">
-                            {selectedHospital.branding?.primary_color && (
-                              <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: selectedHospital.branding.primary_color }} />
-                            )}
-                            {selectedHospital.branding?.primary_color || '—'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Status</span>
-                          <Badge variant={selectedHospital.is_active ? 'default' : 'secondary'} className="text-[10px]">
-                            {selectedHospital.is_active ? 'Actief' : 'Inactief'}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Premium</span>
-                          <Badge variant={(hospitalFeatureCounts[selectedHospital.id] || 0) > 0 ? 'default' : 'secondary'} className="text-[10px]">
-                            {(hospitalFeatureCounts[selectedHospital.id] || 0) > 0
-                              ? `${hospitalFeatureCounts[selectedHospital.id]} functie(s) actief`
-                              : 'Standaard'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold">Logo URL</p>
-                      {selectedHospital.logo_url ? (
-                        <p className="text-xs text-muted-foreground break-all bg-muted/50 p-2 rounded">{selectedHospital.logo_url}</p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic">Geen logo ingesteld</p>
-                      )}
-                      <p className="text-sm font-semibold mt-4">Aangemaakt</p>
-                      <p className="text-xs text-muted-foreground">{new Date(selectedHospital.created_at).toLocaleDateString('nl-BE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  </div>
-                </CollapsibleSection>
+                {/* General Info section - editable */}
+                <GeneralInfoSection
+                  hospital={selectedHospital}
+                  hospitalFeatureCounts={hospitalFeatureCounts}
+                  onSaved={(updated) => {
+                    setSelectedHospital(updated);
+                    fetchHospitals();
+                  }}
+                />
 
                 {/* Billing section */}
                 <CollapsibleSection title="Facturatiegegevens" icon={FileText} defaultOpen={false}>
