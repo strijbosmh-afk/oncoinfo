@@ -417,6 +417,20 @@ export default function HospitalManagementPage() {
     fetchHospitals();
   };
 
+  const toggleHospitalActive = async (h: Hospital) => {
+    const newActive = !h.is_active;
+    const { error } = await supabase.from('hospitals').update({ is_active: newActive }).eq('id', h.id);
+    if (error) {
+      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: newActive ? 'Ziekenhuis geactiveerd' : 'Ziekenhuis gedeactiveerd' });
+      setHospitals(prev => prev.map(x => x.id === h.id ? { ...x, is_active: newActive } : x));
+      if (selectedHospital?.id === h.id) {
+        setSelectedHospital(prev => prev ? { ...prev, is_active: newActive } : prev);
+      }
+    }
+  };
+
   const handleDelete = async (h: Hospital) => {
     if (!confirm(`Weet je zeker dat je "${h.name}" wilt verwijderen?`)) return;
     const { error } = await supabase.from('hospitals').delete().eq('id', h.id);
@@ -631,7 +645,7 @@ export default function HospitalManagementPage() {
                   key={h.id}
                   className={`cursor-pointer transition-all hover:shadow-md ${
                     selectedHospital?.id === h.id ? 'ring-2 ring-primary shadow-md' : ''
-                  }`}
+                  } ${!h.is_active ? 'opacity-60' : ''}`}
                   onClick={() => selectHospital(h)}
                 >
                   <CardContent className="p-4">
@@ -646,18 +660,22 @@ export default function HospitalManagementPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium truncate">{h.name}</p>
-                          <Badge variant={h.is_active ? 'default' : 'secondary'} className="text-[10px] shrink-0">
-                            {h.is_active ? 'Actief' : 'Inactief'}
-                          </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">{h.slug}</p>
                       </div>
-                      {h.branding?.primary_color && (
-                        <div
-                          className="h-5 w-5 rounded-full border shrink-0"
-                          style={{ backgroundColor: h.branding.primary_color }}
+                      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {h.branding?.primary_color && (
+                          <div
+                            className="h-5 w-5 rounded-full border"
+                            style={{ backgroundColor: h.branding.primary_color }}
+                          />
+                        )}
+                        <Switch
+                          checked={h.is_active}
+                          onCheckedChange={() => toggleHospitalActive(h)}
+                          aria-label={h.is_active ? 'Deactiveer' : 'Activeer'}
                         />
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
