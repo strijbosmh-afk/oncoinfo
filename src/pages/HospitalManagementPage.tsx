@@ -315,6 +315,7 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
 }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+  const [dragPreview, setDragPreview] = useState<string | null>(null);
 
   const handleLogoUpload = async (file: File) => {
     if (file.size > 2 * 1024 * 1024) {
@@ -528,14 +529,32 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
             <Label className="text-xs">Logo</Label>
             <div
               className={cn(
-                "rounded-md border-2 border-dashed p-3 transition-colors",
-                uploading ? "border-muted opacity-60" : "border-input hover:border-primary/50"
+                "rounded-md border-2 border-dashed p-3 transition-colors relative",
+                dragPreview ? "border-primary bg-primary/5" : uploading ? "border-muted opacity-60" : "border-input hover:border-primary/50"
               )}
-              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary', 'bg-primary/5'); }}
-              onDragLeave={(e) => { e.currentTarget.classList.remove('border-primary', 'bg-primary/5'); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!dragPreview && e.dataTransfer.items?.[0]?.type.startsWith('image/')) {
+                  // We can't read file data on dragover, just show visual cue
+                  setDragPreview('pending');
+                }
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                const item = e.dataTransfer.items?.[0];
+                if (item?.kind === 'file' && item.type.startsWith('image/')) {
+                  setDragPreview('pending');
+                }
+              }}
+              onDragLeave={(e) => {
+                // Only clear if actually leaving the container
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setDragPreview(null);
+                }
+              }}
               onDrop={async (e) => {
                 e.preventDefault();
-                e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                setDragPreview(null);
                 const file = e.dataTransfer.files?.[0];
                 if (!file || !file.type.startsWith('image/')) {
                   toast({ title: 'Ongeldig bestand', description: 'Alleen afbeeldingen toegestaan.', variant: 'destructive' });
@@ -544,6 +563,12 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
                 await handleLogoUpload(file);
               }}
             >
+              {dragPreview && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-md bg-primary/5 pointer-events-none">
+                  <FileText className="h-8 w-8 text-primary/60 mb-1" />
+                  <span className="text-xs font-medium text-primary/80">Laat los om te uploaden</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://logo.clearbit.com/hospital.be" className="flex-1" />
                 <label className="cursor-pointer">
