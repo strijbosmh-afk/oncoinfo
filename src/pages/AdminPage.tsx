@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DRUG_CLASSES } from '@/types/drug';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
+import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 
 export default function AdminPage() {
   const { user, isAdmin, isApotheker, loading } = useAuth();
@@ -22,7 +24,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | null>(null);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -141,6 +143,17 @@ export default function AdminPage() {
             <Plus className="h-4 w-4" />
             Nieuwe therapie toevoegen
           </Button>
+          <Button
+            variant={activeSection === 'auto-update' ? 'default' : 'outline'}
+            onClick={() => setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+            className="gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Auto-update
+            <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+              BETA
+            </Badge>
+          </Button>
         </div>
 
         {/* Active Section */}
@@ -153,6 +166,12 @@ export default function AdminPage() {
         {activeSection === 'audit' && (
           <div className="mb-8">
             <AuditLog />
+          </div>
+        )}
+
+        {activeSection === 'auto-update' && (
+          <div className="mb-8">
+            <AutoUpdateTherapies />
           </div>
         )}
 
