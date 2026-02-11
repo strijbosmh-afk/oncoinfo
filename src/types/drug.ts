@@ -102,14 +102,6 @@ export const DRUG_DISEASE_AREAS = [
   'NSCLC',
   'SCLC',
   'Mesothelioom',
-  'Longkanker',
-  'Maagkanker',
-  'Hoofd-halskanker',
-  'Melanoom',
-  'Colorectaalcarcinoom',
-  'Pancreascarcinoom',
-  'Levercelcarcinoom',
-  'Schildklierkanker',
   'Supportive Care',
 ] as const;
 
