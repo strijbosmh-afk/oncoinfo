@@ -10,6 +10,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const languageFlags: { code: string; label: string; flag: string }[] = [
+  { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+];
 
 interface Hospital {
   id: string;
@@ -26,7 +34,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -142,6 +150,32 @@ export default function LoginPage() {
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t('auth.login')}
               </Button>
+
+              <div className="flex items-center justify-center gap-1 pt-1">
+                <TooltipProvider delayDuration={200}>
+                  {languageFlags.map((lang) => (
+                    <Tooltip key={lang.code}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => i18n.changeLanguage(lang.code)}
+                          className={`text-xl px-1.5 py-1 rounded-md transition-all ${
+                            i18n.language === lang.code
+                              ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
+                              : 'opacity-50 hover:opacity-80 hover:bg-muted'
+                          }`}
+                          aria-label={lang.label}
+                        >
+                          {lang.flag}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">
+                        {lang.label}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </TooltipProvider>
+              </div>
             </form>
           </CardContent>
         </Card>
