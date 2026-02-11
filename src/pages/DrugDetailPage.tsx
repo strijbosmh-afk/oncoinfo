@@ -76,6 +76,7 @@ export default function DrugDetailPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr'>('nl');
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
+  const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
 
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl', phoneNumber?: string) => {
     if (!drug) return;
@@ -85,12 +86,13 @@ export default function DrugDetailPage() {
       const { data, error } = await supabase.functions.invoke('generate-drug-patient-info', {
         body: { 
           drug_id: drug.id, 
-          include_dosing: includeDosing, 
+          include_dosing: folderMode === 'uitgebreid' ? true : includeDosing, 
           include_side_effects: includeSideEffects,
           physician_name: physicianName || '',
           nurse_name: nurseName || '',
           language,
-          phone_number: phoneNumber || ''
+          phone_number: phoneNumber || '',
+          folder_mode: folderMode
         }
       });
 
@@ -102,13 +104,15 @@ export default function DrugDetailPage() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [drug, includeDosing, includeSideEffects]);
+  }, [drug, includeDosing, includeSideEffects, folderMode]);
 
   const currentNurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
 
+  const effectiveIncludeDosing = folderMode === 'uitgebreid' ? true : includeDosing;
+
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
     drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
-    includeDosing, includeSideEffects
+    effectiveIncludeDosing, includeSideEffects, folderMode
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -754,6 +758,35 @@ export default function DrugDetailPage() {
                           autoFocus
                         />
                       )}
+                    </div>
+
+                    <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm font-medium">Type folder</Label>
+                      <div className="flex gap-1.5 sm:gap-2">
+                        <Button
+                          type="button"
+                          variant={folderMode === 'compact' ? 'default' : 'outline'}
+                          onClick={() => setFolderMode('compact')}
+                          className="flex-1 h-7 sm:h-8 text-xs"
+                          size="sm"
+                        >
+                          Compact
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={folderMode === 'uitgebreid' ? 'default' : 'outline'}
+                          onClick={() => setFolderMode('uitgebreid')}
+                          className="flex-1 h-7 sm:h-8 text-xs"
+                          size="sm"
+                        >
+                          Uitgebreid
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {folderMode === 'compact'
+                          ? 'Beknopte versie met essentiële informatie'
+                          : 'Volledige versie met doseringen en meer detail'}
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">

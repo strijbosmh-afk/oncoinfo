@@ -20,6 +20,7 @@ export function generateStaticPreviewHtml(
   phoneNumber: string,
   includeDosing: boolean,
   includeSideEffects: boolean,
+  folderMode: 'compact' | 'uitgebreid' = 'compact',
 ): string {
   const isFr = language === 'fr';
   const brandNamesText = drug.brand_names?.length > 0 ? ` (${drug.brand_names.join(', ')})` : '';
@@ -63,7 +64,9 @@ export function generateStaticPreviewHtml(
   };
 
   const introText = drug.mechanism_of_action || '';
-  const usageItems = drug.approved_indications?.slice(0, 4) || [];
+  const usageItems = folderMode === 'uitgebreid' 
+    ? (drug.approved_indications || []) 
+    : (drug.approved_indications?.slice(0, 4) || []);
   
   let dosingItems: string[] = [];
   if (includeDosing) {
@@ -75,15 +78,25 @@ export function generateStaticPreviewHtml(
       if (di.adjuvant) dosingItems.push(`${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
       // Simple schemas
       if (dosingItems.length === 0) {
+        if (di.standard_dose && folderMode === 'uitgebreid') dosingItems.push(`${isFr ? 'Dose' : 'Dosis'}: ${di.standard_dose}`);
         if (di.frequency) dosingItems.push(di.frequency);
         if (drug.cycle_length_days) dosingItems.push(`${isFr ? 'Cycle' : 'Cyclus'}: ${drug.cycle_length_days} ${isFr ? 'jours' : 'dagen'}`);
         if (di.duration) dosingItems.push(`${isFr ? 'Durée' : 'Duur'}: ${di.duration}`);
+        if (di.max_dose && folderMode === 'uitgebreid') dosingItems.push(`Max: ${di.max_dose}`);
       }
       if (di.notes) dosingItems.push(di.notes);
+      // In uitgebreid mode, show dose adjustments
+      if (folderMode === 'uitgebreid' && di.dose_adjustments?.length) {
+        for (const adj of di.dose_adjustments) {
+          dosingItems.push(`${adj.condition}: ${adj.adjustment}`);
+        }
+      }
     }
     // Fallback to common_regimens
     if (dosingItems.length === 0 && drug.common_regimens?.length > 0) {
-      dosingItems = drug.common_regimens.slice(0, 3);
+      dosingItems = folderMode === 'uitgebreid' 
+        ? [...drug.common_regimens] 
+        : drug.common_regimens.slice(0, 3);
     }
   }
 
@@ -240,11 +253,21 @@ export function generateStaticPreviewHtml(
     return term;
   };
 
-  const commonSE = (drug.side_effects?.common?.slice(0, 5) || []).map(humanize);
-  const seriousSE = (drug.side_effects?.serious?.slice(0, 3) || []).map(humanize);
-  const contraItems = drug.contraindications?.slice(0, 4) || [];
-  const tipItems = drug.patient_counseling_points?.slice(0, 4) || [];
-  const monitorItems = drug.monitoring_requirements?.slice(0, 4) || [];
+  const commonSE = folderMode === 'uitgebreid'
+    ? (drug.side_effects?.common || []).map(humanize)
+    : (drug.side_effects?.common?.slice(0, 5) || []).map(humanize);
+  const seriousSE = folderMode === 'uitgebreid'
+    ? (drug.side_effects?.serious || []).map(humanize)
+    : (drug.side_effects?.serious?.slice(0, 3) || []).map(humanize);
+  const contraItems = folderMode === 'uitgebreid'
+    ? (drug.contraindications || [])
+    : (drug.contraindications?.slice(0, 4) || []);
+  const tipItems = folderMode === 'uitgebreid'
+    ? (drug.patient_counseling_points || [])
+    : (drug.patient_counseling_points?.slice(0, 4) || []);
+  const monitorItems = folderMode === 'uitgebreid'
+    ? (drug.monitoring_requirements || [])
+    : (drug.monitoring_requirements?.slice(0, 4) || []);
 
   const listHtml = (items: string[]) =>
     items.length > 0 ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '';
