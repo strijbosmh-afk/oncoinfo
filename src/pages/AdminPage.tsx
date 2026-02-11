@@ -174,29 +174,6 @@ export default function AdminPage() {
             <Plus className="h-4 w-4" />
             Nieuwe therapie toevoegen
           </Button>
-          {hasAutoUpdate && (
-            <Button
-              variant={activeSection === 'auto-update' ? 'default' : 'outline'}
-              onClick={() => setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              Auto-Update Database
-              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                BETA
-              </Badge>
-            </Button>
-          )}
-          {hasScheduledUpdates && isSuperAdmin && (
-            <Button
-              variant={activeSection === 'schedule' ? 'default' : 'outline'}
-              onClick={() => setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
-              className="gap-2"
-            >
-              <CalendarClock className="h-4 w-4" />
-              Geplande Updates
-            </Button>
-          )}
           {isSuperAdmin && (
             <Button
               variant="outline"
@@ -207,6 +184,46 @@ export default function AdminPage() {
               Ziekenhuizen
             </Button>
           )}
+
+          {/* Right-aligned premium feature buttons */}
+          <div className="flex gap-3 ml-auto">
+            <Button
+              variant={activeSection === 'auto-update' ? 'default' : 'outline'}
+              onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+              className="gap-2"
+              disabled={!hasAutoUpdate}
+              title={!hasAutoUpdate ? 'Deze functie is niet geactiveerd voor uw ziekenhuis' : undefined}
+            >
+              <Sparkles className="h-4 w-4" />
+              Auto-Update Database
+              {!hasAutoUpdate ? (
+                <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
+                  NIET ACTIEF
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+                  BETA
+                </Badge>
+              )}
+            </Button>
+            {isSuperAdmin && (
+              <Button
+                variant={activeSection === 'schedule' ? 'default' : 'outline'}
+                onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
+                className="gap-2"
+                disabled={!hasScheduledUpdates}
+                title={!hasScheduledUpdates ? 'Deze functie is niet geactiveerd voor uw ziekenhuis' : undefined}
+              >
+                <CalendarClock className="h-4 w-4" />
+                Geplande Updates
+                {!hasScheduledUpdates && (
+                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
+                    NIET ACTIEF
+                  </Badge>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Active Section */}

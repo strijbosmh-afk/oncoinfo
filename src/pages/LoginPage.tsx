@@ -86,15 +86,11 @@ export default function LoginPage() {
     }
   };
 
-  const selectedHospital = hospitals.find(h => h.id === hospitalId);
-  const logoSrc = selectedHospital?.logo_url || '/images/logo-rzt.png';
-
   return (
     <Layout>
       <div className="container flex items-center justify-center py-16 min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <img src={logoSrc} alt="Ziekenhuis logo" className="h-12 w-auto mx-auto mb-4" />
             <CardTitle className="text-2xl">Welkom bij OncoInfo</CardTitle>
             <CardDescription>
               Log in om toegang te krijgen tot de medicijnbibliotheek
@@ -102,23 +98,21 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignIn} className="space-y-4">
-              {hospitals.length > 1 && (
-                <div className="space-y-2">
-                  <Label htmlFor="hospital">Ziekenhuis</Label>
-                  <Select value={hospitalId} onValueChange={setHospitalId}>
-                    <SelectTrigger id="hospital">
-                      <SelectValue placeholder="Kies uw ziekenhuis" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hospitals.map((h) => (
-                        <SelectItem key={h.id} value={h.id}>
-                          {h.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="hospital">Ziekenhuis</Label>
+                <Select value={hospitalId} onValueChange={setHospitalId}>
+                  <SelectTrigger id="hospital">
+                    <SelectValue placeholder="Kies uw ziekenhuis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hospitals.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {h.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="username">Gebruikersnaam</Label>
                 <Input
