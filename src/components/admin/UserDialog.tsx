@@ -51,6 +51,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [canAdd, setCanAdd] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
   const [canModify, setCanModify] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanDelete(false);
         setCanModify(false);
       }
+      setAttempted(false);
     }
   }, [open, mode, user]);
 
@@ -99,6 +101,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   };
 
   const handleSubmit = () => {
+    setAttempted(true);
     if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction) return;
 
     if (mode === 'create') {
@@ -154,7 +157,11 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="bijv. Jan"
                 required
+                className={attempted && !firstName.trim() ? 'border-destructive' : ''}
               />
+              {attempted && !firstName.trim() && (
+                <p className="text-xs text-destructive">Voornaam is verplicht</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="user-lastname">Naam *</Label>
@@ -165,14 +172,18 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="bijv. Jansen"
                 required
+                className={attempted && !lastName.trim() ? 'border-destructive' : ''}
               />
+              {attempted && !lastName.trim() && (
+                <p className="text-xs text-destructive">Naam is verplicht</p>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="user-function">Functie *</Label>
             <Select value={userFunction} onValueChange={setUserFunction}>
-              <SelectTrigger>
+              <SelectTrigger className={attempted && !userFunction ? 'border-destructive' : ''}>
                 <SelectValue placeholder="Selecteer functie" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
@@ -182,6 +193,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 <SelectItem value="overige">Overige</SelectItem>
               </SelectContent>
             </Select>
+            {attempted && !userFunction && (
+              <p className="text-xs text-destructive">Functie is verplicht</p>
+            )}
           </div>
 
           <div className="space-y-2">
