@@ -216,7 +216,7 @@ export function UserManagement() {
               {/* Column headers */}
               <div className="hidden sm:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
                 <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
-                {isSuperAdmin && <div className="w-[140px] text-right">{t('hospitals.title')}</div>}
+                {isSuperAdmin && <div className="w-[180px] text-right">{t('userDialog.hospital', 'Ziekenhuis')}</div>}
                 <div className="w-[100px] text-right">{t('userDialog.function')}</div>
                 <div className="w-[100px]" />
               </div>
@@ -272,7 +272,7 @@ export function UserManagement() {
 
                   {/* Hospital - fixed width for vertical alignment */}
                   {isSuperAdmin && (
-                    <div className="hidden sm:flex w-[140px] justify-end flex-shrink-0">
+                    <div className="hidden sm:flex w-[180px] justify-end flex-shrink-0">
                       {user.hospital_name ? (
                         <Badge
                           variant="outline"
