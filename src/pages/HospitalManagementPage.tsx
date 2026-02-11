@@ -20,6 +20,7 @@ import {
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
   Sparkles, CalendarClock, ToggleRight, ChevronDown, ChevronRight,
   Utensils, Sun, CircleUser, Wind, Search, FileText, Save,
+  Info, Globe, Crown, Filter,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -310,7 +311,9 @@ export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
+  const [hospitalFilter, setHospitalFilter] = useState('');
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [hospitalFeatureCounts, setHospitalFeatureCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
 
@@ -328,6 +331,7 @@ export default function HospitalManagementPage() {
   const [aiLookupLoading, setAiLookupLoading] = useState(false);
   const [logoConfirmed, setLogoConfirmed] = useState<boolean | null>(null);
   const [formLanguage, setFormLanguage] = useState('nl');
+  const [formBillingCountry, setFormBillingCountry] = useState<string>('BE');
 
   // Staff
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -351,20 +355,26 @@ export default function HospitalManagementPage() {
   const [billingSaving, setBillingSaving] = useState(false);
 
   const fetchHospitals = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('hospitals')
-      .select('*')
-      .order('name');
-    if (error) {
+    const [hospRes, featRes] = await Promise.all([
+      supabase.from('hospitals').select('*').order('name'),
+      supabase.from('hospital_features').select('hospital_id, is_enabled'),
+    ]);
+    if (hospRes.error) {
       toast({ title: 'Fout', description: 'Kon ziekenhuizen niet laden', variant: 'destructive' });
     } else {
-      setHospitals((data || []).map(h => ({
+      setHospitals((hospRes.data || []).map(h => ({
         ...h,
         branding: h.branding as Hospital['branding'],
         default_language: (h as any).default_language || 'nl',
         billing_country: (h as any).billing_country || null,
       })));
     }
+    // Build feature counts
+    const counts: Record<string, number> = {};
+    (featRes.data || []).forEach(f => {
+      if (f.is_enabled) counts[f.hospital_id] = (counts[f.hospital_id] || 0) + 1;
+    });
+    setHospitalFeatureCounts(counts);
     setLoading(false);
   }, [toast]);
 
@@ -475,6 +485,12 @@ export default function HospitalManagementPage() {
       if (data?.official_name) setFormName(data.official_name);
       if (data?.official_name && !formSlugManual) setFormSlug(slugify(data.official_name));
       if (data?.brand_color) setFormPrimaryColor(data.brand_color);
+      if (data?.country) {
+        setFormBillingCountry(data.country);
+        // Auto-set language based on country
+        const langMap: Record<string, string> = { BE: 'nl', NL: 'nl', FR: 'fr', DE: 'de', GB: 'en', US: 'en' };
+        if (langMap[data.country]) setFormLanguage(langMap[data.country]);
+      }
       if (data?.logo_url) {
         setFormLogoUrl(data.logo_url);
         setLogoFile(null);
@@ -511,6 +527,7 @@ export default function HospitalManagementPage() {
     setFormLogoUrl('');
     setLogoConfirmed(null);
     setFormLanguage('nl');
+    setFormBillingCountry('BE');
     setDialogOpen(true);
   };
 
@@ -525,6 +542,7 @@ export default function HospitalManagementPage() {
     setFormLogoUrl(h.logo_url || '');
     setLogoConfirmed(h.logo_url ? true : null);
     setFormLanguage(h.default_language || 'nl');
+    setFormBillingCountry(h.billing_country || 'BE');
     setDialogOpen(true);
   };
 
@@ -561,6 +579,7 @@ export default function HospitalManagementPage() {
       branding: { primary_color: formPrimaryColor },
       is_active: formIsActive,
       default_language: formLanguage,
+      billing_country: formBillingCountry,
     };
 
     if (editingHospital) {
@@ -804,54 +823,81 @@ export default function HospitalManagementPage() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
               Ziekenhuizen ({hospitals.length})
             </h2>
+            {hospitals.length > 5 && (
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={hospitalFilter}
+                  onChange={e => setHospitalFilter(e.target.value)}
+                  placeholder="Filter ziekenhuizen..."
+                  className="pl-9 h-9 text-sm"
+                />
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
             ) : hospitals.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">Geen ziekenhuizen gevonden</p>
             ) : (
-              hospitals.map(h => (
-                <Card
-                  key={h.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedHospital?.id === h.id ? 'ring-2 ring-primary shadow-md' : ''
-                  } ${!h.is_active ? 'opacity-60' : ''}`}
-                  onClick={() => selectHospital(h)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      {h.logo_url ? (
-                        <img src={h.logo_url} alt={h.name} className="h-10 w-auto max-w-[60px] object-contain" />
-                      ) : (
-                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
-                          <Building2 className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{h.name}</p>
-                          {h.branding?.primary_color && (
-                            <div
-                              className="h-4 w-4 rounded-full border shrink-0"
-                              style={{ backgroundColor: h.branding.primary_color }}
-                            />
+              (() => {
+                const filtered = hospitals.filter(h =>
+                  !hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase())
+                );
+                return filtered.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Geen resultaten voor "{hospitalFilter}"</p>
+                ) : filtered.map(h => {
+                  const hasPremium = (hospitalFeatureCounts[h.id] || 0) > 0;
+                  return (
+                    <Card
+                      key={h.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedHospital?.id === h.id ? 'ring-2 ring-primary shadow-md' : ''
+                      } ${!h.is_active ? 'opacity-60' : ''}`}
+                      onClick={() => selectHospital(h)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          {h.logo_url ? (
+                            <img src={h.logo_url} alt={h.name} className="h-10 w-auto max-w-[60px] object-contain" />
+                          ) : (
+                            <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+                              <Building2 className="h-5 w-5 text-muted-foreground" />
+                            </div>
                           )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">{h.name}</p>
+                              {h.branding?.primary_color && (
+                                <div
+                                  className="h-4 w-4 rounded-full border shrink-0"
+                                  style={{ backgroundColor: h.branding.primary_color }}
+                                />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`text-[10px] font-medium ${h.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                {h.is_active ? 'Actief' : 'Inactief'}
+                              </span>
+                              <span className="text-muted-foreground text-[10px]">·</span>
+                              <span className={`text-[10px] font-medium flex items-center gap-0.5 ${hasPremium ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                                <Crown className="h-2.5 w-2.5" />
+                                {hasPremium ? 'Premium' : 'Standaard'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <Switch
+                              checked={h.is_active}
+                              onCheckedChange={() => toggleHospitalActive(h)}
+                              aria-label={h.is_active ? 'Deactiveer' : 'Activeer'}
+                            />
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground">{h.slug}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <span className={`text-[10px] font-medium ${h.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
-                          {h.is_active ? 'Actief' : 'Inactief'}
-                        </span>
-                        <Switch
-                          checked={h.is_active}
-                          onCheckedChange={() => toggleHospitalActive(h)}
-                          aria-label={h.is_active ? 'Deactiveer' : 'Activeer'}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+                      </CardContent>
+                    </Card>
+                  );
+                });
+              })()
             )}
           </div>
 
@@ -901,6 +947,76 @@ export default function HospitalManagementPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* General Info section */}
+                <CollapsibleSection title="Algemene Informatie" icon={Info} defaultOpen={false}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        {selectedHospital.logo_url ? (
+                          <img src={selectedHospital.logo_url} alt={selectedHospital.name} className="h-16 w-auto max-w-[100px] object-contain rounded-lg border p-1" />
+                        ) : (
+                          <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                            <Building2 className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{selectedHospital.name}</p>
+                          <p className="text-xs text-muted-foreground">/{selectedHospital.slug}</p>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Standaardtaal</span>
+                          <span className="font-medium flex items-center gap-1.5">
+                            <Globe className="h-3.5 w-3.5" />
+                            {LANGUAGE_OPTIONS.find(l => l.value === selectedHospital.default_language)?.label || selectedHospital.default_language}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Land</span>
+                          <span className="font-medium">
+                            {selectedHospital.billing_country ? (COUNTRY_NAMES[selectedHospital.billing_country] || selectedHospital.billing_country) : '—'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Huisstijlkleur</span>
+                          <span className="font-medium flex items-center gap-2">
+                            {selectedHospital.branding?.primary_color && (
+                              <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: selectedHospital.branding.primary_color }} />
+                            )}
+                            {selectedHospital.branding?.primary_color || '—'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Status</span>
+                          <Badge variant={selectedHospital.is_active ? 'default' : 'secondary'} className="text-[10px]">
+                            {selectedHospital.is_active ? 'Actief' : 'Inactief'}
+                          </Badge>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Premium</span>
+                          <Badge variant={(hospitalFeatureCounts[selectedHospital.id] || 0) > 0 ? 'default' : 'secondary'} className="text-[10px]">
+                            {(hospitalFeatureCounts[selectedHospital.id] || 0) > 0
+                              ? `${hospitalFeatureCounts[selectedHospital.id]} functie(s) actief`
+                              : 'Standaard'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold">Logo URL</p>
+                      {selectedHospital.logo_url ? (
+                        <p className="text-xs text-muted-foreground break-all bg-muted/50 p-2 rounded">{selectedHospital.logo_url}</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Geen logo ingesteld</p>
+                      )}
+                      <p className="text-sm font-semibold mt-4">Aangemaakt</p>
+                      <p className="text-xs text-muted-foreground">{new Date(selectedHospital.created_at).toLocaleDateString('nl-BE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </CollapsibleSection>
 
                 {/* Billing section */}
                 <CollapsibleSection title="Facturatiegegevens" icon={FileText} defaultOpen={false}>
@@ -1372,18 +1488,33 @@ export default function HospitalManagementPage() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Standaardtaal</Label>
-                <Select value={formLanguage} onValueChange={setFormLanguage}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGE_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Land</Label>
+                  <Select value={formBillingCountry} onValueChange={setFormBillingCountry}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map(code => (
+                        <SelectItem key={code} value={code}>{COUNTRY_NAMES[code]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Standaardtaal</Label>
+                  <Select value={formLanguage} onValueChange={setFormLanguage}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGE_OPTIONS.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />

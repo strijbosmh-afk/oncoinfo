@@ -135,6 +135,7 @@ serve(async (req) => {
         domain: known.domain,
         logo_url,
         brand_color: known.brand_color,
+        country: "BE",
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -174,7 +175,8 @@ Rules:
               role: "user",
               content: `Identify this hospital: "${query}"
 
-Return JSON: {"official_name": "...", "domain": "...", "logo_url": "...", "brand_color": "#..."}`,
+Return JSON: {"official_name": "...", "domain": "...", "logo_url": "...", "brand_color": "#...", "country": "XX"}
+Where country is ISO 3166-1 alpha-2 code (e.g. BE, NL, FR, DE).`,
             },
           ],
           tools: [
@@ -206,12 +208,18 @@ Return JSON: {"official_name": "...", "domain": "...", "logo_url": "...", "brand
                       description:
                         "Primary brand color in hex format (e.g. #6b2d5b)",
                     },
+                    country: {
+                      type: "string",
+                      description:
+                        "ISO 3166-1 alpha-2 country code (e.g. BE, NL, FR, DE)",
+                    },
                   },
                   required: [
                     "official_name",
                     "domain",
                     "logo_url",
                     "brand_color",
+                    "country",
                   ],
                   additionalProperties: false,
                 },
