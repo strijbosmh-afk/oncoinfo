@@ -104,6 +104,60 @@ async function sendCredentialsEmail(email: string, username: string, password: s
   return result;
 }
 
+async function sendResetEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'OncoInfo', primaryColor = '#6b2d5b') {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY niet geconfigureerd');
+
+  const { Resend } = await import("npm:resend@2.0.0");
+  const resend = new Resend(resendApiKey);
+
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
+      </div>
+      <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+        <h2 style="color: #333; margin-top: 0;">Wachtwoord Reset</h2>
+        <p style="color: #555; line-height: 1.6;">Uw wachtwoord is gereset door een beheerder. Hieronder vindt u uw nieuwe inloggegevens:</p>
+        
+        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
+          <p style="margin: 0 0 10px;"><strong>Nieuw wachtwoord:</strong> ${password}</p>
+          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
+        </div>
+
+        <p style="color: #d32f2f; font-weight: 500; line-height: 1.6;">⚠️ U wordt bij uw eerstvolgende login gevraagd om een nieuw wachtwoord in te stellen.</p>
+        
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
+        </div>
+      </div>
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
+        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
+      </p>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: 'OncoInfo <admin@oncoinfo.be>',
+    to: [email],
+    subject: 'OncoInfo - Uw wachtwoord is gereset',
+    html: htmlContent,
+  });
+
+  if (result.error) {
+    console.error('Resend error:', result.error);
+    throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
+  }
+  return result;
+}
+
+async function getCallerUsername(supabase: ReturnType<typeof createClient>, userId: string): Promise<string | null> {
+  const { data } = await supabase.from('profiles').select('username').eq('user_id', userId).maybeSingle();
+  return data?.username || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -367,7 +421,84 @@ Deno.serve(async (req) => {
           if (pwError) throw pwError;
         }
 
-        await sendCredentialsEmail(email, username || '', password, login_url);
+        // Fetch hospital branding for email
+        let hName = 'OncoInfo';
+        let hColor = '#6b2d5b';
+        if (user_id) {
+          const { data: profile } = await supabase.from('profiles').select('hospital_id').eq('user_id', user_id).maybeSingle();
+          if (profile?.hospital_id) {
+            const { data: h } = await supabase.from('hospitals').select('name, branding').eq('id', profile.hospital_id).maybeSingle();
+            if (h) { hName = h.name; hColor = (h.branding as any)?.primary_color || '#6b2d5b'; }
+          }
+        }
+
+        await sendCredentialsEmail(email, username || '', password, login_url, hName, hColor);
+        return jsonResponse({ success: true, email_sent: true });
+      }
+
+      case 'reset-password': {
+        const { user_id } = params;
+
+        if (!user_id) {
+          return jsonResponse({ error: 'user_id is verplicht' }, 400);
+        }
+
+        // Block reset of super_admin by non-super-admin
+        const callerIsSuper2 = await isSuperAdmin(supabase, adminUser.id);
+        const targetIsSuper2 = await isSuperAdmin(supabase, user_id);
+        if (targetIsSuper2 && !callerIsSuper2) {
+          return jsonResponse({ error: 'Wachtwoord van super admin kan niet worden gereset' }, 403);
+        }
+
+        // Generate a random password: 12 chars, mixed case + digits + special
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+        let newPassword = '';
+        const randomBytes = new Uint8Array(12);
+        crypto.getRandomValues(randomBytes);
+        for (let i = 0; i < 12; i++) {
+          newPassword += chars[randomBytes[i] % chars.length];
+        }
+        // Ensure at least one uppercase, one lowercase, one digit, one special
+        newPassword = newPassword.slice(0, 8) + 'A' + 'a' + '3' + '!';
+
+        // Update password
+        const { error: pwError } = await supabase.auth.admin.updateUserById(user_id, { password: newPassword });
+        if (pwError) throw pwError;
+
+        // Set password_changed = false to force change on next login
+        await supabase.from('profiles').update({ password_changed: false }).eq('user_id', user_id);
+
+        // Get user info for email
+        const { data: profile } = await supabase.from('profiles').select('email, username, hospital_id').eq('user_id', user_id).maybeSingle();
+        if (!profile?.email) {
+          return jsonResponse({ error: 'Gebruikersprofiel niet gevonden' }, 404);
+        }
+
+        // Fetch hospital branding
+        let hName = 'OncoInfo';
+        let hColor = '#6b2d5b';
+        if (profile.hospital_id) {
+          const { data: h } = await supabase.from('hospitals').select('name, branding').eq('id', profile.hospital_id).maybeSingle();
+          if (h) { hName = h.name; hColor = (h.branding as any)?.primary_color || '#6b2d5b'; }
+        }
+
+        // Send reset email
+        const loginUrl = req.headers.get('origin') || 'https://oncoinfo.lovable.app';
+        await sendResetEmail(profile.email, profile.username || '', newPassword, loginUrl, hName, hColor);
+
+        // Audit log
+        const callerUsername = await getCallerUsername(supabase, adminUser.id);
+        await supabase.from('audit_log').insert({
+          user_id: adminUser.id,
+          username: callerUsername,
+          action: 'password_reset',
+          entity_type: 'user',
+          entity_id: user_id,
+          entity_name: profile.username || profile.email,
+          hospital_id: profile.hospital_id,
+          details: { initiated_by: callerUsername },
+        });
+
         return jsonResponse({ success: true, email_sent: true });
       }
 

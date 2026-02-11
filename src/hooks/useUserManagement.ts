@@ -115,6 +115,17 @@ export function useUserManagement() {
     },
   });
 
+  const resetPassword = useMutation({
+    mutationFn: (userId: string) => callManageUsers('reset-password', { user_id: userId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['managed-users'] });
+      toast({ title: 'Wachtwoord gereset', description: 'Een nieuw wachtwoord is per e-mail verstuurd. De gebruiker moet dit wijzigen bij de volgende login.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Fout bij wachtwoord reset', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     users: usersQuery.data,
     isLoading: usersQuery.isLoading,
@@ -123,6 +134,7 @@ export function useUserManagement() {
     updateUser,
     deleteUser,
     sendCredentials,
+    resetPassword,
     refetch: usersQuery.refetch,
   };
 }
