@@ -665,29 +665,29 @@ export default function DrugDetailPage() {
 
         {/* Patient Folder Dialog – settings + live preview */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col w-[95vw] sm:w-full p-0">
-            <DialogHeader className="px-6 pt-5 pb-0">
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Patiëntenfolder - {drug.generic_name}
+          <DialogContent className="max-w-6xl max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[98vw] sm:w-[95vw] lg:w-full p-0">
+            <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-0">
+              <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="truncate">Patiëntenfolder - {drug.generic_name}</span>
               </DialogTitle>
             </DialogHeader>
 
-            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
               {/* Left: settings */}
-              <div className="lg:w-[380px] shrink-0 p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r space-y-4">
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Arts</Label>
-                  <div className="grid grid-cols-1 gap-3">
+              <div className="lg:w-[380px] shrink-0 p-3 sm:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r space-y-3 sm:space-y-4 max-h-[45vh] lg:max-h-none">
+                <div className="space-y-2 sm:space-y-3">
+                  <Label className="text-xs sm:text-sm font-medium">Arts</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3">
                     {PHYSICIAN_GROUPS.map((group) => (
-                      <div key={group.label} className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">{group.label}</Label>
+                      <div key={group.label} className="space-y-1">
+                        <Label className="text-[11px] sm:text-xs text-muted-foreground">{group.label}</Label>
                         <Select
                           value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
                           onValueChange={setSelectedPhysician}
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder={`Selecteer ${group.label.toLowerCase()}`} />
+                          <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                            <SelectValue placeholder={`Selecteer`} />
                           </SelectTrigger>
                           <SelectContent>
                             {group.physicians.map((doc) => (
@@ -700,8 +700,8 @@ export default function DrugDetailPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 border-t pt-4">
-                  <Label className="text-sm font-medium">Verpleegkundige</Label>
+                <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                  <Label className="text-xs sm:text-sm font-medium">Verpleegkundige</Label>
                   <RadioGroup
                     value={isNurseCustom ? '__custom__' : nurseSelection}
                     onValueChange={(val) => {
@@ -712,16 +712,17 @@ export default function DrugDetailPage() {
                         setNurseSelection(val);
                       }
                     }}
+                    className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
                   >
                     {NURSES.map((nurse) => (
                       <div key={nurse} className="flex items-center gap-2">
                         <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
-                        <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer">{nurse}</Label>
+                        <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer text-xs sm:text-sm">{nurse}</Label>
                       </div>
                     ))}
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="__custom__" id="nurse-custom" />
-                      <Label htmlFor="nurse-custom" className="font-normal cursor-pointer">Andere</Label>
+                      <Label htmlFor="nurse-custom" className="font-normal cursor-pointer text-xs sm:text-sm">Andere</Label>
                     </div>
                   </RadioGroup>
                   {isNurseCustom && (
@@ -729,56 +730,59 @@ export default function DrugDetailPage() {
                       placeholder="Naam verpleegkundige"
                       value={customNurse}
                       onChange={(e) => setCustomNurse(e.target.value)}
-                      className="mt-2"
+                      className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
                       autoFocus
                     />
                   )}
                 </div>
 
-                <div className="space-y-3 border-t pt-4">
-                  <Label className="text-sm font-medium">Taal van de folder</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
-                      onClick={() => setSelectedLanguage('nl')}
-                      className="flex-1"
-                      size="sm"
-                    >
-                      Nederlands
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
-                      onClick={() => setSelectedLanguage('fr')}
-                      className="flex-1"
-                      size="sm"
-                    >
-                      Frans
-                    </Button>
+                <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
+                  <div className="space-y-1.5 sm:space-y-3">
+                    <Label className="text-xs sm:text-sm font-medium">Taal</Label>
+                    <div className="flex gap-1.5 sm:gap-2">
+                      <Button
+                        type="button"
+                        variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
+                        onClick={() => setSelectedLanguage('nl')}
+                        className="flex-1 h-7 sm:h-8 text-xs"
+                        size="sm"
+                      >
+                        NL
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
+                        onClick={() => setSelectedLanguage('fr')}
+                        className="flex-1 h-7 sm:h-8 text-xs"
+                        size="sm"
+                      >
+                        FR
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Telefoonnummer</Label>
-                  <Input
-                    placeholder="bv. 016 80 90 11"
-                    value={customPhone}
-                    onChange={(e) => setCustomPhone(e.target.value)}
-                  />
+                  <div className="space-y-1.5 sm:space-y-3">
+                    <Label className="text-xs sm:text-sm font-medium">Telefoon</Label>
+                    <Input
+                      placeholder="016 80 90 11"
+                      value={customPhone}
+                      onChange={(e) => setCustomPhone(e.target.value)}
+                      className="h-7 sm:h-9 text-xs sm:text-sm"
+                    />
+                  </div>
                 </div>
 
                 <Button
                   onClick={handleConfirmStaff}
                   disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
-                  className="w-full gap-2 mt-2"
+                  className="w-full gap-2 mt-1 sm:mt-2 h-8 sm:h-9 text-xs sm:text-sm"
                 >
                   {isGeneratingPdf ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  {previewHtml ? 'Opnieuw genereren' : 'Genereer definitieve folder'}
+                  {previewHtml ? 'Opnieuw genereren' : 'Genereer folder'}
                 </Button>
               </div>
 
@@ -786,7 +790,7 @@ export default function DrugDetailPage() {
               <div className="flex-1 flex flex-col min-h-0">
                 {previewHtml ? (
                   user ? (
-                    <div className="flex-1 overflow-auto p-4">
+                    <div className="flex-1 overflow-auto p-2 sm:p-4">
                       <PatientFolderEditor
                         drug={drug}
                         previewHtml={previewHtml}
@@ -801,7 +805,7 @@ export default function DrugDetailPage() {
                         srcDoc={previewHtml}
                         className="w-full border-0"
                         title="Patiëntenfolder preview"
-                        style={{ minHeight: '600px', height: '100%' }}
+                        style={{ minHeight: '400px', height: '100%' }}
                       />
                     </div>
                   )
@@ -811,7 +815,7 @@ export default function DrugDetailPage() {
                       srcDoc={staticPreviewHtml}
                       className="w-full border-0"
                       title="Patiëntenfolder voorbeeld"
-                      style={{ minHeight: '600px', height: '100%' }}
+                      style={{ minHeight: '400px', height: '100%' }}
                     />
                   </div>
                 )}
@@ -820,23 +824,23 @@ export default function DrugDetailPage() {
 
             {/* Footer with actions */}
             {previewHtml && (
-              <div className="flex justify-end gap-2 px-6 py-3 border-t">
+              <div className="flex justify-end gap-2 px-4 sm:px-6 py-2 sm:py-3 border-t">
                 <Button
                   variant="outline"
                   onClick={handleDownloadPdf}
                   disabled={isDownloading}
-                  className="gap-2"
+                  className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
                   size="sm"
                 >
                   {isDownloading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <Download className="h-4 w-4" />
+                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  Download PDF
+                  <span className="hidden xs:inline">Download</span> PDF
                 </Button>
-                <Button onClick={handlePrint} className="gap-2" size="sm">
-                  <Printer className="h-4 w-4" />
+                <Button onClick={handlePrint} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8" size="sm">
+                  <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   Afdrukken
                 </Button>
               </div>
