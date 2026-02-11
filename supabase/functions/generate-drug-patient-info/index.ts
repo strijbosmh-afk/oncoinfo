@@ -183,6 +183,42 @@ Deno.serve(async (req) => {
     }
 
     const supabase = authClient;
+
+    // Fetch user's hospital for branding
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('hospital_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    let hospitalName = 'OncoInfo';
+    let hospitalColor = '#6b2d5b';
+    let hospitalLogoUrl: string | null = null;
+
+    if (userProfile?.hospital_id) {
+      const { data: hospital } = await supabase
+        .from('hospitals')
+        .select('name, logo_url, branding')
+        .eq('id', userProfile.hospital_id)
+        .maybeSingle();
+      if (hospital) {
+        hospitalName = hospital.name;
+        hospitalColor = (hospital.branding as any)?.primary_color || '#6b2d5b';
+        hospitalLogoUrl = hospital.logo_url;
+      }
+    }
+
+    // Fetch hospital doctors
+    let doctorsList: string[] = [];
+    if (userProfile?.hospital_id) {
+      const { data: doctors } = await supabase
+        .from('hospital_doctors')
+        .select('name')
+        .eq('hospital_id', userProfile.hospital_id)
+        .eq('is_active', true)
+        .order('display_order');
+      if (doctors) doctorsList = doctors.map((d: any) => d.name);
+    }
  
     const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '' } = await req.json();
  
@@ -212,11 +248,13 @@ Deno.serve(async (req) => {
       .eq('drug_id', drug_id)
       .single();
 
-    // Fetch logo
+    // Fetch logo - use hospital logo or fallback
     let logoDataUri = '';
-    const supabaseStorageLogoUrl = `${supabaseUrl}/storage/v1/object/public/public-assets/logo-rzt.png`;
+    const logoSourceUrl = hospitalLogoUrl
+      ? (hospitalLogoUrl.startsWith('http') ? hospitalLogoUrl : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospitalLogoUrl}`)
+      : `${supabaseUrl}/storage/v1/object/public/public-assets/logo-rzt.png`;
     try {
-      const logoResponse = await fetch(supabaseStorageLogoUrl);
+      const logoResponse = await fetch(logoSourceUrl);
       if (logoResponse.ok) {
         const contentType = logoResponse.headers.get('content-type') || 'image/png';
         if (contentType.startsWith('image/')) {
@@ -230,7 +268,6 @@ Deno.serve(async (req) => {
             }
           }
           logoDataUri = `data:${contentType};base64,${btoa(binary)}`;
-          console.log(`Logo fetched successfully, size: ${logoBuffer.length} bytes`);
         }
       }
     } catch (e) {
@@ -342,7 +379,8 @@ Deno.serve(async (req) => {
       physician_name, nurse_name, language,
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
-      tipsText, monitoringText, phone_number, selfCareTips
+      tipsText, monitoringText, phone_number, selfCareTips,
+      hospitalName, hospitalColor, doctorsList
     );
 
     return new Response(
@@ -379,6 +417,9 @@ function generatePatientInfoHtml(
   monitoringText: string | null,
   phoneNumber: string = '',
   selfCareTips: string | null = null,
+  hospitalName: string = 'RZ Tienen',
+  hospitalColor: string = '#6b2d5b',
+  doctorsList: string[] = [],
 ): string {
   const isFr = language === 'fr';
   
@@ -398,7 +439,7 @@ function generatePatientInfoHtml(
     physician: 'Médecin',
     nurse: 'Infirmier(ère)',
     phone: 'Tél',
-    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
+    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
   } : {
     title: 'Informatie voor patiënten',
     whatIs: `Wat is ${drug.generic_name}?`,
@@ -415,7 +456,7 @@ function generatePatientInfoHtml(
     physician: 'Arts',
     nurse: 'Verpleegkundige',
     phone: 'Tel',
-    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
+    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
   };
 
   const brandNamesText = drug.brand_names?.length > 0 
@@ -451,14 +492,14 @@ function generatePatientInfoHtml(
       width: 210mm; min-height: 297mm; margin: 0 auto; padding: 12mm;
       background: white; overflow: auto;
     }
-    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #6b2d5b; }
+    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
     .logo-header img { max-height: 50px; width: auto; }
     .header-title { text-align: right; }
-    .header-title h1 { color: #6b2d5b; font-size: 22px; margin-bottom: 4px; }
+    .header-title h1 { color: ${hospitalColor}; font-size: 22px; margin-bottom: 4px; }
     .header-title .subtitle { color: #666; font-size: 13px; }
     .content { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
     .section { margin-bottom: 10px; }
-    .section h2 { color: #6b2d5b; font-size: 15px; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+    .section h2 { color: ${hospitalColor}; font-size: 15px; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
     .section p { margin-bottom: 4px; color: #333; font-size: 13px; }
     .section ul { margin-left: 14px; margin-bottom: 6px; }
     .section li { margin-bottom: 3px; color: #333; font-size: 13px; }
@@ -466,12 +507,12 @@ function generatePatientInfoHtml(
     .warning-box h3 { color: #cc7a00; font-size: 13px; margin-bottom: 4px; }
     .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
     .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 4px; }
-    .info-box { background: #f5e6f0; border-left: 3px solid #6b2d5b; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
+    .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
     .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
     .selfcare-box h3 { color: #2e7d32; font-size: 13px; margin-bottom: 4px; }
     .full-width { grid-column: 1 / -1; }
     .contact-section { background: #f5f5f5; padding: 10px 12px; border-radius: 4px; margin-top: 12px; font-size: 12px; }
-    .contact-section h2 { font-size: 14px; margin-bottom: 8px; color: #6b2d5b; }
+    .contact-section h2 { font-size: 14px; margin-bottom: 8px; color: ${hospitalColor}; }
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
@@ -483,7 +524,7 @@ function generatePatientInfoHtml(
 </head>
 <body>
   <div class="logo-header">
-    <img src="${logoUrl}" alt="RZ Tienen Logo" />
+    <img src="${logoUrl}" alt="${hospitalName} Logo" />
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
       <p class="subtitle">${labels.title}</p>
@@ -571,9 +612,9 @@ function generatePatientInfoHtml(
   <div class="contact-section full-width">
     <h2>${labels.contact}</h2>
     <div class="contact-grid">
-      <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
+      <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
       <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+      <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
     </div>
   </div>
 
