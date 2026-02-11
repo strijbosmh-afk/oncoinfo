@@ -217,7 +217,7 @@ export function UserManagement() {
               <div className="hidden lg:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
                 <div className="h-8 w-8 flex-shrink-0" />
                 <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
-                {isSuperAdmin && <div className="w-[160px] text-right">{t('userDialog.hospital', 'Ziekenhuis')}</div>}
+                {isSuperAdmin && <div className="w-[160px] text-right">{t('userDialog.hospital')}</div>}
                 <div className="w-[120px] text-right">{t('userDialog.function')}</div>
                 <div className="w-[148px] flex-shrink-0" />
               </div>

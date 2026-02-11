@@ -531,7 +531,8 @@
     "canModify": "Kan behandelingen wijzigen",
     "canDelete": "Kan behandelingen verwijderen",
     "sendEmail": "Inloggegevens per e-mail versturen",
-    "create": "Aanmaken"
+    "create": "Aanmaken",
+    "hospital": "Ziekenhuis"
   },
   "changePassword": {
     "title": "Wijzig uw wachtwoord",

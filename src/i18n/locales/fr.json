@@ -531,7 +531,8 @@
     "canModify": "Peut modifier des traitements",
     "canDelete": "Peut supprimer des traitements",
     "sendEmail": "Envoyer les identifiants par e-mail",
-    "create": "Créer"
+    "create": "Créer",
+    "hospital": "Hôpital"
   },
   "changePassword": {
     "title": "Modifiez votre mot de passe",
