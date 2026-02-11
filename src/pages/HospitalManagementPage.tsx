@@ -590,6 +590,12 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
                   </Button>
                 </label>
               </div>
+              {logoUrl && (
+                <div className="flex items-center gap-2 mt-2">
+                  <img src={logoUrl} alt="Logo" className="h-8 w-8 rounded object-contain border bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <span className="text-[11px] text-muted-foreground truncate flex-1">{logoUrl.split('/').pop()?.split('?')[0]}</span>
+                </div>
+              )}
               {!logoUrl && !uploading && (
                 <p className="text-[11px] text-muted-foreground text-center mt-1.5">Sleep een afbeelding hierheen of klik op Uploaden</p>
               )}
