@@ -473,6 +473,7 @@ export type Database = {
           billing_vat_number: string | null
           branding: Json | null
           created_at: string
+          default_language: string
           id: string
           is_active: boolean
           logo_url: string | null
@@ -498,6 +499,7 @@ export type Database = {
           billing_vat_number?: string | null
           branding?: Json | null
           created_at?: string
+          default_language?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -523,6 +525,7 @@ export type Database = {
           billing_vat_number?: string | null
           branding?: Json | null
           created_at?: string
+          default_language?: string
           id?: string
           is_active?: boolean
           logo_url?: string | null

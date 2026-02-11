@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 interface Hospital {
   id: string;
@@ -12,6 +13,8 @@ interface Hospital {
     [key: string]: unknown;
   } | null;
   is_active: boolean;
+  default_language: string;
+  billing_country: string | null;
 }
 
 interface HospitalContextType {
@@ -25,7 +28,8 @@ const HospitalContext = createContext<HospitalContextType>({
 });
 
 export function HospitalProvider({ children }: { children: ReactNode }) {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, isSuperAdmin, loading: authLoading } = useAuth();
+  const { i18n } = useTranslation();
   const [hospital, setHospital] = useState<Hospital | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,20 +50,28 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (!error && data) {
-        setHospital({
+        const h: Hospital = {
           id: data.id,
           name: data.name,
           slug: data.slug,
           logo_url: data.logo_url,
           branding: data.branding as Hospital['branding'],
           is_active: data.is_active,
-        });
+          default_language: (data as any).default_language || 'nl',
+          billing_country: (data as any).billing_country || null,
+        };
+        setHospital(h);
+
+        // Set language based on hospital — super admins always stay Dutch
+        if (!isSuperAdmin && h.default_language) {
+          i18n.changeLanguage(h.default_language);
+        }
       }
       setLoading(false);
     };
 
     fetchHospital();
-  }, [user, profile?.hospital_id, authLoading]);
+  }, [user, profile?.hospital_id, authLoading, i18n, isSuperAdmin]);
 
   return (
     <HospitalContext.Provider value={{ hospital, loading }}>

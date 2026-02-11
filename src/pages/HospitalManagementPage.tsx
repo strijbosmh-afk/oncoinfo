@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
@@ -303,6 +304,7 @@ export default function HospitalManagementPage() {
   const [saving, setSaving] = useState(false);
   const [aiLookupLoading, setAiLookupLoading] = useState(false);
   const [logoConfirmed, setLogoConfirmed] = useState<boolean | null>(null);
+  const [formLanguage, setFormLanguage] = useState('nl');
 
   // Staff
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -799,16 +801,19 @@ export default function HospitalManagementPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium truncate">{h.name}</p>
+                          {h.branding?.primary_color && (
+                            <div
+                              className="h-4 w-4 rounded-full border shrink-0"
+                              style={{ backgroundColor: h.branding.primary_color }}
+                            />
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">{h.slug}</p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        {h.branding?.primary_color && (
-                          <div
-                            className="h-5 w-5 rounded-full border"
-                            style={{ backgroundColor: h.branding.primary_color }}
-                          />
-                        )}
+                        <span className={`text-[10px] font-medium ${h.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          {h.is_active ? 'Actief' : 'Inactief'}
+                        </span>
                         <Switch
                           checked={h.is_active}
                           onCheckedChange={() => toggleHospitalActive(h)}
