@@ -9,62 +9,88 @@ const corsHeaders = {
 interface HospitalEntry {
   official_name: string;
   domain: string;
-  logo_url: string;
   brand_color: string;
   aliases: string[];
 }
 
+// Generate multiple logo URL candidates for a domain
+function logoUrls(domain: string): string[] {
+  return [
+    `https://icon.horse/icon/${domain}`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+    `https://logo.clearbit.com/${domain}`,
+  ];
+}
+
+// Try each URL with a HEAD request, return first that responds 200 with image content-type
+async function findWorkingLogo(domain: string): Promise<string> {
+  const candidates = logoUrls(domain);
+  for (const url of candidates) {
+    try {
+      const resp = await fetch(url, { method: "HEAD", redirect: "follow" });
+      const ct = resp.headers.get("content-type") || "";
+      if (resp.ok && (ct.startsWith("image/") || url.includes("google.com/s2/favicons"))) {
+        return url;
+      }
+    } catch {
+      // skip
+    }
+  }
+  // Default fallback
+  return `https://icon.horse/icon/${domain}`;
+}
+
 const KNOWN_HOSPITALS: HospitalEntry[] = [
-  { official_name: "UZ Leuven", domain: "uzleuven.be", logo_url: "https://logo.clearbit.com/uzleuven.be", brand_color: "#003D6B", aliases: ["uzleuven", "uz leuven", "universitair ziekenhuis leuven"] },
-  { official_name: "UZ Gent", domain: "uzgent.be", logo_url: "https://logo.clearbit.com/uzgent.be", brand_color: "#0063AF", aliases: ["uzgent", "uz gent", "universitair ziekenhuis gent"] },
-  { official_name: "Institut Jules Bordet", domain: "bordet.be", logo_url: "https://logo.clearbit.com/bordet.be", brand_color: "#1B3C6E", aliases: ["bordet", "jules bordet", "institut bordet", "institut jules bordet"] },
-  { official_name: "Jessa Ziekenhuis", domain: "jessazh.be", logo_url: "https://logo.clearbit.com/jessazh.be", brand_color: "#E30613", aliases: ["jessa", "jessa ziekenhuis", "jessa ziekenhuizen", "jessazh"] },
-  { official_name: "AZ Maria Middelares", domain: "azmariamiddelares.be", logo_url: "https://logo.clearbit.com/azmariamiddelares.be", brand_color: "#003F72", aliases: ["maria middelares", "az maria middelares", "az maria middelares gent"] },
-  { official_name: "AZ Groeninge", domain: "azgroeninge.be", logo_url: "https://logo.clearbit.com/azgroeninge.be", brand_color: "#006633", aliases: ["groeninge", "az groeninge", "az groeninge kortrijk"] },
-  { official_name: "AZ Klina", domain: "klina.be", logo_url: "https://logo.clearbit.com/klina.be", brand_color: "#009CDE", aliases: ["klina", "az klina", "az klina brasschaat"] },
-  { official_name: "UZ Brussel", domain: "uzbrussel.be", logo_url: "https://logo.clearbit.com/uzbrussel.be", brand_color: "#E4002B", aliases: ["uzbrussel", "uz brussel", "universitair ziekenhuis brussel"] },
-  { official_name: "AZ Sint-Lucas Gent", domain: "azstlucas.be", logo_url: "https://logo.clearbit.com/azstlucas.be", brand_color: "#1D70B8", aliases: ["sint-lucas", "az sint-lucas", "az sint-lucas gent", "az st lucas"] },
-  { official_name: "AZ Sint-Jan Brugge", domain: "azsintjan.be", logo_url: "https://logo.clearbit.com/azsintjan.be", brand_color: "#003DA5", aliases: ["sint-jan", "az sint-jan", "az sint-jan brugge"] },
-  { official_name: "AZ Delta", domain: "azdelta.be", logo_url: "https://logo.clearbit.com/azdelta.be", brand_color: "#E30613", aliases: ["az delta", "azdelta", "az delta roeselare"] },
-  { official_name: "AZ Nikolaas", domain: "aznikolaas.be", logo_url: "https://logo.clearbit.com/aznikolaas.be", brand_color: "#009640", aliases: ["nikolaas", "az nikolaas", "az nikolaas sint-niklaas"] },
-  { official_name: "AZ Turnhout", domain: "azturnhout.be", logo_url: "https://logo.clearbit.com/azturnhout.be", brand_color: "#0066B3", aliases: ["az turnhout", "azturnhout"] },
-  { official_name: "AZ Monica", domain: "azmonica.be", logo_url: "https://logo.clearbit.com/azmonica.be", brand_color: "#E30613", aliases: ["monica", "az monica", "az monica antwerpen", "az monica deurne"] },
-  { official_name: "AZ Vesalius", domain: "azvesalius.be", logo_url: "https://logo.clearbit.com/azvesalius.be", brand_color: "#005DAA", aliases: ["vesalius", "az vesalius", "az vesalius tongeren"] },
-  { official_name: "Ziekenhuis Oost-Limburg", domain: "zol.be", logo_url: "https://logo.clearbit.com/zol.be", brand_color: "#00A651", aliases: ["zol", "ziekenhuis oost-limburg", "ziekenhuis oost limburg"] },
-  { official_name: "CHU de Liège", domain: "chuliege.be", logo_url: "https://logo.clearbit.com/chuliege.be", brand_color: "#003F87", aliases: ["chu liege", "chu de liège", "chu liège", "chuliege"] },
-  { official_name: "Cliniques Universitaires Saint-Luc", domain: "saintluc.be", logo_url: "https://logo.clearbit.com/saintluc.be", brand_color: "#0054A6", aliases: ["saint-luc", "cliniques saint-luc", "saint luc", "saintluc"] },
-  { official_name: "AZ Jan Palfijn Gent", domain: "azjanpalfijn.be", logo_url: "https://logo.clearbit.com/azjanpalfijn.be", brand_color: "#E30613", aliases: ["jan palfijn", "az jan palfijn", "az jan palfijn gent"] },
-  { official_name: "GZA Ziekenhuizen", domain: "gza.be", logo_url: "https://logo.clearbit.com/gza.be", brand_color: "#00599D", aliases: ["gza", "gza ziekenhuizen", "gasthuiszusters antwerpen"] },
-  { official_name: "AZ Alma", domain: "azalma.be", logo_url: "https://logo.clearbit.com/azalma.be", brand_color: "#8DC63F", aliases: ["alma", "az alma", "az alma eeklo"] },
-  { official_name: "AZ Glorieux", domain: "azglorieux.be", logo_url: "https://logo.clearbit.com/azglorieux.be", brand_color: "#003DA5", aliases: ["glorieux", "az glorieux", "az glorieux ronse"] },
-  { official_name: "AZ Damiaan", domain: "azdamiaan.be", logo_url: "https://logo.clearbit.com/azdamiaan.be", brand_color: "#009FE3", aliases: ["damiaan", "az damiaan", "az damiaan oostende"] },
-  { official_name: "AZ Sint-Blasius", domain: "azsintblasius.be", logo_url: "https://logo.clearbit.com/azsintblasius.be", brand_color: "#E30613", aliases: ["sint-blasius", "az sint-blasius", "az sint-blasius dendermonde"] },
-  { official_name: "AZ Sint-Maarten", domain: "azstmaarten.be", logo_url: "https://logo.clearbit.com/azstmaarten.be", brand_color: "#003DA5", aliases: ["sint-maarten", "az sint-maarten", "az sint-maarten mechelen"] },
-  { official_name: "Imelda Ziekenhuis", domain: "imelda.be", logo_url: "https://logo.clearbit.com/imelda.be", brand_color: "#005BAC", aliases: ["imelda", "imelda ziekenhuis", "imelda bonheiden"] },
-  { official_name: "AZ Herentals", domain: "azherentals.be", logo_url: "https://logo.clearbit.com/azherentals.be", brand_color: "#009640", aliases: ["az herentals", "azherentals"] },
-  { official_name: "AZ Rivierenland", domain: "azrivierenland.be", logo_url: "https://logo.clearbit.com/azrivierenland.be", brand_color: "#0079C1", aliases: ["rivierenland", "az rivierenland", "az rivierenland bornem"] },
-  { official_name: "AZ Sint-Dimpna", domain: "azsintdimpna.be", logo_url: "https://logo.clearbit.com/azsintdimpna.be", brand_color: "#0072CE", aliases: ["sint-dimpna", "az sint-dimpna", "az sint-dimpna geel"] },
-  { official_name: "OLV Ziekenhuis Aalst", domain: "olvz.be", logo_url: "https://logo.clearbit.com/olvz.be", brand_color: "#003DA5", aliases: ["olv", "olvz", "olv aalst", "olv ziekenhuis aalst", "onze-lieve-vrouw aalst"] },
-  { official_name: "Regionaal Ziekenhuis Tienen", domain: "rztienen.be", logo_url: "https://logo.clearbit.com/rztienen.be", brand_color: "#6B2D5B", aliases: ["rz tienen", "rztienen", "regionaal ziekenhuis tienen"] },
-  { official_name: "Vitaz", domain: "vitaz.be", logo_url: "https://logo.clearbit.com/vitaz.be", brand_color: "#E30613", aliases: ["vitaz", "vitaz sint-niklaas"] },
-  { official_name: "AZ Zeno", domain: "azzeno.be", logo_url: "https://logo.clearbit.com/azzeno.be", brand_color: "#009FE3", aliases: ["zeno", "az zeno", "az zeno knokke"] },
-  { official_name: "AZ Oudenaarde", domain: "azoudenaarde.be", logo_url: "https://logo.clearbit.com/azoudenaarde.be", brand_color: "#003DA5", aliases: ["az oudenaarde", "azoudenaarde"] },
-  { official_name: "CHR de la Citadelle", domain: "chrcitadelle.be", logo_url: "https://logo.clearbit.com/chrcitadelle.be", brand_color: "#003F87", aliases: ["citadelle", "chr citadelle", "chr de la citadelle"] },
-  { official_name: "Grand Hôpital de Charleroi", domain: "ghdc.be", logo_url: "https://logo.clearbit.com/ghdc.be", brand_color: "#0072CE", aliases: ["ghdc", "grand hopital de charleroi", "grand hôpital de charleroi"] },
-  { official_name: "CHU UCL Namur", domain: "chuuclnamur.uclouvain.be", logo_url: "https://logo.clearbit.com/chuuclnamur.uclouvain.be", brand_color: "#0054A6", aliases: ["chu ucl namur", "chu namur", "chuuclnamur"] },
-  { official_name: "Clinique Saint-Pierre Ottignies", domain: "cspo.be", logo_url: "https://logo.clearbit.com/cspo.be", brand_color: "#003DA5", aliases: ["cspo", "saint-pierre ottignies", "clinique saint-pierre"] },
-  { official_name: "Hôpital Erasme", domain: "erasme.ulb.ac.be", logo_url: "https://logo.clearbit.com/erasme.ulb.ac.be", brand_color: "#003F87", aliases: ["erasme", "hopital erasme", "hôpital erasme"] },
-  { official_name: "AZ Sint-Elisabeth Zottegem", domain: "azstelisabeth.be", logo_url: "https://logo.clearbit.com/azstelisabeth.be", brand_color: "#003DA5", aliases: ["sint-elisabeth", "az sint-elisabeth", "az sint-elisabeth zottegem"] },
-  { official_name: "Mariaziekenhuis Noord-Limburg", domain: "mznl.be", logo_url: "https://logo.clearbit.com/mznl.be", brand_color: "#E30613", aliases: ["mznl", "mariaziekenhuis", "mariaziekenhuis noord-limburg"] },
-  { official_name: "AZ Diest", domain: "azdiest.be", logo_url: "https://logo.clearbit.com/azdiest.be", brand_color: "#009640", aliases: ["az diest", "azdiest"] },
-  { official_name: "Heilig Hartziekenhuis Lier", domain: "hhzhlier.be", logo_url: "https://logo.clearbit.com/hhzhlier.be", brand_color: "#E30613", aliases: ["heilig hart lier", "hhzh lier", "heilig hartziekenhuis lier"] },
-  { official_name: "Jan Yperman Ziekenhuis", domain: "yperman.net", logo_url: "https://logo.clearbit.com/yperman.net", brand_color: "#003DA5", aliases: ["yperman", "jan yperman", "jan yperman ziekenhuis", "jan yperman ieper"] },
-  { official_name: "AZ West", domain: "azwest.be", logo_url: "https://logo.clearbit.com/azwest.be", brand_color: "#0079C1", aliases: ["az west", "azwest", "az west veurne"] },
-  { official_name: "Chirec", domain: "chirec.be", logo_url: "https://logo.clearbit.com/chirec.be", brand_color: "#E30613", aliases: ["chirec", "chirec delta", "chirec braine"] },
-  { official_name: "Centre Hospitalier de Mouscron", domain: "chmouscron.be", logo_url: "https://logo.clearbit.com/chmouscron.be", brand_color: "#003F87", aliases: ["ch mouscron", "centre hospitalier mouscron"] },
-  { official_name: "Hôpitaux Iris Sud", domain: "his-izz.be", logo_url: "https://logo.clearbit.com/his-izz.be", brand_color: "#0072CE", aliases: ["iris sud", "his", "hopitaux iris sud", "hôpitaux iris sud"] },
-  { official_name: "AZ Lokeren", domain: "azlokeren.be", logo_url: "https://logo.clearbit.com/azlokeren.be", brand_color: "#003DA5", aliases: ["az lokeren", "azlokeren"] },
-  { official_name: "Sint-Andriesziekenhuis Tielt", domain: "satielt.be", logo_url: "https://logo.clearbit.com/satielt.be", brand_color: "#009640", aliases: ["sint-andries", "sint-andriesziekenhuis", "sa tielt"] },
+  { official_name: "UZ Leuven", domain: "uzleuven.be", brand_color: "#003D6B", aliases: ["uzleuven", "uz leuven", "universitair ziekenhuis leuven"] },
+  { official_name: "UZ Gent", domain: "uzgent.be", brand_color: "#0063AF", aliases: ["uzgent", "uz gent", "universitair ziekenhuis gent"] },
+  { official_name: "Institut Jules Bordet", domain: "bordet.be", brand_color: "#1B3C6E", aliases: ["bordet", "jules bordet", "institut bordet", "institut jules bordet"] },
+  { official_name: "Jessa Ziekenhuis", domain: "jessazh.be", brand_color: "#E30613", aliases: ["jessa", "jessa ziekenhuis", "jessa ziekenhuizen", "jessazh"] },
+  { official_name: "AZ Maria Middelares", domain: "azmariamiddelares.be", brand_color: "#003F72", aliases: ["maria middelares", "az maria middelares", "az maria middelares gent"] },
+  { official_name: "AZ Groeninge", domain: "azgroeninge.be", brand_color: "#006633", aliases: ["groeninge", "az groeninge", "az groeninge kortrijk"] },
+  { official_name: "AZ Klina", domain: "klina.be", brand_color: "#009CDE", aliases: ["klina", "az klina", "az klina brasschaat"] },
+  { official_name: "UZ Brussel", domain: "uzbrussel.be", brand_color: "#E4002B", aliases: ["uzbrussel", "uz brussel", "universitair ziekenhuis brussel"] },
+  { official_name: "AZ Sint-Lucas Gent", domain: "azstlucas.be", brand_color: "#1D70B8", aliases: ["sint-lucas", "az sint-lucas", "az sint-lucas gent", "az st lucas"] },
+  { official_name: "AZ Sint-Jan Brugge", domain: "azsintjan.be", brand_color: "#003DA5", aliases: ["sint-jan", "az sint-jan", "az sint-jan brugge"] },
+  { official_name: "AZ Delta", domain: "azdelta.be", brand_color: "#E30613", aliases: ["az delta", "azdelta", "az delta roeselare"] },
+  { official_name: "AZ Nikolaas", domain: "aznikolaas.be", brand_color: "#009640", aliases: ["nikolaas", "az nikolaas", "az nikolaas sint-niklaas"] },
+  { official_name: "AZ Turnhout", domain: "azturnhout.be", brand_color: "#0066B3", aliases: ["az turnhout", "azturnhout"] },
+  { official_name: "AZ Monica", domain: "azmonica.be", brand_color: "#E30613", aliases: ["monica", "az monica", "az monica antwerpen", "az monica deurne"] },
+  { official_name: "AZ Vesalius", domain: "azvesalius.be", brand_color: "#005DAA", aliases: ["vesalius", "az vesalius", "az vesalius tongeren"] },
+  { official_name: "Ziekenhuis Oost-Limburg", domain: "zol.be", brand_color: "#00A651", aliases: ["zol", "ziekenhuis oost-limburg", "ziekenhuis oost limburg"] },
+  { official_name: "CHU de Liège", domain: "chuliege.be", brand_color: "#003F87", aliases: ["chu liege", "chu de liège", "chu liège", "chuliege"] },
+  { official_name: "Cliniques Universitaires Saint-Luc", domain: "saintluc.be", brand_color: "#0054A6", aliases: ["saint-luc", "cliniques saint-luc", "saint luc", "saintluc"] },
+  { official_name: "AZ Jan Palfijn Gent", domain: "azjanpalfijn.be", brand_color: "#E30613", aliases: ["jan palfijn", "az jan palfijn", "az jan palfijn gent"] },
+  { official_name: "GZA Ziekenhuizen", domain: "gza.be", brand_color: "#00599D", aliases: ["gza", "gza ziekenhuizen", "gasthuiszusters antwerpen"] },
+  { official_name: "AZ Alma", domain: "azalma.be", brand_color: "#8DC63F", aliases: ["alma", "az alma", "az alma eeklo"] },
+  { official_name: "AZ Glorieux", domain: "azglorieux.be", brand_color: "#003DA5", aliases: ["glorieux", "az glorieux", "az glorieux ronse"] },
+  { official_name: "AZ Damiaan", domain: "azdamiaan.be", brand_color: "#009FE3", aliases: ["damiaan", "az damiaan", "az damiaan oostende"] },
+  { official_name: "AZ Sint-Blasius", domain: "azsintblasius.be", brand_color: "#E30613", aliases: ["sint-blasius", "az sint-blasius", "az sint-blasius dendermonde"] },
+  { official_name: "AZ Sint-Maarten", domain: "azstmaarten.be", brand_color: "#003DA5", aliases: ["sint-maarten", "az sint-maarten", "az sint-maarten mechelen"] },
+  { official_name: "Imelda Ziekenhuis", domain: "imelda.be", brand_color: "#005BAC", aliases: ["imelda", "imelda ziekenhuis", "imelda bonheiden"] },
+  { official_name: "AZ Herentals", domain: "azherentals.be", brand_color: "#009640", aliases: ["az herentals", "azherentals"] },
+  { official_name: "AZ Rivierenland", domain: "azrivierenland.be", brand_color: "#0079C1", aliases: ["rivierenland", "az rivierenland", "az rivierenland bornem"] },
+  { official_name: "AZ Sint-Dimpna", domain: "azsintdimpna.be", brand_color: "#0072CE", aliases: ["sint-dimpna", "az sint-dimpna", "az sint-dimpna geel"] },
+  { official_name: "OLV Ziekenhuis Aalst", domain: "olvz.be", brand_color: "#003DA5", aliases: ["olv", "olvz", "olv aalst", "olv ziekenhuis aalst", "onze-lieve-vrouw aalst"] },
+  { official_name: "Regionaal Ziekenhuis Tienen", domain: "rztienen.be", brand_color: "#6B2D5B", aliases: ["rz tienen", "rztienen", "regionaal ziekenhuis tienen"] },
+  { official_name: "Vitaz", domain: "vitaz.be", brand_color: "#E30613", aliases: ["vitaz", "vitaz sint-niklaas"] },
+  { official_name: "AZ Zeno", domain: "azzeno.be", brand_color: "#009FE3", aliases: ["zeno", "az zeno", "az zeno knokke"] },
+  { official_name: "AZ Oudenaarde", domain: "azoudenaarde.be", brand_color: "#003DA5", aliases: ["az oudenaarde", "azoudenaarde"] },
+  { official_name: "CHR de la Citadelle", domain: "chrcitadelle.be", brand_color: "#003F87", aliases: ["citadelle", "chr citadelle", "chr de la citadelle"] },
+  { official_name: "Grand Hôpital de Charleroi", domain: "ghdc.be", brand_color: "#0072CE", aliases: ["ghdc", "grand hopital de charleroi", "grand hôpital de charleroi"] },
+  { official_name: "CHU UCL Namur", domain: "chuuclnamur.uclouvain.be", brand_color: "#0054A6", aliases: ["chu ucl namur", "chu namur", "chuuclnamur"] },
+  { official_name: "Clinique Saint-Pierre Ottignies", domain: "cspo.be", brand_color: "#003DA5", aliases: ["cspo", "saint-pierre ottignies", "clinique saint-pierre"] },
+  { official_name: "Hôpital Erasme", domain: "erasme.ulb.ac.be", brand_color: "#003F87", aliases: ["erasme", "hopital erasme", "hôpital erasme"] },
+  { official_name: "AZ Sint-Elisabeth Zottegem", domain: "azstelisabeth.be", brand_color: "#003DA5", aliases: ["sint-elisabeth", "az sint-elisabeth", "az sint-elisabeth zottegem"] },
+  { official_name: "Mariaziekenhuis Noord-Limburg", domain: "mznl.be", brand_color: "#E30613", aliases: ["mznl", "mariaziekenhuis", "mariaziekenhuis noord-limburg"] },
+  { official_name: "AZ Diest", domain: "azdiest.be", brand_color: "#009640", aliases: ["az diest", "azdiest"] },
+  { official_name: "Heilig Hartziekenhuis Lier", domain: "hhzhlier.be", brand_color: "#E30613", aliases: ["heilig hart lier", "hhzh lier", "heilig hartziekenhuis lier"] },
+  { official_name: "Jan Yperman Ziekenhuis", domain: "yperman.net", brand_color: "#003DA5", aliases: ["yperman", "jan yperman", "jan yperman ziekenhuis", "jan yperman ieper"] },
+  { official_name: "AZ West", domain: "azwest.be", brand_color: "#0079C1", aliases: ["az west", "azwest", "az west veurne"] },
+  { official_name: "Chirec", domain: "chirec.be", brand_color: "#E30613", aliases: ["chirec", "chirec delta", "chirec braine"] },
+  { official_name: "Centre Hospitalier de Mouscron", domain: "chmouscron.be", brand_color: "#003F87", aliases: ["ch mouscron", "centre hospitalier mouscron"] },
+  { official_name: "Hôpitaux Iris Sud", domain: "his-izz.be", brand_color: "#0072CE", aliases: ["iris sud", "his", "hopitaux iris sud", "hôpitaux iris sud"] },
+  { official_name: "AZ Lokeren", domain: "azlokeren.be", brand_color: "#003DA5", aliases: ["az lokeren", "azlokeren"] },
+  { official_name: "Sint-Andriesziekenhuis Tielt", domain: "satielt.be", brand_color: "#009640", aliases: ["sint-andries", "sint-andriesziekenhuis", "sa tielt"] },
 ];
 
 function findKnownHospital(query: string): HospitalEntry | null {
@@ -102,10 +128,12 @@ serve(async (req) => {
     const known = findKnownHospital(query);
     if (known) {
       console.log("Found in predefined list:", known.official_name);
+      const logo_url = await findWorkingLogo(known.domain);
+      console.log("Best logo URL:", logo_url);
       return new Response(JSON.stringify({
         official_name: known.official_name,
         domain: known.domain,
-        logo_url: known.logo_url,
+        logo_url,
         brand_color: known.brand_color,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -225,9 +253,11 @@ Return JSON: {"official_name": "...", "domain": "...", "logo_url": "...", "brand
 
     const result = JSON.parse(toolCall.function.arguments);
 
-    // Build clearbit fallback if no specific logo found
-    if (!result.logo_url && result.domain) {
-      result.logo_url = `https://logo.clearbit.com/${result.domain}`;
+    // Find best working logo URL
+    if (result.domain) {
+      result.logo_url = await findWorkingLogo(result.domain);
+    } else if (!result.logo_url) {
+      result.logo_url = "";
     }
 
     console.log("Hospital lookup result:", result);
