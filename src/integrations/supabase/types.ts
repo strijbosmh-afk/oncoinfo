@@ -456,6 +456,21 @@ export type Database = {
       }
       hospitals: {
         Row: {
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_bic: string | null
+          billing_city: string | null
+          billing_contact_person: string | null
+          billing_country: string | null
+          billing_email: string | null
+          billing_iban: string | null
+          billing_name: string | null
+          billing_peppol_id: string | null
+          billing_peppol_scheme: string | null
+          billing_phone: string | null
+          billing_po_number: string | null
+          billing_postal_code: string | null
+          billing_vat_number: string | null
           branding: Json | null
           created_at: string
           id: string
@@ -466,6 +481,21 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_bic?: string | null
+          billing_city?: string | null
+          billing_contact_person?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_iban?: string | null
+          billing_name?: string | null
+          billing_peppol_id?: string | null
+          billing_peppol_scheme?: string | null
+          billing_phone?: string | null
+          billing_po_number?: string | null
+          billing_postal_code?: string | null
+          billing_vat_number?: string | null
           branding?: Json | null
           created_at?: string
           id?: string
@@ -476,6 +506,21 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_bic?: string | null
+          billing_city?: string | null
+          billing_contact_person?: string | null
+          billing_country?: string | null
+          billing_email?: string | null
+          billing_iban?: string | null
+          billing_name?: string | null
+          billing_peppol_id?: string | null
+          billing_peppol_scheme?: string | null
+          billing_phone?: string | null
+          billing_po_number?: string | null
+          billing_postal_code?: string | null
+          billing_vat_number?: string | null
           branding?: Json | null
           created_at?: string
           id?: string
