@@ -865,6 +865,10 @@ export type Database = {
         Args: { _disease_areas: string[]; _drug_hospital_id: string }
         Returns: boolean
       }
+      get_discipline_disease_areas: {
+        Args: { _discipline: string }
+        Returns: string[]
+      }
       get_email_by_username: { Args: { _username: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       has_role: {

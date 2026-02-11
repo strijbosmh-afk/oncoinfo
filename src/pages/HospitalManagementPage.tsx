@@ -61,6 +61,15 @@ const AVAILABLE_FEATURES: { key: string; label: string; description: string; ico
   { key: 'scheduled_updates', label: 'Geplande Updates', description: 'Automatische scans inplannen op vaste intervallen', icon: CalendarClock },
 ];
 
+// Overkoepelende disciplines (categorieën) die in/uitgeschakeld kunnen worden
+const AVAILABLE_DISCIPLINES: { key: string; label: string; description: string; icon: typeof Heart }[] = [
+  { key: 'Borstkanker', label: 'Borstkanker', description: 'HR+, HER2+, Triple negatief', icon: Heart },
+  { key: 'Urologie', label: 'Urologie', description: 'Prostaat, Blaas, Nier, Testis, Penis', icon: Stethoscope },
+  { key: 'Gynaecologie', label: 'Gynaecologie', description: 'Ovarium, Endometrium, Cervix, Vulva', icon: Stethoscope },
+  { key: 'Respiratoire oncologie', label: 'Respiratoire oncologie', description: 'NSCLC, SCLC, Mesothelioom', icon: Stethoscope },
+  { key: 'Supportive Care', label: 'Supportive Care', description: 'Anti-emetica, G-CSF, Erytropoietines, Antiresorptiva', icon: Pill },
+];
+
 const staffTypeLabels: Record<StaffType, string> = {
   arts: 'Artsen',
   verpleging: 'Verpleging',
@@ -99,7 +108,6 @@ export default function HospitalManagementPage() {
   const [newStaffSpec, setNewStaffSpec] = useState('');
 
   // Disciplines
-  const [allDiseaseAreas, setAllDiseaseAreas] = useState<string[]>([]);
   const [hospitalDisciplines, setHospitalDisciplines] = useState<HospitalDiscipline[]>([]);
   const [disciplinesLoading, setDisciplinesLoading] = useState(false);
 
@@ -123,19 +131,12 @@ export default function HospitalManagementPage() {
     setLoading(false);
   }, [toast]);
 
-  const fetchAllDiseaseAreas = useCallback(async () => {
-    const { data } = await supabase.from('drugs').select('disease_areas');
-    if (data) {
-      const areas = new Set<string>();
-      data.forEach(d => d.disease_areas?.forEach((a: string) => areas.add(a)));
-      setAllDiseaseAreas(Array.from(areas).sort());
-    }
-  }, []);
+  // No longer need to fetch disease areas from drugs - we use fixed categories
+
 
   useEffect(() => {
     fetchHospitals();
-    fetchAllDiseaseAreas();
-  }, [fetchHospitals, fetchAllDiseaseAreas]);
+  }, [fetchHospitals]);
 
   // When a hospital is selected, load its staff + disciplines + features
   const selectHospital = useCallback(async (h: Hospital) => {
@@ -316,9 +317,9 @@ export default function HospitalManagementPage() {
 
   const enableAllDisciplines = async () => {
     if (!selectedHospital) return;
-    const toCreate = allDiseaseAreas.filter(
-      area => !hospitalDisciplines.find(d => d.disease_area === area)
-    );
+    const toCreate = AVAILABLE_DISCIPLINES
+      .map(d => d.key)
+      .filter(key => !hospitalDisciplines.find(d => d.disease_area === key));
     if (toCreate.length > 0) {
       await supabase.from('hospital_disciplines').insert(
         toCreate.map(area => ({
@@ -328,7 +329,6 @@ export default function HospitalManagementPage() {
         }))
       );
     }
-    // Enable any disabled
     const toEnable = hospitalDisciplines.filter(d => !d.is_enabled).map(d => d.id);
     if (toEnable.length > 0) {
       await supabase.from('hospital_disciplines').update({ is_enabled: true }).in('id', toEnable);
@@ -521,13 +521,13 @@ export default function HospitalManagementPage() {
                       <div>
                         <CardTitle className="flex items-center gap-2 text-lg">
                           <BookOpen className="h-5 w-5" />
-                          Disciplines (Ziektegebieden)
+                          Disciplines
                         </CardTitle>
                         <CardDescription>
-                          Bepaal welke ziektegebieden beschikbaar zijn voor dit ziekenhuis.
+                          Bepaal welke oncologische disciplines beschikbaar zijn voor dit ziekenhuis.
                           {enabledCount > 0 && (
                             <Badge variant="outline" className="ml-2">
-                              {enabledCount} / {allDiseaseAreas.length} actief
+                              {enabledCount} / {AVAILABLE_DISCIPLINES.length} actief
                             </Badge>
                           )}
                         </CardDescription>
@@ -546,32 +546,36 @@ export default function HospitalManagementPage() {
                     {disciplinesLoading ? (
                       <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {allDiseaseAreas.map(area => {
-                          const disc = hospitalDisciplines.find(d => d.disease_area === area);
-                          const isEnabled = disc?.is_enabled ?? false;
+                      <div className="space-y-3">
+                        {AVAILABLE_DISCIPLINES.map(disc => {
+                          const existing = hospitalDisciplines.find(d => d.disease_area === disc.key);
+                          const isEnabled = existing?.is_enabled ?? false;
+                          const Icon = disc.icon;
                           return (
                             <div
-                              key={area}
-                              className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                              key={disc.key}
+                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
                                 isEnabled
                                   ? 'bg-primary/5 border-primary/20'
                                   : 'bg-muted/30 border-border'
                               }`}
                             >
-                              <div className="flex items-center gap-2">
-                                {isEnabled ? (
-                                  <Check className="h-4 w-4 text-primary" />
-                                ) : (
-                                  <Lock className="h-4 w-4 text-muted-foreground/50" />
-                                )}
-                                <span className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
-                                  {area}
-                                </span>
+                              <div className="flex items-center gap-3">
+                                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                  isEnabled ? 'bg-primary/10' : 'bg-muted'
+                                }`}>
+                                  <Icon className={`h-4.5 w-4.5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                                </div>
+                                <div>
+                                  <p className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
+                                    {disc.label}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{disc.description}</p>
+                                </div>
                               </div>
                               <Switch
                                 checked={isEnabled}
-                                onCheckedChange={() => toggleDiscipline(area)}
+                                onCheckedChange={() => toggleDiscipline(disc.key)}
                               />
                             </div>
                           );
