@@ -139,7 +139,11 @@ export default function AdminPage() {
             <ClipboardList className="h-4 w-4" />
             Activiteiten Log
           </Button>
-          <Button onClick={() => setRegimenDialogOpen(true)} className="gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => setRegimenDialogOpen(true)} 
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             Nieuwe therapie toevoegen
           </Button>
