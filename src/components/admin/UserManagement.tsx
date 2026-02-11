@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useUserManagement, type ManagedUser } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ import {
 import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound } from 'lucide-react';
 
 export function UserManagement() {
+  const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
   const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword } = useUserManagement();
 
@@ -120,7 +122,7 @@ export function UserManagement() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Nooit';
+    if (!dateString) return t('userMgmt.never');
     return new Date(dateString).toLocaleDateString('nl-BE', {
       day: '2-digit',
       month: '2-digit',
@@ -138,26 +140,26 @@ export function UserManagement() {
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <CardTitle>Gebruikersbeheer</CardTitle>
+              <CardTitle>{t('userMgmt.title')}</CardTitle>
               <CardDescription>
-                Beheer accounts en rollen
+                {t('userMgmt.description')}
                 {users && (
                   <Badge variant="outline" className="ml-2">
-                    {filteredUsers.length}{filteredUsers.length !== users.length ? ` / ${users.length}` : ''} gebruikers
+                    {filteredUsers.length}{filteredUsers.length !== users.length ? ` / ${users.length}` : ''} {t('userMgmt.users')}
                   </Badge>
                 )}
               </CardDescription>
             </div>
             <Button onClick={handleCreate} className="gap-2">
               <Plus className="h-4 w-4" />
-              Nieuwe gebruiker
+              {t('userMgmt.newUser')}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 mb-4">
             <Input
-              placeholder="Zoek op naam of e-mail..."
+              placeholder={t('userMgmt.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -170,11 +172,11 @@ export function UserManagement() {
                   <SelectTrigger className="w-[200px]">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      <SelectValue placeholder="Alle ziekenhuizen" />
+                      <SelectValue placeholder={t('userMgmt.allHospitals')} />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle ziekenhuizen</SelectItem>
+                    <SelectItem value="all">{t('userMgmt.allHospitals')}</SelectItem>
                     {hospitals.map(([id, name]) => (
                       <SelectItem key={id} value={id}>{name}</SelectItem>
                     ))}
@@ -182,10 +184,10 @@ export function UserManagement() {
                 </Select>
                 <Select value={functionFilter} onValueChange={setFunctionFilter}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Alle functies" />
+                    <SelectValue placeholder={t('userMgmt.allFunctions')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle functies</SelectItem>
+                    <SelectItem value="all">{t('userMgmt.allFunctions')}</SelectItem>
                     {functions.map(fn => (
                       <SelectItem key={fn} value={fn} className="capitalize">{fn}</SelectItem>
                     ))}
@@ -198,7 +200,7 @@ export function UserManagement() {
                     onClick={() => { setHospitalFilter('all'); setFunctionFilter('all'); }}
                     className="text-xs"
                   >
-                    Filters wissen
+                    {t('userMgmt.clearFilters')}
                   </Button>
                 )}
               </div>
@@ -252,19 +254,19 @@ export function UserManagement() {
                         )}
                         {user.id === currentUser?.id && (
                           <Badge variant="outline" className="text-xs flex-shrink-0">
-                            Jij
+                            {t('userMgmt.you')}
                           </Badge>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {user.username && <span className="font-medium">{user.username}</span>}
-                        {user.username && ' · '}{user.email} · Laatst ingelogd: {formatDate(user.last_sign_in_at)}
+                        {user.username && ' · '}{user.email} · {t('userMgmt.lastLogin')}: {formatDate(user.last_sign_in_at)}
                       </p>
                       {(user.can_add_treatments || user.can_modify_treatments || user.can_delete_treatments) && (
                         <div className="flex gap-1 mt-1 flex-wrap">
-                          {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">+toevoegen</Badge>}
-                          {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">✎wijzigen</Badge>}
-                          {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">×verwijderen</Badge>}
+                          {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.addPerm')}</Badge>}
+                          {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.editPerm')}</Badge>}
+                          {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.deletePerm')}</Badge>}
                         </div>
                       )}
                     </div>
@@ -277,17 +279,17 @@ export function UserManagement() {
                           size="icon"
                           onClick={() => { setResetUser(user); setResetDialogOpen(true); }}
                           disabled={user.id === currentUser?.id}
-                          title="Wachtwoord resetten"
+                          title={t('userMgmt.resetPassword')}
                         >
                           <KeyRound className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Wachtwoord resetten</TooltipContent>
+                      <TooltipContent>{t('userMgmt.resetPassword')}</TooltipContent>
                     </Tooltip>
-                    <Button variant="ghost" size="icon" onClick={() => handleSendCredentials(user)} title="Inloggegevens versturen">
+                    <Button variant="ghost" size="icon" onClick={() => handleSendCredentials(user)} title={t('userMgmt.sendCredentials')}>
                       <Mail className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} title="Bewerken">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} title={t('common.edit')}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -295,7 +297,7 @@ export function UserManagement() {
                       size="icon"
                       onClick={() => handleDeleteClick(user)}
                       disabled={user.id === currentUser?.id}
-                      title="Verwijderen"
+                      title={t('common.delete')}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -304,7 +306,7 @@ export function UserManagement() {
                 </div>
               ))}
               {filteredUsers.length === 0 && !isLoading && (
-                <p className="text-center text-muted-foreground py-8">Geen gebruikers gevonden</p>
+                <p className="text-center text-muted-foreground py-8">{t('userMgmt.noUsers')}</p>
               )}
             </div>
           )}
@@ -326,20 +328,19 @@ export function UserManagement() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Gebruiker verwijderen</AlertDialogTitle>
+            <AlertDialogTitle>{t('userMgmt.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet u zeker dat u <strong>{userToDelete?.email}</strong> wilt verwijderen?
-              Dit kan niet ongedaan worden gemaakt.
+              {t('userMgmt.deleteDesc', { email: userToDelete?.email })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteUser.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Verwijderen
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -349,28 +350,27 @@ export function UserManagement() {
       <AlertDialog open={credentialsDialogOpen} onOpenChange={setCredentialsDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Inloggegevens versturen</AlertDialogTitle>
+            <AlertDialogTitle>{t('userMgmt.sendCredTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Voer een (nieuw) wachtwoord in voor <strong>{credentialsUser?.email}</strong>.
-              Het wachtwoord wordt bijgewerkt en per e-mail verstuurd.
+              {t('userMgmt.sendCredDesc', { email: credentialsUser?.email })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4">
             <Input
               type="text"
-              placeholder="Nieuw wachtwoord"
+              placeholder={t('userMgmt.newPassword')}
               value={credentialsPassword}
               onChange={(e) => setCredentialsPassword(e.target.value)}
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSendCredentialsConfirm}
               disabled={!credentialsPassword.trim() || sendCredentials.isPending}
             >
               {sendCredentials.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Versturen
+              {t('userMgmt.send')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -380,15 +380,17 @@ export function UserManagement() {
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Wachtwoord resetten</AlertDialogTitle>
+            <AlertDialogTitle>{t('userMgmt.resetTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Weet u zeker dat u het wachtwoord van <strong>{resetUser?.first_name} {resetUser?.last_name}</strong> ({resetUser?.username}) wilt resetten?
-              Er wordt een nieuw willekeurig wachtwoord gegenereerd en per e-mail verstuurd naar <strong>{resetUser?.email}</strong>.
-              De gebruiker moet het wachtwoord wijzigen bij de volgende login.
+              {t('userMgmt.resetDesc', {
+                name: `${resetUser?.first_name} ${resetUser?.last_name}`,
+                username: resetUser?.username,
+                email: resetUser?.email,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (resetUser) resetPassword.mutate(resetUser.id);
@@ -397,7 +399,7 @@ export function UserManagement() {
               disabled={resetPassword.isPending}
             >
               {resetPassword.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Wachtwoord resetten
+              {t('userMgmt.resetPassword')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
