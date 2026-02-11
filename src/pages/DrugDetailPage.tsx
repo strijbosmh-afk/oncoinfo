@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,8 @@ import {
   Star,
   FileText,
   Settings2,
-  Printer
+  Printer,
+  ChevronDown
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -72,6 +74,7 @@ export default function DrugDetailPage() {
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr'>('nl');
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
 
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl', phoneNumber?: string) => {
@@ -675,116 +678,135 @@ export default function DrugDetailPage() {
 
             <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
               {/* Left: settings */}
-              <div className="lg:w-[380px] shrink-0 p-3 sm:p-6 overflow-y-auto border-b lg:border-b-0 lg:border-r space-y-3 sm:space-y-4 max-h-[45vh] lg:max-h-none">
-                <div className="space-y-2 sm:space-y-3">
-                  <Label className="text-xs sm:text-sm font-medium">Arts</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3">
-                    {PHYSICIAN_GROUPS.map((group) => (
-                      <div key={group.label} className="space-y-1">
-                        <Label className="text-[11px] sm:text-xs text-muted-foreground">{group.label}</Label>
-                        <Select
-                          value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
-                          onValueChange={setSelectedPhysician}
-                        >
-                          <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                            <SelectValue placeholder={`Selecteer`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {group.physicians.map((doc) => (
-                              <SelectItem key={doc} value={doc}>{doc}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+              <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="lg:w-[380px] shrink-0 border-b lg:border-b-0 lg:border-r">
+                <div className="flex items-center justify-between p-3 sm:p-4 lg:hidden">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="gap-2 text-xs font-medium w-full justify-between h-8">
+                      <span className="flex items-center gap-2">
+                        <Settings2 className="h-3.5 w-3.5" />
+                        Instellingen
+                        {selectedPhysician && (
+                          <span className="text-muted-foreground font-normal truncate max-w-[150px]">— {selectedPhysician}</span>
+                        )}
+                      </span>
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+
+                <CollapsibleContent className="lg:!block">
+                  <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[40vh] lg:max-h-none">
+                    <div className="space-y-2 sm:space-y-3">
+                      <Label className="text-xs sm:text-sm font-medium">Arts</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3">
+                        {PHYSICIAN_GROUPS.map((group) => (
+                          <div key={group.label} className="space-y-1">
+                            <Label className="text-[11px] sm:text-xs text-muted-foreground">{group.label}</Label>
+                            <Select
+                              value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
+                              onValueChange={setSelectedPhysician}
+                            >
+                              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                                <SelectValue placeholder={`Selecteer`} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {group.physicians.map((doc) => (
+                                  <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
-                  <Label className="text-xs sm:text-sm font-medium">Verpleegkundige</Label>
-                  <RadioGroup
-                    value={isNurseCustom ? '__custom__' : nurseSelection}
-                    onValueChange={(val) => {
-                      if (val === '__custom__') {
-                        setIsNurseCustom(true);
-                      } else {
-                        setIsNurseCustom(false);
-                        setNurseSelection(val);
-                      }
-                    }}
-                    className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
-                  >
-                    {NURSES.map((nurse) => (
-                      <div key={nurse} className="flex items-center gap-2">
-                        <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
-                        <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer text-xs sm:text-sm">{nurse}</Label>
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <Label className="text-xs sm:text-sm font-medium">Verpleegkundige</Label>
+                      <RadioGroup
+                        value={isNurseCustom ? '__custom__' : nurseSelection}
+                        onValueChange={(val) => {
+                          if (val === '__custom__') {
+                            setIsNurseCustom(true);
+                          } else {
+                            setIsNurseCustom(false);
+                            setNurseSelection(val);
+                          }
+                        }}
+                        className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
+                      >
+                        {NURSES.map((nurse) => (
+                          <div key={nurse} className="flex items-center gap-2">
+                            <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
+                            <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer text-xs sm:text-sm">{nurse}</Label>
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2">
+                          <RadioGroupItem value="__custom__" id="nurse-custom" />
+                          <Label htmlFor="nurse-custom" className="font-normal cursor-pointer text-xs sm:text-sm">Andere</Label>
+                        </div>
+                      </RadioGroup>
+                      {isNurseCustom && (
+                        <Input
+                          placeholder="Naam verpleegkundige"
+                          value={customNurse}
+                          onChange={(e) => setCustomNurse(e.target.value)}
+                          className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
+                          autoFocus
+                        />
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
+                      <div className="space-y-1.5 sm:space-y-3">
+                        <Label className="text-xs sm:text-sm font-medium">Taal</Label>
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <Button
+                            type="button"
+                            variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
+                            onClick={() => setSelectedLanguage('nl')}
+                            className="flex-1 h-7 sm:h-8 text-xs"
+                            size="sm"
+                          >
+                            NL
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
+                            onClick={() => setSelectedLanguage('fr')}
+                            className="flex-1 h-7 sm:h-8 text-xs"
+                            size="sm"
+                          >
+                            FR
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="__custom__" id="nurse-custom" />
-                      <Label htmlFor="nurse-custom" className="font-normal cursor-pointer text-xs sm:text-sm">Andere</Label>
+
+                      <div className="space-y-1.5 sm:space-y-3">
+                        <Label className="text-xs sm:text-sm font-medium">Telefoon</Label>
+                        <Input
+                          placeholder="016 80 90 11"
+                          value={customPhone}
+                          onChange={(e) => setCustomPhone(e.target.value)}
+                          className="h-7 sm:h-9 text-xs sm:text-sm"
+                        />
+                      </div>
                     </div>
-                  </RadioGroup>
-                  {isNurseCustom && (
-                    <Input
-                      placeholder="Naam verpleegkundige"
-                      value={customNurse}
-                      onChange={(e) => setCustomNurse(e.target.value)}
-                      className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
-                      autoFocus
-                    />
-                  )}
-                </div>
 
-                <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
-                  <div className="space-y-1.5 sm:space-y-3">
-                    <Label className="text-xs sm:text-sm font-medium">Taal</Label>
-                    <div className="flex gap-1.5 sm:gap-2">
-                      <Button
-                        type="button"
-                        variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
-                        onClick={() => setSelectedLanguage('nl')}
-                        className="flex-1 h-7 sm:h-8 text-xs"
-                        size="sm"
-                      >
-                        NL
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
-                        onClick={() => setSelectedLanguage('fr')}
-                        className="flex-1 h-7 sm:h-8 text-xs"
-                        size="sm"
-                      >
-                        FR
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={handleConfirmStaff}
+                      disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
+                      className="w-full gap-2 mt-1 sm:mt-2 h-8 sm:h-9 text-xs sm:text-sm"
+                    >
+                      {isGeneratingPdf ? (
+                        <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      )}
+                      {previewHtml ? 'Opnieuw genereren' : 'Genereer folder'}
+                    </Button>
                   </div>
-
-                  <div className="space-y-1.5 sm:space-y-3">
-                    <Label className="text-xs sm:text-sm font-medium">Telefoon</Label>
-                    <Input
-                      placeholder="016 80 90 11"
-                      value={customPhone}
-                      onChange={(e) => setCustomPhone(e.target.value)}
-                      className="h-7 sm:h-9 text-xs sm:text-sm"
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleConfirmStaff}
-                  disabled={isGeneratingPdf || (isNurseCustom && !customNurse.trim())}
-                  className="w-full gap-2 mt-1 sm:mt-2 h-8 sm:h-9 text-xs sm:text-sm"
-                >
-                  {isGeneratingPdf ? (
-                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                  ) : (
-                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  )}
-                  {previewHtml ? 'Opnieuw genereren' : 'Genereer folder'}
-                </Button>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Right: preview */}
               <div className="flex-1 flex flex-col min-h-0">
