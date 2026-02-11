@@ -137,16 +137,6 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="user-lastname">Naam</Label>
-              <Input
-                id="user-lastname"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="bijv. Jansen"
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="user-firstname">Voornaam</Label>
               <Input
                 id="user-firstname"
@@ -154,6 +144,16 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="bijv. Jan"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-lastname">Naam</Label>
+              <Input
+                id="user-lastname"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="bijv. Jansen"
               />
             </div>
           </div>
