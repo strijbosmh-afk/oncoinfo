@@ -861,6 +861,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      drug_visible_for_user: {
+        Args: { _disease_areas: string[]; _drug_hospital_id: string }
+        Returns: boolean
+      }
       get_email_by_username: { Args: { _username: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
