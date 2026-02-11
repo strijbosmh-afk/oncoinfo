@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,6 +48,7 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 export function AuditLog() {
+  const { t } = useTranslation();
   const [filterAction, setFilterAction] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
@@ -146,15 +148,18 @@ export function AuditLog() {
   const exportCsv = () => {
     if (!logs || logs.length === 0) return;
     const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const header = ['Datum', 'Gebruiker', 'Actie', 'Type', 'Naam', 'Details'];
+    const header = [t('auditLog.csvDate'), t('auditLog.csvUser'), t('auditLog.csvAction'), t('auditLog.csvType'), t('auditLog.csvName'), t('auditLog.csvDetails')];
+    const entityLabel = (type: string | null) =>
+      type === 'drug' ? t('auditLog.drug') : type === 'patient_folder' ? t('auditLog.patientFolder') : type === 'trial' ? t('auditLog.trial') : type === 'session' ? t('auditLog.login') : (type || '');
+    const actionLabel = (action: string) =>
+      action === 'login' ? t('auditLog.login') : action === 'create' ? t('auditLog.created') : action === 'update' ? t('auditLog.updated') : action === 'delete' ? t('auditLog.deleted') : action;
     const rows = logs.map((e) => {
       const detailStr = e.details ? JSON.stringify(e.details) : '';
-      const entityLabel = e.entity_type === 'drug' ? 'Medicijn' : e.entity_type === 'patient_folder' ? 'Patiëntenfolder' : e.entity_type === 'trial' ? 'Studie' : e.entity_type === 'session' ? 'Login' : (e.entity_type || '');
       return [
         formatDate(e.created_at),
-        e.username || 'Onbekend',
-        ACTION_LABELS[e.action] || e.action,
-        entityLabel,
+        e.username || t('auditLog.unknown'),
+        actionLabel(e.action),
+        entityLabel(e.entity_type),
         e.entity_name || '',
         detailStr,
       ].map(escape).join(',');
@@ -174,14 +179,14 @@ export function AuditLog() {
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <CardTitle>Activiteitenlog</CardTitle>
-            <CardDescription>Overzicht van logins, wijzigingen en toevoegingen</CardDescription>
+            <CardTitle>{t('auditLog.title')}</CardTitle>
+            <CardDescription>{t('auditLog.description')}</CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative w-[220px]">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Zoek gebruiker, item..."
+                placeholder={t('auditLog.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9 h-9"
@@ -191,7 +196,7 @@ export function AuditLog() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("gap-1.5 w-[150px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
                   <CalendarIcon className="h-4 w-4" />
-                  {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : 'Van'}
+                  {dateFrom ? format(dateFrom, 'dd/MM/yyyy') : t('auditLog.from')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -202,7 +207,7 @@ export function AuditLog() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("gap-1.5 w-[150px] justify-start text-left font-normal", !dateTo && "text-muted-foreground")}>
                   <CalendarIcon className="h-4 w-4" />
-                  {dateTo ? format(dateTo, 'dd/MM/yyyy') : 'Tot'}
+                  {dateTo ? format(dateTo, 'dd/MM/yyyy') : t('auditLog.to')}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -218,13 +223,13 @@ export function AuditLog() {
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-popover">
-                <SelectItem value="all">Alle activiteiten</SelectItem>
-                <SelectItem value="login">Logins</SelectItem>
-                <SelectItem value="create">Aangemaakt</SelectItem>
-                <SelectItem value="update">Bijgewerkt</SelectItem>
-                <SelectItem value="delete">Verwijderd</SelectItem>
-              </SelectContent>
+                 <SelectContent className="bg-popover">
+                    <SelectItem value="all">{t('auditLog.allActivities')}</SelectItem>
+                    <SelectItem value="login">{t('auditLog.logins')}</SelectItem>
+                    <SelectItem value="create">{t('auditLog.created')}</SelectItem>
+                    <SelectItem value="update">{t('auditLog.updated')}</SelectItem>
+                    <SelectItem value="delete">{t('auditLog.deleted')}</SelectItem>
+                  </SelectContent>
             </Select>
             <Button
               variant="outline"
@@ -246,7 +251,7 @@ export function AuditLog() {
           </div>
         ) : !filteredLogs || filteredLogs.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {searchQuery ? 'Geen resultaten voor deze zoekopdracht.' : 'Nog geen activiteiten gelogd. Activiteiten worden vanaf nu bijgehouden.'}
+            {searchQuery ? t('auditLog.noResults') : t('auditLog.noActivity')}
           </p>
         ) : (
           <>
@@ -258,13 +263,13 @@ export function AuditLog() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{entry.username || 'Onbekend'}</span>
+                      <span className="font-medium text-sm">{entry.username || t('auditLog.unknown')}</span>
                       <Badge variant="outline" className={`text-xs ${ACTION_COLORS[entry.action] || ''}`}>
                         {ACTION_LABELS[entry.action] || entry.action}
                       </Badge>
                       {entry.entity_type && entry.entity_type !== 'session' && (
                         <span className="text-xs text-muted-foreground">
-                          {entry.entity_type === 'drug' ? 'Medicijn' : entry.entity_type === 'patient_folder' ? 'Patiëntenfolder' : entry.entity_type === 'trial' ? 'Studie' : entry.entity_type}
+                          {entry.entity_type === 'drug' ? t('auditLog.drug') : entry.entity_type === 'patient_folder' ? t('auditLog.patientFolder') : entry.entity_type === 'trial' ? t('auditLog.trial') : entry.entity_type}
                           {entry.entity_name && `: ${entry.entity_name}`}
                         </span>
                       )}
@@ -282,7 +287,7 @@ export function AuditLog() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-4 border-t mt-4">
                 <p className="text-sm text-muted-foreground">
-                  {totalItems} resultaten · pagina {safePage} van {totalPages}
+                  {totalItems} {t('auditLog.results')} · {t('auditLog.page')} {safePage} {t('auditLog.of')} {totalPages}
                 </p>
                 <div className="flex items-center gap-1">
                   <Button

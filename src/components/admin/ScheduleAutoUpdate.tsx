@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -57,6 +58,7 @@ function calculateNextRun(interval: string): string {
 }
 
 export function ScheduleAutoUpdate() {
+  const { t } = useTranslation();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,13 +104,13 @@ export function ScheduleAutoUpdate() {
 
       if (error) throw error;
 
-      toast({ title: 'Schema aangemaakt', description: `Auto-update ${INTERVAL_LABELS[newInterval]} ingepland.` });
+      toast({ title: t('scheduleUpdate.scheduleCreated'), description: t('scheduleUpdate.scheduleCreatedDesc', { interval: t(`scheduleUpdate.${newInterval}`) }) });
       setShowForm(false);
       setNewAreas([]);
       setNewInterval('monthly');
       fetchSchedules();
     } catch (err: any) {
-      toast({ title: 'Fout', description: err.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -129,7 +131,7 @@ export function ScheduleAutoUpdate() {
       .eq('id', id);
 
     if (error) {
-      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
       fetchSchedules();
     }
@@ -142,9 +144,9 @@ export function ScheduleAutoUpdate() {
       .eq('id', id);
 
     if (error) {
-      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Verwijderd', description: 'Schema verwijderd.' });
+      toast({ title: t('scheduleUpdate.deleted'), description: t('scheduleUpdate.scheduleDeleted') });
       fetchSchedules();
     }
   };
@@ -166,10 +168,10 @@ export function ScheduleAutoUpdate() {
           <div>
             <CardTitle className="flex items-center gap-2">
               <CalendarClock className="h-5 w-5 text-primary" />
-              Geplande Auto-Updates
+              {t('scheduleUpdate.title')}
             </CardTitle>
             <CardDescription>
-              Plan verplichte automatische database-updates op vaste intervallen
+              {t('scheduleUpdate.description')}
             </CardDescription>
           </div>
           <Badge variant="outline" className="text-primary border-primary/40 bg-primary/5 text-[10px] px-1.5 py-0">
@@ -187,14 +189,14 @@ export function ScheduleAutoUpdate() {
                   <div className="flex items-center gap-3">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <span className="font-medium text-sm">{INTERVAL_LABELS[schedule.schedule_interval]}</span>
+                     <span className="font-medium text-sm">{t(`scheduleUpdate.${schedule.schedule_interval}`)}</span>
                       {schedule.disease_areas.length > 0 && (
                         <p className="text-xs text-muted-foreground">
                           {schedule.disease_areas.join(', ')}
                         </p>
                       )}
                       {schedule.disease_areas.length === 0 && (
-                        <p className="text-xs text-muted-foreground">Alle ziektegebieden</p>
+                        <p className="text-xs text-muted-foreground">{t('scheduleUpdate.allAreas')}</p>
                       )}
                     </div>
                   </div>
@@ -216,24 +218,24 @@ export function ScheduleAutoUpdate() {
 
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   {schedule.next_run_at && schedule.is_active && (
-                    <span>Volgende run: {format(new Date(schedule.next_run_at), 'dd MMM yyyy HH:mm', { locale: nl })}</span>
+                    <span>{t('scheduleUpdate.nextRun')}: {format(new Date(schedule.next_run_at), 'dd MMM yyyy HH:mm', { locale: nl })}</span>
                   )}
                   {schedule.last_run_at && (
-                    <span>Laatste run: {format(new Date(schedule.last_run_at), 'dd MMM yyyy HH:mm', { locale: nl })}</span>
+                    <span>{t('scheduleUpdate.lastRun')}: {format(new Date(schedule.last_run_at), 'dd MMM yyyy HH:mm', { locale: nl })}</span>
                   )}
-                  <span>Runs: {schedule.run_count}</span>
+                  <span>{t('scheduleUpdate.runs')}: {schedule.run_count}</span>
                 </div>
 
                 {schedule.last_result && (
                   <div className="text-xs bg-muted/50 rounded p-2">
                     {schedule.last_result.added?.length > 0 && (
-                      <span className="text-green-600">{schedule.last_result.added.length} toegevoegd</span>
+                      <span className="text-green-600">{schedule.last_result.added.length} {t('autoUpdate.added')}</span>
                     )}
                     {schedule.last_result.skipped?.length > 0 && (
-                      <span className="text-muted-foreground ml-2">{schedule.last_result.skipped.length} overgeslagen</span>
+                      <span className="text-muted-foreground ml-2">{schedule.last_result.skipped.length} {t('autoUpdate.skipped')}</span>
                     )}
                     {schedule.last_result.errors?.length > 0 && (
-                      <span className="text-destructive ml-2">{schedule.last_result.errors.length} fouten</span>
+                      <span className="text-destructive ml-2">{schedule.last_result.errors.length} {t('autoUpdate.errors')}</span>
                     )}
                   </div>
                 )}
@@ -243,7 +245,7 @@ export function ScheduleAutoUpdate() {
         )}
 
         {schedules.length === 0 && !showForm && (
-          <p className="text-sm text-muted-foreground">Nog geen geplande updates ingesteld.</p>
+          <p className="text-sm text-muted-foreground">{t('scheduleUpdate.noSchedules')}</p>
         )}
 
         {/* New schedule form */}
@@ -251,21 +253,21 @@ export function ScheduleAutoUpdate() {
           <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
             <div className="flex gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Interval</Label>
+                <Label className="text-sm font-medium">{t('scheduleUpdate.interval')}</Label>
                 <Select value={newInterval} onValueChange={setNewInterval}>
                   <SelectTrigger className="w-[200px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
-                    <SelectItem value="weekly">Wekelijks</SelectItem>
-                    <SelectItem value="monthly">Maandelijks</SelectItem>
-                    <SelectItem value="quarterly">Per kwartaal</SelectItem>
+                    <SelectItem value="weekly">{t('scheduleUpdate.weekly')}</SelectItem>
+                    <SelectItem value="monthly">{t('scheduleUpdate.monthly')}</SelectItem>
+                    <SelectItem value="quarterly">{t('scheduleUpdate.quarterly')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Discipline</Label>
+                <Label className="text-sm font-medium">{t('scheduleUpdate.discipline')}</Label>
                 <Select
                   value={newDiscipline}
                   onValueChange={(val) => {
@@ -287,7 +289,7 @@ export function ScheduleAutoUpdate() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Geselecteerde ziektegebieden</Label>
+              <Label className="text-sm font-medium">{t('scheduleUpdate.selectedAreas')}</Label>
               <div className="flex flex-wrap gap-2">
                 {DRUG_DISEASE_AREAS.map((area) => (
                   <Button
@@ -305,23 +307,23 @@ export function ScheduleAutoUpdate() {
                   </Button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">{newAreas.length} van {DRUG_DISEASE_AREAS.length} geselecteerd</p>
+              <p className="text-xs text-muted-foreground">{t('scheduleUpdate.selectedOf', { selected: newAreas.length, total: DRUG_DISEASE_AREAS.length })}</p>
             </div>
 
             <div className="flex gap-2">
               <Button onClick={handleCreate} disabled={saving || newAreas.length === 0} className="gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Schema aanmaken
+                {t('scheduleUpdate.createSchedule')}
               </Button>
               <Button variant="outline" onClick={() => { setShowForm(false); setNewDiscipline('all'); setNewAreas([...DRUG_DISEASE_AREAS]); }}>
-                Annuleren
+                {t('common.cancel')}
               </Button>
             </div>
           </div>
         ) : (
           <Button variant="outline" onClick={() => setShowForm(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Nieuw schema toevoegen
+            {t('scheduleUpdate.addSchedule')}
           </Button>
         )}
       </CardContent>

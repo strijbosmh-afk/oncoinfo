@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,6 +43,7 @@ interface DiscoveredTherapy {
 }
 
 export function AutoUpdateTherapies() {
+  const { t } = useTranslation();
   const [scanning, setScanning] = useState(false);
   const [adding, setAdding] = useState(false);
   const [therapies, setTherapies] = useState<DiscoveredTherapy[]>([]);
@@ -78,12 +80,12 @@ export function AutoUpdateTherapies() {
       setHasScanned(true);
 
       toast({
-        title: 'Scan voltooid',
-        description: `${found.length} nieuwe therapie(ën) gevonden.`,
+        title: t('autoUpdate.scanComplete'),
+        description: t('autoUpdate.therapiesFound', { count: found.length }),
       });
     } catch (err: any) {
       toast({
-        title: 'Scan mislukt',
+        title: t('autoUpdate.scanFailed'),
         description: err.message,
         variant: 'destructive',
       });
@@ -154,18 +156,18 @@ export function AutoUpdateTherapies() {
       queryClient.invalidateQueries({ queryKey: ['drugs'] });
 
       const parts: string[] = [];
-      if (addedCount > 0) parts.push(`${addedCount} toegevoegd`);
-      if (skippedCount > 0) parts.push(`${skippedCount} overgeslagen (duplicaat)`);
-      if (errorCount > 0) parts.push(`${errorCount} fout(en)`);
+      if (addedCount > 0) parts.push(`${addedCount} ${t('autoUpdate.added')}`);
+      if (skippedCount > 0) parts.push(`${skippedCount} ${t('autoUpdate.skipped')}`);
+      if (errorCount > 0) parts.push(`${errorCount} ${t('autoUpdate.errors')}`);
 
       toast({
-        title: 'Therapieën verwerkt',
+        title: t('autoUpdate.processed'),
         description: parts.join(', ') + '.',
         variant: errorCount > 0 ? 'destructive' : 'default',
       });
     } catch (err: any) {
       toast({
-        title: 'Fout bij toevoegen',
+        title: t('autoUpdate.addError'),
         description: err.message,
         variant: 'destructive',
       });
@@ -182,20 +184,20 @@ export function AutoUpdateTherapies() {
         <div className="flex items-center gap-2">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
-            Auto-Update Geneesmiddelenlijst
+            {t('autoUpdate.title')}
           </CardTitle>
           <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0">
-            BETA
+            {t('admin.beta')}
           </Badge>
         </div>
         <CardDescription>
-          Scan PubMed, RIZIV en ESMO/ASCO richtlijnen voor nieuwe oncologische therapieën
+          {t('autoUpdate.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Filter area selection */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Ziektegebieden (optioneel filter)</Label>
+          <Label className="text-sm font-medium">{t('autoUpdate.diseaseAreas')}</Label>
           <div className="flex flex-wrap gap-2">
             {DRUG_DISEASE_AREAS.map((area) => (
               <Button
@@ -222,13 +224,13 @@ export function AutoUpdateTherapies() {
           ) : (
             <Search className="h-4 w-4" />
           )}
-          {scanning ? 'Bezig met scannen…' : 'Start scan'}
+          {scanning ? t('autoUpdate.scanning') : t('autoUpdate.startScan')}
         </Button>
 
         {/* Summary */}
         {scanSummary && (
           <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">Scan samenvatting</p>
+            <p className="font-medium text-foreground mb-1">{t('autoUpdate.scanSummary')}</p>
             {scanSummary}
           </div>
         )}
@@ -237,7 +239,7 @@ export function AutoUpdateTherapies() {
         {hasScanned && therapies.length === 0 && !scanning && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
             <Check className="h-4 w-4 text-green-500" />
-            Geen nieuwe therapieën gevonden — de bibliotheek is up-to-date.
+            {t('autoUpdate.noNewTherapies')}
           </div>
         )}
 
@@ -251,7 +253,7 @@ export function AutoUpdateTherapies() {
                   onCheckedChange={(checked) => toggleAll(!!checked)}
                 />
                 <Label className="text-sm cursor-pointer font-medium">
-                  Alles selecteren ({therapies.length})
+                  {t('autoUpdate.selectAll')} ({therapies.length})
                 </Label>
               </div>
               <Button
@@ -265,7 +267,7 @@ export function AutoUpdateTherapies() {
                 ) : (
                   <Plus className="h-3.5 w-3.5" />
                 )}
-                {selectedCount} toevoegen
+                {selectedCount} {t('autoUpdate.addSelected')}
               </Button>
             </div>
 
@@ -305,11 +307,12 @@ function TherapyCard({
   onCancelEdit: (i: number) => void;
   onUpdate: (i: number, field: string, value: any) => void;
 }) {
+  const { t } = useTranslation();
   if (therapy.editing) {
     return (
       <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Bewerken</span>
+          <span className="text-sm font-semibold">{t('autoUpdate.editing')}</span>
           <div className="flex gap-1">
             <Button
               variant="ghost"
@@ -327,7 +330,7 @@ function TherapyCard({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">Naam</Label>
+            <Label className="text-xs">{t('autoUpdate.name')}</Label>
             <Input
               value={therapy.generic_name}
               onChange={(e) => onUpdate(index, 'generic_name', e.target.value)}
@@ -335,7 +338,7 @@ function TherapyCard({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Merknamen</Label>
+            <Label className="text-xs">{t('autoUpdate.brandNames')}</Label>
             <Input
               value={therapy.brand_names?.join(', ') || ''}
               onChange={(e) =>
@@ -349,14 +352,14 @@ function TherapyCard({
                 )
               }
               className="h-8 text-sm"
-              placeholder="bijv. Keytruda, Opdivo"
+              placeholder={t('autoUpdate.brandNamesPlaceholder')}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">Klasse</Label>
+            <Label className="text-xs">{t('autoUpdate.class')}</Label>
             <Select value={therapy.drug_class} onValueChange={(v) => onUpdate(index, 'drug_class', v)}>
               <SelectTrigger className="h-8 text-sm">
                 <SelectValue />
@@ -371,7 +374,7 @@ function TherapyCard({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Toedieningsweg</Label>
+            <Label className="text-xs">{t('autoUpdate.route')}</Label>
             <Select
               value={therapy.administration_route || ''}
               onValueChange={(v) => onUpdate(index, 'administration_route', v)}
@@ -380,17 +383,17 @@ function TherapyCard({
                 <SelectValue placeholder="Selecteer" />
               </SelectTrigger>
               <SelectContent className="bg-popover">
-                <SelectItem value="Oraal">Oraal</SelectItem>
-                <SelectItem value="Intraveneus">Intraveneus</SelectItem>
-                <SelectItem value="Subcutaan">Subcutaan</SelectItem>
-                <SelectItem value="Intramusculair">Intramusculair</SelectItem>
+                <SelectItem value="Oraal">{t('autoUpdate.oral')}</SelectItem>
+                <SelectItem value="Intraveneus">{t('autoUpdate.intravenous')}</SelectItem>
+                <SelectItem value="Subcutaan">{t('autoUpdate.subcutaneous')}</SelectItem>
+                <SelectItem value="Intramusculair">{t('autoUpdate.intramuscular')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Werkingsmechanisme</Label>
+          <Label className="text-xs">{t('autoUpdate.mechanism')}</Label>
           <Input
             value={therapy.mechanism_of_action || ''}
             onChange={(e) => onUpdate(index, 'mechanism_of_action', e.target.value)}
@@ -399,7 +402,7 @@ function TherapyCard({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-xs">Ziektegebieden (kommagescheiden)</Label>
+          <Label className="text-xs">{t('autoUpdate.diseaseAreasComma')}</Label>
           <Input
             value={therapy.disease_areas?.join(', ') || ''}
             onChange={(e) =>
@@ -421,7 +424,7 @@ function TherapyCard({
             checked={therapy.is_on_zvz || false}
             onCheckedChange={(checked) => onUpdate(index, 'is_on_zvz', !!checked)}
           />
-          <Label className="text-xs cursor-pointer">RIZIV terugbetaald</Label>
+          <Label className="text-xs cursor-pointer">{t('autoUpdate.reimbursed')}</Label>
         </div>
       </div>
     );
