@@ -146,6 +146,53 @@ const staffTypeIcons: Record<StaffType, typeof Stethoscope> = {
   apotheker: Pill,
 };
 
+function LogoPreview({ logoUrl, hospitalName, primaryColor }: { logoUrl: string; hospitalName: string; primaryColor: string }) {
+  const [imgStatus, setImgStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+
+  useEffect(() => {
+    setImgStatus('loading');
+  }, [logoUrl]);
+
+  if (!logoUrl && !hospitalName) return null;
+
+  const initials = hospitalName
+    .split(/\s+/)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 3);
+
+  return (
+    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
+      <div
+        className="h-16 w-16 rounded-lg flex items-center justify-center shrink-0 overflow-hidden border"
+        style={{ backgroundColor: imgStatus !== 'loaded' ? `${primaryColor}20` : 'transparent' }}
+      >
+        {logoUrl && imgStatus !== 'error' ? (
+          <img
+            src={logoUrl}
+            alt="Logo preview"
+            className={`h-full w-full object-contain ${imgStatus === 'loading' ? 'opacity-0' : 'opacity-100'} transition-opacity`}
+            onLoad={() => setImgStatus('loaded')}
+            onError={() => setImgStatus('error')}
+          />
+        ) : (
+          <span className="text-lg font-bold" style={{ color: primaryColor }}>{initials || '?'}</span>
+        )}
+        {logoUrl && imgStatus === 'loading' && (
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground absolute" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        {imgStatus === 'loaded' && <p className="text-sm font-medium text-green-600 flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Logo gevonden</p>}
+        {imgStatus === 'error' && logoUrl && <p className="text-sm text-destructive">Logo niet bereikbaar — pas de URL aan of upload een bestand</p>}
+        {!logoUrl && <p className="text-sm text-muted-foreground">Geen logo ingesteld — initialen worden getoond</p>}
+        {logoUrl && <p className="text-xs text-muted-foreground truncate">{logoUrl}</p>}
+      </div>
+    </div>
+  );
+}
+
 export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -945,17 +992,11 @@ export default function HospitalManagementPage() {
               </div>
               <div className="space-y-2">
                 <Label>Logo</Label>
-                {formLogoUrl && (
-                  <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-                    <img
-                      src={formLogoUrl}
-                      alt="Logo preview"
-                      className="h-10 w-10 object-contain rounded"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                    <span className="text-xs text-muted-foreground flex-1 truncate">{formLogoUrl}</span>
-                  </div>
-                )}
+                <LogoPreview
+                  logoUrl={logoFile ? URL.createObjectURL(logoFile) : formLogoUrl}
+                  hospitalName={formName}
+                  primaryColor={formPrimaryColor}
+                />
                 <Input
                   value={formLogoUrl}
                   onChange={e => setFormLogoUrl(e.target.value)}
