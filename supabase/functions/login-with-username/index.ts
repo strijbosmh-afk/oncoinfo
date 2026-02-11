@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { username, password } = await req.json();
+    const { username, password, hospital_id } = await req.json();
 
     if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
       return new Response(
@@ -27,7 +27,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Basic input validation
     if (username.length > 100 || password.length > 200) {
       return new Response(
         JSON.stringify({ error: 'Ongeldige invoer.' }),
@@ -39,17 +38,20 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
-    // Service role client for profile lookup (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    // Anon client for auth sign-in (service role doesn't work for signInWithPassword)
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Look up email by username server-side (never exposed to client)
-    const { data: profileData, error: lookupError } = await supabaseAdmin
+    // Look up user by username, optionally filtering by hospital
+    let query = supabaseAdmin
       .from('profiles')
-      .select('email')
-      .eq('username', username.trim())
-      .maybeSingle();
+      .select('email, hospital_id')
+      .eq('username', username.trim());
+
+    if (hospital_id) {
+      query = query.eq('hospital_id', hospital_id);
+    }
+
+    const { data: profileData, error: lookupError } = await query.maybeSingle();
 
     if (lookupError || !profileData?.email) {
       // Generic error - never reveal whether username exists
