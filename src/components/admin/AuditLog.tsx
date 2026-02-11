@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon, Search } from 'lucide-react';
+import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -51,6 +51,8 @@ export function AuditLog() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['audit-log', filterAction, dateFrom?.toISOString(), dateTo?.toISOString()],
@@ -88,6 +90,21 @@ export function AuditLog() {
       (entry.details && JSON.stringify(entry.details).toLowerCase().includes(q))
     );
   }, [logs, searchQuery]);
+
+  const totalItems = filteredLogs?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginatedLogs = useMemo(() => {
+    if (!filteredLogs) return [];
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filteredLogs.slice(start, start + PAGE_SIZE);
+  }, [filteredLogs, safePage]);
+
+  // Reset page when filters change
+  const handleSearchChange = (val: string) => { setSearchQuery(val); setCurrentPage(1); };
+  const handleFilterChange = (val: string) => { setFilterAction(val); setCurrentPage(1); };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('nl-BE', {
@@ -166,7 +183,7 @@ export function AuditLog() {
               <Input
                 placeholder="Zoek gebruiker, item..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9 h-9"
               />
             </div>
@@ -193,11 +210,11 @@ export function AuditLog() {
               </PopoverContent>
             </Popover>
             {(dateFrom || dateTo) && (
-              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+              <Button variant="ghost" size="sm" onClick={() => { setDateFrom(undefined); setDateTo(undefined); setCurrentPage(1); }}>
                 Reset
               </Button>
             )}
-            <Select value={filterAction} onValueChange={setFilterAction}>
+            <Select value={filterAction} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -232,33 +249,87 @@ export function AuditLog() {
             {searchQuery ? 'Geen resultaten voor deze zoekopdracht.' : 'Nog geen activiteiten gelogd. Activiteiten worden vanaf nu bijgehouden.'}
           </p>
         ) : (
-          <div className="space-y-1.5 max-h-[600px] overflow-y-auto">
-            {filteredLogs.map((entry) => (
-              <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div className="flex-shrink-0 mt-0.5">
-                  {ACTION_ICONS[entry.action] || <Pencil className="h-4 w-4" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{entry.username || 'Onbekend'}</span>
-                    <Badge variant="outline" className={`text-xs ${ACTION_COLORS[entry.action] || ''}`}>
-                      {ACTION_LABELS[entry.action] || entry.action}
-                    </Badge>
-                    {entry.entity_type && entry.entity_type !== 'session' && (
-                      <span className="text-xs text-muted-foreground">
-                        {entry.entity_type === 'drug' ? 'Medicijn' : entry.entity_type === 'patient_folder' ? 'Patiëntenfolder' : entry.entity_type === 'trial' ? 'Studie' : entry.entity_type}
-                        {entry.entity_name && `: ${entry.entity_name}`}
-                      </span>
-                    )}
+          <>
+            <div className="space-y-1.5">
+              {paginatedLogs.map((entry) => (
+                <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                  <div className="flex-shrink-0 mt-0.5">
+                    {ACTION_ICONS[entry.action] || <Pencil className="h-4 w-4" />}
                   </div>
-                  {renderDetails(entry)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{entry.username || 'Onbekend'}</span>
+                      <Badge variant="outline" className={`text-xs ${ACTION_COLORS[entry.action] || ''}`}>
+                        {ACTION_LABELS[entry.action] || entry.action}
+                      </Badge>
+                      {entry.entity_type && entry.entity_type !== 'session' && (
+                        <span className="text-xs text-muted-foreground">
+                          {entry.entity_type === 'drug' ? 'Medicijn' : entry.entity_type === 'patient_folder' ? 'Patiëntenfolder' : entry.entity_type === 'trial' ? 'Studie' : entry.entity_type}
+                          {entry.entity_name && `: ${entry.entity_name}`}
+                        </span>
+                      )}
+                    </div>
+                    {renderDetails(entry)}
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                    {formatDate(entry.created_at)}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                  {formatDate(entry.created_at)}
-                </span>
+              ))}
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <p className="text-sm text-muted-foreground">
+                  {totalItems} resultaten · pagina {safePage} van {totalPages}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={safePage <= 1}
+                    onClick={() => setCurrentPage(safePage - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let page: number;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (safePage <= 3) {
+                      page = i + 1;
+                    } else if (safePage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = safePage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={page}
+                        variant={page === safePage ? 'default' : 'outline'}
+                        size="icon"
+                        className="h-8 w-8 text-xs"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setCurrentPage(safePage + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
