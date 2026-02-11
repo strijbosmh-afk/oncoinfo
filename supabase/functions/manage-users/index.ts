@@ -24,14 +24,22 @@ async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .eq('role', 'admin')
-    .maybeSingle();
+    .in('role', ['admin', 'super_admin']);
 
-  if (!roleData) {
+  if (!roleData || roleData.length === 0) {
     throw { message: 'Forbidden: Admin access required', status: 403 };
   }
 
   return user;
+}
+
+async function getAdminHospitalId(supabase: ReturnType<typeof createClient>, userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('hospital_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return data?.hospital_id || null;
 }
 
 async function isSuperAdmin(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
@@ -44,7 +52,7 @@ async function isSuperAdmin(supabase: ReturnType<typeof createClient>, userId: s
   return !!data;
 }
 
-async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string) {
+async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'RZ Tienen', primaryColor = '#6b2d5b') {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY niet geconfigureerd');
@@ -55,9 +63,9 @@ async function sendCredentialsEmail(email: string, username: string, password: s
 
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: #6b2d5b; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+      <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
-        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">RZ Tienen - Oncologie</p>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
         <h2 style="color: #333; margin-top: 0;">Welkom bij OncoInfo</h2>
@@ -66,13 +74,13 @@ async function sendCredentialsEmail(email: string, username: string, password: s
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
           <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
           <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
-          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: #6b2d5b;">${loginUrl}</a></p>
+          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
         </div>
 
         <p style="color: #555; line-height: 1.6;">Bewaar deze gegevens veilig en deel ze niet met anderen.</p>
         
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${loginUrl}" style="background: #6b2d5b; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
+          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
         </div>
       </div>
       <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
@@ -125,6 +133,7 @@ Deno.serve(async (req) => {
         const { data: permissions } = await supabase.from('user_permissions').select('*');
 
         const callerIsSuperAdmin = await isSuperAdmin(supabase, adminUser.id);
+        const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
 
         const enrichedUsers = users
           .map((u: any) => {
@@ -139,6 +148,7 @@ Deno.serve(async (req) => {
               first_name: profile?.first_name || null,
               last_name: profile?.last_name || null,
               function: profile?.function || null,
+              hospital_id: profile?.hospital_id || null,
               created_at: u.created_at,
               last_sign_in_at: u.last_sign_in_at,
               role: isSA ? 'super_admin' : userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',
@@ -151,14 +161,16 @@ Deno.serve(async (req) => {
             };
           })
           // Hide super_admin from non-super-admin callers
-          .filter((u: any) => callerIsSuperAdmin || !u.is_super_admin);
+          .filter((u: any) => callerIsSuperAdmin || !u.is_super_admin)
+          // Hospital admins only see users from their own hospital
+          .filter((u: any) => callerIsSuperAdmin || !callerHospitalId || u.hospital_id === callerHospitalId);
 
         return jsonResponse({ users: enrichedUsers });
       }
 
       case 'create': {
         const { email, username, password, role, send_email, login_url,
-          first_name, last_name, function: userFunction,
+          first_name, last_name, function: userFunction, hospital_id,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
         if (!email || !username || !password || !role) {
@@ -174,11 +186,14 @@ Deno.serve(async (req) => {
 
         if (createError) throw createError;
 
-        // Set username and name fields in profiles
-        const profileData: Record<string, string> = { username };
+        // Set username, name fields and hospital_id in profiles
+        const profileData: Record<string, any> = { username };
         if (first_name !== undefined) profileData.first_name = first_name;
         if (last_name !== undefined) profileData.last_name = last_name;
         if (userFunction !== undefined) profileData.function = userFunction;
+        // Assign hospital: use provided hospital_id, or caller's hospital
+        const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
+        profileData.hospital_id = hospital_id || callerHospitalId;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
         // The trigger creates a default 'viewer' role. Update if needed.
@@ -202,7 +217,18 @@ Deno.serve(async (req) => {
         let emailError = null;
         if (send_email && login_url) {
           try {
-            await sendCredentialsEmail(email, username, password, login_url);
+            // Fetch hospital branding for email
+            const newUserHospitalId = profileData.hospital_id;
+            let hName = 'OncoInfo';
+            let hColor = '#6b2d5b';
+            if (newUserHospitalId) {
+              const { data: h } = await supabase.from('hospitals').select('name, branding').eq('id', newUserHospitalId).maybeSingle();
+              if (h) {
+                hName = h.name;
+                hColor = (h.branding as any)?.primary_color || '#6b2d5b';
+              }
+            }
+            await sendCredentialsEmail(email, username, password, login_url, hName, hColor);
             emailSent = true;
           } catch (err: any) {
             console.error('Failed to send credentials email:', err);

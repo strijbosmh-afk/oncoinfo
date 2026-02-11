@@ -56,6 +56,17 @@ serve(async (req) => {
       );
     }
 
+    // Fetch user's hospital for branding
+    const { data: userProfile } = await authClient.from('profiles').select('hospital_id').eq('user_id', user.id).maybeSingle();
+    let hospital: any = null;
+    let hospitalDoctors: any[] = [];
+    if (userProfile?.hospital_id) {
+      const { data: h } = await supabase.from('hospitals').select('*').eq('id', userProfile.hospital_id).maybeSingle();
+      hospital = h;
+      const { data: docs } = await supabase.from('hospital_doctors').select('*').eq('hospital_id', userProfile.hospital_id).eq('is_active', true).order('display_order');
+      hospitalDoctors = docs || [];
+    }
+
     // Fetch trial data
     const { data: trial, error: trialError } = await supabase
       .from("trials")
@@ -194,8 +205,8 @@ Formatteer als HTML voor PDF generatie.`;
     
     const patientInfo = JSON.parse(toolCall.function.arguments);
 
-    // Generate HTML for PDF
-    const html = generatePatientPdfHtml(patientInfo, trial, include_dosing, include_side_effects);
+    // Generate HTML for PDF with hospital branding
+    const html = generatePatientPdfHtml(patientInfo, trial, include_dosing, include_side_effects, hospital, hospitalDoctors);
 
     return new Response(
       JSON.stringify({ 
@@ -216,7 +227,10 @@ Formatteer als HTML voor PDF generatie.`;
   }
 });
 
-function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean): string {
+function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean, hospital: any, doctors: any[]): string {
+  const primaryColor = hospital?.branding?.primary_color || '#0077b6';
+  const hospitalName = hospital?.name || 'OncoInfo';
+  const logoUrl = hospital?.logo_url || '';
   return `
 <!DOCTYPE html>
 <html lang="nl">
@@ -239,14 +253,19 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     }
     
     .header {
-      border-bottom: 3px solid #0077b6;
+      border-bottom: 3px solid ${primaryColor};
       padding-bottom: 20px;
       margin-bottom: 30px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
+    
+    .header img { height: 50px; width: auto; }
     
     .header h1 {
       font-size: 22pt;
-      color: #0077b6;
+      color: ${primaryColor};
       margin-bottom: 8px;
     }
     
@@ -256,7 +275,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     }
     
     .drug-highlight {
-      background: linear-gradient(135deg, #0077b6 0%, #00a8e8 100%);
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%);
       color: white;
       padding: 20px;
       border-radius: 8px;
@@ -274,7 +293,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     
     .section h3 {
       font-size: 13pt;
-      color: #0077b6;
+      color: ${primaryColor};
       margin-bottom: 10px;
       padding-bottom: 5px;
       border-bottom: 1px solid #e0e0e0;
@@ -365,8 +384,11 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
 </head>
 <body>
   <div class="header">
-    <h1>Patiëntinformatie</h1>
-    <p class="subtitle">${info.title}</p>
+    ${logoUrl ? `<img src="${logoUrl}" alt="${hospitalName}" />` : ''}
+    <div>
+      <h1>Patiëntinformatie – ${hospitalName}</h1>
+      <p class="subtitle">${info.title}</p>
+    </div>
   </div>
 
   <div class="drug-highlight">
@@ -432,9 +454,14 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
   <div class="contact-section">
     <h3>Heeft u vragen?</h3>
     <p>Neem dan contact op met uw behandelend arts of verpleegkundige:</p>
-    <p><strong>Afdeling:</strong> [Afdeling invullen]</p>
-    <p><strong>Telefoonnummer:</strong> [Telefoonnummer invullen]</p>
-    <p><strong>E-mail:</strong> [E-mailadres invullen]</p>
+    ${doctors.length > 0 ? `
+      <p><strong>Uw artsen:</strong></p>
+      <ul>
+        ${doctors.map((d: any) => `<li>${d.name}${d.specialization ? ` – ${d.specialization}` : ''}</li>`).join('')}
+      </ul>
+    ` : `
+      <p><strong>Afdeling:</strong> [Afdeling invullen]</p>
+    `}
   </div>
 
   <div class="footer">
