@@ -16,7 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import {
   Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X,
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
-  Sparkles, CalendarClock, ToggleRight,
+  Sparkles, CalendarClock, ToggleRight, ChevronDown, ChevronRight,
+  Utensils, Sun, CircleUser, Wind,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -61,13 +62,76 @@ const AVAILABLE_FEATURES: { key: string; label: string; description: string; ico
   { key: 'scheduled_updates', label: 'Geplande Updates', description: 'Automatische scans inplannen op vaste intervallen', icon: CalendarClock },
 ];
 
-// Overkoepelende disciplines (categorieën) die in/uitgeschakeld kunnen worden
-const AVAILABLE_DISCIPLINES: { key: string; label: string; description: string; icon: typeof Heart }[] = [
-  { key: 'Borstkanker', label: 'Borstkanker', description: 'HR+, HER2+, Triple negatief', icon: Heart },
-  { key: 'Urologie', label: 'Urologie', description: 'Prostaat, Blaas, Nier, Testis, Penis', icon: Stethoscope },
-  { key: 'Gynaecologie', label: 'Gynaecologie', description: 'Ovarium, Endometrium, Cervix, Vulva', icon: Stethoscope },
-  { key: 'Respiratoire oncologie', label: 'Respiratoire oncologie', description: 'NSCLC, SCLC, Mesothelioom', icon: Stethoscope },
-  { key: 'Supportive Care', label: 'Supportive Care', description: 'Anti-emetica, G-CSF, Erytropoietines, Antiresorptiva', icon: Pill },
+// Discipline categories with sub-disciplines (disease_areas stored in DB)
+interface DisciplineCategory {
+  key: string;
+  label: string;
+  description: string;
+  icon: typeof Heart;
+  subDisciplines: { key: string; label: string }[];
+  isPlaceholder?: boolean;
+}
+
+const DISCIPLINE_CATEGORIES: DisciplineCategory[] = [
+  {
+    key: 'breast', label: 'Borstkanker', description: 'HR+, HER2+, Triple negatief', icon: Heart,
+    subDisciplines: [
+      { key: 'Borstkanker', label: 'Borstkanker (alle subtypes)' },
+    ],
+  },
+  {
+    key: 'urology', label: 'Urologie', description: 'Prostaat, Blaas, Nier, Testis, Penis', icon: Stethoscope,
+    subDisciplines: [
+      { key: 'Prostaatkanker', label: 'Prostaatkanker' },
+      { key: 'Blaaskanker', label: 'Blaaskanker' },
+      { key: 'Niercelcarcinoom', label: 'Niercelcarcinoom' },
+      { key: 'Testiskanker', label: 'Testiskanker' },
+      { key: 'Peniskanker', label: 'Peniskanker' },
+    ],
+  },
+  {
+    key: 'gynecology', label: 'Gynaecologie', description: 'Ovarium, Endometrium, Cervix, Vulva', icon: Stethoscope,
+    subDisciplines: [
+      { key: 'Ovariumkanker', label: 'Ovariumcarcinoom' },
+      { key: 'Endometriumkanker', label: 'Endometriumcarcinoom' },
+      { key: 'Cervixkanker', label: 'Cervixcarcinoom' },
+      { key: 'Vulvakanker', label: 'Vulvacarcinoom' },
+    ],
+  },
+  {
+    key: 'respiratory', label: 'Respiratoire oncologie', description: 'NSCLC, SCLC, Mesothelioom', icon: Wind,
+    subDisciplines: [
+      { key: 'NSCLC', label: 'NSCLC' },
+      { key: 'SCLC', label: 'SCLC' },
+      { key: 'Mesothelioom', label: 'Mesothelioom' },
+    ],
+  },
+  {
+    key: 'supportive', label: 'Supportive Care', description: 'Anti-emetica, G-CSF, Erytropoietines, Antiresorptiva', icon: Pill,
+    subDisciplines: [
+      { key: 'Anti-emetica', label: 'Anti-emetica' },
+      { key: 'Groeifactoren', label: 'G-CSF / Groeifactoren' },
+      { key: 'Erytropoietines', label: 'Erytropoietines' },
+      { key: 'Trombopoietine-agonisten', label: 'Trombopoietine-agonisten' },
+      { key: 'Antiresorptiva', label: 'Antiresorptiva' },
+      { key: 'Supportive Care', label: 'Overige supportive care' },
+    ],
+  },
+  {
+    key: 'digestive', label: 'Digestieve oncologie', description: 'Gastro-intestinale tumoren', icon: Utensils,
+    subDisciplines: [],
+    isPlaceholder: true,
+  },
+  {
+    key: 'skin', label: 'Huidtumoren', description: 'Dermatologische oncologie', icon: Sun,
+    subDisciplines: [],
+    isPlaceholder: true,
+  },
+  {
+    key: 'headneck', label: 'Hoofd & Halstumoren', description: 'Hoofd-halstumoren', icon: CircleUser,
+    subDisciplines: [],
+    isPlaceholder: true,
+  },
 ];
 
 const staffTypeLabels: Record<StaffType, string> = {
@@ -110,6 +174,7 @@ export default function HospitalManagementPage() {
   // Disciplines
   const [hospitalDisciplines, setHospitalDisciplines] = useState<HospitalDiscipline[]>([]);
   const [disciplinesLoading, setDisciplinesLoading] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Features
   const [hospitalFeatures, setHospitalFeatures] = useState<HospitalFeature[]>([]);
@@ -283,12 +348,11 @@ export default function HospitalManagementPage() {
     if (selectedHospital) selectHospital(selectedHospital);
   };
 
-  // Discipline management
+  // Discipline management - toggle individual sub-discipline
   const toggleDiscipline = async (diseaseArea: string) => {
     if (!selectedHospital) return;
     const existing = hospitalDisciplines.find(d => d.disease_area === diseaseArea);
     if (existing) {
-      // Toggle
       const { error } = await supabase
         .from('hospital_disciplines')
         .update({ is_enabled: !existing.is_enabled })
@@ -299,7 +363,6 @@ export default function HospitalManagementPage() {
         );
       }
     } else {
-      // Create as enabled
       const { data, error } = await supabase
         .from('hospital_disciplines')
         .insert({
@@ -315,10 +378,39 @@ export default function HospitalManagementPage() {
     }
   };
 
+  // Toggle all sub-disciplines in a category
+  const toggleCategoryAll = async (cat: DisciplineCategory, enable: boolean) => {
+    if (!selectedHospital || cat.isPlaceholder) return;
+    for (const sub of cat.subDisciplines) {
+      const existing = hospitalDisciplines.find(d => d.disease_area === sub.key);
+      if (enable && !existing) {
+        await supabase.from('hospital_disciplines').insert({
+          hospital_id: selectedHospital.id, disease_area: sub.key, is_enabled: true,
+        });
+      } else if (enable && existing && !existing.is_enabled) {
+        await supabase.from('hospital_disciplines').update({ is_enabled: true }).eq('id', existing.id);
+      } else if (!enable && existing && existing.is_enabled) {
+        await supabase.from('hospital_disciplines').update({ is_enabled: false }).eq('id', existing.id);
+      }
+    }
+    selectHospital(selectedHospital);
+  };
+
+  const toggleExpandCategory = (key: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const allSubDisciplineKeys = DISCIPLINE_CATEGORIES
+    .filter(c => !c.isPlaceholder)
+    .flatMap(c => c.subDisciplines.map(s => s.key));
+
   const enableAllDisciplines = async () => {
     if (!selectedHospital) return;
-    const toCreate = AVAILABLE_DISCIPLINES
-      .map(d => d.key)
+    const toCreate = allSubDisciplineKeys
       .filter(key => !hospitalDisciplines.find(d => d.disease_area === key));
     if (toCreate.length > 0) {
       await supabase.from('hospital_disciplines').insert(
@@ -524,10 +616,10 @@ export default function HospitalManagementPage() {
                           Disciplines
                         </CardTitle>
                         <CardDescription>
-                          Bepaal welke oncologische disciplines beschikbaar zijn voor dit ziekenhuis.
+                          Bepaal welke oncologische disciplines en subdisciplines beschikbaar zijn.
                           {enabledCount > 0 && (
                             <Badge variant="outline" className="ml-2">
-                              {enabledCount} / {AVAILABLE_DISCIPLINES.length} actief
+                              {enabledCount} / {allSubDisciplineKeys.length} actief
                             </Badge>
                           )}
                         </CardDescription>
@@ -546,37 +638,104 @@ export default function HospitalManagementPage() {
                     {disciplinesLoading ? (
                       <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
                     ) : (
-                      <div className="space-y-3">
-                        {AVAILABLE_DISCIPLINES.map(disc => {
-                          const existing = hospitalDisciplines.find(d => d.disease_area === disc.key);
-                          const isEnabled = existing?.is_enabled ?? false;
-                          const Icon = disc.icon;
+                      <div className="space-y-2">
+                        {DISCIPLINE_CATEGORIES.map(cat => {
+                          const Icon = cat.icon;
+                          const isExpanded = expandedCategories.has(cat.key);
+                          const enabledSubs = cat.subDisciplines.filter(s =>
+                            hospitalDisciplines.find(d => d.disease_area === s.key && d.is_enabled)
+                          ).length;
+                          const allEnabled = !cat.isPlaceholder && enabledSubs === cat.subDisciplines.length && cat.subDisciplines.length > 0;
+                          const someEnabled = enabledSubs > 0;
+
                           return (
-                            <div
-                              key={disc.key}
-                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                                isEnabled
+                            <div key={cat.key} className={`rounded-lg border transition-colors ${
+                              cat.isPlaceholder
+                                ? 'border-dashed border-muted opacity-60'
+                                : allEnabled
                                   ? 'bg-primary/5 border-primary/20'
-                                  : 'bg-muted/30 border-border'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                                  isEnabled ? 'bg-primary/10' : 'bg-muted'
-                                }`}>
-                                  <Icon className={`h-4.5 w-4.5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                                </div>
-                                <div>
-                                  <p className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
-                                    {disc.label}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">{disc.description}</p>
-                                </div>
+                                  : someEnabled
+                                    ? 'bg-primary/[0.02] border-primary/10'
+                                    : 'bg-muted/30 border-border'
+                            }`}>
+                              {/* Category header */}
+                              <div className="flex items-center justify-between p-4">
+                                <button
+                                  className="flex items-center gap-3 flex-1 text-left"
+                                  onClick={() => !cat.isPlaceholder && toggleExpandCategory(cat.key)}
+                                  disabled={cat.isPlaceholder}
+                                >
+                                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                    someEnabled ? 'bg-primary/10' : 'bg-muted'
+                                  }`}>
+                                    <Icon className={`h-4 w-4 ${someEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className={`text-sm font-medium ${cat.isPlaceholder ? 'text-muted-foreground' : ''}`}>
+                                        {cat.label}
+                                      </p>
+                                      {cat.isPlaceholder && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground border-dashed">
+                                          Binnenkort
+                                        </Badge>
+                                      )}
+                                      {!cat.isPlaceholder && someEnabled && (
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                          {enabledSubs}/{cat.subDisciplines.length}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{cat.description}</p>
+                                  </div>
+                                  {!cat.isPlaceholder && (
+                                    isExpanded
+                                      ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+                                      : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                                  )}
+                                </button>
+                                {!cat.isPlaceholder && (
+                                  <Switch
+                                    checked={allEnabled}
+                                    onCheckedChange={(checked) => toggleCategoryAll(cat, checked)}
+                                    className="ml-3"
+                                  />
+                                )}
                               </div>
-                              <Switch
-                                checked={isEnabled}
-                                onCheckedChange={() => toggleDiscipline(disc.key)}
-                              />
+
+                              {/* Sub-disciplines (expanded) */}
+                              {isExpanded && !cat.isPlaceholder && (
+                                <div className="border-t border-border/50 px-4 pb-3 pt-2 space-y-1">
+                                  {cat.subDisciplines.map(sub => {
+                                    const disc = hospitalDisciplines.find(d => d.disease_area === sub.key);
+                                    const subEnabled = disc?.is_enabled ?? false;
+                                    return (
+                                      <div
+                                        key={sub.key}
+                                        className={`flex items-center justify-between py-2 px-3 rounded-md transition-colors ${
+                                          subEnabled ? 'bg-primary/5' : 'hover:bg-muted/50'
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          {subEnabled ? (
+                                            <Check className="h-3.5 w-3.5 text-primary" />
+                                          ) : (
+                                            <div className="h-3.5 w-3.5" />
+                                          )}
+                                          <span className={`text-sm ${!subEnabled ? 'text-muted-foreground' : ''}`}>
+                                            {sub.label}
+                                          </span>
+                                        </div>
+                                        <Switch
+                                          checked={subEnabled}
+                                          onCheckedChange={() => toggleDiscipline(sub.key)}
+                                          className="scale-90"
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
