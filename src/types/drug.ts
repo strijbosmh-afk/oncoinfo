@@ -103,6 +103,14 @@ export const DRUG_DISEASE_AREAS = [
   'SCLC',
   'Mesothelioom',
   'Longkanker',
+  'Maagkanker',
+  'Hoofd-halskanker',
+  'Melanoom',
+  'Colorectaalcarcinoom',
+  'Pancreascarcinoom',
+  'Levercelcarcinoom',
+  'Schildklierkanker',
+  'Supportive Care',
 ] as const;
 
 // Category configurations for the drug library
