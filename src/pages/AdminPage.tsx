@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useDrugs } from '@/hooks/useDrugs';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,29 @@ export default function AdminPage() {
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
   const navigate = useNavigate();
+
+  // Check if hospital has features enabled
+  const [hasAutoUpdate, setHasAutoUpdate] = useState(false);
+  const [hasScheduledUpdates, setHasScheduledUpdates] = useState(false);
+
+  useEffect(() => {
+    if (!user || isSuperAdmin) {
+      // Super admins always have access
+      setHasAutoUpdate(true);
+      setHasScheduledUpdates(true);
+      return;
+    }
+    // Check hospital features
+    supabase
+      .from('hospital_features')
+      .select('feature_key, is_enabled')
+      .then(({ data }) => {
+        if (data) {
+          setHasAutoUpdate(data.some(f => f.feature_key === 'auto_update' && f.is_enabled));
+          setHasScheduledUpdates(data.some(f => f.feature_key === 'scheduled_updates' && f.is_enabled));
+        }
+      });
+  }, [user, isSuperAdmin]);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -150,18 +174,20 @@ export default function AdminPage() {
             <Plus className="h-4 w-4" />
             Nieuwe therapie toevoegen
           </Button>
-          <Button
-            variant={activeSection === 'auto-update' ? 'default' : 'outline'}
-            onClick={() => setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
-            className="gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Auto-Update Database
-            <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-              BETA
-            </Badge>
-          </Button>
-          {isSuperAdmin && (
+          {hasAutoUpdate && (
+            <Button
+              variant={activeSection === 'auto-update' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              Auto-Update Database
+              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+                BETA
+              </Badge>
+            </Button>
+          )}
+          {hasScheduledUpdates && isSuperAdmin && (
             <Button
               variant={activeSection === 'schedule' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'schedule' ? null : 'schedule')}

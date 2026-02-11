@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X,
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
+  Sparkles, CalendarClock, ToggleRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -47,6 +48,18 @@ interface HospitalDiscipline {
   disease_area: string;
   is_enabled: boolean;
 }
+
+interface HospitalFeature {
+  id: string;
+  hospital_id: string;
+  feature_key: string;
+  is_enabled: boolean;
+}
+
+const AVAILABLE_FEATURES: { key: string; label: string; description: string; icon: typeof Sparkles }[] = [
+  { key: 'auto_update', label: 'Auto-Update Database', description: 'AI-gestuurde automatische updates van therapieën via PubMed en RIZIV', icon: Sparkles },
+  { key: 'scheduled_updates', label: 'Geplande Updates', description: 'Automatische scans inplannen op vaste intervallen', icon: CalendarClock },
+];
 
 const staffTypeLabels: Record<StaffType, string> = {
   arts: 'Artsen',
@@ -90,6 +103,10 @@ export default function HospitalManagementPage() {
   const [hospitalDisciplines, setHospitalDisciplines] = useState<HospitalDiscipline[]>([]);
   const [disciplinesLoading, setDisciplinesLoading] = useState(false);
 
+  // Features
+  const [hospitalFeatures, setHospitalFeatures] = useState<HospitalFeature[]>([]);
+  const [featuresLoading, setFeaturesLoading] = useState(false);
+
   const fetchHospitals = useCallback(async () => {
     const { data, error } = await supabase
       .from('hospitals')
@@ -120,13 +137,14 @@ export default function HospitalManagementPage() {
     fetchAllDiseaseAreas();
   }, [fetchHospitals, fetchAllDiseaseAreas]);
 
-  // When a hospital is selected, load its staff + disciplines
+  // When a hospital is selected, load its staff + disciplines + features
   const selectHospital = useCallback(async (h: Hospital) => {
     setSelectedHospital(h);
     setStaffLoading(true);
     setDisciplinesLoading(true);
+    setFeaturesLoading(true);
 
-    const [staffRes, discRes] = await Promise.all([
+    const [staffRes, discRes, featRes] = await Promise.all([
       supabase
         .from('hospital_doctors')
         .select('*')
@@ -136,12 +154,18 @@ export default function HospitalManagementPage() {
         .from('hospital_disciplines')
         .select('*')
         .eq('hospital_id', h.id),
+      supabase
+        .from('hospital_features')
+        .select('*')
+        .eq('hospital_id', h.id),
     ]);
 
     setStaffMembers((staffRes.data || []) as StaffMember[]);
     setHospitalDisciplines((discRes.data || []) as HospitalDiscipline[]);
+    setHospitalFeatures((featRes.data || []) as HospitalFeature[]);
     setStaffLoading(false);
     setDisciplinesLoading(false);
+    setFeaturesLoading(false);
   }, []);
 
   // Hospital CRUD
@@ -321,7 +345,38 @@ export default function HospitalManagementPage() {
     selectHospital(selectedHospital);
   };
 
+  // Feature management
+  const toggleFeature = async (featureKey: string) => {
+    if (!selectedHospital) return;
+    const existing = hospitalFeatures.find(f => f.feature_key === featureKey);
+    if (existing) {
+      const { error } = await supabase
+        .from('hospital_features')
+        .update({ is_enabled: !existing.is_enabled })
+        .eq('id', existing.id);
+      if (!error) {
+        setHospitalFeatures(prev =>
+          prev.map(f => f.id === existing.id ? { ...f, is_enabled: !f.is_enabled } : f)
+        );
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('hospital_features')
+        .insert({
+          hospital_id: selectedHospital.id,
+          feature_key: featureKey,
+          is_enabled: true,
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        setHospitalFeatures(prev => [...prev, data as HospitalFeature]);
+      }
+    }
+  };
+
   const enabledCount = hospitalDisciplines.filter(d => d.is_enabled).length;
+  const enabledFeatureCount = hospitalFeatures.filter(f => f.is_enabled).length;
 
   if (authLoading) {
     return (
@@ -526,6 +581,73 @@ export default function HospitalManagementPage() {
                     <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
                       <Lock className="h-3 w-3" />
                       Op termijn wordt dit een betalende optie: betaal per discipline
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Features section */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <ToggleRight className="h-5 w-5" />
+                          Premium Functies
+                        </CardTitle>
+                        <CardDescription>
+                          Schakel betaalde functies in of uit voor dit ziekenhuis.
+                          {enabledFeatureCount > 0 && (
+                            <Badge variant="outline" className="ml-2">
+                              {enabledFeatureCount} / {AVAILABLE_FEATURES.length} actief
+                            </Badge>
+                          )}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {featuresLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    ) : (
+                      <div className="space-y-3">
+                        {AVAILABLE_FEATURES.map(feat => {
+                          const existing = hospitalFeatures.find(f => f.feature_key === feat.key);
+                          const isEnabled = existing?.is_enabled ?? false;
+                          const Icon = feat.icon;
+                          return (
+                            <div
+                              key={feat.key}
+                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                                isEnabled
+                                  ? 'bg-primary/5 border-primary/20'
+                                  : 'bg-muted/30 border-border'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                  isEnabled ? 'bg-primary/10' : 'bg-muted'
+                                }`}>
+                                  <Icon className={`h-4.5 w-4.5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                                </div>
+                                <div>
+                                  <p className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
+                                    {feat.label}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">{feat.description}</p>
+                                </div>
+                              </div>
+                              <Switch
+                                checked={isEnabled}
+                                onCheckedChange={() => toggleFeature(feat.key)}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Betalende opties: functies worden per ziekenhuis gefactureerd
                     </p>
                   </CardContent>
                 </Card>
