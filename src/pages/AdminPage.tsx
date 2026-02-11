@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | null>(null);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -116,27 +117,50 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="overview">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <TabsList className="flex-wrap">
-              <TabsTrigger value="overview">Overzicht</TabsTrigger>
-              <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
-              {isAdmin && (
-                <TabsTrigger value="users" className="gap-1.5">
-                  <Users className="h-4 w-4" />
-                  Gebruikers
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="audit" className="gap-1.5">
-                <ClipboardList className="h-4 w-4" />
-                Activiteiten
-              </TabsTrigger>
-            </TabsList>
-            <Button onClick={() => setRegimenDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nieuwe therapie toevoegen
+        {/* Quick Action Buttons */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          {isAdmin && (
+            <Button 
+              variant={activeSection === 'users' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
+              className="gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Gebruikersbeheer
             </Button>
+          )}
+          <Button 
+            variant={activeSection === 'audit' ? 'default' : 'outline'}
+            onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Activiteiten Log
+          </Button>
+          <Button onClick={() => setRegimenDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nieuwe therapie toevoegen
+          </Button>
+        </div>
+
+        {/* Active Section */}
+        {activeSection === 'users' && isAdmin && (
+          <div className="mb-8">
+            <UserManagement />
           </div>
+        )}
+
+        {activeSection === 'audit' && (
+          <div className="mb-8">
+            <AuditLog />
+          </div>
+        )}
+
+        <Tabs defaultValue="overview">
+          <TabsList className="flex-wrap">
+            <TabsTrigger value="overview">Overzicht</TabsTrigger>
+            <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="overview" className="mt-6">
             <Card>
@@ -218,15 +242,6 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
 
-          {isAdmin && (
-            <TabsContent value="users" className="mt-6">
-              <UserManagement />
-            </TabsContent>
-          )}
-
-          <TabsContent value="audit" className="mt-6">
-            <AuditLog />
-          </TabsContent>
         </Tabs>
 
         {/* Nieuwe therapie dialog */}
