@@ -310,6 +310,7 @@ export type Database = {
           is_active: boolean
           name: string
           specialization: string | null
+          staff_type: string
           updated_at: string
         }
         Insert: {
@@ -320,6 +321,7 @@ export type Database = {
           is_active?: boolean
           name: string
           specialization?: string | null
+          staff_type?: string
           updated_at?: string
         }
         Update: {
@@ -330,6 +332,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           specialization?: string | null
+          staff_type?: string
           updated_at?: string
         }
         Relationships: [

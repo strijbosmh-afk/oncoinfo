@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X, Stethoscope, Heart, Pill } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 interface Hospital {
@@ -20,14 +22,29 @@ interface Hospital {
   created_at: string;
 }
 
-interface Doctor {
+type StaffType = 'arts' | 'verpleging' | 'apotheker';
+
+interface StaffMember {
   id: string;
   hospital_id: string;
   name: string;
   specialization: string | null;
+  staff_type: StaffType;
   display_order: number;
   is_active: boolean;
 }
+
+const staffTypeLabels: Record<StaffType, string> = {
+  arts: 'Artsen',
+  verpleging: 'Verpleging',
+  apotheker: 'Apothekers',
+};
+
+const staffTypeIcons: Record<StaffType, typeof Stethoscope> = {
+  arts: Stethoscope,
+  verpleging: Heart,
+  apotheker: Pill,
+};
 
 export function HospitalManagement() {
   const { toast } = useToast();
@@ -37,9 +54,10 @@ export function HospitalManagement() {
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [doctorsDialogOpen, setDoctorsDialogOpen] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeStaffTab, setActiveStaffTab] = useState<StaffType>('arts');
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -48,9 +66,9 @@ export function HospitalManagement() {
   const [formIsActive, setFormIsActive] = useState(true);
   const [logoFile, setLogoFile] = useState<File | null>(null);
 
-  // Doctor form
-  const [newDoctorName, setNewDoctorName] = useState('');
-  const [newDoctorSpec, setNewDoctorSpec] = useState('');
+  // Staff form
+  const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffSpec, setNewStaffSpec] = useState('');
 
   const fetchHospitals = useCallback(async () => {
     const { data, error } = await supabase
@@ -160,40 +178,42 @@ export function HospitalManagement() {
     }
   };
 
-  // Doctors management
-  const openDoctors = async (h: Hospital) => {
+  // Staff management
+  const openStaff = async (h: Hospital) => {
     setSelectedHospital(h);
     setDoctorsDialogOpen(true);
-    setDoctorsLoading(true);
+    setStaffLoading(true);
     const { data } = await supabase
       .from('hospital_doctors')
       .select('*')
       .eq('hospital_id', h.id)
       .order('display_order');
-    setDoctors((data || []) as Doctor[]);
-    setDoctorsLoading(false);
+    setStaffMembers((data || []) as StaffMember[]);
+    setStaffLoading(false);
   };
 
-  const addDoctor = async () => {
-    if (!newDoctorName.trim() || !selectedHospital) return;
+  const addStaffMember = async () => {
+    if (!newStaffName.trim() || !selectedHospital) return;
+    const filtered = staffMembers.filter(s => s.staff_type === activeStaffTab);
     const { error } = await supabase.from('hospital_doctors').insert({
       hospital_id: selectedHospital.id,
-      name: newDoctorName.trim(),
-      specialization: newDoctorSpec.trim() || null,
-      display_order: doctors.length,
+      name: newStaffName.trim(),
+      specialization: newStaffSpec.trim() || null,
+      staff_type: activeStaffTab,
+      display_order: filtered.length,
     });
     if (error) {
       toast({ title: 'Fout', description: error.message, variant: 'destructive' });
     } else {
-      setNewDoctorName('');
-      setNewDoctorSpec('');
-      openDoctors(selectedHospital);
+      setNewStaffName('');
+      setNewStaffSpec('');
+      openStaff(selectedHospital);
     }
   };
 
-  const removeDoctor = async (docId: string) => {
-    await supabase.from('hospital_doctors').delete().eq('id', docId);
-    if (selectedHospital) openDoctors(selectedHospital);
+  const removeStaffMember = async (id: string) => {
+    await supabase.from('hospital_doctors').delete().eq('id', id);
+    if (selectedHospital) openStaff(selectedHospital);
   };
 
   if (loading) {
@@ -257,9 +277,9 @@ export function HospitalManagement() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openDoctors(h)} className="gap-1">
+                    <Button variant="outline" size="sm" onClick={() => openStaff(h)} className="gap-1">
                       <UserPlus className="h-3.5 w-3.5" />
-                      Artsen
+                      Medewerkers
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => openEdit(h)}>
                       <Pencil className="h-4 w-4" />
@@ -324,41 +344,62 @@ export function HospitalManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Doctors Dialog */}
+      {/* Staff Dialog */}
       <Dialog open={doctorsDialogOpen} onOpenChange={setDoctorsDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Artsen – {selectedHospital?.name}</DialogTitle>
+            <DialogTitle>Medewerkers – {selectedHospital?.name}</DialogTitle>
           </DialogHeader>
-          {doctorsLoading ? (
+          {staffLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : (
-            <div className="space-y-4">
-              {doctors.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nog geen artsen toegevoegd</p>
-              )}
-              {doctors.map(doc => (
-                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">{doc.name}</p>
-                    {doc.specialization && <p className="text-xs text-muted-foreground">{doc.specialization}</p>}
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => removeDoctor(doc.id)} className="text-destructive h-8 w-8">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <div className="border-t pt-4 space-y-3">
-                <p className="text-sm font-medium">Arts toevoegen</p>
-                <div className="flex gap-2">
-                  <Input placeholder="Naam" value={newDoctorName} onChange={e => setNewDoctorName(e.target.value)} className="flex-1" />
-                  <Input placeholder="Specialisatie" value={newDoctorSpec} onChange={e => setNewDoctorSpec(e.target.value)} className="flex-1" />
-                  <Button onClick={addDoctor} size="icon" disabled={!newDoctorName.trim()}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType)}>
+              <TabsList className="w-full">
+                {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
+                  const Icon = staffTypeIcons[type];
+                  const count = staffMembers.filter(s => s.staff_type === type).length;
+                  return (
+                    <TabsTrigger key={type} value={type} className="flex-1 gap-1.5">
+                      <Icon className="h-3.5 w-3.5" />
+                      {staffTypeLabels[type]} ({count})
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+              {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
+                const filtered = staffMembers.filter(s => s.staff_type === type);
+                return (
+                  <TabsContent key={type} value={type} className="space-y-3 mt-4">
+                    {filtered.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nog geen {staffTypeLabels[type].toLowerCase()} toegevoegd
+                      </p>
+                    )}
+                    {filtered.map(member => (
+                      <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium text-sm">{member.name}</p>
+                          {member.specialization && <p className="text-xs text-muted-foreground">{member.specialization}</p>}
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => removeStaffMember(member.id)} className="text-destructive h-8 w-8">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="border-t pt-4 space-y-3">
+                      <p className="text-sm font-medium">Toevoegen</p>
+                      <div className="flex gap-2">
+                        <Input placeholder="Naam" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} className="flex-1" />
+                        <Input placeholder="Specialisatie / functie" value={newStaffSpec} onChange={e => setNewStaffSpec(e.target.value)} className="flex-1" />
+                        <Button onClick={addStaffMember} size="icon" disabled={!newStaffName.trim()}>
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
