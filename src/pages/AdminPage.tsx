@@ -153,7 +153,7 @@ export default function AdminPage() {
             className="gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Auto-update
+            Auto-Update Database
             <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
               BETA
             </Badge>
