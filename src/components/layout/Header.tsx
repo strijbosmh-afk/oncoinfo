@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye } from 'lucide-react';
+import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useTranslation } from 'react-i18next';
@@ -58,9 +58,16 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, us
 }
 
 export function Header() {
-  const { user, profile, permissions, isAdmin, isApotheker, signOut, loading } = useAuth();
+  const { user, profile, permissions, isAdmin, isApotheker, isSuperAdmin, signOut, loading } = useAuth();
   const { hospital } = useHospital();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const languages = [
+    { code: 'nl', label: 'Nederlands' },
+    { code: 'fr', label: 'Français' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'en', label: 'English' },
+  ];
 
   const userFunction = profile?.function ?? null;
   const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction, t);
@@ -182,6 +189,31 @@ export function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                {isSuperAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <div className="px-3 py-1.5">
+                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                        <Languages className="h-3 w-3" />
+                        {t('header.language', 'Taal')}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {languages.map((lang) => (
+                          <Button
+                            key={lang.code}
+                            variant={i18n.language === lang.code ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-6 text-xs px-2"
+                            onClick={() => i18n.changeLanguage(lang.code)}
+                          >
+                            {lang.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => signOut()}
                   className="flex items-center gap-2 cursor-pointer text-destructive"

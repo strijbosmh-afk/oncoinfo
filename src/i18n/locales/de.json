@@ -55,7 +55,8 @@
     "addTreatments": "Behandlungen hinzufügen",
     "modifyTreatments": "Behandlungen ändern",
     "deleteTreatments": "Behandlungen löschen",
-    "readOnly": "Nur lesen"
+    "readOnly": "Nur lesen",
+    "language": "Sprache"
   },
   "roles": {
     "admin": "Admin",
