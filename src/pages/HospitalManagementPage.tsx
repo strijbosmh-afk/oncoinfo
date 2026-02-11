@@ -619,6 +619,8 @@ export default function HospitalManagementPage() {
   const { toast } = useToast();
 
   const [hospitalFilter, setHospitalFilter] = useState('');
+  const [hospitalStatusFilter, setHospitalStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [hospitalSort, setHospitalSort] = useState<'active-first' | 'name' | 'premium'>('active-first');
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [hospitalFeatureCounts, setHospitalFeatureCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -1136,18 +1138,42 @@ export default function HospitalManagementPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Hospital list */}
           <div className="lg:col-span-1 space-y-3">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Ziekenhuizen ({hospitals.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Ziekenhuizen ({hospitals.length})
+              </h2>
+              <Select value={hospitalSort} onValueChange={(v) => setHospitalSort(v as typeof hospitalSort)}>
+                <SelectTrigger className="h-7 w-[130px] text-[11px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active-first">Actief eerst</SelectItem>
+                  <SelectItem value="name">Naam A-Z</SelectItem>
+                  <SelectItem value="premium">Premium eerst</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             {hospitals.length > 5 && (
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  value={hospitalFilter}
-                  onChange={e => setHospitalFilter(e.target.value)}
-                  placeholder="Filter ziekenhuizen..."
-                  className="pl-9 h-9 text-sm"
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={hospitalFilter}
+                    onChange={e => setHospitalFilter(e.target.value)}
+                    placeholder="Filter ziekenhuizen..."
+                    className="pl-9 h-9 text-sm"
+                  />
+                </div>
+                <Select value={hospitalStatusFilter} onValueChange={(v) => setHospitalStatusFilter(v as typeof hospitalStatusFilter)}>
+                  <SelectTrigger className="h-9 w-[110px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle</SelectItem>
+                    <SelectItem value="active">Actief</SelectItem>
+                    <SelectItem value="inactive">Inactief</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
             {loading ? (
@@ -1156,9 +1182,21 @@ export default function HospitalManagementPage() {
               <p className="text-muted-foreground text-center py-8">Geen ziekenhuizen gevonden</p>
             ) : (
               (() => {
-                const filtered = hospitals.filter(h =>
-                  !hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase())
-                ).sort((a, b) => (a.is_active === b.is_active ? 0 : a.is_active ? -1 : 1));
+                const filtered = hospitals
+                  .filter(h =>
+                    (!hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase())) &&
+                    (hospitalStatusFilter === 'all' || (hospitalStatusFilter === 'active' ? h.is_active : !h.is_active))
+                  )
+                  .sort((a, b) => {
+                    if (hospitalSort === 'active-first') return a.is_active === b.is_active ? a.name.localeCompare(b.name) : a.is_active ? -1 : 1;
+                    if (hospitalSort === 'name') return a.name.localeCompare(b.name);
+                    if (hospitalSort === 'premium') {
+                      const ac = hospitalFeatureCounts[a.id] || 0;
+                      const bc = hospitalFeatureCounts[b.id] || 0;
+                      return bc - ac || a.name.localeCompare(b.name);
+                    }
+                    return 0;
+                  });
                 return filtered.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">Geen resultaten voor "{hospitalFilter}"</p>
                 ) : filtered.map(h => {
