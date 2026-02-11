@@ -448,6 +448,12 @@ export default function DrugDetailPage() {
                         <p className="text-muted-foreground">{drug.dosing_info.duration}</p>
                       </div>
                     )}
+                    {drug.dosing_info.max_dose && (
+                      <div>
+                        <h4 className="font-medium mb-1">Maximale Dosering</h4>
+                        <p className="text-muted-foreground">{drug.dosing_info.max_dose}</p>
+                      </div>
+                    )}
                     {drug.dosing_info.dose_adjustments && drug.dosing_info.dose_adjustments.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">Dosisaanpassingen</h4>
@@ -533,6 +539,35 @@ export default function DrugDetailPage() {
               </Card>
             )}
 
+            {drug.side_effects?.management && Object.keys(drug.side_effects.management).length > 0 && (
+              <Card className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                    <Info className="h-5 w-5" />
+                    Bijwerkingen Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {Object.entries(drug.side_effects.management).map(([key, value]) => (
+                      <div key={key} className="text-sm">
+                        <span className="font-medium capitalize">{key}:</span>{' '}
+                        <span className="text-muted-foreground">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!drug.side_effects?.common && !drug.side_effects?.veel_voorkomend && !drug.side_effects?.serious && !drug.side_effects?.ernstig && (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Geen bijwerkingen geregistreerd voor dit medicijn.</p>
+                </CardContent>
+              </Card>
+            )}
+
             {drug.drug_interactions && drug.drug_interactions.length > 0 && (
                <Card className="border-orange-500/50 bg-orange-50/50 dark:bg-orange-950/20">
                 <CardHeader>
@@ -559,7 +594,7 @@ export default function DrugDetailPage() {
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-6">
-            {drug.monitoring_requirements && drug.monitoring_requirements.length > 0 && (
+            {drug.monitoring_requirements && drug.monitoring_requirements.length > 0 ? (
               <Card>
                 <CardHeader>
                   <CardTitle>Monitoring Vereisten</CardTitle>
@@ -570,6 +605,12 @@ export default function DrugDetailPage() {
                       <li key={i}>{req}</li>
                     ))}
                   </ul>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Geen specifieke monitoring vereisten geregistreerd.</p>
                 </CardContent>
               </Card>
             )}
