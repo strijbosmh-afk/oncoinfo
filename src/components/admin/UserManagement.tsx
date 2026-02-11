@@ -216,67 +216,89 @@ export function UserManagement() {
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 border rounded-lg gap-2"
+                  className="flex items-center p-3 border rounded-lg gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {user.role === 'admin' || user.role === 'super_admin' ? (
-                        <Shield className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium truncate">
-                          {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
-                        </p>
-                        <Badge
-                          variant={user.role === 'admin' || user.role === 'super_admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
-                          className={`text-xs flex-shrink-0 ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''} ${user.role === 'super_admin' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                        >
-                          {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
-                        </Badge>
-                        {user.function && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 gap-1 capitalize">
-                            {user.function}
-                          </Badge>
-                        )}
-                        {isSuperAdmin && user.hospital_name && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs flex-shrink-0 gap-1 border-transparent text-white"
-                            style={{ backgroundColor: user.hospital_color || 'hsl(var(--muted-foreground))' }}
-                          >
-                            <Building2 className="h-3 w-3" />
-                            {user.hospital_name}
-                          </Badge>
-                        )}
-                        {user.id === currentUser?.id && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {t('userMgmt.you')}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {user.username && <span className="font-medium">{user.username}</span>}
-                        {user.username && ' · '}{user.email} · {t('userMgmt.lastLogin')}: {formatDate(user.last_sign_in_at)}
-                      </p>
-                      {(user.can_add_treatments || user.can_modify_treatments || user.can_delete_treatments) && (
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.addPerm')}</Badge>}
-                          {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.editPerm')}</Badge>}
-                          {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.deletePerm')}</Badge>}
-                        </div>
-                      )}
-                    </div>
+                  {/* Avatar */}
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    {user.role === 'admin' || user.role === 'super_admin' ? (
+                      <Shield className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+
+                  {/* Name + meta */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium truncate">
+                        {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
+                      </p>
+                      {user.id === currentUser?.id && (
+                        <Badge variant="outline" className="text-[10px] py-0 flex-shrink-0">
+                          {t('userMgmt.you')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.username && <span className="font-medium">{user.username}</span>}
+                      {user.username && ' · '}{user.email}
+                    </p>
+                  </div>
+
+                  {/* Hospital */}
+                  {isSuperAdmin && (
+                    <div className="hidden sm:flex flex-shrink-0">
+                      {user.hospital_name ? (
+                        <Badge
+                          variant="outline"
+                          className="text-xs gap-1 border-transparent text-white whitespace-nowrap"
+                          style={{ backgroundColor: user.hospital_color || 'hsl(var(--muted-foreground))' }}
+                        >
+                          <Building2 className="h-3 w-3" />
+                          {user.hospital_name}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Function */}
+                  <div className="hidden sm:flex flex-shrink-0">
+                    {user.function ? (
+                      <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
+                        {user.function}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </div>
+
+                  {/* Role */}
+                  <div className="flex-shrink-0">
+                    <Badge
+                      variant={user.role === 'admin' || user.role === 'super_admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
+                      className={`text-xs whitespace-nowrap ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''} ${user.role === 'super_admin' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                    >
+                      {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
+                    </Badge>
+                  </div>
+
+                  {/* Permissions (compact) */}
+                  <div className="hidden md:flex gap-1 flex-shrink-0">
+                    {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.addPerm')}</Badge>}
+                    {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.editPerm')}</Badge>}
+                    {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.deletePerm')}</Badge>}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-0.5 flex-shrink-0 border-l pl-2 ml-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => { setResetUser(user); setResetDialogOpen(true); }}
                           disabled={user.id === currentUser?.id}
                           title={t('userMgmt.resetPassword')}
@@ -286,19 +308,19 @@ export function UserManagement() {
                       </TooltipTrigger>
                       <TooltipContent>{t('userMgmt.resetPassword')}</TooltipContent>
                     </Tooltip>
-                    <Button variant="ghost" size="icon" onClick={() => handleSendCredentials(user)} title={t('userMgmt.sendCredentials')}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSendCredentials(user)} title={t('userMgmt.sendCredentials')}>
                       <Mail className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} title={t('common.edit')}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(user)} title={t('common.edit')}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => handleDeleteClick(user)}
                       disabled={user.id === currentUser?.id}
                       title={t('common.delete')}
-                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
