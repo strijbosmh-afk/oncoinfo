@@ -269,6 +269,13 @@ export function UserManagement() {
                       {user.username && <span className="font-medium">{user.username}</span>}
                       {user.username && ' · '}{user.email}
                     </p>
+                    {/* Show hospital & function inline on smaller screens */}
+                    <p className="lg:hidden text-xs text-muted-foreground truncate mt-0.5">
+                      {[
+                        isSuperAdmin && user.hospital_name ? user.hospital_name : null,
+                        user.function
+                      ].filter(Boolean).join(' · ') || null}
+                    </p>
                   </div>
 
                   {/* Hospital - fixed width for vertical alignment */}
