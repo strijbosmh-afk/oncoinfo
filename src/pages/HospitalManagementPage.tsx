@@ -17,7 +17,7 @@ import {
   Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X,
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
   Sparkles, CalendarClock, ToggleRight, ChevronDown, ChevronRight,
-  Utensils, Sun, CircleUser, Wind,
+  Utensils, Sun, CircleUser, Wind, Search,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -1024,12 +1024,12 @@ export default function HospitalManagementPage() {
                     size="icon"
                     onClick={handleAiLookup}
                     disabled={!formName.trim() || aiLookupLoading}
-                    title="AI: zoek ziekenhuis en logo"
+                    title="Zoek logo"
                   >
-                    {aiLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {aiLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Typ een naam en klik ✨ om automatisch het ziekenhuis te identificeren en logo te vinden</p>
+                <p className="text-xs text-muted-foreground">Typ een naam en klik 🔍 om automatisch het ziekenhuis te identificeren en logo te vinden</p>
               </div>
               <div className="space-y-2">
                 <Label>Slug (URL-vriendelijk)</Label>
