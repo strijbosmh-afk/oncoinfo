@@ -13,6 +13,7 @@ interface Profile {
   function: string | null;
   role: 'admin' | 'viewer';
   password_changed: boolean;
+  hospital_id: string | null;
 }
 
 export interface UserPermissions {
