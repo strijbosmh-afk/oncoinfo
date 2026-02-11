@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 
 interface Hospital {
@@ -25,6 +26,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,7 +35,6 @@ export default function LoginPage() {
       }
     });
 
-    // Fetch active hospitals
     supabase
       .from('hospitals')
       .select('id, name, slug, logo_url')
@@ -59,8 +60,8 @@ export default function LoginPage() {
 
       if (error || data?.error) {
         toast({
-          title: 'Inloggen mislukt',
-          description: data?.error || 'Gebruikersnaam of wachtwoord is onjuist.',
+          title: t('auth.loginFailed'),
+          description: data?.error || t('auth.loginFailedDescription'),
           variant: 'destructive',
         });
         return;
@@ -77,8 +78,8 @@ export default function LoginPage() {
       navigate('/home');
     } catch {
       toast({
-        title: 'Fout',
-        description: 'Er is een onverwachte fout opgetreden.',
+        title: t('common.error'),
+        description: t('auth.unexpectedError'),
         variant: 'destructive',
       });
     } finally {
@@ -91,18 +92,18 @@ export default function LoginPage() {
       <div className="container flex items-center justify-center py-16 min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welkom bij OncoInfo</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.welcome')}</CardTitle>
             <CardDescription>
-              Log in om toegang te krijgen tot de medicijnbibliotheek
+              {t('auth.loginDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="hospital">Ziekenhuis</Label>
+                <Label htmlFor="hospital">{t('auth.hospital')}</Label>
                 <Select value={hospitalId} onValueChange={setHospitalId}>
                   <SelectTrigger id="hospital">
-                    <SelectValue placeholder="Kies uw ziekenhuis" />
+                    <SelectValue placeholder={t('auth.selectHospital')} />
                   </SelectTrigger>
                   <SelectContent>
                     {hospitals.map((h) => (
@@ -114,11 +115,11 @@ export default function LoginPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="username">Gebruikersnaam</Label>
+                <Label htmlFor="username">{t('auth.username')}</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Uw gebruikersnaam"
+                  placeholder={t('auth.usernamePlaceholder')}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -126,7 +127,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Wachtwoord</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -139,7 +140,7 @@ export default function LoginPage() {
               </div>
               <Button type="submit" className="w-full" disabled={isLoading || !hospitalId}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Inloggen
+                {t('auth.login')}
               </Button>
             </form>
           </CardContent>

@@ -19,10 +19,12 @@ import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
 import { CalendarClock, Building2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminPage() {
   const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
   const { data: drugs, isLoading: drugsLoading } = useDrugs({});
+  const { t } = useTranslation();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
@@ -30,18 +32,15 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
   const navigate = useNavigate();
 
-  // Check if hospital has features enabled
   const [hasAutoUpdate, setHasAutoUpdate] = useState(false);
   const [hasScheduledUpdates, setHasScheduledUpdates] = useState(false);
 
   useEffect(() => {
     if (!user || isSuperAdmin) {
-      // Super admins always have access
       setHasAutoUpdate(true);
       setHasScheduledUpdates(true);
       return;
     }
-    // Check hospital features
     supabase
       .from('hospital_features')
       .select('feature_key, is_enabled')
@@ -53,12 +52,10 @@ export default function AdminPage() {
       });
   }, [user, isSuperAdmin]);
 
-  // Calculate statistics
   const totalDrugs = drugs?.length || 0;
   const combinationDrugs = drugs?.filter(d => d.drug_class === 'Combinatietherapie').length || 0;
   const individualDrugs = totalDrugs - combinationDrugs;
 
-  // Filter drugs
   const filteredDrugs = useMemo(() => {
     if (!drugs) return [];
     return drugs.filter(drug => {
@@ -88,8 +85,8 @@ export default function AdminPage() {
     return (
       <Layout>
         <div className="container py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Toegang Geweigerd</h1>
-          <p className="text-muted-foreground">Je hebt admin- of apothekersrechten nodig om deze pagina te bekijken.</p>
+          <h1 className="text-2xl font-bold mb-4">{t('auth.accessDenied')}</h1>
+          <p className="text-muted-foreground">{t('auth.accessDeniedDescription')}</p>
         </div>
       </Layout>
     );
@@ -98,8 +95,8 @@ export default function AdminPage() {
   return (
     <Layout>
       <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-2">Beheerportaal</h1>
-        <p className="text-muted-foreground mb-8">Beheer medicijnen en combinatieschema's</p>
+        <h1 className="text-3xl font-bold mb-2">{t('admin.title')}</h1>
+        <p className="text-muted-foreground mb-8">{t('admin.description')}</p>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -107,7 +104,7 @@ export default function AdminPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Totaal Medicijnen</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('admin.totalDrugs')}</p>
                   <p className="text-3xl font-bold">{totalDrugs}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
@@ -121,7 +118,7 @@ export default function AdminPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Combinatieschema's</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('admin.combinationRegimens')}</p>
                   <p className="text-3xl font-bold">{combinationDrugs}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
@@ -135,7 +132,7 @@ export default function AdminPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Individuele Medicijnen</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('admin.individualDrugs')}</p>
                   <p className="text-3xl font-bold">{individualDrugs}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -155,7 +152,7 @@ export default function AdminPage() {
               className="gap-2"
             >
               <Users className="h-4 w-4" />
-              Gebruikersbeheer
+              {t('admin.userManagement')}
             </Button>
           )}
           <Button 
@@ -164,7 +161,7 @@ export default function AdminPage() {
             className="gap-2"
           >
             <ClipboardList className="h-4 w-4" />
-            Activiteiten Log
+            {t('admin.activityLog')}
           </Button>
           <Button 
             variant="outline"
@@ -172,7 +169,7 @@ export default function AdminPage() {
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
-            Nieuwe therapie toevoegen
+            {t('admin.addTherapy')}
           </Button>
           {isSuperAdmin && (
             <Button
@@ -181,28 +178,27 @@ export default function AdminPage() {
               className="gap-2"
             >
               <Building2 className="h-4 w-4" />
-              Ziekenhuizen
+              {t('admin.hospitals')}
             </Button>
           )}
 
-          {/* Right-aligned premium feature buttons */}
           <div className="flex gap-3 ml-auto">
             <Button
               variant={activeSection === 'auto-update' ? 'default' : 'outline'}
               onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
               className="gap-2"
               disabled={!hasAutoUpdate}
-              title={!hasAutoUpdate ? 'Deze functie is niet geactiveerd voor uw ziekenhuis' : undefined}
+              title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
             >
               <Sparkles className="h-4 w-4" />
-              Auto-Update Database
+              {t('admin.autoUpdate')}
               {!hasAutoUpdate ? (
                 <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                  NIET ACTIEF
+                  {t('admin.notActive')}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                  BETA
+                  {t('admin.beta')}
                 </Badge>
               )}
             </Button>
@@ -212,13 +208,13 @@ export default function AdminPage() {
                 onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
                 className="gap-2"
                 disabled={!hasScheduledUpdates}
-                title={!hasScheduledUpdates ? 'Deze functie is niet geactiveerd voor uw ziekenhuis' : undefined}
+                title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
               >
                 <CalendarClock className="h-4 w-4" />
-                Geplande Updates
+                {t('admin.scheduledUpdates')}
                 {!hasScheduledUpdates && (
                   <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                    NIET ACTIEF
+                    {t('admin.notActive')}
                   </Badge>
                 )}
               </Button>
@@ -254,22 +250,21 @@ export default function AdminPage() {
 
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Overzicht</TabsTrigger>
-            <TabsTrigger value="drugs">Medicijnen ({totalDrugs})</TabsTrigger>
+            <TabsTrigger value="overview">{t('admin.overview')}</TabsTrigger>
+            <TabsTrigger value="drugs">{t('admin.drugsTab')} ({totalDrugs})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Medicijnbibliotheek Overzicht</CardTitle>
+                <CardTitle>{t('admin.libraryOverview')}</CardTitle>
                 <CardDescription>
-                  Beheer de medicijnen en combinatieschema's voor oncologie
+                  {t('admin.libraryDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  De medicijnbibliotheek bevat {totalDrugs} items, waarvan {combinationDrugs} combinatieschema's 
-                  en {individualDrugs} individuele medicijnen.
+                  {t('admin.libraryStats', { total: totalDrugs, combos: combinationDrugs, individual: individualDrugs })}
                 </p>
               </CardContent>
             </Card>
@@ -278,23 +273,23 @@ export default function AdminPage() {
           <TabsContent value="drugs" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Medicijnen Beheren</CardTitle>
-                <CardDescription>Zoek en bekijk alle medicijnen in de bibliotheek</CardDescription>
+                <CardTitle>{t('admin.manageDrugs')}</CardTitle>
+                <CardDescription>{t('admin.manageDrugsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-4">
                   <Input 
-                    placeholder="Zoek medicijn..." 
+                    placeholder={t('drugs.searchPlaceholder')} 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="flex-1"
                   />
                   <Select value={filterClass} onValueChange={setFilterClass}>
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Alle klassen" />
+                      <SelectValue placeholder={t('drugs.allClasses')} />
                     </SelectTrigger>
                     <SelectContent className="bg-popover">
-                      <SelectItem value="all">Alle klassen</SelectItem>
+                      <SelectItem value="all">{t('drugs.allClasses')}</SelectItem>
                       {DRUG_CLASSES.map(c => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
@@ -308,7 +303,7 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   <div className="grid gap-2">
-                    <p className="text-sm text-muted-foreground">{filteredDrugs.length} medicijnen gevonden</p>
+                    <p className="text-sm text-muted-foreground">{t('drugs.found', { count: filteredDrugs.length })}</p>
                     {filteredDrugs.slice(0, 50).map(drug => (
                       <div key={drug.id} className="flex justify-between items-center p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
@@ -329,7 +324,7 @@ export default function AdminPage() {
                     ))}
                     {filteredDrugs.length > 50 && (
                       <p className="text-sm text-muted-foreground text-center py-2">
-                        En {filteredDrugs.length - 50} meer...
+                        {t('drugs.andMore', { count: filteredDrugs.length - 50 })}
                       </p>
                     )}
                   </div>
@@ -340,11 +335,10 @@ export default function AdminPage() {
 
         </Tabs>
 
-        {/* Nieuwe therapie dialog */}
         <Dialog open={regimenDialogOpen} onOpenChange={setRegimenDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nieuwe Therapie Toevoegen</DialogTitle>
+              <DialogTitle>{t('admin.addTherapy')}</DialogTitle>
             </DialogHeader>
             <RegimenSearch />
           </DialogContent>
