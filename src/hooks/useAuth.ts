@@ -8,6 +8,9 @@ interface Profile {
   user_id: string;
   email: string;
   username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  function: string | null;
   role: 'admin' | 'viewer';
   password_changed: boolean;
 }
