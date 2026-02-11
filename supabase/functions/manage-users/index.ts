@@ -131,6 +131,9 @@ Deno.serve(async (req) => {
         const { data: profiles } = await supabase.from('profiles').select('*');
         const { data: roles } = await supabase.from('user_roles').select('*');
         const { data: permissions } = await supabase.from('user_permissions').select('*');
+        const { data: hospitals } = await supabase.from('hospitals').select('id, name');
+
+        const hospitalMap = new Map((hospitals || []).map((h: any) => [h.id, h.name]));
 
         const callerIsSuperAdmin = await isSuperAdmin(supabase, adminUser.id);
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
@@ -141,6 +144,7 @@ Deno.serve(async (req) => {
             const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
             const perm = permissions?.find((p: any) => p.user_id === u.id);
             const isSA = userRoles.includes('super_admin');
+            const hospId = profile?.hospital_id || null;
             return {
               id: u.id,
               email: u.email,
@@ -148,7 +152,8 @@ Deno.serve(async (req) => {
               first_name: profile?.first_name || null,
               last_name: profile?.last_name || null,
               function: profile?.function || null,
-              hospital_id: profile?.hospital_id || null,
+              hospital_id: hospId,
+              hospital_name: hospId ? (hospitalMap.get(hospId) || null) : null,
               created_at: u.created_at,
               last_sign_in_at: u.last_sign_in_at,
               role: isSA ? 'super_admin' : userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',

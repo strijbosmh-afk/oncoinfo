@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useUserManagement, type ManagedUser } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserDialog } from './UserDialog';
 import {
   AlertDialog,
@@ -16,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter } from 'lucide-react';
 
 export function UserManagement() {
   const { user: currentUser, isSuperAdmin } = useAuth();
@@ -31,12 +32,37 @@ export function UserManagement() {
   const [credentialsUser, setCredentialsUser] = useState<ManagedUser | null>(null);
   const [credentialsPassword, setCredentialsPassword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [hospitalFilter, setHospitalFilter] = useState<string>('all');
+  const [functionFilter, setFunctionFilter] = useState<string>('all');
 
-  const filteredUsers = users?.filter((u) => {
-    const q = searchQuery.toLowerCase();
-    return u.email?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q) || 
-      u.first_name?.toLowerCase().includes(q) || u.last_name?.toLowerCase().includes(q);
-  }) ?? [];
+  // Derive unique hospitals and functions for filter dropdowns
+  const hospitals = useMemo(() => {
+    if (!users) return [];
+    const map = new Map<string, string>();
+    users.forEach(u => {
+      if (u.hospital_id && u.hospital_name) map.set(u.hospital_id, u.hospital_name);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  }, [users]);
+
+  const functions = useMemo(() => {
+    if (!users) return [];
+    const set = new Set<string>();
+    users.forEach(u => { if (u.function) set.add(u.function); });
+    return Array.from(set).sort();
+  }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter((u) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = !q || u.email?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q) ||
+        u.first_name?.toLowerCase().includes(q) || u.last_name?.toLowerCase().includes(q);
+      const matchesHospital = hospitalFilter === 'all' || u.hospital_id === hospitalFilter;
+      const matchesFunction = functionFilter === 'all' || u.function === functionFilter;
+      return matchesSearch && matchesHospital && matchesFunction;
+    });
+  }, [users, searchQuery, hospitalFilter, functionFilter]);
 
   const handleCreate = () => {
     setDialogMode('create');
@@ -101,6 +127,8 @@ export function UserManagement() {
     });
   };
 
+  const hasActiveFilters = hospitalFilter !== 'all' || functionFilter !== 'all';
+
   return (
     <>
       <Card>
@@ -108,7 +136,14 @@ export function UserManagement() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <CardTitle>Gebruikersbeheer</CardTitle>
-              <CardDescription>Beheer accounts en rollen</CardDescription>
+              <CardDescription>
+                Beheer accounts en rollen
+                {users && (
+                  <Badge variant="outline" className="ml-2">
+                    {filteredUsers.length}{filteredUsers.length !== users.length ? ` / ${users.length}` : ''} gebruikers
+                  </Badge>
+                )}
+              </CardDescription>
             </div>
             <Button onClick={handleCreate} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -117,12 +152,55 @@ export function UserManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <Input
-            placeholder="Zoek op naam of e-mail..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="mb-4"
-          />
+          <div className="space-y-3 mb-4">
+            <Input
+              placeholder="Zoek op naam of e-mail..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+
+            {/* Filters - only for super admins */}
+            {isSuperAdmin && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Select value={hospitalFilter} onValueChange={setHospitalFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      <SelectValue placeholder="Alle ziekenhuizen" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle ziekenhuizen</SelectItem>
+                    {hospitals.map(([id, name]) => (
+                      <SelectItem key={id} value={id}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={functionFilter} onValueChange={setFunctionFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Alle functies" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle functies</SelectItem>
+                    {functions.map(fn => (
+                      <SelectItem key={fn} value={fn} className="capitalize">{fn}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setHospitalFilter('all'); setFunctionFilter('all'); }}
+                    className="text-xs"
+                  >
+                    Filters wissen
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
 
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -157,6 +235,12 @@ export function UserManagement() {
                         {user.function && (
                           <Badge variant="outline" className="text-xs flex-shrink-0 gap-1 capitalize">
                             {user.function}
+                          </Badge>
+                        )}
+                        {isSuperAdmin && user.hospital_name && (
+                          <Badge variant="outline" className="text-xs flex-shrink-0 gap-1 text-muted-foreground">
+                            <Building2 className="h-3 w-3" />
+                            {user.hospital_name}
                           </Badge>
                         )}
                         {user.id === currentUser?.id && (
