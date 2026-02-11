@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,9 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Clock, CalendarClock, Trash2, Plus } from 'lucide-react';
-import { DRUG_DISEASE_AREAS } from '@/types/drug';
+import { DRUG_DISEASE_AREAS, DRUG_CATEGORIES } from '@/types/drug';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
+
+// Map discipline to disease areas
+const DISCIPLINE_MAP: Record<string, { label: string; areas: string[] }> = {
+  all: { label: 'Alle disciplines', areas: [...DRUG_DISEASE_AREAS] },
+  breast: { label: 'Borstkanker', areas: ['Borstkanker'] },
+  urology: { label: 'Urologie', areas: ['Prostaatkanker', 'Blaaskanker', 'Niercelcarcinoom', 'Testiskanker', 'Peniskanker'] },
+  gynecology: { label: 'Gynaecologie', areas: ['Ovariumcarcinoom', 'Endometriumcarcinoom', 'Cervixcarcinoom', 'Vulvacarcinoom'] },
+  respiratory: { label: 'Respiratoire', areas: ['NSCLC', 'SCLC', 'Mesothelioom'] },
+  supportive: { label: 'Supportive Care', areas: ['Supportive Care'] },
+};
 
 interface Schedule {
   id: string;
@@ -51,7 +61,8 @@ export function ScheduleAutoUpdate() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newInterval, setNewInterval] = useState<string>('monthly');
-  const [newAreas, setNewAreas] = useState<string[]>([]);
+  const [newDiscipline, setNewDiscipline] = useState<string>('all');
+  const [newAreas, setNewAreas] = useState<string[]>([...DRUG_DISEASE_AREAS]);
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
 
@@ -238,22 +249,45 @@ export function ScheduleAutoUpdate() {
         {/* New schedule form */}
         {showForm ? (
           <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Interval</Label>
-              <Select value={newInterval} onValueChange={setNewInterval}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-popover">
-                  <SelectItem value="weekly">Wekelijks</SelectItem>
-                  <SelectItem value="monthly">Maandelijks</SelectItem>
-                  <SelectItem value="quarterly">Per kwartaal</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Interval</Label>
+                <Select value={newInterval} onValueChange={setNewInterval}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value="weekly">Wekelijks</SelectItem>
+                    <SelectItem value="monthly">Maandelijks</SelectItem>
+                    <SelectItem value="quarterly">Per kwartaal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Discipline</Label>
+                <Select
+                  value={newDiscipline}
+                  onValueChange={(val) => {
+                    setNewDiscipline(val);
+                    const disc = DISCIPLINE_MAP[val];
+                    if (disc) setNewAreas(disc.areas);
+                  }}
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {Object.entries(DISCIPLINE_MAP).map(([key, { label }]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Ziektegebieden (leeg = alles)</Label>
+              <Label className="text-sm font-medium">Geselecteerde ziektegebieden</Label>
               <div className="flex flex-wrap gap-2">
                 {DRUG_DISEASE_AREAS.map((area) => (
                   <Button
@@ -271,14 +305,15 @@ export function ScheduleAutoUpdate() {
                   </Button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground">{newAreas.length} van {DRUG_DISEASE_AREAS.length} geselecteerd</p>
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleCreate} disabled={saving} className="gap-2">
+              <Button onClick={handleCreate} disabled={saving || newAreas.length === 0} className="gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Schema aanmaken
               </Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>
+              <Button variant="outline" onClick={() => { setShowForm(false); setNewDiscipline('all'); setNewAreas([...DRUG_DISEASE_AREAS]); }}>
                 Annuleren
               </Button>
             </div>
