@@ -1,0 +1,367 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+
+interface Hospital {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  branding: { primary_color?: string } | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface Doctor {
+  id: string;
+  hospital_id: string;
+  name: string;
+  specialization: string | null;
+  display_order: number;
+  is_active: boolean;
+}
+
+export function HospitalManagement() {
+  const { toast } = useToast();
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
+  const [doctorsDialogOpen, setDoctorsDialogOpen] = useState(false);
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [formName, setFormName] = useState('');
+  const [formSlug, setFormSlug] = useState('');
+  const [formPrimaryColor, setFormPrimaryColor] = useState('#6b2d5b');
+  const [formIsActive, setFormIsActive] = useState(true);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+
+  // Doctor form
+  const [newDoctorName, setNewDoctorName] = useState('');
+  const [newDoctorSpec, setNewDoctorSpec] = useState('');
+
+  const fetchHospitals = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('hospitals')
+      .select('*')
+      .order('name');
+    if (error) {
+      toast({ title: 'Fout', description: 'Kon ziekenhuizen niet laden', variant: 'destructive' });
+    } else {
+      setHospitals((data || []).map(h => ({
+        ...h,
+        branding: h.branding as Hospital['branding'],
+      })));
+    }
+    setLoading(false);
+  }, [toast]);
+
+  useEffect(() => { fetchHospitals(); }, [fetchHospitals]);
+
+  const openCreate = () => {
+    setEditingHospital(null);
+    setFormName('');
+    setFormSlug('');
+    setFormPrimaryColor('#6b2d5b');
+    setFormIsActive(true);
+    setLogoFile(null);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (h: Hospital) => {
+    setEditingHospital(h);
+    setFormName(h.name);
+    setFormSlug(h.slug);
+    setFormPrimaryColor(h.branding?.primary_color || '#6b2d5b');
+    setFormIsActive(h.is_active);
+    setLogoFile(null);
+    setDialogOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!formName.trim() || !formSlug.trim()) {
+      toast({ title: 'Vul alle velden in', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+
+    let logoUrl = editingHospital?.logo_url || null;
+
+    // Upload logo if provided
+    if (logoFile) {
+      const ext = logoFile.name.split('.').pop();
+      const path = `hospital-logos/${formSlug}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('public-assets')
+        .upload(path, logoFile, { upsert: true });
+      if (uploadError) {
+        toast({ title: 'Logo upload mislukt', description: uploadError.message, variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(path);
+      logoUrl = urlData.publicUrl;
+    }
+
+    const payload = {
+      name: formName.trim(),
+      slug: formSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, ''),
+      logo_url: logoUrl,
+      branding: { primary_color: formPrimaryColor },
+      is_active: formIsActive,
+    };
+
+    if (editingHospital) {
+      const { error } = await supabase
+        .from('hospitals')
+        .update(payload)
+        .eq('id', editingHospital.id);
+      if (error) {
+        toast({ title: 'Fout bij bijwerken', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Ziekenhuis bijgewerkt' });
+      }
+    } else {
+      const { error } = await supabase
+        .from('hospitals')
+        .insert(payload);
+      if (error) {
+        toast({ title: 'Fout bij aanmaken', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Ziekenhuis aangemaakt' });
+      }
+    }
+
+    setSaving(false);
+    setDialogOpen(false);
+    fetchHospitals();
+  };
+
+  const handleDelete = async (h: Hospital) => {
+    if (!confirm(`Weet je zeker dat je "${h.name}" wilt verwijderen? Dit verwijdert ook alle gekoppelde artsen.`)) return;
+    const { error } = await supabase.from('hospitals').delete().eq('id', h.id);
+    if (error) {
+      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Ziekenhuis verwijderd' });
+      fetchHospitals();
+    }
+  };
+
+  // Doctors management
+  const openDoctors = async (h: Hospital) => {
+    setSelectedHospital(h);
+    setDoctorsDialogOpen(true);
+    setDoctorsLoading(true);
+    const { data } = await supabase
+      .from('hospital_doctors')
+      .select('*')
+      .eq('hospital_id', h.id)
+      .order('display_order');
+    setDoctors((data || []) as Doctor[]);
+    setDoctorsLoading(false);
+  };
+
+  const addDoctor = async () => {
+    if (!newDoctorName.trim() || !selectedHospital) return;
+    const { error } = await supabase.from('hospital_doctors').insert({
+      hospital_id: selectedHospital.id,
+      name: newDoctorName.trim(),
+      specialization: newDoctorSpec.trim() || null,
+      display_order: doctors.length,
+    });
+    if (error) {
+      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    } else {
+      setNewDoctorName('');
+      setNewDoctorSpec('');
+      openDoctors(selectedHospital);
+    }
+  };
+
+  const removeDoctor = async (docId: string) => {
+    await supabase.from('hospital_doctors').delete().eq('id', docId);
+    if (selectedHospital) openDoctors(selectedHospital);
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Ziekenhuizen Beheren
+              </CardTitle>
+              <CardDescription>Beheer ziekenhuizen, logo's en branding voor het platform</CardDescription>
+            </div>
+            <Button onClick={openCreate} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nieuw Ziekenhuis
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {hospitals.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">Geen ziekenhuizen gevonden</p>
+          ) : (
+            <div className="space-y-3">
+              {hospitals.map(h => (
+                <div key={h.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-4">
+                    {h.logo_url ? (
+                      <img src={h.logo_url} alt={h.name} className="h-10 w-auto max-w-[80px] object-contain" />
+                    ) : (
+                      <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{h.name}</p>
+                        <Badge variant={h.is_active ? 'default' : 'secondary'} className="text-xs">
+                          {h.is_active ? 'Actief' : 'Inactief'}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Slug: {h.slug}</p>
+                    </div>
+                    {h.branding?.primary_color && (
+                      <div
+                        className="h-6 w-6 rounded-full border"
+                        style={{ backgroundColor: h.branding.primary_color }}
+                        title={h.branding.primary_color}
+                      />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openDoctors(h)} className="gap-1">
+                      <UserPlus className="h-3.5 w-3.5" />
+                      Artsen
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => openEdit(h)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDelete(h)} className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Hospital Create/Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingHospital ? 'Ziekenhuis Bewerken' : 'Nieuw Ziekenhuis'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Naam</Label>
+              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="bijv. RZ Tienen" />
+            </div>
+            <div className="space-y-2">
+              <Label>Slug (URL-vriendelijk)</Label>
+              <Input value={formSlug} onChange={e => setFormSlug(e.target.value)} placeholder="bijv. rztienen" />
+            </div>
+            <div className="space-y-2">
+              <Label>Logo uploaden</Label>
+              <Input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
+              {editingHospital?.logo_url && !logoFile && (
+                <p className="text-xs text-muted-foreground">Huidig logo behouden (laat leeg om niet te wijzigen)</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Huisstijlkleur</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={formPrimaryColor}
+                  onChange={e => setFormPrimaryColor(e.target.value)}
+                  className="h-10 w-14 rounded cursor-pointer border"
+                />
+                <Input value={formPrimaryColor} onChange={e => setFormPrimaryColor(e.target.value)} className="w-32" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />
+              <Label>Actief</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingHospital ? 'Bijwerken' : 'Aanmaken'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Doctors Dialog */}
+      <Dialog open={doctorsDialogOpen} onOpenChange={setDoctorsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Artsen – {selectedHospital?.name}</DialogTitle>
+          </DialogHeader>
+          {doctorsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          ) : (
+            <div className="space-y-4">
+              {doctors.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">Nog geen artsen toegevoegd</p>
+              )}
+              {doctors.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium text-sm">{doc.name}</p>
+                    {doc.specialization && <p className="text-xs text-muted-foreground">{doc.specialization}</p>}
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => removeDoctor(doc.id)} className="text-destructive h-8 w-8">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <div className="border-t pt-4 space-y-3">
+                <p className="text-sm font-medium">Arts toevoegen</p>
+                <div className="flex gap-2">
+                  <Input placeholder="Naam" value={newDoctorName} onChange={e => setNewDoctorName(e.target.value)} className="flex-1" />
+                  <Input placeholder="Specialisatie" value={newDoctorSpec} onChange={e => setNewDoctorSpec(e.target.value)} className="flex-1" />
+                  <Button onClick={addDoctor} size="icon" disabled={!newDoctorName.trim()}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
