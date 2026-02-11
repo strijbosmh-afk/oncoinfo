@@ -13,11 +13,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X,
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
   Sparkles, CalendarClock, ToggleRight, ChevronDown, ChevronRight,
-  Utensils, Sun, CircleUser, Wind, Search,
+  Utensils, Sun, CircleUser, Wind, Search, FileText, Save,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -56,6 +57,42 @@ interface HospitalFeature {
   feature_key: string;
   is_enabled: boolean;
 }
+
+interface BillingInfo {
+  billing_name: string;
+  billing_address_line1: string;
+  billing_address_line2: string;
+  billing_postal_code: string;
+  billing_city: string;
+  billing_country: string;
+  billing_vat_number: string;
+  billing_email: string;
+  billing_phone: string;
+  billing_contact_person: string;
+  billing_peppol_id: string;
+  billing_peppol_scheme: string;
+  billing_iban: string;
+  billing_bic: string;
+  billing_po_number: string;
+}
+
+const emptyBilling: BillingInfo = {
+  billing_name: '',
+  billing_address_line1: '',
+  billing_address_line2: '',
+  billing_postal_code: '',
+  billing_city: '',
+  billing_country: 'België',
+  billing_vat_number: '',
+  billing_email: '',
+  billing_phone: '',
+  billing_contact_person: '',
+  billing_peppol_id: '',
+  billing_peppol_scheme: '0208',
+  billing_iban: '',
+  billing_bic: '',
+  billing_po_number: '',
+};
 
 const AVAILABLE_FEATURES: { key: string; label: string; description: string; icon: typeof Sparkles }[] = [
   { key: 'auto_update', label: 'Auto-Update Database', description: 'AI-gestuurde automatische updates van therapieën via PubMed en RIZIV', icon: Sparkles },
@@ -209,6 +246,42 @@ function LogoPreview({
   );
 }
 
+// Collapsible section wrapper
+function CollapsibleSection({ 
+  title, icon: Icon, badge, children, defaultOpen = false, actions 
+}: { 
+  title: string; icon: typeof BookOpen; badge?: React.ReactNode; 
+  children: React.ReactNode; defaultOpen?: boolean; actions?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer select-none hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Icon className="h-5 w-5" />
+                  {title}
+                </CardTitle>
+                {badge}
+              </div>
+              {actions && <div onClick={e => e.stopPropagation()}>{actions}</div>}
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>
+            {children}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
 export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -229,7 +302,7 @@ export default function HospitalManagementPage() {
   const [formLogoUrl, setFormLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [aiLookupLoading, setAiLookupLoading] = useState(false);
-  const [logoConfirmed, setLogoConfirmed] = useState<boolean | null>(null); // null=pending, true=confirmed, false=rejected
+  const [logoConfirmed, setLogoConfirmed] = useState<boolean | null>(null);
 
   // Staff
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -247,6 +320,11 @@ export default function HospitalManagementPage() {
   const [hospitalFeatures, setHospitalFeatures] = useState<HospitalFeature[]>([]);
   const [featuresLoading, setFeaturesLoading] = useState(false);
 
+  // Billing
+  const [billing, setBilling] = useState<BillingInfo>(emptyBilling);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingSaving, setBillingSaving] = useState(false);
+
   const fetchHospitals = useCallback(async () => {
     const { data, error } = await supabase
       .from('hospitals')
@@ -263,21 +341,19 @@ export default function HospitalManagementPage() {
     setLoading(false);
   }, [toast]);
 
-  // No longer need to fetch disease areas from drugs - we use fixed categories
-
-
   useEffect(() => {
     fetchHospitals();
   }, [fetchHospitals]);
 
-  // When a hospital is selected, load its staff + disciplines + features
+  // When a hospital is selected, load its staff + disciplines + features + billing
   const selectHospital = useCallback(async (h: Hospital) => {
     setSelectedHospital(h);
     setStaffLoading(true);
     setDisciplinesLoading(true);
     setFeaturesLoading(true);
+    setBillingLoading(true);
 
-    const [staffRes, discRes, featRes] = await Promise.all([
+    const [staffRes, discRes, featRes, billingRes] = await Promise.all([
       supabase
         .from('hospital_doctors')
         .select('*')
@@ -291,18 +367,63 @@ export default function HospitalManagementPage() {
         .from('hospital_features')
         .select('*')
         .eq('hospital_id', h.id),
+      supabase
+        .from('hospitals')
+        .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
+        .eq('id', h.id)
+        .single(),
     ]);
 
     setStaffMembers((staffRes.data || []) as StaffMember[]);
     setHospitalDisciplines((discRes.data || []) as HospitalDiscipline[]);
     setHospitalFeatures((featRes.data || []) as HospitalFeature[]);
+    if (billingRes.data) {
+      setBilling({
+        billing_name: billingRes.data.billing_name || '',
+        billing_address_line1: billingRes.data.billing_address_line1 || '',
+        billing_address_line2: billingRes.data.billing_address_line2 || '',
+        billing_postal_code: billingRes.data.billing_postal_code || '',
+        billing_city: billingRes.data.billing_city || '',
+        billing_country: billingRes.data.billing_country || 'België',
+        billing_vat_number: billingRes.data.billing_vat_number || '',
+        billing_email: billingRes.data.billing_email || '',
+        billing_phone: billingRes.data.billing_phone || '',
+        billing_contact_person: billingRes.data.billing_contact_person || '',
+        billing_peppol_id: billingRes.data.billing_peppol_id || '',
+        billing_peppol_scheme: billingRes.data.billing_peppol_scheme || '0208',
+        billing_iban: billingRes.data.billing_iban || '',
+        billing_bic: billingRes.data.billing_bic || '',
+        billing_po_number: billingRes.data.billing_po_number || '',
+      });
+    } else {
+      setBilling(emptyBilling);
+    }
     setStaffLoading(false);
     setDisciplinesLoading(false);
     setFeaturesLoading(false);
+    setBillingLoading(false);
   }, []);
 
+  const saveBilling = async () => {
+    if (!selectedHospital) return;
+    setBillingSaving(true);
+    const { error } = await supabase
+      .from('hospitals')
+      .update(billing)
+      .eq('id', selectedHospital.id);
+    if (error) {
+      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Facturatiegegevens opgeslagen' });
+    }
+    setBillingSaving(false);
+  };
+
+  const updateBillingField = (field: keyof BillingInfo, value: string) => {
+    setBilling(prev => ({ ...prev, [field]: value }));
+  };
+
   // Hospital CRUD
-  // Generate a unique color based on existing hospitals
   const generateUniqueColor = () => {
     const palette = [
       '#6b2d5b', '#1e6f9f', '#2d6b3f', '#9f5b1e', '#5b2d6b',
@@ -315,11 +436,6 @@ export default function HospitalManagementPage() {
 
   const slugify = (text: string) =>
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  const suggestLogoUrl = (name: string) => {
-    const domain = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') + '.be';
-    return `https://logo.clearbit.com/${domain}`;
-  };
 
   const handleAiLookup = async () => {
     if (!formName.trim()) return;
@@ -335,16 +451,16 @@ export default function HospitalManagementPage() {
       if (data?.logo_url) {
         setFormLogoUrl(data.logo_url);
         setLogoFile(null);
-        setLogoConfirmed(null); // pending confirmation
+        setLogoConfirmed(null);
       } else {
         setFormLogoUrl('');
-        setLogoConfirmed(false); // no logo found, show upload
+        setLogoConfirmed(false);
       }
       toast({ title: 'Ziekenhuis gevonden', description: `${data?.official_name || formName} — bevestig het logo` });
     } catch (e: any) {
       console.error('Lookup failed:', e);
       toast({ title: 'Zoeken mislukt', description: e?.message || 'Probeer het opnieuw', variant: 'destructive' });
-      setLogoConfirmed(false); // show upload on failure
+      setLogoConfirmed(false);
     } finally {
       setAiLookupLoading(false);
     }
@@ -355,7 +471,6 @@ export default function HospitalManagementPage() {
     if (!formSlugManual && !editingHospital) {
       setFormSlug(slugify(name));
     }
-    // Don't auto-suggest logo URL anymore - wait for lookup
   };
 
   const openCreate = () => {
@@ -493,7 +608,7 @@ export default function HospitalManagementPage() {
     if (selectedHospital) selectHospital(selectedHospital);
   };
 
-  // Discipline management - toggle individual sub-discipline
+  // Discipline management
   const toggleDiscipline = async (diseaseArea: string) => {
     if (!selectedHospital) return;
     const existing = hospitalDisciplines.find(d => d.disease_area === diseaseArea);
@@ -523,7 +638,6 @@ export default function HospitalManagementPage() {
     }
   };
 
-  // Toggle all sub-disciplines in a category
   const toggleCategoryAll = async (cat: DisciplineCategory, enable: boolean) => {
     if (!selectedHospital || cat.isPlaceholder) return;
     for (const sub of cat.subDisciplines) {
@@ -718,7 +832,7 @@ export default function HospitalManagementPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Hospital info header */}
                 <Card>
                   <CardContent className="p-6">
@@ -755,278 +869,361 @@ export default function HospitalManagementPage() {
                   </CardContent>
                 </Card>
 
-                {/* Disciplines section */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                {/* Billing section */}
+                <CollapsibleSection title="Facturatiegegevens" icon={FileText} defaultOpen={false}>
+                  {billingLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Company info */}
                       <div>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <BookOpen className="h-5 w-5" />
-                          Disciplines
-                        </CardTitle>
-                        <CardDescription>
-                          Bepaal welke oncologische disciplines en subdisciplines beschikbaar zijn.
-                          {enabledCount > 0 && (
-                            <Badge variant="outline" className="ml-2">
-                              {enabledCount} / {allSubDisciplineKeys.length} actief
-                            </Badge>
-                          )}
-                        </CardDescription>
+                        <h3 className="text-sm font-semibold mb-3">Bedrijfsgegevens</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Facturatienaam</Label>
+                            <Input value={billing.billing_name} onChange={e => updateBillingField('billing_name', e.target.value)} placeholder="Officiële naam voor factuur" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">BTW-nummer</Label>
+                            <Input value={billing.billing_vat_number} onChange={e => updateBillingField('billing_vat_number', e.target.value)} placeholder="BE0123.456.789" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={enableAllDisciplines}>
-                          Alles aan
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={disableAllDisciplines}>
-                          Alles uit
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {disciplinesLoading ? (
-                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                    ) : (
-                      <div className="space-y-2">
-                        {DISCIPLINE_CATEGORIES.map(cat => {
-                          const Icon = cat.icon;
-                          const isExpanded = expandedCategories.has(cat.key);
-                          const enabledSubs = cat.subDisciplines.filter(s =>
-                            hospitalDisciplines.find(d => d.disease_area === s.key && d.is_enabled)
-                          ).length;
-                          const allEnabled = !cat.isPlaceholder && enabledSubs === cat.subDisciplines.length && cat.subDisciplines.length > 0;
-                          const someEnabled = enabledSubs > 0;
 
-                          return (
-                            <div key={cat.key} className={`rounded-lg border transition-colors ${
-                              cat.isPlaceholder
-                                ? 'border-dashed border-muted opacity-60'
-                                : allEnabled
-                                  ? 'bg-primary/5 border-primary/20'
-                                  : someEnabled
-                                    ? 'bg-primary/[0.02] border-primary/10'
-                                    : 'bg-muted/30 border-border'
-                            }`}>
-                              {/* Category header */}
-                              <div className="flex items-center justify-between p-4">
-                                <button
-                                  className="flex items-center gap-3 flex-1 text-left"
-                                  onClick={() => !cat.isPlaceholder && toggleExpandCategory(cat.key)}
-                                  disabled={cat.isPlaceholder}
-                                >
-                                  <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                                    someEnabled ? 'bg-primary/10' : 'bg-muted'
-                                  }`}>
-                                    <Icon className={`h-4 w-4 ${someEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <p className={`text-sm font-medium ${cat.isPlaceholder ? 'text-muted-foreground' : ''}`}>
-                                        {cat.label}
-                                      </p>
-                                      {cat.isPlaceholder && (
-                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground border-dashed">
-                                          Binnenkort
-                                        </Badge>
-                                      )}
-                                      {!cat.isPlaceholder && someEnabled && (
-                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                          {enabledSubs}/{cat.subDisciplines.length}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">{cat.description}</p>
-                                  </div>
-                                  {!cat.isPlaceholder && (
-                                    isExpanded
-                                      ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
-                                      : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
-                                  )}
-                                </button>
-                                {!cat.isPlaceholder && (
-                                  <Switch
-                                    checked={allEnabled}
-                                    onCheckedChange={(checked) => toggleCategoryAll(cat, checked)}
-                                    className="ml-3"
-                                  />
-                                )}
-                              </div>
-
-                              {/* Sub-disciplines (expanded) */}
-                              {isExpanded && !cat.isPlaceholder && (
-                                <div className="border-t border-border/50 px-4 pb-3 pt-2 space-y-1">
-                                  {cat.subDisciplines.map(sub => {
-                                    const disc = hospitalDisciplines.find(d => d.disease_area === sub.key);
-                                    const subEnabled = disc?.is_enabled ?? false;
-                                    return (
-                                      <div
-                                        key={sub.key}
-                                        className={`flex items-center justify-between py-2 px-3 rounded-md transition-colors ${
-                                          subEnabled ? 'bg-primary/5' : 'hover:bg-muted/50'
-                                        }`}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          {subEnabled ? (
-                                            <Check className="h-3.5 w-3.5 text-primary" />
-                                          ) : (
-                                            <div className="h-3.5 w-3.5" />
-                                          )}
-                                          <span className={`text-sm ${!subEnabled ? 'text-muted-foreground' : ''}`}>
-                                            {sub.label}
-                                          </span>
-                                        </div>
-                                        <Switch
-                                          checked={subEnabled}
-                                          onCheckedChange={() => toggleDiscipline(sub.key)}
-                                          className="scale-90"
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                      {/* Address */}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">Adres</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Adresregel 1</Label>
+                            <Input value={billing.billing_address_line1} onChange={e => updateBillingField('billing_address_line1', e.target.value)} placeholder="Straat en huisnummer" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Adresregel 2</Label>
+                            <Input value={billing.billing_address_line2} onChange={e => updateBillingField('billing_address_line2', e.target.value)} placeholder="Gebouw, afdeling, ..." />
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Postcode</Label>
+                              <Input value={billing.billing_postal_code} onChange={e => updateBillingField('billing_postal_code', e.target.value)} placeholder="3300" />
                             </div>
-                          );
-                        })}
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Gemeente</Label>
+                              <Input value={billing.billing_city} onChange={e => updateBillingField('billing_city', e.target.value)} placeholder="Tienen" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Land</Label>
+                              <Input value={billing.billing_country} onChange={e => updateBillingField('billing_country', e.target.value)} placeholder="België" />
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
-                      <Lock className="h-3 w-3" />
-                      Op termijn wordt dit een betalende optie: betaal per discipline
-                    </p>
-                  </CardContent>
-                </Card>
 
-                {/* Features section */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+                      {/* Contact */}
                       <div>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <ToggleRight className="h-5 w-5" />
-                          Premium Functies
-                        </CardTitle>
-                        <CardDescription>
-                          Schakel betaalde functies in of uit voor dit ziekenhuis.
-                          {enabledFeatureCount > 0 && (
-                            <Badge variant="outline" className="ml-2">
-                              {enabledFeatureCount} / {AVAILABLE_FEATURES.length} actief
-                            </Badge>
-                          )}
-                        </CardDescription>
+                        <h3 className="text-sm font-semibold mb-3">Contactpersoon facturatie</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Contactpersoon</Label>
+                            <Input value={billing.billing_contact_person} onChange={e => updateBillingField('billing_contact_person', e.target.value)} placeholder="Naam contactpersoon" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">E-mail</Label>
+                            <Input type="email" value={billing.billing_email} onChange={e => updateBillingField('billing_email', e.target.value)} placeholder="facturatie@hospital.be" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Telefoon</Label>
+                            <Input value={billing.billing_phone} onChange={e => updateBillingField('billing_phone', e.target.value)} placeholder="+32 ..." />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Banking */}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">Bankgegevens</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">IBAN</Label>
+                            <Input value={billing.billing_iban} onChange={e => updateBillingField('billing_iban', e.target.value)} placeholder="BE68 5390 0754 7034" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">BIC</Label>
+                            <Input value={billing.billing_bic} onChange={e => updateBillingField('billing_bic', e.target.value)} placeholder="TRIOBEXX" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* PEPPOL */}
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">PEPPOL / e-facturatie</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">PEPPOL-ID</Label>
+                            <Input value={billing.billing_peppol_id} onChange={e => updateBillingField('billing_peppol_id', e.target.value)} placeholder="0208:0123456789" />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">PEPPOL-schema</Label>
+                            <Input value={billing.billing_peppol_scheme} onChange={e => updateBillingField('billing_peppol_scheme', e.target.value)} placeholder="0208" />
+                            <p className="text-[10px] text-muted-foreground">0208 = Belgisch KBO-nummer</p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">PO-nummer</Label>
+                            <Input value={billing.billing_po_number} onChange={e => updateBillingField('billing_po_number', e.target.value)} placeholder="Bestelbonnummer" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-2">
+                        <Button onClick={saveBilling} disabled={billingSaving} className="gap-2">
+                          {billingSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                          Opslaan
+                        </Button>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {featuresLoading ? (
-                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                    ) : (
-                      <div className="space-y-3">
-                        {AVAILABLE_FEATURES.map(feat => {
-                          const existing = hospitalFeatures.find(f => f.feature_key === feat.key);
-                          const isEnabled = existing?.is_enabled ?? false;
-                          const Icon = feat.icon;
-                          return (
-                            <div
-                              key={feat.key}
-                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                                isEnabled
-                                  ? 'bg-primary/5 border-primary/20'
+                  )}
+                </CollapsibleSection>
+
+                {/* Disciplines section */}
+                <CollapsibleSection
+                  title="Disciplines"
+                  icon={BookOpen}
+                  badge={enabledCount > 0 ? (
+                    <Badge variant="outline" className="text-xs">
+                      {enabledCount} / {allSubDisciplineKeys.length} actief
+                    </Badge>
+                  ) : undefined}
+                  actions={
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={enableAllDisciplines}>Alles aan</Button>
+                      <Button variant="outline" size="sm" onClick={disableAllDisciplines}>Alles uit</Button>
+                    </div>
+                  }
+                >
+                  {disciplinesLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                    <div className="space-y-2">
+                      {DISCIPLINE_CATEGORIES.map(cat => {
+                        const Icon = cat.icon;
+                        const isExpanded = expandedCategories.has(cat.key);
+                        const enabledSubs = cat.subDisciplines.filter(s =>
+                          hospitalDisciplines.find(d => d.disease_area === s.key && d.is_enabled)
+                        ).length;
+                        const allEnabled = !cat.isPlaceholder && enabledSubs === cat.subDisciplines.length && cat.subDisciplines.length > 0;
+                        const someEnabled = enabledSubs > 0;
+
+                        return (
+                          <div key={cat.key} className={`rounded-lg border transition-colors ${
+                            cat.isPlaceholder
+                              ? 'border-dashed border-muted opacity-60'
+                              : allEnabled
+                                ? 'bg-primary/5 border-primary/20'
+                                : someEnabled
+                                  ? 'bg-primary/[0.02] border-primary/10'
                                   : 'bg-muted/30 border-border'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3">
+                          }`}>
+                            <div className="flex items-center justify-between p-4">
+                              <button
+                                className="flex items-center gap-3 flex-1 text-left"
+                                onClick={() => !cat.isPlaceholder && toggleExpandCategory(cat.key)}
+                                disabled={cat.isPlaceholder}
+                              >
                                 <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                                  isEnabled ? 'bg-primary/10' : 'bg-muted'
+                                  someEnabled ? 'bg-primary/10' : 'bg-muted'
                                 }`}>
-                                  <Icon className={`h-4.5 w-4.5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  <Icon className={`h-4 w-4 ${someEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
                                 </div>
                                 <div>
-                                  <p className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
-                                    {feat.label}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">{feat.description}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className={`text-sm font-medium ${cat.isPlaceholder ? 'text-muted-foreground' : ''}`}>
+                                      {cat.label}
+                                    </p>
+                                    {cat.isPlaceholder && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground border-dashed">
+                                        Binnenkort
+                                      </Badge>
+                                    )}
+                                    {!cat.isPlaceholder && someEnabled && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                        {enabledSubs}/{cat.subDisciplines.length}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{cat.description}</p>
                                 </div>
-                              </div>
-                              <Switch
-                                checked={isEnabled}
-                                onCheckedChange={() => toggleFeature(feat.key)}
-                              />
+                                {!cat.isPlaceholder && (
+                                  isExpanded
+                                    ? <ChevronDown className="h-4 w-4 text-muted-foreground ml-auto" />
+                                    : <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
+                                )}
+                              </button>
+                              {!cat.isPlaceholder && (
+                                <Switch
+                                  checked={allEnabled}
+                                  onCheckedChange={(checked) => toggleCategoryAll(cat, checked)}
+                                  className="ml-3"
+                                />
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
-                      <Lock className="h-3 w-3" />
-                      Betalende opties: functies worden per ziekenhuis gefactureerd
-                    </p>
-                  </CardContent>
-                </Card>
+
+                            {isExpanded && !cat.isPlaceholder && (
+                              <div className="border-t border-border/50 px-4 pb-3 pt-2 space-y-1">
+                                {cat.subDisciplines.map(sub => {
+                                  const disc = hospitalDisciplines.find(d => d.disease_area === sub.key);
+                                  const subEnabled = disc?.is_enabled ?? false;
+                                  return (
+                                    <div
+                                      key={sub.key}
+                                      className={`flex items-center justify-between py-2 px-3 rounded-md transition-colors ${
+                                        subEnabled ? 'bg-primary/5' : 'hover:bg-muted/50'
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {subEnabled ? (
+                                          <Check className="h-3.5 w-3.5 text-primary" />
+                                        ) : (
+                                          <div className="h-3.5 w-3.5" />
+                                        )}
+                                        <span className={`text-sm ${!subEnabled ? 'text-muted-foreground' : ''}`}>
+                                          {sub.label}
+                                        </span>
+                                      </div>
+                                      <Switch
+                                        checked={subEnabled}
+                                        onCheckedChange={() => toggleDiscipline(sub.key)}
+                                        className="scale-90"
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Op termijn wordt dit een betalende optie: betaal per discipline
+                  </p>
+                </CollapsibleSection>
+
+                {/* Features section */}
+                <CollapsibleSection
+                  title="Premium Functies"
+                  icon={ToggleRight}
+                  badge={enabledFeatureCount > 0 ? (
+                    <Badge variant="outline" className="text-xs">
+                      {enabledFeatureCount} / {AVAILABLE_FEATURES.length} actief
+                    </Badge>
+                  ) : undefined}
+                >
+                  {featuresLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                    <div className="space-y-3">
+                      {AVAILABLE_FEATURES.map(feat => {
+                        const existing = hospitalFeatures.find(f => f.feature_key === feat.key);
+                        const isEnabled = existing?.is_enabled ?? false;
+                        const Icon = feat.icon;
+                        return (
+                          <div
+                            key={feat.key}
+                            className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                              isEnabled
+                                ? 'bg-primary/5 border-primary/20'
+                                : 'bg-muted/30 border-border'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                isEnabled ? 'bg-primary/10' : 'bg-muted'
+                              }`}>
+                                <Icon className={`h-4.5 w-4.5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                              </div>
+                              <div>
+                                <p className={`text-sm font-medium ${!isEnabled ? 'text-muted-foreground' : ''}`}>
+                                  {feat.label}
+                                </p>
+                                <p className="text-xs text-muted-foreground">{feat.description}</p>
+                              </div>
+                            </div>
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleFeature(feat.key)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    Betalende opties: functies worden per ziekenhuis gefactureerd
+                  </p>
+                </CollapsibleSection>
 
                 {/* Staff section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <UserPlus className="h-5 w-5" />
-                      Medewerkers
-                    </CardTitle>
-                    <CardDescription>Beheer artsen, verpleging en apothekers</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {staffLoading ? (
-                      <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
-                    ) : (
-                      <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType)}>
-                        <TabsList className="w-full">
-                          {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
-                            const Icon = staffTypeIcons[type];
-                            const count = staffMembers.filter(s => s.staff_type === type).length;
-                            return (
-                              <TabsTrigger key={type} value={type} className="flex-1 gap-1.5">
-                                <Icon className="h-3.5 w-3.5" />
-                                {staffTypeLabels[type]} ({count})
-                              </TabsTrigger>
-                            );
-                          })}
-                        </TabsList>
+                <CollapsibleSection
+                  title="Medewerkers"
+                  icon={UserPlus}
+                  badge={staffMembers.length > 0 ? (
+                    <Badge variant="outline" className="text-xs">{staffMembers.length}</Badge>
+                  ) : undefined}
+                >
+                  {staffLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                    <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType)}>
+                      <TabsList className="w-full">
                         {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
-                          const filtered = staffMembers.filter(s => s.staff_type === type);
+                          const Icon = staffTypeIcons[type];
+                          const count = staffMembers.filter(s => s.staff_type === type).length;
                           return (
-                            <TabsContent key={type} value={type} className="space-y-3 mt-4">
-                              {filtered.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                  Nog geen {staffTypeLabels[type].toLowerCase()} toegevoegd
-                                </p>
-                              )}
-                              {filtered.map(member => (
-                                <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                  <div>
-                                    <p className="font-medium text-sm">{member.name}</p>
-                                    {member.specialization && <p className="text-xs text-muted-foreground">{member.specialization}</p>}
-                                  </div>
-                                  <Button variant="ghost" size="icon" onClick={() => removeStaffMember(member.id)} className="text-destructive h-8 w-8">
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <div className="border-t pt-4 space-y-3">
-                                <p className="text-sm font-medium">Toevoegen</p>
-                                <div className="flex gap-2">
-                                  <Input placeholder="Naam" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} className="flex-1" />
-                                  <Input placeholder="Specialisatie / functie" value={newStaffSpec} onChange={e => setNewStaffSpec(e.target.value)} className="flex-1" />
-                                  <Button onClick={addStaffMember} size="icon" disabled={!newStaffName.trim()}>
-                                    <Plus className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </TabsContent>
+                            <TabsTrigger key={type} value={type} className="flex-1 gap-1.5">
+                              <Icon className="h-3.5 w-3.5" />
+                              {staffTypeLabels[type]} ({count})
+                            </TabsTrigger>
                           );
                         })}
-                      </Tabs>
-                    )}
-                  </CardContent>
-                </Card>
+                      </TabsList>
+                      {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
+                        const filtered = staffMembers.filter(s => s.staff_type === type);
+                        return (
+                          <TabsContent key={type} value={type} className="space-y-3 mt-4">
+                            {filtered.length === 0 && (
+                              <p className="text-sm text-muted-foreground text-center py-4">
+                                Nog geen {staffTypeLabels[type].toLowerCase()} toegevoegd
+                              </p>
+                            )}
+                            {filtered.map(member => (
+                              <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                <div>
+                                  <p className="font-medium text-sm">{member.name}</p>
+                                  {member.specialization && <p className="text-xs text-muted-foreground">{member.specialization}</p>}
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => removeStaffMember(member.id)} className="text-destructive h-8 w-8">
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                            <div className="border-t pt-4 space-y-3">
+                              <p className="text-sm font-medium">Toevoegen</p>
+                              <div className="flex gap-2">
+                                <Input placeholder="Naam" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} className="flex-1" />
+                                <Input placeholder="Specialisatie / functie" value={newStaffSpec} onChange={e => setNewStaffSpec(e.target.value)} className="flex-1" />
+                                <Button onClick={addStaffMember} size="icon" disabled={!newStaffName.trim()}>
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </TabsContent>
+                        );
+                      })}
+                    </Tabs>
+                  )}
+                </CollapsibleSection>
               </div>
             )}
           </div>
