@@ -235,10 +235,21 @@ Geef maximaal 15 relevante nieuwe therapieën. Als er geen nieuwe zijn, geef een
         .eq("user_id", user.id)
         .single();
 
+      // Fetch all existing drug names for duplicate check
+      const { data: allExisting } = await supabase.from("drugs").select("generic_name");
+      const existingNamesSet = new Set((allExisting || []).map((d: any) => d.generic_name.toLowerCase().trim()));
+
       const added: string[] = [];
       const errors: string[] = [];
+      const skipped: string[] = [];
 
       for (const therapy of therapies) {
+        // Duplicate check
+        if (existingNamesSet.has(therapy.generic_name.toLowerCase().trim())) {
+          skipped.push(therapy.generic_name);
+          continue;
+        }
+
         const drugData = {
           generic_name: therapy.generic_name,
           brand_names: therapy.brand_names || [],
@@ -277,7 +288,7 @@ Geef maximaal 15 relevante nieuwe therapieën. Als er geen nieuwe zijn, geef een
       }
 
       return new Response(
-        JSON.stringify({ success: true, added, errors }),
+        JSON.stringify({ success: true, added, errors, skipped }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
