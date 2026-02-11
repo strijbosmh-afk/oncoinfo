@@ -377,6 +377,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_auto_updates: {
+        Row: {
+          created_at: string
+          created_by: string
+          disease_areas: string[] | null
+          id: string
+          is_active: boolean
+          last_result: Json | null
+          last_run_at: string | null
+          next_run_at: string | null
+          run_count: number
+          schedule_interval: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          disease_areas?: string[] | null
+          id?: string
+          is_active?: boolean
+          last_result?: Json | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          run_count?: number
+          schedule_interval: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          disease_areas?: string[] | null
+          id?: string
+          is_active?: boolean
+          last_result?: Json | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          run_count?: number
+          schedule_interval?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trials: {
         Row: {
           abstract: string | null
@@ -589,7 +631,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "viewer" | "apotheker"
+      app_role: "admin" | "viewer" | "apotheker" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -717,7 +759,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "viewer", "apotheker"],
+      app_role: ["admin", "viewer", "apotheker", "super_admin"],
     },
   },
 } as const
