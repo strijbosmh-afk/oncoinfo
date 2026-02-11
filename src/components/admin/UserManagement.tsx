@@ -18,11 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound } from 'lucide-react';
 
 export function UserManagement() {
   const { user: currentUser, isSuperAdmin } = useAuth();
-  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials } = useUserManagement();
+  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -32,6 +32,8 @@ export function UserManagement() {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const [credentialsUser, setCredentialsUser] = useState<ManagedUser | null>(null);
   const [credentialsPassword, setCredentialsPassword] = useState('');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetUser, setResetUser] = useState<ManagedUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState<string>('all');
   const [functionFilter, setFunctionFilter] = useState<string>('all');
@@ -268,6 +270,20 @@ export function UserManagement() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setResetUser(user); setResetDialogOpen(true); }}
+                          disabled={user.id === currentUser?.id}
+                          title="Wachtwoord resetten"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Wachtwoord resetten</TooltipContent>
+                    </Tooltip>
                     <Button variant="ghost" size="icon" onClick={() => handleSendCredentials(user)} title="Inloggegevens versturen">
                       <Mail className="h-4 w-4" />
                     </Button>
@@ -355,6 +371,33 @@ export function UserManagement() {
             >
               {sendCredentials.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Versturen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Password reset confirmation */}
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Wachtwoord resetten</AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet u zeker dat u het wachtwoord van <strong>{resetUser?.first_name} {resetUser?.last_name}</strong> ({resetUser?.username}) wilt resetten?
+              Er wordt een nieuw willekeurig wachtwoord gegenereerd en per e-mail verstuurd naar <strong>{resetUser?.email}</strong>.
+              De gebruiker moet het wachtwoord wijzigen bij de volgende login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (resetUser) resetPassword.mutate(resetUser.id);
+                setResetDialogOpen(false);
+              }}
+              disabled={resetPassword.isPending}
+            >
+              {resetPassword.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Wachtwoord resetten
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
