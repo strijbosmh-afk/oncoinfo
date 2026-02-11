@@ -89,15 +89,20 @@ export const ADMINISTRATION_ROUTES = [
 ] as const;
 
 export const DRUG_DISEASE_AREAS = [
+  'Borstkanker',
   'Prostaatkanker',
   'Blaaskanker',
   'Niercelcarcinoom',
   'Testiskanker',
   'Peniskanker',
-  'Longkanker',
+  'Ovariumcarcinoom',
+  'Endometriumcarcinoom',
+  'Cervixcarcinoom',
+  'Vulvacarcinoom',
   'NSCLC',
   'SCLC',
-  'Mesothelioom'
+  'Mesothelioom',
+  'Longkanker',
 ] as const;
 
 // Category configurations for the drug library
