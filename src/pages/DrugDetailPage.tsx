@@ -77,7 +77,9 @@ export default function DrugDetailPage() {
   const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
-  const isBelgium = hospital?.billing_country === 'BE';
+  const billingCountry = hospital?.billing_country || '';
+  const isMultiLang = ['BE'].includes(billingCountry);
+  const isDACH = ['DE', 'AT', 'CH'].includes(billingCountry);
   const defaultFolderLang = hospital?.default_language === 'fr' ? 'fr' : hospital?.default_language === 'de' ? 'de' : hospital?.default_language === 'en' ? 'en' : 'nl';
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr' | 'de' | 'en'>(defaultFolderLang);
   const [settingsOpen, setSettingsOpen] = useState(true);
@@ -798,26 +800,17 @@ export default function DrugDetailPage() {
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
                       <div className="space-y-1.5 sm:space-y-3">
                         <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
-                        {isBelgium ? (
+                        {(isMultiLang || isDACH) ? (
                           <div className="flex gap-1.5 sm:gap-2">
-                            <Button
-                              type="button"
-                              variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
-                              onClick={() => setSelectedLanguage('nl')}
-                              className="flex-1 h-7 sm:h-8 text-xs"
-                              size="sm"
-                            >
-                              NL
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
-                              onClick={() => setSelectedLanguage('fr')}
-                              className="flex-1 h-7 sm:h-8 text-xs"
-                              size="sm"
-                            >
-                              FR
-                            </Button>
+                            {isMultiLang && (
+                              <>
+                                <Button type="button" variant={selectedLanguage === 'nl' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('nl')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">NL</Button>
+                                <Button type="button" variant={selectedLanguage === 'fr' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('fr')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">FR</Button>
+                              </>
+                            )}
+                            {isDACH && (
+                              <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
+                            )}
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground pt-1">
