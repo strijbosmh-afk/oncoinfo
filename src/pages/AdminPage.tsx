@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -17,7 +17,6 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
-import { HospitalManagement } from '@/components/admin/HospitalManagement';
 import { CalendarClock, Building2 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -27,7 +26,8 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'hospitals' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
+  const navigate = useNavigate();
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -173,8 +173,8 @@ export default function AdminPage() {
           )}
           {isSuperAdmin && (
             <Button
-              variant={activeSection === 'hospitals' ? 'default' : 'outline'}
-              onClick={() => setActiveSection(activeSection === 'hospitals' ? null : 'hospitals')}
+              variant="outline"
+              onClick={() => navigate('/admin/hospitals')}
               className="gap-2"
             >
               <Building2 className="h-4 w-4" />
@@ -208,11 +208,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {activeSection === 'hospitals' && isSuperAdmin && (
-          <div className="mb-8">
-            <HospitalManagement />
-          </div>
-        )}
 
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">

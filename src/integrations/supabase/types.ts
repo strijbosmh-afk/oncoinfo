@@ -301,6 +301,41 @@ export type Database = {
           },
         ]
       }
+      hospital_disciplines: {
+        Row: {
+          created_at: string
+          disease_area: string
+          hospital_id: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          disease_area: string
+          hospital_id: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          disease_area?: string
+          hospital_id?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_disciplines_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospital_doctors: {
         Row: {
           created_at: string
