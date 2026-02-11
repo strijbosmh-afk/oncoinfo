@@ -214,12 +214,12 @@ export function UserManagement() {
           ) : (
             <div className="space-y-2">
               {/* Column headers */}
-              <div className="hidden sm:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
-                <div className="h-8 w-8 flex-shrink-0" /> {/* Avatar spacer */}
+              <div className="hidden lg:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
+                <div className="h-8 w-8 flex-shrink-0" />
                 <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
-                {isSuperAdmin && <div className="w-[180px] text-right">{t('userDialog.hospital', 'Ziekenhuis')}</div>}
+                {isSuperAdmin && <div className="w-[160px] text-right">{t('userDialog.hospital', 'Ziekenhuis')}</div>}
                 <div className="w-[120px] text-right">{t('userDialog.function')}</div>
-                <div className="w-[148px] flex-shrink-0" /> {/* Actions spacer: 4×32px + gaps + border */}
+                <div className="w-[148px] flex-shrink-0" />
               </div>
 
               {filteredUsers.map((user) => {
@@ -273,7 +273,7 @@ export function UserManagement() {
 
                   {/* Hospital - fixed width for vertical alignment */}
                   {isSuperAdmin && (
-                    <div className="hidden sm:flex w-[180px] justify-end flex-shrink-0">
+                    <div className="hidden lg:flex w-[160px] justify-end flex-shrink-0">
                       {user.hospital_name ? (
                         <Badge
                           variant="outline"
@@ -290,7 +290,7 @@ export function UserManagement() {
                   )}
 
                   {/* Function - fixed width for vertical alignment */}
-                  <div className="hidden sm:flex w-[120px] justify-end flex-shrink-0">
+                  <div className="hidden lg:flex w-[120px] justify-end flex-shrink-0">
                     {user.function ? (
                       <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
                         {user.function}
