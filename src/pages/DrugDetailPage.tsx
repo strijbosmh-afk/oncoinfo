@@ -242,30 +242,30 @@ export default function DrugDetailPage() {
 
   return (
     <Layout>
-      <div className="container py-8">
+      <div className="container py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <Link to="/drugs">
-            <Button variant="ghost" size="sm" className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button variant="ghost" size="sm" className="mb-2 sm:mb-4 h-8 text-xs sm:text-sm">
+              <ArrowLeft className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               Terug naar medicijnen
             </Button>
           </Link>
 
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3 mb-2">
-              <Pill className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">{drug.generic_name}</h1>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2 min-w-0">
+              <Pill className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+              <h1 className="text-xl sm:text-3xl font-bold truncate">{drug.generic_name}</h1>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => toggleFavorite(drug.id)}
-              className="shrink-0"
+              className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
               aria-label={isFavorite(drug.id) ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
             >
               <Star
-                className={`h-6 w-6 transition-colors ${
+                className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
                   isFavorite(drug.id)
                     ? 'fill-yellow-400 text-yellow-400'
                     : 'text-muted-foreground hover:text-yellow-400'
@@ -274,40 +274,42 @@ export default function DrugDetailPage() {
             </Button>
           </div>
           {drug.brand_names.length > 0 && (
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm sm:text-lg text-muted-foreground">
               {drug.brand_names.join(', ')}
             </p>
           )}
-          <div className="flex flex-wrap gap-2 mt-3">
-            <Badge variant="default">{drug.drug_class}</Badge>
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+            <Badge variant="default" className="text-xs">{drug.drug_class}</Badge>
             {drug.administration_route && (
-              <Badge variant="outline">{drug.administration_route}</Badge>
+              <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
             )}
             {drug.is_on_zvz && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
                 RIZIV Terugbetaald
               </Badge>
             )}
             {drug.unit_price !== null && drug.unit_price !== undefined && (
-              <Badge variant="outline" className="font-mono">
+              <Badge variant="outline" className="font-mono text-xs">
                 €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
               </Badge>
             )}
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overzicht</TabsTrigger>
-              <TabsTrigger value="dosing">Dosering</TabsTrigger>
-              <TabsTrigger value="side-effects">Bijwerkingen</TabsTrigger>
-              <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <TabsList className="w-max">
+                <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">Overzicht</TabsTrigger>
+                <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">Dosering</TabsTrigger>
+                <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">Bijwerkingen</TabsTrigger>
+                <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">Monitoring</TabsTrigger>
+              </TabsList>
+            </div>
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
                     <Settings2 className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -335,20 +337,21 @@ export default function DrugDetailPage() {
                 onClick={handleOpenStaffDialog} 
                 disabled={isGeneratingPdf}
                 variant="outline"
-                className="gap-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
               >
                 {isGeneratingPdf ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
-                Patiëntenfolder
+                <span className="hidden xs:inline">Patiëntenfolder</span>
+                <span className="xs:hidden">Folder</span>
               </Button>
             </div>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               {/* Mechanism of Action */}
               {drug.mechanism_of_action && (
                 <Card>
@@ -482,8 +485,8 @@ export default function DrugDetailPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="side-effects" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="side-effects" className="space-y-4 sm:space-y-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               {(drug.side_effects?.common || drug.side_effects?.veel_voorkomend) && (
                 <Card>
                   <CardHeader>
@@ -593,7 +596,7 @@ export default function DrugDetailPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="monitoring" className="space-y-6">
+          <TabsContent value="monitoring" className="space-y-4 sm:space-y-6">
             {drug.monitoring_requirements && drug.monitoring_requirements.length > 0 ? (
               <Card>
                 <CardHeader>
