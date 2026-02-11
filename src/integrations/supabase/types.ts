@@ -474,6 +474,7 @@ export type Database = {
           branding: Json | null
           created_at: string
           default_language: string
+          display_order: number
           id: string
           is_active: boolean
           logo_url: string | null
@@ -500,6 +501,7 @@ export type Database = {
           branding?: Json | null
           created_at?: string
           default_language?: string
+          display_order?: number
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -526,6 +528,7 @@ export type Database = {
           branding?: Json | null
           created_at?: string
           default_language?: string
+          display_order?: number
           id?: string
           is_active?: boolean
           logo_url?: string | null
