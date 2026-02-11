@@ -213,26 +213,51 @@ export function UserManagement() {
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredUsers.map((user) => (
+              {/* Column headers */}
+              <div className="hidden sm:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
+                <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
+                {isSuperAdmin && <div className="w-[140px] text-right">{t('hospitals.title')}</div>}
+                <div className="w-[100px] text-right">{t('userDialog.function')}</div>
+                <div className="w-[100px]" />
+              </div>
+
+              {filteredUsers.map((user) => {
+                const isAdminRole = user.role === 'admin' || user.role === 'super_admin';
+                return (
                 <div
                   key={user.id}
                   className="flex items-center p-3 border rounded-lg gap-3"
                 >
                   {/* Avatar */}
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {user.role === 'admin' || user.role === 'super_admin' ? (
+                    {isAdminRole ? (
                       <Shield className="h-4 w-4 text-primary" />
                     ) : (
                       <Eye className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
 
-                  {/* Name + meta */}
+                  {/* Name + admin badge inline */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="font-medium truncate">
                         {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
                       </p>
+                      {user.role === 'super_admin' && (
+                        <Badge className="text-[10px] py-0 px-1.5 bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0">
+                          Super Admin
+                        </Badge>
+                      )}
+                      {user.role === 'admin' && (
+                        <Badge className="text-[10px] py-0 px-1.5 flex-shrink-0">
+                          Admin
+                        </Badge>
+                      )}
+                      {user.role === 'apotheker' && (
+                        <Badge className="text-[10px] py-0 px-1.5 bg-emerald-600 hover:bg-emerald-700 text-white flex-shrink-0">
+                          Apotheker
+                        </Badge>
+                      )}
                       {user.id === currentUser?.id && (
                         <Badge variant="outline" className="text-[10px] py-0 flex-shrink-0">
                           {t('userMgmt.you')}
@@ -245,17 +270,17 @@ export function UserManagement() {
                     </p>
                   </div>
 
-                  {/* Hospital */}
+                  {/* Hospital - fixed width for vertical alignment */}
                   {isSuperAdmin && (
-                    <div className="hidden sm:flex flex-shrink-0">
+                    <div className="hidden sm:flex w-[140px] justify-end flex-shrink-0">
                       {user.hospital_name ? (
                         <Badge
                           variant="outline"
-                          className="text-xs gap-1 border-transparent text-white whitespace-nowrap"
+                          className="text-xs gap-1 border-transparent text-white whitespace-nowrap max-w-full truncate"
                           style={{ backgroundColor: user.hospital_color || 'hsl(var(--muted-foreground))' }}
                         >
-                          <Building2 className="h-3 w-3" />
-                          {user.hospital_name}
+                          <Building2 className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{user.hospital_name}</span>
                         </Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -263,8 +288,8 @@ export function UserManagement() {
                     </div>
                   )}
 
-                  {/* Function */}
-                  <div className="hidden sm:flex flex-shrink-0">
+                  {/* Function - fixed width for vertical alignment */}
+                  <div className="hidden sm:flex w-[100px] justify-end flex-shrink-0">
                     {user.function ? (
                       <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
                         {user.function}
@@ -272,23 +297,6 @@ export function UserManagement() {
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
-                  </div>
-
-                  {/* Role */}
-                  <div className="flex-shrink-0">
-                    <Badge
-                      variant={user.role === 'admin' || user.role === 'super_admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
-                      className={`text-xs whitespace-nowrap ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''} ${user.role === 'super_admin' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
-                    >
-                      {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
-                    </Badge>
-                  </div>
-
-                  {/* Permissions (compact) */}
-                  <div className="hidden md:flex gap-1 flex-shrink-0">
-                    {user.can_add_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.addPerm')}</Badge>}
-                    {user.can_modify_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.editPerm')}</Badge>}
-                    {user.can_delete_treatments && <Badge variant="outline" className="text-[10px] py-0">{t('userMgmt.deletePerm')}</Badge>}
                   </div>
 
                   {/* Actions */}
@@ -326,7 +334,8 @@ export function UserManagement() {
                     </Button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               {filteredUsers.length === 0 && !isLoading && (
                 <p className="text-center text-muted-foreground py-8">{t('userMgmt.noUsers')}</p>
               )}
