@@ -146,7 +146,13 @@ const staffTypeIcons: Record<StaffType, typeof Stethoscope> = {
   apotheker: Pill,
 };
 
-function LogoPreview({ logoUrl, hospitalName, primaryColor }: { logoUrl: string; hospitalName: string; primaryColor: string }) {
+function LogoPreview({ 
+  logoUrl, hospitalName, primaryColor, 
+  onConfirm, onReject, showActions 
+}: { 
+  logoUrl: string; hospitalName: string; primaryColor: string;
+  onConfirm?: () => void; onReject?: () => void; showActions?: boolean;
+}) {
   const [imgStatus, setImgStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
 
   useEffect(() => {
@@ -185,9 +191,19 @@ function LogoPreview({ logoUrl, hospitalName, primaryColor }: { logoUrl: string;
       </div>
       <div className="flex-1 min-w-0">
         {imgStatus === 'loaded' && <p className="text-sm font-medium text-green-600 flex items-center gap-1"><Check className="h-3.5 w-3.5" /> Logo gevonden</p>}
-        {imgStatus === 'error' && logoUrl && <p className="text-sm text-destructive">Logo niet bereikbaar — pas de URL aan of upload een bestand</p>}
-        {!logoUrl && <p className="text-sm text-muted-foreground">Geen logo ingesteld — initialen worden getoond</p>}
+        {imgStatus === 'error' && logoUrl && <p className="text-sm text-destructive">Logo niet bereikbaar</p>}
+        {!logoUrl && <p className="text-sm text-muted-foreground">Geen logo gevonden</p>}
         {logoUrl && <p className="text-xs text-muted-foreground truncate">{logoUrl}</p>}
+        {showActions && imgStatus === 'loaded' && (
+          <div className="flex gap-2 mt-2">
+            <Button type="button" size="sm" variant="default" className="gap-1 h-7 text-xs" onClick={onConfirm}>
+              <Check className="h-3 w-3" /> Akkoord
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={onReject}>
+              <X className="h-3 w-3" /> Ander logo
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -213,6 +229,7 @@ export default function HospitalManagementPage() {
   const [formLogoUrl, setFormLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [aiLookupLoading, setAiLookupLoading] = useState(false);
+  const [logoConfirmed, setLogoConfirmed] = useState<boolean | null>(null); // null=pending, true=confirmed, false=rejected
 
   // Staff
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -314,12 +331,20 @@ export default function HospitalManagementPage() {
       if (error) throw error;
       if (data?.official_name) setFormName(data.official_name);
       if (data?.official_name && !formSlugManual) setFormSlug(slugify(data.official_name));
-      if (data?.logo_url) setFormLogoUrl(data.logo_url);
       if (data?.brand_color) setFormPrimaryColor(data.brand_color);
-      toast({ title: 'AI-suggestie toegepast', description: `Gevonden: ${data?.official_name || formName}` });
+      if (data?.logo_url) {
+        setFormLogoUrl(data.logo_url);
+        setLogoFile(null);
+        setLogoConfirmed(null); // pending confirmation
+      } else {
+        setFormLogoUrl('');
+        setLogoConfirmed(false); // no logo found, show upload
+      }
+      toast({ title: 'Ziekenhuis gevonden', description: `${data?.official_name || formName} — bevestig het logo` });
     } catch (e: any) {
-      console.error('AI lookup failed:', e);
-      toast({ title: 'AI-lookup mislukt', description: e?.message || 'Probeer het opnieuw', variant: 'destructive' });
+      console.error('Lookup failed:', e);
+      toast({ title: 'Zoeken mislukt', description: e?.message || 'Probeer het opnieuw', variant: 'destructive' });
+      setLogoConfirmed(false); // show upload on failure
     } finally {
       setAiLookupLoading(false);
     }
@@ -330,9 +355,7 @@ export default function HospitalManagementPage() {
     if (!formSlugManual && !editingHospital) {
       setFormSlug(slugify(name));
     }
-    if (!editingHospital && name.trim()) {
-      setFormLogoUrl(suggestLogoUrl(name));
-    }
+    // Don't auto-suggest logo URL anymore - wait for lookup
   };
 
   const openCreate = () => {
@@ -344,6 +367,7 @@ export default function HospitalManagementPage() {
     setFormIsActive(true);
     setLogoFile(null);
     setFormLogoUrl('');
+    setLogoConfirmed(null);
     setDialogOpen(true);
   };
 
@@ -356,6 +380,7 @@ export default function HospitalManagementPage() {
     setFormIsActive(h.is_active);
     setLogoFile(null);
     setFormLogoUrl(h.logo_url || '');
+    setLogoConfirmed(h.logo_url ? true : null);
     setDialogOpen(true);
   };
 
@@ -1044,18 +1069,48 @@ export default function HospitalManagementPage() {
               </div>
               <div className="space-y-2">
                 <Label>Logo</Label>
-                <LogoPreview
-                  logoUrl={logoFile ? URL.createObjectURL(logoFile) : formLogoUrl}
-                  hospitalName={formName}
-                  primaryColor={formPrimaryColor}
-                />
-                <Input
-                  value={formLogoUrl}
-                  onChange={e => setFormLogoUrl(e.target.value)}
-                  placeholder="Logo URL (optioneel)"
-                />
-                <p className="text-xs text-muted-foreground">Of upload een bestand:</p>
-                <Input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
+                {aiLookupLoading ? (
+                  <div className="flex items-center gap-3 p-4 border rounded-lg bg-muted/30">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Logo zoeken...</p>
+                  </div>
+                ) : logoFile ? (
+                  <LogoPreview
+                    logoUrl={URL.createObjectURL(logoFile)}
+                    hospitalName={formName}
+                    primaryColor={formPrimaryColor}
+                    showActions={false}
+                  />
+                ) : formLogoUrl && logoConfirmed !== false ? (
+                  <LogoPreview
+                    logoUrl={formLogoUrl}
+                    hospitalName={formName}
+                    primaryColor={formPrimaryColor}
+                    showActions={logoConfirmed === null}
+                    onConfirm={() => setLogoConfirmed(true)}
+                    onReject={() => {
+                      setLogoConfirmed(false);
+                      setFormLogoUrl('');
+                    }}
+                  />
+                ) : (
+                  <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      {logoConfirmed === false ? 'Upload een eigen logo:' : 'Geen logo gevonden — upload een bestand:'}
+                    </p>
+                    <Input type="file" accept="image/*" onChange={e => {
+                      const file = e.target.files?.[0] || null;
+                      setLogoFile(file);
+                      if (file) setLogoConfirmed(true);
+                    }} />
+                    <p className="text-xs text-muted-foreground">Of voer een URL in:</p>
+                    <Input
+                      value={formLogoUrl}
+                      onChange={e => { setFormLogoUrl(e.target.value); if (e.target.value) setLogoConfirmed(null); }}
+                      placeholder="https://..."
+                    />
+                  </div>
+                )}
                 {editingHospital?.logo_url && !logoFile && !formLogoUrl && (
                   <p className="text-xs text-muted-foreground">Huidig logo behouden</p>
                 )}
