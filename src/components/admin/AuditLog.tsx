@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon } from 'lucide-react';
-import { useState } from 'react';
+import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useState, useMemo } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -49,6 +50,7 @@ export function AuditLog() {
   const [filterAction, setFilterAction] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['audit-log', filterAction, dateFrom?.toISOString(), dateTo?.toISOString()],
@@ -74,6 +76,18 @@ export function AuditLog() {
       return data as AuditEntry[];
     },
   });
+
+  const filteredLogs = useMemo(() => {
+    if (!logs || !searchQuery.trim()) return logs;
+    const q = searchQuery.toLowerCase();
+    return logs.filter(entry =>
+      (entry.username?.toLowerCase().includes(q)) ||
+      (entry.entity_name?.toLowerCase().includes(q)) ||
+      (entry.action.toLowerCase().includes(q)) ||
+      (entry.entity_type?.toLowerCase().includes(q)) ||
+      (entry.details && JSON.stringify(entry.details).toLowerCase().includes(q))
+    );
+  }, [logs, searchQuery]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('nl-BE', {
@@ -147,6 +161,15 @@ export function AuditLog() {
             <CardDescription>Overzicht van logins, wijzigingen en toevoegingen</CardDescription>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-[220px]">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoek gebruiker, item..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className={cn("gap-1.5 w-[150px] justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}>
@@ -204,13 +227,13 @@ export function AuditLog() {
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        ) : !logs || logs.length === 0 ? (
+        ) : !filteredLogs || filteredLogs.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            Nog geen activiteiten gelogd. Activiteiten worden vanaf nu bijgehouden.
+            {searchQuery ? 'Geen resultaten voor deze zoekopdracht.' : 'Nog geen activiteiten gelogd. Activiteiten worden vanaf nu bijgehouden.'}
           </p>
         ) : (
           <div className="space-y-1.5 max-h-[600px] overflow-y-auto">
-            {logs.map((entry) => (
+            {filteredLogs.map((entry) => (
               <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
                 <div className="flex-shrink-0 mt-0.5">
                   {ACTION_ICONS[entry.action] || <Pencil className="h-4 w-4" />}
