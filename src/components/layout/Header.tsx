@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useHospital } from '@/contexts/HospitalContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +57,7 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, us
 
 export function Header() {
   const { user, profile, permissions, isAdmin, isApotheker, signOut, loading } = useAuth();
+  const { hospital } = useHospital();
 
   const userFunction = profile?.function ?? null;
   const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction);
@@ -70,9 +72,13 @@ export function Header() {
         {/* Left: branding + user info */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <Link to="/home" className="flex items-center gap-2 shrink-0">
+            {hospital?.logo_url && (
+              <img src={hospital.logo_url} alt={hospital.name} className="h-7 sm:h-8 w-auto" />
+            )}
             <span className="text-base font-bold text-primary sm:text-2xl">
               OncoInfo
-              <span className="hidden xs:inline"> – RZ Tienen</span>
+              {hospital && <span className="hidden xs:inline"> – {hospital.name}</span>}
+              {!hospital && <span className="hidden xs:inline"> – RZ Tienen</span>}
             </span>
           </Link>
 
