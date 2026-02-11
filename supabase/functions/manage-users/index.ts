@@ -122,6 +122,9 @@ Deno.serve(async (req) => {
             id: u.id,
             email: u.email,
             username: profile?.username || null,
+            first_name: profile?.first_name || null,
+            last_name: profile?.last_name || null,
+            function: profile?.function || null,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
             role: userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',
@@ -138,6 +141,7 @@ Deno.serve(async (req) => {
 
       case 'create': {
         const { email, username, password, role, send_email, login_url,
+          first_name, last_name, function: userFunction,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
         if (!email || !username || !password || !role) {
@@ -153,8 +157,12 @@ Deno.serve(async (req) => {
 
         if (createError) throw createError;
 
-        // Set username in profiles
-        await supabase.from('profiles').update({ username }).eq('user_id', newUser.user.id);
+        // Set username and name fields in profiles
+        const profileData: Record<string, string> = { username };
+        if (first_name !== undefined) profileData.first_name = first_name;
+        if (last_name !== undefined) profileData.last_name = last_name;
+        if (userFunction !== undefined) profileData.function = userFunction;
+        await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
         // The trigger creates a default 'viewer' role. Update if needed.
         if (role === 'admin') {
@@ -194,6 +202,7 @@ Deno.serve(async (req) => {
 
       case 'update': {
         const { user_id, email, username, password, role,
+          first_name, last_name, function: userFunction,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
         if (!user_id) {
@@ -220,6 +229,9 @@ Deno.serve(async (req) => {
         if (email) profileUpdate.email = email;
         if (username) profileUpdate.username = username;
         if (role) profileUpdate.role = role;
+        if (first_name !== undefined) profileUpdate.first_name = first_name;
+        if (last_name !== undefined) profileUpdate.last_name = last_name;
+        if (userFunction !== undefined) profileUpdate.function = userFunction;
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);

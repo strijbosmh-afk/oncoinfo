@@ -17,19 +17,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-function getRoleBadge(isAdmin: boolean, isApotheker: boolean, isPhysician: boolean) {
-  if (isPhysician) return { label: 'Arts', icon: Stethoscope, className: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' };
-  if (isApotheker) return { label: 'Apotheek', icon: FlaskConical, className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' };
+function getRoleBadge(isAdmin: boolean, isApotheker: boolean, userFunction: string | null) {
+  if (userFunction === 'arts') return { label: 'Arts', icon: Stethoscope, className: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' };
+  if (userFunction === 'apotheek' || isApotheker) return { label: 'Apotheek', icon: FlaskConical, className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' };
   if (isAdmin) return { label: 'Admin', icon: Shield, className: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700' };
+  if (userFunction === 'verpleegkundige') return { label: 'Verpleegk.', icon: User, className: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700' };
   return { label: 'Viewer', icon: Eye, className: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' };
 }
 
-function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, isPhysician, permissions }: {
+function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, userFunction, permissions }: {
   displayName: string;
   roleBadge: { label: string };
   isAdmin: boolean;
   isApotheker: boolean;
-  isPhysician: boolean;
+  userFunction: string | null;
   permissions: { can_add_treatments?: boolean; can_modify_treatments?: boolean; can_delete_treatments?: boolean } | null;
 }) {
   return (
@@ -40,7 +41,7 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, is
         <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
           {isAdmin && <li>Volledige beheertoegang</li>}
           {isApotheker && <li>Medicijnbeheer</li>}
-          {isPhysician && <li>Arts</li>}
+          {userFunction && <li>Functie: {userFunction}</li>}
           {permissions?.can_add_treatments && <li>Behandelingen toevoegen</li>}
           {permissions?.can_modify_treatments && <li>Behandelingen wijzigen</li>}
           {permissions?.can_delete_treatments && <li>Behandelingen verwijderen</li>}
@@ -56,11 +57,12 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, is
 export function Header() {
   const { user, profile, permissions, isAdmin, isApotheker, signOut, loading } = useAuth();
 
-  const isPhysician = permissions?.is_physician ?? false;
-  const roleBadge = getRoleBadge(isAdmin, isApotheker, isPhysician);
+  const userFunction = profile?.function ?? null;
+  const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction);
   const RoleIcon = roleBadge.icon;
 
-  const displayName = profile?.username || user?.email?.split('@')[0] || '';
+  // Display first_name + last_name if available, fallback to username
+  const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || profile?.username || user?.email?.split('@')[0] || '';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -94,7 +96,7 @@ export function Header() {
                         roleBadge={roleBadge}
                         isAdmin={isAdmin}
                         isApotheker={isApotheker}
-                        isPhysician={isPhysician}
+                        userFunction={userFunction}
                         permissions={permissions}
                       />
                     </TooltipContent>
@@ -156,7 +158,7 @@ export function Header() {
                       roleBadge={roleBadge}
                       isAdmin={isAdmin}
                       isApotheker={isApotheker}
-                      isPhysician={isPhysician}
+                      userFunction={userFunction}
                       permissions={permissions}
                     />
                   </div>

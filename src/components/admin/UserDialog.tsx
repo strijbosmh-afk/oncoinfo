@@ -16,6 +16,9 @@ interface UserDialogProps {
     id: string;
     email: string;
     username?: string;
+    first_name?: string | null;
+    last_name?: string | null;
+    function?: string | null;
     role: 'admin' | 'viewer' | 'apotheker';
     is_physician?: boolean;
     can_add_treatments?: boolean;
@@ -38,11 +41,13 @@ function generatePassword(length = 12): string {
 export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading }: UserDialogProps) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [userFunction, setUserFunction] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [isPhysician, setIsPhysician] = useState(false);
   const [canAdd, setCanAdd] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
   const [canModify, setCanModify] = useState(false);
@@ -53,21 +58,25 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       if (mode === 'edit' && user) {
         setEmail(user.email);
         setUsername(user.username || '');
+        setFirstName(user.first_name || '');
+        setLastName(user.last_name || '');
+        setUserFunction(user.function || '');
         setRole(user.role);
         setPassword('');
         setShowPassword(false);
-        setIsPhysician(user.is_physician ?? false);
         setCanAdd(user.can_add_treatments ?? false);
         setCanDelete(user.can_delete_treatments ?? false);
         setCanModify(user.can_modify_treatments ?? false);
       } else {
         setEmail('');
         setUsername('');
+        setFirstName('');
+        setLastName('');
+        setUserFunction('');
         setPassword(generatePassword());
         setRole('viewer');
         setSendEmail(true);
         setShowPassword(true);
-        setIsPhysician(false);
         setCanAdd(false);
         setCanDelete(false);
         setCanModify(false);
@@ -88,11 +97,13 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       onSubmit({
         email: email.trim(),
         username: username.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        function: userFunction,
         password: password.trim(),
         role,
         send_email: sendEmail,
         login_url: `${window.location.origin}`,
-        is_physician: isPhysician,
         can_add_treatments: canAdd,
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,
@@ -103,8 +114,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       if (username.trim() !== (user!.username || '')) changes.username = username.trim();
       if (password.trim()) changes.password = password.trim();
       if (role !== user!.role) changes.role = role;
-      // Always send permissions so they can be updated
-      changes.is_physician = isPhysician;
+      changes.first_name = firstName.trim();
+      changes.last_name = lastName.trim();
+      changes.function = userFunction;
       changes.can_add_treatments = canAdd;
       changes.can_delete_treatments = canDelete;
       changes.can_modify_treatments = canModify;
@@ -123,6 +135,44 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="user-lastname">Naam</Label>
+              <Input
+                id="user-lastname"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="bijv. Jansen"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-firstname">Voornaam</Label>
+              <Input
+                id="user-firstname"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="bijv. Jan"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="user-function">Functie</Label>
+            <Select value={userFunction} onValueChange={setUserFunction}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecteer functie" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="arts">Arts</SelectItem>
+                <SelectItem value="apotheek">Apotheek</SelectItem>
+                <SelectItem value="verpleegkundige">Verpleegkundige</SelectItem>
+                <SelectItem value="overige">Overige</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="user-username">Gebruikersnaam</Label>
             <Input
@@ -200,17 +250,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
           </div>
 
           <div className="space-y-3 pt-2 border-t">
-            <Label className="text-sm font-medium">Eigenschappen & rechten</Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is-physician"
-                checked={isPhysician}
-                onCheckedChange={(checked) => setIsPhysician(checked as boolean)}
-              />
-              <Label htmlFor="is-physician" className="text-sm font-normal cursor-pointer">
-                Arts (physician)
-              </Label>
-            </div>
+            <Label className="text-sm font-medium">Rechten</Label>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="can-add"

@@ -6,6 +6,9 @@ export interface ManagedUser {
   id: string;
   email: string;
   username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  function: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   role: 'admin' | 'viewer' | 'apotheker';
