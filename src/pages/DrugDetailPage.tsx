@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
@@ -56,6 +57,7 @@ const PHYSICIAN_GROUPS = [
 const NURSES = ['Mireille Pycke'] as const;
 
 export default function DrugDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -100,7 +102,7 @@ export default function DrugDetailPage() {
       setPreviewHtml(data.html);
     } catch (err) {
       console.error('Error generating patient info:', err);
-      toast.error('Fout bij genereren patiëntenfolder');
+      toast.error(t('patientFolder.generateError'));
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -208,10 +210,10 @@ export default function DrugDetailPage() {
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       
       document.body.removeChild(tempIframe);
-      toast.success('PDF gedownload');
+      toast.success(t('patientFolder.downloaded'));
     } catch (err) {
       console.error('Error downloading PDF:', err);
-      toast.error('Fout bij downloaden PDF');
+      toast.error(t('patientFolder.downloadError'));
     } finally {
       setIsDownloading(false);
     }
@@ -233,11 +235,11 @@ export default function DrugDetailPage() {
         <div className="container py-12">
           <Card>
             <CardContent className="py-8 text-center">
-              <p className="text-destructive">Medicijn niet gevonden.</p>
+              <p className="text-destructive">{t('drugDetail.drugNotFound')}</p>
               <Link to="/drugs">
                 <Button variant="outline" className="mt-4">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Terug naar overzicht
+                  {t('drugs.backToOverview')}
                 </Button>
               </Link>
             </CardContent>
@@ -255,7 +257,7 @@ export default function DrugDetailPage() {
           <Link to="/drugs">
             <Button variant="ghost" size="sm" className="mb-2 sm:mb-4 h-8 text-xs sm:text-sm">
               <ArrowLeft className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              Terug naar medicijnen
+              {t('drugs.backToDrugs')}
             </Button>
           </Link>
 
@@ -269,7 +271,7 @@ export default function DrugDetailPage() {
               size="icon"
               onClick={() => toggleFavorite(drug.id)}
               className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
-              aria-label={isFavorite(drug.id) ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+              aria-label={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
             >
               <Star
                 className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
@@ -292,7 +294,7 @@ export default function DrugDetailPage() {
             )}
             {drug.is_on_zvz && (
               <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                RIZIV Terugbetaald
+                RIZIV
               </Badge>
             )}
             {drug.unit_price !== null && drug.unit_price !== undefined && (
@@ -307,10 +309,10 @@ export default function DrugDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
               <TabsList className="w-max">
-                <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">Overzicht</TabsTrigger>
-                <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">Dosering</TabsTrigger>
-                <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">Bijwerkingen</TabsTrigger>
-                <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">Monitoring</TabsTrigger>
+                <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.overview')}</TabsTrigger>
+                <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.dosing')}</TabsTrigger>
+                <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.sideEffects')}</TabsTrigger>
+                <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.monitoring')}</TabsTrigger>
               </TabsList>
             </div>
             <div className="flex items-center gap-2">
@@ -322,20 +324,20 @@ export default function DrugDetailPage() {
                 </PopoverTrigger>
                 <PopoverContent className="w-56" align="end">
                   <div className="space-y-3">
-                    <p className="text-sm font-medium">Folder opties</p>
+                    <p className="text-sm font-medium">{t('patientFolder.folderOptions')}</p>
                     <label className="flex items-center gap-2 text-sm">
                       <Checkbox
                         checked={includeDosing}
                         onCheckedChange={(checked) => setIncludeDosing(checked as boolean)}
                       />
-                      Dosering opnemen
+                      {t('patientFolder.includeDosing')}
                     </label>
                     <label className="flex items-center gap-2 text-sm">
                       <Checkbox
                         checked={includeSideEffects}
                         onCheckedChange={(checked) => setIncludeSideEffects(checked as boolean)}
                       />
-                      Bijwerkingen opnemen
+                      {t('patientFolder.includeSideEffects')}
                     </label>
                   </div>
                 </PopoverContent>
@@ -351,8 +353,8 @@ export default function DrugDetailPage() {
                 ) : (
                   <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
-                <span className="hidden xs:inline">Patiëntenfolder</span>
-                <span className="xs:hidden">Folder</span>
+                <span className="hidden xs:inline">{t('patientFolder.title')}</span>
+                <span className="xs:hidden">{t('patientFolder.titleShort')}</span>
               </Button>
             </div>
           </div>
@@ -365,7 +367,7 @@ export default function DrugDetailPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Info className="h-5 w-5" />
-                      Werkingsmechanisme
+                      {t('drugDetail.mechanism')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -380,7 +382,7 @@ export default function DrugDetailPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Stethoscope className="h-5 w-5" />
-                      Goedgekeurde Indicaties
+                      {t('drugDetail.indications')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -397,7 +399,7 @@ export default function DrugDetailPage() {
               {drug.disease_areas.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Ziektegebieden</CardTitle>
+                    <CardTitle>{t('drugDetail.diseaseAreas')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
@@ -415,7 +417,7 @@ export default function DrugDetailPage() {
               {drug.common_regimens && drug.common_regimens.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Veelgebruikte Schema's</CardTitle>
+                    <CardTitle>{t('drugDetail.commonRegimens')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -434,7 +436,7 @@ export default function DrugDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  Doseringsinformatie
+                  {t('drugDetail.dosingInfo')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -442,31 +444,31 @@ export default function DrugDetailPage() {
                   <>
                     {drug.dosing_info.standard_dose && (
                       <div>
-                        <h4 className="font-medium mb-1">Standaard Dosering</h4>
+                        <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
                         <p className="text-muted-foreground">{drug.dosing_info.standard_dose}</p>
                       </div>
                     )}
                     {drug.dosing_info.frequency && (
                       <div>
-                        <h4 className="font-medium mb-1">Frequentie</h4>
+                        <h4 className="font-medium mb-1">{t('drugDetail.frequency')}</h4>
                         <p className="text-muted-foreground">{drug.dosing_info.frequency}</p>
                       </div>
                     )}
                     {drug.dosing_info.duration && (
                       <div>
-                        <h4 className="font-medium mb-1">Behandelduur</h4>
+                        <h4 className="font-medium mb-1">{t('drugDetail.duration')}</h4>
                         <p className="text-muted-foreground">{drug.dosing_info.duration}</p>
                       </div>
                     )}
                     {drug.dosing_info.max_dose && (
                       <div>
-                        <h4 className="font-medium mb-1">Maximale Dosering</h4>
+                        <h4 className="font-medium mb-1">{t('drugDetail.maxDose')}</h4>
                         <p className="text-muted-foreground">{drug.dosing_info.max_dose}</p>
                       </div>
                     )}
                     {drug.dosing_info.dose_adjustments && drug.dosing_info.dose_adjustments.length > 0 && (
                       <div>
-                        <h4 className="font-medium mb-2">Dosisaanpassingen</h4>
+                        <h4 className="font-medium mb-2">{t('drugDetail.doseAdjustments')}</h4>
                         <div className="space-y-2">
                           {drug.dosing_info.dose_adjustments.map((adj, i) => (
                             <div key={i} className="text-sm">
@@ -479,13 +481,13 @@ export default function DrugDetailPage() {
                     )}
                   </>
                 ) : (
-                  <p className="text-muted-foreground">Geen doseringsinformatie beschikbaar.</p>
+                  <p className="text-muted-foreground">{t('drugDetail.noDosingInfo')}</p>
                 )}
 
                 {drug.cycle_length_days && (
                   <div>
-                    <h4 className="font-medium mb-1">Cyclusduur</h4>
-                    <p className="text-muted-foreground">{drug.cycle_length_days} dagen</p>
+                    <h4 className="font-medium mb-1">{t('drugDetail.cycleDuration')}</h4>
+                    <p className="text-muted-foreground">{drug.cycle_length_days} {t('drugDetail.days')}</p>
                   </div>
                 )}
               </CardContent>
@@ -499,7 +501,7 @@ export default function DrugDetailPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <AlertTriangle className="h-5 w-5 text-yellow-500" />
-                      Veel Voorkomende Bijwerkingen
+                      {t('drugDetail.commonSideEffects')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -517,7 +519,7 @@ export default function DrugDetailPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
                       <AlertTriangle className="h-5 w-5" />
-                      Ernstige Bijwerkingen
+                      {t('drugDetail.seriousSideEffects')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -536,7 +538,7 @@ export default function DrugDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
-                    Contra-indicaties
+                    {t('drugDetail.contraindications')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -554,7 +556,7 @@ export default function DrugDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                     <Info className="h-5 w-5" />
-                    Bijwerkingen Management
+                    {t('drugDetail.sideEffectManagement')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -573,7 +575,7 @@ export default function DrugDetailPage() {
             {!drug.side_effects?.common && !drug.side_effects?.veel_voorkomend && !drug.side_effects?.serious && !drug.side_effects?.ernstig && (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">Geen bijwerkingen geregistreerd voor dit medicijn.</p>
+                  <p className="text-muted-foreground">{t('drugDetail.noSideEffects')}</p>
                 </CardContent>
               </Card>
             )}
@@ -583,14 +585,14 @@ export default function DrugDetailPage() {
                 <CardHeader>
                    <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
                      <AlertTriangle className="h-5 w-5" />
-                     Medicijninteracties
+                     {t('drugDetail.drugInteractions')}
                    </CardTitle>
                 </CardHeader>
                  <CardContent className="space-y-3">
                    <div className="flex items-start gap-2 p-3 bg-orange-100/80 dark:bg-orange-900/30 rounded-md border border-orange-200 dark:border-orange-800">
                      <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
                      <p className="text-sm text-orange-800 dark:text-orange-300">
-                       <strong>Let op:</strong> Controleer altijd op interacties met huidige medicatie van de patiënt.
+                       <strong>{t('drugDetail.interactionWarning').split('.')[0]}:</strong> {t('drugDetail.interactionWarning')}
                      </p>
                    </div>
                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
@@ -607,7 +609,7 @@ export default function DrugDetailPage() {
             {drug.monitoring_requirements && drug.monitoring_requirements.length > 0 ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Monitoring Vereisten</CardTitle>
+                  <CardTitle>{t('drugDetail.monitoringRequirements')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -620,7 +622,7 @@ export default function DrugDetailPage() {
             ) : (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">Geen specifieke monitoring vereisten geregistreerd.</p>
+                  <p className="text-muted-foreground">{t('drugDetail.noMonitoring')}</p>
                 </CardContent>
               </Card>
             )}
@@ -628,7 +630,7 @@ export default function DrugDetailPage() {
             {drug.patient_counseling_points && drug.patient_counseling_points.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Patiëntvoorlichting</CardTitle>
+                  <CardTitle>{t('drugDetail.patientCounseling')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
@@ -645,7 +647,7 @@ export default function DrugDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ExternalLink className="h-5 w-5" />
-                    Referenties
+                    {t('drugDetail.references')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -676,7 +678,7 @@ export default function DrugDetailPage() {
             <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-0">
               <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="truncate">Patiëntenfolder - {drug.generic_name}</span>
+                <span className="truncate">{t('patientFolder.title')} - {drug.generic_name}</span>
               </DialogTitle>
             </DialogHeader>
 
@@ -688,7 +690,7 @@ export default function DrugDetailPage() {
                     <Button variant="ghost" size="sm" className="gap-2 text-xs font-medium w-full justify-between h-8">
                       <span className="flex items-center gap-2">
                         <Settings2 className="h-3.5 w-3.5" />
-                        Instellingen
+                        {t('patientFolder.settings')}
                         {selectedPhysician && (
                           <span className="text-muted-foreground font-normal truncate max-w-[150px]">— {selectedPhysician}</span>
                         )}
@@ -701,7 +703,7 @@ export default function DrugDetailPage() {
                 <CollapsibleContent className="lg:!block">
                   <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[40vh] lg:max-h-none">
                     <div className="space-y-2 sm:space-y-3">
-                      <Label className="text-xs sm:text-sm font-medium">Arts</Label>
+                      <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3">
                         {PHYSICIAN_GROUPS.map((group) => (
                           <div key={group.label} className="space-y-1">
@@ -711,7 +713,7 @@ export default function DrugDetailPage() {
                               onValueChange={setSelectedPhysician}
                             >
                               <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={`Selecteer`} />
+                                <SelectValue placeholder={t('patientFolder.select')} />
                               </SelectTrigger>
                               <SelectContent>
                                 {group.physicians.map((doc) => (
@@ -725,7 +727,7 @@ export default function DrugDetailPage() {
                     </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
-                      <Label className="text-xs sm:text-sm font-medium">Verpleegkundige</Label>
+                      <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.nurse')}</Label>
                       <RadioGroup
                         value={isNurseCustom ? '__custom__' : nurseSelection}
                         onValueChange={(val) => {
@@ -746,12 +748,12 @@ export default function DrugDetailPage() {
                         ))}
                         <div className="flex items-center gap-2">
                           <RadioGroupItem value="__custom__" id="nurse-custom" />
-                          <Label htmlFor="nurse-custom" className="font-normal cursor-pointer text-xs sm:text-sm">Andere</Label>
+                          <Label htmlFor="nurse-custom" className="font-normal cursor-pointer text-xs sm:text-sm">{t('patientFolder.otherNurse')}</Label>
                         </div>
                       </RadioGroup>
                       {isNurseCustom && (
                         <Input
-                          placeholder="Naam verpleegkundige"
+                          placeholder={t('patientFolder.nurseName')}
                           value={customNurse}
                           onChange={(e) => setCustomNurse(e.target.value)}
                           className="mt-1 h-8 sm:h-9 text-xs sm:text-sm"
@@ -761,7 +763,7 @@ export default function DrugDetailPage() {
                     </div>
 
                     <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
-                      <Label className="text-xs sm:text-sm font-medium">Type folder</Label>
+                      <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.folderType')}</Label>
                       <div className="flex gap-1.5 sm:gap-2">
                         <Button
                           type="button"
@@ -770,7 +772,7 @@ export default function DrugDetailPage() {
                           className="flex-1 h-7 sm:h-8 text-xs"
                           size="sm"
                         >
-                          Compact
+                          {t('patientFolder.compact')}
                         </Button>
                         <Button
                           type="button"
@@ -779,19 +781,19 @@ export default function DrugDetailPage() {
                           className="flex-1 h-7 sm:h-8 text-xs"
                           size="sm"
                         >
-                          Uitgebreid
+                          {t('patientFolder.extended')}
                         </Button>
                       </div>
                       <p className="text-[10px] text-muted-foreground">
                         {folderMode === 'compact'
-                          ? 'Beknopte versie met essentiële informatie'
-                          : 'Volledige versie met doseringen en meer detail'}
+                          ? t('patientFolder.compactDesc')
+                          : t('patientFolder.extendedDesc')}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
                       <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">Taal</Label>
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
                         <div className="flex gap-1.5 sm:gap-2">
                           <Button
                             type="button"
@@ -815,9 +817,9 @@ export default function DrugDetailPage() {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">Telefoon</Label>
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.phone')}</Label>
                         <Input
-                          placeholder="016 80 90 11"
+                          placeholder={t('patientFolder.phonePlaceholder')}
                           value={customPhone}
                           onChange={(e) => setCustomPhone(e.target.value)}
                           className="h-7 sm:h-9 text-xs sm:text-sm"
@@ -835,7 +837,7 @@ export default function DrugDetailPage() {
                       ) : (
                         <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       )}
-                      {previewHtml ? 'Opnieuw genereren' : 'Genereer folder'}
+                      {previewHtml ? t('patientFolder.regenerate') : t('patientFolder.generate')}
                     </Button>
                   </div>
                 </CollapsibleContent>
@@ -892,11 +894,11 @@ export default function DrugDetailPage() {
                   ) : (
                     <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  <span className="hidden xs:inline">Download</span> PDF
+                  <span className="hidden xs:inline">{t('common.download')}</span> PDF
                 </Button>
                 <Button onClick={handlePrint} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8" size="sm">
                   <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  Afdrukken
+                  {t('common.print')}
                 </Button>
               </div>
             )}

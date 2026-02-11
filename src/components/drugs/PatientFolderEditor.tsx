@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,7 @@ export function PatientFolderEditor({
   iframeRef,
   onRefreshPreview 
 }: PatientFolderEditorProps) {
+  const { t } = useTranslation();
   const { data: savedContent, isLoading } = usePatientFolderContent(drug.id);
   const saveMutation = useSavePatientFolderContent();
   const resetMutation = useResetPatientFolderContent();
@@ -92,29 +94,29 @@ export function PatientFolderEditor({
         drug_id: drug.id,
         ...formData,
       });
-      toast.success('Tekst opgeslagen');
+      toast.success(t('patientFolder.contentSaved'));
       setHasChanges(false);
       // Refresh the preview
       onRefreshPreview();
     } catch (error) {
       console.error('Error saving content:', error);
-      toast.error('Fout bij opslaan');
+      toast.error(t('patientFolder.saveError'));
     }
   };
 
   const handleReset = async () => {
-    if (!confirm('Weet u zeker dat u alle aanpassingen wilt verwijderen en terug wilt naar de standaard tekst?')) {
+    if (!confirm(t('patientFolder.resetConfirm'))) {
       return;
     }
     
     try {
       await resetMutation.mutateAsync(drug.id);
-      toast.success('Tekst gereset naar standaard');
+      toast.success(t('patientFolder.contentReset'));
       setHasChanges(false);
       onRefreshPreview();
     } catch (error) {
       console.error('Error resetting content:', error);
-      toast.error('Fout bij resetten');
+      toast.error(t('patientFolder.resetError'));
     }
   };
 
@@ -133,11 +135,11 @@ export function PatientFolderEditor({
           <TabsList>
             <TabsTrigger value="preview" className="gap-2">
               <Eye className="h-4 w-4" />
-              Voorbeeld
+              {t('patientFolder.preview')}
             </TabsTrigger>
             <TabsTrigger value="edit" className="gap-2">
               <Edit className="h-4 w-4" />
-              Bewerken
+              {t('common.edit')}
             </TabsTrigger>
           </TabsList>
           
@@ -156,7 +158,7 @@ export function PatientFolderEditor({
                   ) : (
                     <RotateCcw className="h-4 w-4" />
                   )}
-                  Reset
+                  {t('patientFolder.reset')}
                 </Button>
               )}
               <Button 
@@ -170,7 +172,7 @@ export function PatientFolderEditor({
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                Opslaan
+                {t('common.save')}
               </Button>
             </div>
           )}
@@ -196,111 +198,111 @@ export function PatientFolderEditor({
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    U heeft onopgeslagen wijzigingen. Klik op "Opslaan" om deze te bewaren.
+                    {t('patientFolder.unsavedChanges')}
                   </AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="introduction">Wat is {drug.generic_name}? (Introductie)</Label>
+                <Label htmlFor="introduction">{t('patientFolder.fieldIntroduction', { name: drug.generic_name })}</Label>
                 <Textarea
                   id="introduction"
                   value={formData.introduction ?? ''}
                   onChange={(e) => handleChange('introduction', e.target.value)}
                   rows={3}
-                  placeholder="Beschrijf het werkingsmechanisme..."
+                  placeholder={t('patientFolder.introPlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="usage_info">Waarvoor wordt het gebruikt?</Label>
+                <Label htmlFor="usage_info">{t('patientFolder.fieldUsage')}</Label>
                 <Textarea
                   id="usage_info"
                   value={formData.usage_info ?? ''}
                   onChange={(e) => handleChange('usage_info', e.target.value)}
                   rows={3}
-                  placeholder="• Indicatie 1&#10;• Indicatie 2"
+                  placeholder={t('patientFolder.indicationPlaceholder')}
                 />
-                <p className="text-xs text-muted-foreground">Gebruik • voor een lijst</p>
+                <p className="text-xs text-muted-foreground">{t('patientFolder.useBullets')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dosing_info">Hoe wordt het gegeven? (Dosering)</Label>
+                <Label htmlFor="dosing_info">{t('patientFolder.fieldDosing')}</Label>
                 <Textarea
                   id="dosing_info"
                   value={formData.dosing_info ?? ''}
                   onChange={(e) => handleChange('dosing_info', e.target.value)}
                   rows={3}
-                  placeholder="Dosering: ...&#10;Frequentie: ...&#10;Duur: ..."
+                  placeholder={t('patientFolder.dosingPlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contraindications">Wanneer niet gebruiken (Contra-indicaties)</Label>
+                <Label htmlFor="contraindications">{t('patientFolder.fieldContraindications')}</Label>
                 <Textarea
                   id="contraindications"
                   value={formData.contraindications ?? ''}
                   onChange={(e) => handleChange('contraindications', e.target.value)}
                   rows={3}
-                  placeholder="• Contra-indicatie 1&#10;• Contra-indicatie 2"
+                  placeholder={t('patientFolder.contraPlaceholder')}
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="side_effects_common">Veel voorkomende bijwerkingen</Label>
+                  <Label htmlFor="side_effects_common">{t('patientFolder.fieldCommonSideEffects')}</Label>
                   <Textarea
                     id="side_effects_common"
                     value={formData.side_effects_common ?? ''}
                     onChange={(e) => handleChange('side_effects_common', e.target.value)}
                     rows={4}
-                    placeholder="• Bijwerking 1&#10;• Bijwerking 2"
+                    placeholder={t('patientFolder.sideEffectPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="side_effects_serious">Ernstige bijwerkingen</Label>
+                  <Label htmlFor="side_effects_serious">{t('patientFolder.fieldSeriousSideEffects')}</Label>
                   <Textarea
                     id="side_effects_serious"
                     value={formData.side_effects_serious ?? ''}
                     onChange={(e) => handleChange('side_effects_serious', e.target.value)}
                     rows={4}
-                    placeholder="• Ernstige bijwerking 1&#10;• Ernstige bijwerking 2"
+                    placeholder={t('patientFolder.sideEffectPlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tips">Belangrijke tips (Patiëntvoorlichting)</Label>
+                <Label htmlFor="tips">{t('patientFolder.fieldTips')}</Label>
                 <Textarea
                   id="tips"
                   value={formData.tips ?? ''}
                   onChange={(e) => handleChange('tips', e.target.value)}
                   rows={3}
-                  placeholder="• Tip 1&#10;• Tip 2"
+                  placeholder={t('patientFolder.tipsPlaceholder')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="self_care_tips">Wat kunt u zelf doen? (Zelfzorgtips)</Label>
+                <Label htmlFor="self_care_tips">{t('patientFolder.fieldSelfCare')}</Label>
                 <Textarea
                   id="self_care_tips"
                   value={formData.self_care_tips ?? ''}
                   onChange={(e) => handleChange('self_care_tips', e.target.value)}
                   rows={4}
-                  placeholder="• Drink voldoende water&#10;• Gebruik een zachte tandenborstel&#10;• Vermijd direct zonlicht"
+                  placeholder={t('patientFolder.selfCarePlaceholder')}
                 />
-                <p className="text-xs text-muted-foreground">Deze tips verschijnen in het groene kader op de folder</p>
+                <p className="text-xs text-muted-foreground">{t('patientFolder.fieldSelfCareHint')}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="monitoring">Controles (Monitoring)</Label>
+                <Label htmlFor="monitoring">{t('patientFolder.fieldMonitoring')}</Label>
                 <Textarea
                   id="monitoring"
                   value={formData.monitoring ?? ''}
                   onChange={(e) => handleChange('monitoring', e.target.value)}
                   rows={3}
-                  placeholder="• Controle 1&#10;• Controle 2"
+                  placeholder={t('patientFolder.monitoringPlaceholder')}
                 />
               </div>
             </div>
