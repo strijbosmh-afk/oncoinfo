@@ -19,7 +19,7 @@ interface UserDialogProps {
     first_name?: string | null;
     last_name?: string | null;
     function?: string | null;
-    role: 'admin' | 'viewer' | 'apotheker';
+    role: 'admin' | 'viewer' | 'apotheker' | 'super_admin';
     is_physician?: boolean;
     can_add_treatments?: boolean;
     can_delete_treatments?: boolean;
@@ -27,6 +27,7 @@ interface UserDialogProps {
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
+  callerIsSuperAdmin?: boolean;
 }
 
 function generatePassword(length = 12): string {
@@ -38,14 +39,14 @@ function generatePassword(length = 12): string {
   return pw;
 }
 
-export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading }: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin }: UserDialogProps) {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [userFunction, setUserFunction] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker'>('viewer');
+  const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker' | 'super_admin'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [canAdd, setCanAdd] = useState(false);
@@ -262,7 +263,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
           <div className="space-y-2">
             <Label>Rol</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'viewer' | 'apotheker')}>
+            <Select value={role} onValueChange={(v) => setRole(v as 'admin' | 'viewer' | 'apotheker' | 'super_admin')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -270,6 +271,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 <SelectItem value="viewer">Viewer — alleen lezen</SelectItem>
                 <SelectItem value="apotheker">Apotheker — apotheek toegang</SelectItem>
                 <SelectItem value="admin">Admin — volledig beheer</SelectItem>
+                {callerIsSuperAdmin && (
+                  <SelectItem value="super_admin">Super Admin — platform beheer</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

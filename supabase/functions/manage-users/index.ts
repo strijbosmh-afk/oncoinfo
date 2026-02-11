@@ -196,11 +196,17 @@ Deno.serve(async (req) => {
         profileData.hospital_id = hospital_id || callerHospitalId;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
-        // The trigger creates a default 'viewer' role. Update if needed.
-        if (role === 'admin') {
+        const assignedRole = role === 'super_admin' || role === 'admin' || role === 'apotheker' ? role : 'viewer';
+
+        // Only super_admin callers can assign super_admin role
+        if (assignedRole === 'super_admin' && !(await isSuperAdmin(supabase, adminUser.id))) {
+          return jsonResponse({ error: 'Alleen super admins kunnen de super admin rol toewijzen' }, 403);
+        }
+
+        if (assignedRole !== 'viewer') {
           await supabase.from('user_roles').delete().eq('user_id', newUser.user.id);
-          await supabase.from('user_roles').insert({ user_id: newUser.user.id, role: 'admin' });
-          await supabase.from('profiles').update({ role: 'admin' }).eq('user_id', newUser.user.id);
+          await supabase.from('user_roles').insert({ user_id: newUser.user.id, role: assignedRole });
+          await supabase.from('profiles').update({ role: assignedRole === 'super_admin' ? 'admin' : assignedRole }).eq('user_id', newUser.user.id);
         }
 
         // Create or update permissions
@@ -252,8 +258,10 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
         }
 
-        // Block modifications to super_admin account
-        if (await isSuperAdmin(supabase, user_id) && user_id !== adminUser.id) {
+        // Block modifications to super_admin accounts by non-super-admins
+        const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
+        const targetIsSuper = await isSuperAdmin(supabase, user_id);
+        if (targetIsSuper && !callerIsSuper) {
           return jsonResponse({ error: 'Het super admin account kan niet worden gewijzigd' }, 403);
         }
 
@@ -287,6 +295,10 @@ Deno.serve(async (req) => {
 
         // Update role if changed
         if (role) {
+          // Only super_admin callers can assign super_admin role
+          if (role === 'super_admin' && !callerIsSuper) {
+            return jsonResponse({ error: 'Alleen super admins kunnen de super admin rol toewijzen' }, 403);
+          }
           await supabase.from('user_roles').delete().eq('user_id', user_id);
           await supabase.from('user_roles').insert({ user_id, role });
         }
