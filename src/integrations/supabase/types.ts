@@ -101,6 +101,7 @@ export type Database = {
           entity_id: string | null
           entity_name: string | null
           entity_type: string | null
+          hospital_id: string | null
           id: string
           user_id: string
           username: string | null
@@ -112,6 +113,7 @@ export type Database = {
           entity_id?: string | null
           entity_name?: string | null
           entity_type?: string | null
+          hospital_id?: string | null
           id?: string
           user_id: string
           username?: string | null
@@ -123,11 +125,20 @@ export type Database = {
           entity_id?: string | null
           entity_name?: string | null
           entity_type?: string | null
+          hospital_id?: string | null
           id?: string
           user_id?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       drugs: {
         Row: {
@@ -146,6 +157,7 @@ export type Database = {
           ema_approval_date: string | null
           fda_approval_date: string | null
           generic_name: string
+          hospital_id: string | null
           id: string
           is_on_zvz: boolean | null
           mechanism_of_action: string | null
@@ -173,6 +185,7 @@ export type Database = {
           ema_approval_date?: string | null
           fda_approval_date?: string | null
           generic_name: string
+          hospital_id?: string | null
           id?: string
           is_on_zvz?: boolean | null
           mechanism_of_action?: string | null
@@ -200,6 +213,7 @@ export type Database = {
           ema_approval_date?: string | null
           fda_approval_date?: string | null
           generic_name?: string
+          hospital_id?: string | null
           id?: string
           is_on_zvz?: boolean | null
           mechanism_of_action?: string | null
@@ -211,7 +225,15 @@ export type Database = {
           unit_price?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "drugs_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       endpoints: {
         Row: {
@@ -279,12 +301,126 @@ export type Database = {
           },
         ]
       }
+      hospital_doctors: {
+        Row: {
+          created_at: string
+          display_order: number
+          hospital_id: string
+          id: string
+          is_active: boolean
+          name: string
+          specialization: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          hospital_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          specialization?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          hospital_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          specialization?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_doctors_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospital_drug_visibility: {
+        Row: {
+          created_at: string
+          drug_id: string
+          hospital_id: string
+          id: string
+          is_visible: boolean
+        }
+        Insert: {
+          created_at?: string
+          drug_id: string
+          hospital_id: string
+          id?: string
+          is_visible?: boolean
+        }
+        Update: {
+          created_at?: string
+          drug_id?: string
+          hospital_id?: string
+          id?: string
+          is_visible?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_drug_visibility_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_drug_visibility_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals: {
+        Row: {
+          branding: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          branding?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          branding?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patient_folder_content: {
         Row: {
           contraindications: string | null
           created_at: string
           dosing_info: string | null
           drug_id: string
+          hospital_id: string | null
           id: string
           introduction: string | null
           monitoring: string | null
@@ -300,6 +436,7 @@ export type Database = {
           created_at?: string
           dosing_info?: string | null
           drug_id: string
+          hospital_id?: string | null
           id?: string
           introduction?: string | null
           monitoring?: string | null
@@ -315,6 +452,7 @@ export type Database = {
           created_at?: string
           dosing_info?: string | null
           drug_id?: string
+          hospital_id?: string | null
           id?: string
           introduction?: string | null
           monitoring?: string | null
@@ -333,6 +471,13 @@ export type Database = {
             referencedRelation: "drugs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "patient_folder_content_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -341,6 +486,7 @@ export type Database = {
           email: string | null
           first_name: string | null
           function: string | null
+          hospital_id: string | null
           id: string
           last_name: string | null
           password_changed: boolean
@@ -354,6 +500,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           function?: string | null
+          hospital_id?: string | null
           id?: string
           last_name?: string | null
           password_changed?: boolean
@@ -367,6 +514,7 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           function?: string | null
+          hospital_id?: string | null
           id?: string
           last_name?: string | null
           password_changed?: boolean
@@ -375,13 +523,22 @@ export type Database = {
           user_id?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_auto_updates: {
         Row: {
           created_at: string
           created_by: string
           disease_areas: string[] | null
+          hospital_id: string | null
           id: string
           is_active: boolean
           last_result: Json | null
@@ -395,6 +552,7 @@ export type Database = {
           created_at?: string
           created_by: string
           disease_areas?: string[] | null
+          hospital_id?: string | null
           id?: string
           is_active?: boolean
           last_result?: Json | null
@@ -408,6 +566,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           disease_areas?: string[] | null
+          hospital_id?: string | null
           id?: string
           is_active?: boolean
           last_result?: Json | null
@@ -417,7 +576,15 @@ export type Database = {
           schedule_interval?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_auto_updates_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trials: {
         Row: {
@@ -622,6 +789,7 @@ export type Database = {
     }
     Functions: {
       get_email_by_username: { Args: { _username: string }; Returns: string }
+      get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
