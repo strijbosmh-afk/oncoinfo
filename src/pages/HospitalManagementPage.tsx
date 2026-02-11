@@ -212,6 +212,7 @@ export default function HospitalManagementPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [formLogoUrl, setFormLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
+  const [aiLookupLoading, setAiLookupLoading] = useState(false);
 
   // Staff
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
@@ -299,9 +300,29 @@ export default function HospitalManagementPage() {
     text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   const suggestLogoUrl = (name: string) => {
-    // Try to find a logo via Clearbit (common for organizations)
     const domain = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') + '.be';
     return `https://logo.clearbit.com/${domain}`;
+  };
+
+  const handleAiLookup = async () => {
+    if (!formName.trim()) return;
+    setAiLookupLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('lookup-hospital', {
+        body: { query: formName.trim() },
+      });
+      if (error) throw error;
+      if (data?.official_name) setFormName(data.official_name);
+      if (data?.official_name && !formSlugManual) setFormSlug(slugify(data.official_name));
+      if (data?.logo_url) setFormLogoUrl(data.logo_url);
+      if (data?.brand_color) setFormPrimaryColor(data.brand_color);
+      toast({ title: 'AI-suggestie toegepast', description: `Gevonden: ${data?.official_name || formName}` });
+    } catch (e: any) {
+      console.error('AI lookup failed:', e);
+      toast({ title: 'AI-lookup mislukt', description: e?.message || 'Probeer het opnieuw', variant: 'destructive' });
+    } finally {
+      setAiLookupLoading(false);
+    }
   };
 
   const handleNameChange = (name: string) => {
@@ -977,7 +998,20 @@ export default function HospitalManagementPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Naam</Label>
-                <Input value={formName} onChange={e => handleNameChange(e.target.value)} placeholder="bijv. RZ Tienen" />
+                <div className="flex gap-2">
+                  <Input value={formName} onChange={e => handleNameChange(e.target.value)} placeholder="bijv. RZ Tienen" className="flex-1" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleAiLookup}
+                    disabled={!formName.trim() || aiLookupLoading}
+                    title="AI: zoek ziekenhuis en logo"
+                  >
+                    {aiLookupLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Typ een naam en klik ✨ om automatisch het ziekenhuis te identificeren en logo te vinden</p>
               </div>
               <div className="space-y-2">
                 <Label>Slug (URL-vriendelijk)</Label>
