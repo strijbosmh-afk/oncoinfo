@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Log login to audit_log
+    // Log login to audit_log with hospital_id
     try {
       await supabaseAdmin.from('audit_log').insert({
         user_id: signInData.user.id,
@@ -83,7 +83,8 @@ Deno.serve(async (req) => {
         action: 'login',
         entity_type: 'session',
         entity_name: username.trim(),
-        details: { ip: req.headers.get('x-forwarded-for') || 'unknown' },
+        hospital_id: profileData.hospital_id || null,
+        details: { ip: req.headers.get('x-forwarded-for') || 'unknown', hospital_id: hospital_id || null },
       });
     } catch (logErr) {
       console.error('Audit log error:', logErr);

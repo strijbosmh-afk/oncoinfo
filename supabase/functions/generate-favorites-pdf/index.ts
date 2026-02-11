@@ -37,6 +37,34 @@ Deno.serve(async (req) => {
     }
 
      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+     // Fetch user's hospital for branding
+     const { data: userProfile } = await supabase
+       .from('profiles')
+       .select('hospital_id')
+       .eq('user_id', user.id)
+       .maybeSingle();
+
+     let hospitalName = 'OncoInfo';
+     let hospitalColor = '#6b2d5b';
+     let hospitalLogoUrl = 'https://oncoinfo.lovable.app/images/logo-rzt.png';
+
+     if (userProfile?.hospital_id) {
+       const { data: hospital } = await supabase
+         .from('hospitals')
+         .select('name, logo_url, branding')
+         .eq('id', userProfile.hospital_id)
+         .maybeSingle();
+       if (hospital) {
+         hospitalName = hospital.name;
+         hospitalColor = (hospital.branding as any)?.primary_color || '#6b2d5b';
+         if (hospital.logo_url) {
+           hospitalLogoUrl = hospital.logo_url.startsWith('http')
+             ? hospital.logo_url
+             : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospital.logo_url}`;
+         }
+       }
+     }
  
      const { drug_ids, include_dosing = true, include_side_effects = true } = await req.json();
  
@@ -60,11 +88,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Logo URL from the published site
-    const logoUrl = 'https://uroinfo.lovable.app/images/logo-rzt.png';
-    
-    // Generate combined HTML for all drugs
-    const html = generateCombinedHtml(drugs, include_dosing, include_side_effects, logoUrl);
+    // Generate combined HTML for all drugs with hospital branding
+    const html = generateCombinedHtml(drugs, include_dosing, include_side_effects, hospitalLogoUrl, hospitalName, hospitalColor);
 
     return new Response(
       JSON.stringify({ 
@@ -85,7 +110,7 @@ Deno.serve(async (req) => {
   }
 });
 
-function generateDrugSection(drug: any, includeDosing: boolean, includeSideEffects: boolean): string {
+function generateDrugSection(drug: any, includeDosing: boolean, includeSideEffects: boolean, _hospitalColor?: string): string {
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.slice(0, 2).join(', ')})` 
     : '';
@@ -122,8 +147,8 @@ function generateDrugSection(drug: any, includeDosing: boolean, includeSideEffec
   `;
 }
 
-function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideEffects: boolean, logoUrl: string): string {
-  const drugSections = drugs.map(drug => generateDrugSection(drug, includeDosing, includeSideEffects)).join('');
+function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideEffects: boolean, logoUrl: string, hospitalName: string = 'OncoInfo', hospitalColor: string = '#6b2d5b'): string {
+  const drugSections = drugs.map(drug => generateDrugSection(drug, includeDosing, includeSideEffects, hospitalColor)).join('');
 
   return `
 <!DOCTYPE html>
@@ -133,143 +158,52 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Favoriete Medicijnen - Patiëntinformatie</title>
   <style>
-    @page {
-      size: A4;
-      margin: 10mm;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    @page { size: A4; margin: 10mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 9px;
-      line-height: 1.3;
-      color: #1a1a1a;
-      width: 210mm;
-      min-height: 297mm;
-      max-height: 297mm;
-      margin: 0 auto;
-      padding: 10mm;
-      background: white;
-      overflow: hidden;
+      font-size: 9px; line-height: 1.3; color: #1a1a1a;
+      width: 210mm; min-height: 297mm; max-height: 297mm;
+      margin: 0 auto; padding: 10mm; background: white; overflow: hidden;
     }
     .logo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #6b2d5b;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px; padding-bottom: 6px; border-bottom: 2px solid ${hospitalColor};
     }
-    .logo-header img {
-      max-height: 32px;
-      width: auto;
-    }
-    .header-title h1 {
-      color: #6b2d5b;
-      font-size: 14px;
-    }
-    .header-title .subtitle {
-      color: #666;
-      font-size: 9px;
-    }
-    .drugs-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    .drug-section {
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      padding: 6px 8px;
-      background: #fafafa;
-    }
+    .logo-header img { max-height: 32px; width: auto; }
+    .header-title h1 { color: ${hospitalColor}; font-size: 14px; }
+    .header-title .subtitle { color: #666; font-size: 9px; }
+    .drugs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .drug-section { border: 1px solid #e0e0e0; border-radius: 4px; padding: 6px 8px; background: #fafafa; }
     .drug-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #e0e0e0;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #e0e0e0;
     }
-    .drug-header h2 {
-      color: #6b2d5b;
-      font-size: 11px;
-      margin: 0;
-    }
-    .drug-class {
-      background: #f5e6f0;
-      color: #6b2d5b;
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-size: 8px;
-    }
-    .drug-content {
-      font-size: 8px;
-    }
-    .drug-content p, .drug-content div {
-      margin-bottom: 2px;
-    }
-    .moa {
-      color: #555;
-      font-style: italic;
-    }
-    .inline-list {
-      color: #333;
-    }
-    .side-effects {
-      color: #333;
-    }
-    .warning-label {
-      color: #cc7a00;
-      font-weight: 600;
-    }
-    .danger-label {
-      color: #cc0000;
-      font-weight: 600;
-      margin-left: 6px;
-    }
-    .tips {
-      color: #6b2d5b;
-    }
+    .drug-header h2 { color: ${hospitalColor}; font-size: 11px; margin: 0; }
+    .drug-class { background: #f5e6f0; color: ${hospitalColor}; padding: 1px 6px; border-radius: 3px; font-size: 8px; }
+    .drug-content { font-size: 8px; }
+    .drug-content p, .drug-content div { margin-bottom: 2px; }
+    .moa { color: #555; font-style: italic; }
+    .inline-list { color: #333; }
+    .side-effects { color: #333; }
+    .warning-label { color: #cc7a00; font-weight: 600; }
+    .danger-label { color: #cc0000; font-weight: 600; margin-left: 6px; }
+    .tips { color: ${hospitalColor}; }
     .contact-section {
-      background: #f5f5f5;
-      padding: 6px 10px;
-      border-radius: 4px;
-      margin-top: 8px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      font-size: 8px;
+      background: #f5f5f5; padding: 6px 10px; border-radius: 4px; margin-top: 8px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; font-size: 8px;
     }
-    .contact-section h2 {
-      grid-column: 1 / -1;
-      font-size: 10px;
-      color: #6b2d5b;
-      margin-bottom: 2px;
-    }
+    .contact-section h2 { grid-column: 1 / -1; font-size: 10px; color: ${hospitalColor}; margin-bottom: 2px; }
     .footer {
-      margin-top: 6px;
-      padding-top: 4px;
-      border-top: 1px solid #e0e0e0;
-      font-size: 7px;
-      color: #666;
-      text-align: center;
+      margin-top: 6px; padding-top: 4px; border-top: 1px solid #e0e0e0;
+      font-size: 7px; color: #666; text-align: center;
     }
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-    }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
 <body>
   <div class="logo-header">
-    <img src="${logoUrl}" alt="RZ Tienen Logo" />
+    <img src="${logoUrl}" alt="${hospitalName} Logo" />
     <div class="header-title">
       <h1>Mijn Medicijnen</h1>
       <p class="subtitle">${drugs.length} medicijn${drugs.length !== 1 ? 'en' : ''} - Patiëntinformatie</p>
@@ -285,11 +219,11 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
     <p><strong>Arts:</strong> _____________</p>
     <p><strong>Verpleegkundige:</strong> _____________</p>
     <p><strong>Apotheek:</strong> _____________</p>
-    <p><strong>Tel:</strong> 016 80 90 11</p>
+    <p><strong>Tel:</strong> _____________</p>
   </div>
 
   <div class="footer">
-    <p>RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.</p>
+    <p>${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.</p>
   </div>
 </body>
 </html>
