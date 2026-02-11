@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { cn } from '@/lib/utils';
 import { Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
@@ -314,6 +315,31 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
 }) {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+
+  const handleLogoUpload = async (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: 'Bestand te groot', description: 'Max 2MB toegestaan.', variant: 'destructive' });
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Ongeldig bestand', description: 'Alleen afbeeldingen toegestaan.', variant: 'destructive' });
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split('.').pop() || 'png';
+    const path = `logos/${hospital.id}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('public-assets')
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      toast({ title: 'Upload mislukt', description: uploadError.message, variant: 'destructive' });
+    } else {
+      const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(path);
+      setLogoUrl(`${urlData.publicUrl}?t=${Date.now()}`);
+      toast({ title: 'Logo geüpload', description: 'Het logo is opgeslagen.' });
+    }
+    setUploading(false);
+  };
   const [editing, setEditing] = useState(false);
   const [logoUrl, setLogoUrl] = useState(hospital.logo_url || '');
   const [language, setLanguage] = useState(hospital.default_language || 'nl');
@@ -500,44 +526,48 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Logo</Label>
-            <div className="flex items-center gap-2">
-              <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://logo.clearbit.com/hospital.be" className="flex-1" />
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                      toast({ title: 'Bestand te groot', description: 'Max 2MB toegestaan.', variant: 'destructive' });
-                      return;
-                    }
-                    setUploading(true);
-                    const ext = file.name.split('.').pop() || 'png';
-                    const path = `logos/${hospital.id}.${ext}`;
-                    const { error: uploadError } = await supabase.storage
-                      .from('public-assets')
-                      .upload(path, file, { upsert: true, contentType: file.type });
-                    if (uploadError) {
-                      toast({ title: 'Upload mislukt', description: uploadError.message, variant: 'destructive' });
-                    } else {
-                      const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(path);
-                      setLogoUrl(`${urlData.publicUrl}?t=${Date.now()}`);
-                      toast({ title: 'Logo geüpload', description: 'Het logo is opgeslagen.' });
-                    }
-                    setUploading(false);
-                    e.target.value = '';
-                  }}
-                />
-                <Button type="button" variant="outline" size="sm" className="gap-1.5 whitespace-nowrap" disabled={uploading} asChild>
-                  <span>
-                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                    Uploaden
-                  </span>
-                </Button>
-              </label>
+            <div
+              className={cn(
+                "rounded-md border-2 border-dashed p-3 transition-colors",
+                uploading ? "border-muted opacity-60" : "border-input hover:border-primary/50"
+              )}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-primary', 'bg-primary/5'); }}
+              onDragLeave={(e) => { e.currentTarget.classList.remove('border-primary', 'bg-primary/5'); }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('border-primary', 'bg-primary/5');
+                const file = e.dataTransfer.files?.[0];
+                if (!file || !file.type.startsWith('image/')) {
+                  toast({ title: 'Ongeldig bestand', description: 'Alleen afbeeldingen toegestaan.', variant: 'destructive' });
+                  return;
+                }
+                await handleLogoUpload(file);
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Input value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="https://logo.clearbit.com/hospital.be" className="flex-1" />
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) await handleLogoUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-1.5 whitespace-nowrap" disabled={uploading} asChild>
+                    <span>
+                      {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                      Uploaden
+                    </span>
+                  </Button>
+                </label>
+              </div>
+              {!logoUrl && !uploading && (
+                <p className="text-[11px] text-muted-foreground text-center mt-1.5">Sleep een afbeelding hierheen of klik op Uploaden</p>
+              )}
             </div>
             {logoUrl && (
               <LogoPreview logoUrl={logoUrl} hospitalName={hospital.name} primaryColor={color} />
