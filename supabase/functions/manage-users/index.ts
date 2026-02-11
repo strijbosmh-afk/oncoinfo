@@ -34,6 +34,16 @@ async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader
   return user;
 }
 
+async function isSuperAdmin(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'super_admin')
+    .maybeSingle();
+  return !!data;
+}
+
 async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string) {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) {
@@ -114,27 +124,34 @@ Deno.serve(async (req) => {
         const { data: roles } = await supabase.from('user_roles').select('*');
         const { data: permissions } = await supabase.from('user_permissions').select('*');
 
-        const enrichedUsers = users.map((u: any) => {
-          const profile = profiles?.find((p: any) => p.user_id === u.id);
-          const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
-          const perm = permissions?.find((p: any) => p.user_id === u.id);
-          return {
-            id: u.id,
-            email: u.email,
-            username: profile?.username || null,
-            first_name: profile?.first_name || null,
-            last_name: profile?.last_name || null,
-            function: profile?.function || null,
-            created_at: u.created_at,
-            last_sign_in_at: u.last_sign_in_at,
-            role: userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',
-            profile_id: profile?.id,
-            is_physician: perm?.is_physician ?? false,
-            can_add_treatments: perm?.can_add_treatments ?? false,
-            can_delete_treatments: perm?.can_delete_treatments ?? false,
-            can_modify_treatments: perm?.can_modify_treatments ?? false,
-          };
-        });
+        const callerIsSuperAdmin = await isSuperAdmin(supabase, adminUser.id);
+
+        const enrichedUsers = users
+          .map((u: any) => {
+            const profile = profiles?.find((p: any) => p.user_id === u.id);
+            const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
+            const perm = permissions?.find((p: any) => p.user_id === u.id);
+            const isSA = userRoles.includes('super_admin');
+            return {
+              id: u.id,
+              email: u.email,
+              username: profile?.username || null,
+              first_name: profile?.first_name || null,
+              last_name: profile?.last_name || null,
+              function: profile?.function || null,
+              created_at: u.created_at,
+              last_sign_in_at: u.last_sign_in_at,
+              role: isSA ? 'super_admin' : userRoles.includes('admin') ? 'admin' : userRoles.includes('apotheker') ? 'apotheker' : 'viewer',
+              profile_id: profile?.id,
+              is_physician: perm?.is_physician ?? false,
+              can_add_treatments: perm?.can_add_treatments ?? false,
+              can_delete_treatments: perm?.can_delete_treatments ?? false,
+              can_modify_treatments: perm?.can_modify_treatments ?? false,
+              is_super_admin: isSA,
+            };
+          })
+          // Hide super_admin from non-super-admin callers
+          .filter((u: any) => callerIsSuperAdmin || !u.is_super_admin);
 
         return jsonResponse({ users: enrichedUsers });
       }
@@ -209,6 +226,11 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
         }
 
+        // Block modifications to super_admin account
+        if (await isSuperAdmin(supabase, user_id) && user_id !== adminUser.id) {
+          return jsonResponse({ error: 'Het super admin account kan niet worden gewijzigd' }, 403);
+        }
+
         // Prevent self-demotion
         if (user_id === adminUser.id && role === 'viewer') {
           return jsonResponse({ error: 'U kunt uw eigen admin-rol niet verwijderen' }, 400);
@@ -270,6 +292,11 @@ Deno.serve(async (req) => {
 
         if (user_id === adminUser.id) {
           return jsonResponse({ error: 'U kunt uw eigen account niet verwijderen' }, 400);
+        }
+
+        // Block deletion of super_admin account
+        if (await isSuperAdmin(supabase, user_id)) {
+          return jsonResponse({ error: 'Het super admin account kan niet worden verwijderd' }, 403);
         }
 
         // Clean up profiles and roles first
