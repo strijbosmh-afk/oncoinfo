@@ -531,7 +531,8 @@
     "canModify": "Kann Behandlungen ändern",
     "canDelete": "Kann Behandlungen löschen",
     "sendEmail": "Zugangsdaten per E-Mail senden",
-    "create": "Erstellen"
+    "create": "Erstellen",
+    "hospital": "Krankenhaus"
   },
   "changePassword": {
     "title": "Passwort ändern",

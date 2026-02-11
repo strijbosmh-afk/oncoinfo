@@ -531,7 +531,8 @@
     "canModify": "Can modify treatments",
     "canDelete": "Can delete treatments",
     "sendEmail": "Send credentials by email",
-    "create": "Create"
+    "create": "Create",
+    "hospital": "Hospital"
   },
   "changePassword": {
     "title": "Change your password",
