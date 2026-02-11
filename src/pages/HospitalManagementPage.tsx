@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -21,9 +21,26 @@ import {
   Stethoscope, Heart, Pill, ArrowLeft, BookOpen, Check, Lock,
   Sparkles, CalendarClock, ToggleRight, ChevronDown, ChevronRight,
   Utensils, Sun, CircleUser, Wind, Search, FileText, Save,
-  Info, Globe, Crown, Filter,
+  Info, Globe, Crown, Filter, GripVertical,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Hospital {
   id: string;
@@ -35,6 +52,7 @@ interface Hospital {
   created_at: string;
   default_language: string;
   billing_country: string | null;
+  display_order: number;
 }
 
 const COUNTRIES = [
@@ -614,13 +632,82 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
   );
 }
 
+function SortableHospitalCard({ hospital, isSelected, onSelect, onToggleActive, hasPremium, featureCount, totalFeatures }: {
+  hospital: Hospital;
+  isSelected: boolean;
+  onSelect: (h: Hospital) => void;
+  onToggleActive: (h: Hospital) => void;
+  hasPremium: boolean;
+  featureCount: number;
+  totalFeatures: number;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging: itemDragging } = useSortable({ id: hospital.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'cursor-pointer transition-all hover:shadow-md',
+        isSelected && 'ring-2 ring-primary shadow-md',
+        !hospital.is_active && 'opacity-60',
+        itemDragging && 'shadow-lg ring-2 ring-primary/50 z-50'
+      )}
+      onClick={() => onSelect(hospital)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2">
+          <div
+            className="shrink-0 cursor-grab active:cursor-grabbing p-1 -ml-1 text-muted-foreground hover:text-foreground"
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4" />
+          </div>
+          {hospital.logo_url ? (
+            <img src={hospital.logo_url} alt={hospital.name} className="h-10 w-auto max-w-[60px] object-contain" />
+          ) : (
+            <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
+              <Building2 className="h-5 w-5 text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-medium truncate">{hospital.name}</p>
+              {hospital.branding?.primary_color && (
+                <div className="h-4 w-4 rounded-full border shrink-0" style={{ backgroundColor: hospital.branding.primary_color }} />
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`text-[10px] font-medium flex items-center gap-0.5 ${hasPremium ? (featureCount === totalFeatures ? 'text-amber-500' : 'text-amber-600') : 'text-muted-foreground'}`}>
+                <Crown className={`h-2.5 w-2.5 ${hasPremium ? (featureCount === totalFeatures ? 'fill-amber-500' : '') : ''}`} />
+                {hasPremium ? `${featureCount}/${totalFeatures}` : 'Standaard'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <Switch
+              checked={hospital.is_active}
+              onCheckedChange={() => onToggleActive(hospital)}
+              aria-label={hospital.is_active ? 'Deactiveer' : 'Activeer'}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [hospitalFilter, setHospitalFilter] = useState('');
-  const [hospitalStatusFilter, setHospitalStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [hospitalSort, setHospitalSort] = useState<'active-first' | 'name' | 'premium'>('active-first');
+  const [activeExpanded, setActiveExpanded] = useState(true);
+  const [inactiveExpanded, setInactiveExpanded] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [hospitalFeatureCounts, setHospitalFeatureCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -665,7 +752,7 @@ export default function HospitalManagementPage() {
 
   const fetchHospitals = useCallback(async () => {
     const [hospRes, featRes] = await Promise.all([
-      supabase.from('hospitals').select('*').order('name'),
+      supabase.from('hospitals').select('*').order('display_order'),
       supabase.from('hospital_features').select('hospital_id, is_enabled'),
     ]);
     if (hospRes.error) {
@@ -691,7 +778,37 @@ export default function HospitalManagementPage() {
     fetchHospitals();
   }, [fetchHospitals]);
 
-  // When a hospital is selected, load its staff + disciplines + features + billing
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent, isActiveGroup: boolean) => {
+    const { active, over } = event;
+    setIsDragging(false);
+    if (!over || active.id === over.id) return;
+
+    const group = hospitals.filter(h => h.is_active === isActiveGroup);
+    const oldIndex = group.findIndex(h => h.id === active.id);
+    const newIndex = group.findIndex(h => h.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(group, oldIndex, newIndex);
+    // Merge back: keep the other group as-is, rebuild full list
+    const otherGroup = hospitals.filter(h => h.is_active !== isActiveGroup);
+    const activeGroup = isActiveGroup ? reordered : otherGroup.filter(h => h.is_active);
+    const inactiveGroup = isActiveGroup ? otherGroup.filter(h => !h.is_active) : reordered;
+    const newList = [...activeGroup, ...inactiveGroup].map((h, i) => ({ ...h, display_order: i }));
+    setHospitals(newList);
+
+    // Persist to DB
+    const updates = reordered.map((h, i) => ({ id: h.id, display_order: isActiveGroup ? i : activeGroup.length + i }));
+    for (const u of updates) {
+      await supabase.from('hospitals').update({ display_order: u.display_order }).eq('id', u.id);
+    }
+  }, [hospitals]);
+
+
   const selectHospital = useCallback(async (h: Hospital) => {
     setSelectedHospital(h);
     setStaffLoading(true);
@@ -1142,38 +1259,16 @@ export default function HospitalManagementPage() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Ziekenhuizen ({hospitals.length})
               </h2>
-              <Select value={hospitalSort} onValueChange={(v) => setHospitalSort(v as typeof hospitalSort)}>
-                <SelectTrigger className="h-7 w-[130px] text-[11px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active-first">Actief eerst</SelectItem>
-                  <SelectItem value="name">Naam A-Z</SelectItem>
-                  <SelectItem value="premium">Premium eerst</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             {hospitals.length > 5 && (
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    value={hospitalFilter}
-                    onChange={e => setHospitalFilter(e.target.value)}
-                    placeholder="Filter ziekenhuizen..."
-                    className="pl-9 h-9 text-sm"
-                  />
-                </div>
-                <Select value={hospitalStatusFilter} onValueChange={(v) => setHospitalStatusFilter(v as typeof hospitalStatusFilter)}>
-                  <SelectTrigger className="h-9 w-[110px] text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle</SelectItem>
-                    <SelectItem value="active">Actief</SelectItem>
-                    <SelectItem value="inactive">Inactief</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="relative">
+                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  value={hospitalFilter}
+                  onChange={e => setHospitalFilter(e.target.value)}
+                  placeholder="Filter ziekenhuizen..."
+                  className="pl-9 h-9 text-sm"
+                />
               </div>
             )}
             {loading ? (
@@ -1182,75 +1277,61 @@ export default function HospitalManagementPage() {
               <p className="text-muted-foreground text-center py-8">Geen ziekenhuizen gevonden</p>
             ) : (
               (() => {
-                const filtered = hospitals
-                  .filter(h =>
-                    (!hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase())) &&
-                    (hospitalStatusFilter === 'all' || (hospitalStatusFilter === 'active' ? h.is_active : !h.is_active))
-                  )
-                  .sort((a, b) => {
-                    if (hospitalSort === 'active-first') return a.is_active === b.is_active ? a.name.localeCompare(b.name) : a.is_active ? -1 : 1;
-                    if (hospitalSort === 'name') return a.name.localeCompare(b.name);
-                    if (hospitalSort === 'premium') {
-                      const ac = hospitalFeatureCounts[a.id] || 0;
-                      const bc = hospitalFeatureCounts[b.id] || 0;
-                      return bc - ac || a.name.localeCompare(b.name);
-                    }
-                    return 0;
-                  });
-                return filtered.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Geen resultaten voor "{hospitalFilter}"</p>
-                ) : filtered.map(h => {
-                  const hasPremium = (hospitalFeatureCounts[h.id] || 0) > 0;
-                  return (
-                    <Card
-                      key={h.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${
-                        selectedHospital?.id === h.id ? 'ring-2 ring-primary shadow-md' : ''
-                      } ${!h.is_active ? 'opacity-60' : ''}`}
-                      onClick={() => selectHospital(h)}
+                const filterFn = (h: Hospital) =>
+                  !hospitalFilter || h.name.toLowerCase().includes(hospitalFilter.toLowerCase()) || h.slug.toLowerCase().includes(hospitalFilter.toLowerCase());
+                const activeHospitals = hospitals.filter(h => h.is_active && filterFn(h)).sort((a, b) => a.display_order - b.display_order);
+                const inactiveHospitals = hospitals.filter(h => !h.is_active && filterFn(h)).sort((a, b) => a.display_order - b.display_order);
+
+                if (activeHospitals.length === 0 && inactiveHospitals.length === 0) {
+                  return <p className="text-sm text-muted-foreground text-center py-4">Geen resultaten voor &quot;{hospitalFilter}&quot;</p>;
+                }
+
+                const renderGroup = (items: Hospital[], isActiveGroup: boolean, expanded: boolean, setExpanded: (v: boolean) => void, label: string) => (
+                  <div key={label}>
+                    <button
+                      onClick={() => setExpanded(!expanded)}
+                      className="flex items-center gap-2 w-full text-left py-2 px-1 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          {h.logo_url ? (
-                            <img src={h.logo_url} alt={h.name} className="h-10 w-auto max-w-[60px] object-contain" />
-                          ) : (
-                            <div className="h-10 w-10 rounded bg-muted flex items-center justify-center shrink-0">
-                              <Building2 className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{h.name}</p>
-                              {h.branding?.primary_color && (
-                                <div
-                                  className="h-4 w-4 rounded-full border shrink-0"
-                                  style={{ backgroundColor: h.branding.primary_color }}
+                      {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      {label} ({items.length})
+                    </button>
+                    {expanded && (
+                      <DndContext
+                        sensors={dndSensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={() => setIsDragging(true)}
+                        onDragEnd={(e) => handleDragEnd(e, isActiveGroup)}
+                      >
+                        <SortableContext items={items.map(h => h.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-2">
+                            {items.map(h => {
+                              const fc = hospitalFeatureCounts[h.id] || 0;
+                              return (
+                                <SortableHospitalCard
+                                  key={h.id}
+                                  hospital={h}
+                                  isSelected={selectedHospital?.id === h.id}
+                                  onSelect={selectHospital}
+                                  onToggleActive={toggleHospitalActive}
+                                  hasPremium={fc > 0}
+                                  featureCount={fc}
+                                  totalFeatures={AVAILABLE_FEATURES.length}
                                 />
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-[10px] font-medium ${h.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
-                                {h.is_active ? 'Actief' : 'Inactief'}
-                              </span>
-                              <span className="text-muted-foreground text-[10px]">·</span>
-                              <span className={`text-[10px] font-medium flex items-center gap-0.5 ${hasPremium ? (hospitalFeatureCounts[h.id] === AVAILABLE_FEATURES.length ? 'text-amber-500' : 'text-amber-600') : 'text-muted-foreground'}`}>
-                                <Crown className={`h-2.5 w-2.5 ${hasPremium ? (hospitalFeatureCounts[h.id] === AVAILABLE_FEATURES.length ? 'fill-amber-500' : '') : ''}`} />
-                                {hasPremium ? `${hospitalFeatureCounts[h.id]}/${AVAILABLE_FEATURES.length}` : 'Standaard'}
-                              </span>
-                            </div>
+                              );
+                            })}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <Switch
-                              checked={h.is_active}
-                              onCheckedChange={() => toggleHospitalActive(h)}
-                              aria-label={h.is_active ? 'Deactiveer' : 'Activeer'}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                });
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                  </div>
+                );
+
+                return (
+                  <>
+                    {renderGroup(activeHospitals, true, activeExpanded, setActiveExpanded, 'Actief')}
+                    {renderGroup(inactiveHospitals, false, inactiveExpanded, setInactiveExpanded, 'Inactief')}
+                  </>
+                );
               })()
             )}
           </div>
