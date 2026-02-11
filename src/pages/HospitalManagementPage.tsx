@@ -962,9 +962,14 @@ export default function HospitalManagementPage() {
         .update({ is_enabled: !existing.is_enabled })
         .eq('id', existing.id);
       if (!error) {
+        const wasEnabled = existing.is_enabled;
         setHospitalFeatures(prev =>
           prev.map(f => f.id === existing.id ? { ...f, is_enabled: !f.is_enabled } : f)
         );
+        setHospitalFeatureCounts(prev => ({
+          ...prev,
+          [selectedHospital.id]: Math.max(0, (prev[selectedHospital.id] || 0) + (wasEnabled ? -1 : 1)),
+        }));
       }
     } else {
       const { data, error } = await supabase
@@ -978,6 +983,10 @@ export default function HospitalManagementPage() {
         .single();
       if (!error && data) {
         setHospitalFeatures(prev => [...prev, data as HospitalFeature]);
+        setHospitalFeatureCounts(prev => ({
+          ...prev,
+          [selectedHospital.id]: (prev[selectedHospital.id] || 0) + 1,
+        }));
       }
     }
   };
@@ -1086,9 +1095,9 @@ export default function HospitalManagementPage() {
                                 {h.is_active ? 'Actief' : 'Inactief'}
                               </span>
                               <span className="text-muted-foreground text-[10px]">·</span>
-                              <span className={`text-[10px] font-medium flex items-center gap-0.5 ${hasPremium ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                                <Crown className="h-2.5 w-2.5" />
-                                {hasPremium ? 'Premium' : 'Standaard'}
+                              <span className={`text-[10px] font-medium flex items-center gap-0.5 ${hasPremium ? (hospitalFeatureCounts[h.id] === AVAILABLE_FEATURES.length ? 'text-amber-500' : 'text-amber-600') : 'text-muted-foreground'}`}>
+                                <Crown className={`h-2.5 w-2.5 ${hasPremium ? (hospitalFeatureCounts[h.id] === AVAILABLE_FEATURES.length ? 'fill-amber-500' : '') : ''}`} />
+                                {hasPremium ? `${hospitalFeatureCounts[h.id]}/${AVAILABLE_FEATURES.length}` : 'Standaard'}
                               </span>
                             </div>
                           </div>
