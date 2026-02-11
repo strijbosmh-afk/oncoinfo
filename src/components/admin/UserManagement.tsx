@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserDialog } from './UserDialog';
 import {
   AlertDialog,
@@ -238,7 +239,11 @@ export function UserManagement() {
                           </Badge>
                         )}
                         {isSuperAdmin && user.hospital_name && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 gap-1 text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className="text-xs flex-shrink-0 gap-1 border-transparent text-white"
+                            style={{ backgroundColor: user.hospital_color || 'hsl(var(--muted-foreground))' }}
+                          >
                             <Building2 className="h-3 w-3" />
                             {user.hospital_name}
                           </Badge>

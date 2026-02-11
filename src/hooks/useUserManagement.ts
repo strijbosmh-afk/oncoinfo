@@ -11,6 +11,7 @@ export interface ManagedUser {
   function: string | null;
   hospital_id: string | null;
   hospital_name: string | null;
+  hospital_color: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   role: 'admin' | 'viewer' | 'apotheker' | 'super_admin';
