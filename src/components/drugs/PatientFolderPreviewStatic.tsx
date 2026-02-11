@@ -16,7 +16,7 @@ export function generateStaticPreviewHtml(
   drug: Drug,
   physicianName: string,
   nurseName: string,
-  language: 'nl' | 'fr',
+  language: string,
   phoneNumber: string,
   includeDosing: boolean,
   includeSideEffects: boolean,

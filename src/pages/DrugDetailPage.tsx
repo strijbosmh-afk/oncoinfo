@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
+import { useHospital } from '@/contexts/HospitalContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +63,7 @@ export default function DrugDetailPage() {
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { isFavorite, toggleFavorite } = useFavorites();
   const { user } = useAuth();
+  const { hospital } = useHospital();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
@@ -75,12 +77,14 @@ export default function DrugDetailPage() {
   const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr'>('nl');
+  const isBelgium = hospital?.billing_country === 'BE';
+  const defaultFolderLang = hospital?.default_language === 'fr' ? 'fr' : hospital?.default_language === 'de' ? 'de' : hospital?.default_language === 'en' ? 'en' : 'nl';
+  const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr' | 'de' | 'en'>(defaultFolderLang);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
 
-  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: 'nl' | 'fr' = 'nl', phoneNumber?: string) => {
+  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: string = 'nl', phoneNumber?: string) => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
@@ -794,26 +798,32 @@ export default function DrugDetailPage() {
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
                       <div className="space-y-1.5 sm:space-y-3">
                         <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
-                        <div className="flex gap-1.5 sm:gap-2">
-                          <Button
-                            type="button"
-                            variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
-                            onClick={() => setSelectedLanguage('nl')}
-                            className="flex-1 h-7 sm:h-8 text-xs"
-                            size="sm"
-                          >
-                            NL
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
-                            onClick={() => setSelectedLanguage('fr')}
-                            className="flex-1 h-7 sm:h-8 text-xs"
-                            size="sm"
-                          >
-                            FR
-                          </Button>
-                        </div>
+                        {isBelgium ? (
+                          <div className="flex gap-1.5 sm:gap-2">
+                            <Button
+                              type="button"
+                              variant={selectedLanguage === 'nl' ? 'default' : 'outline'}
+                              onClick={() => setSelectedLanguage('nl')}
+                              className="flex-1 h-7 sm:h-8 text-xs"
+                              size="sm"
+                            >
+                              NL
+                            </Button>
+                            <Button
+                              type="button"
+                              variant={selectedLanguage === 'fr' ? 'default' : 'outline'}
+                              onClick={() => setSelectedLanguage('fr')}
+                              className="flex-1 h-7 sm:h-8 text-xs"
+                              size="sm"
+                            >
+                              FR
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground pt-1">
+                            {defaultFolderLang === 'fr' ? 'Français' : defaultFolderLang === 'de' ? 'Deutsch' : defaultFolderLang === 'en' ? 'English' : 'Nederlands'}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-3">
