@@ -84,13 +84,22 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
     }
   }, [open, mode, user]);
 
+  // Default: verpleegkundige gets no permissions (only on create or when changing function)
+  useEffect(() => {
+    if (userFunction === 'verpleegkundige' && mode === 'create') {
+      setCanAdd(false);
+      setCanDelete(false);
+      setCanModify(false);
+    }
+  }, [userFunction, mode]);
+
   const handleCopyPassword = () => {
     navigator.clipboard.writeText(password);
     toast({ title: 'Gekopieerd', description: 'Wachtwoord is naar het klembord gekopieerd.' });
   };
 
   const handleSubmit = () => {
-    if (!email.trim() || !username.trim()) return;
+    if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction) return;
 
     if (mode === 'create') {
       if (!password.trim()) return;
@@ -137,29 +146,31 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="user-firstname">Voornaam</Label>
+              <Label htmlFor="user-firstname">Voornaam *</Label>
               <Input
                 id="user-firstname"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="bijv. Jan"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="user-lastname">Naam</Label>
+              <Label htmlFor="user-lastname">Naam *</Label>
               <Input
                 id="user-lastname"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="bijv. Jansen"
+                required
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user-function">Functie</Label>
+            <Label htmlFor="user-function">Functie *</Label>
             <Select value={userFunction} onValueChange={setUserFunction}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecteer functie" />
@@ -303,7 +314,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !email.trim() || !username.trim() || (mode === 'create' && !password.trim())}
+            disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || (mode === 'create' && !password.trim())}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             {mode === 'create' ? 'Aanmaken' : 'Opslaan'}
