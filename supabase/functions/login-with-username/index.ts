@@ -41,6 +41,26 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
 
+    // --- Rate limiting: max 5 attempts per 15 minutes per identifier ---
+    const rateLimitIdentifier = `${username.trim().toLowerCase()}:${hospital_id || 'any'}`;
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+    const { count: attemptCount } = await supabaseAdmin
+      .from('login_attempts')
+      .select('*', { count: 'exact', head: true })
+      .eq('identifier', rateLimitIdentifier)
+      .gte('attempted_at', fifteenMinutesAgo);
+
+    if ((attemptCount ?? 0) >= 5) {
+      return new Response(
+        JSON.stringify({ error: 'Te veel inlogpogingen. Probeer het over 15 minuten opnieuw.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Record this attempt
+    await supabaseAdmin.from('login_attempts').insert({ identifier: rateLimitIdentifier });
+
     // Look up user by username, optionally filtering by hospital
     let query = supabaseAdmin
       .from('profiles')

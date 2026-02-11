@@ -487,6 +487,24 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          identifier: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          identifier: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          identifier?: string
+        }
+        Relationships: []
+      }
       patient_folder_content: {
         Row: {
           contraindications: string | null
