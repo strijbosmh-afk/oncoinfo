@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,17 +14,18 @@ interface ChangePasswordDialogProps {
   userId: string;
 }
 
-const PASSWORD_RULES = [
-  { label: 'Minimaal 8 tekens', test: (p: string) => p.length >= 8 },
-  { label: 'Minimaal 1 hoofdletter', test: (p: string) => /[A-Z]/.test(p) },
-  { label: 'Minimaal 1 cijfer of speciaal teken', test: (p: string) => /[0-9\W_]/.test(p) },
-];
-
 export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePasswordDialogProps) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const PASSWORD_RULES = [
+    { label: t('changePassword.ruleLength'), test: (p: string) => p.length >= 8 },
+    { label: t('changePassword.ruleUppercase'), test: (p: string) => /[A-Z]/.test(p) },
+    { label: t('changePassword.ruleSpecial'), test: (p: string) => /[0-9\W_]/.test(p) },
+  ];
 
   const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password));
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
@@ -45,14 +47,14 @@ export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePassword
         .eq('user_id', userId);
 
       toast({
-        title: 'Wachtwoord gewijzigd',
-        description: 'Uw wachtwoord is succesvol bijgewerkt.',
+        title: t('changePassword.success'),
+        description: t('changePassword.successDesc'),
       });
       onSuccess();
     } catch (err: any) {
       toast({
-        title: 'Fout',
-        description: err.message || 'Kon wachtwoord niet wijzigen.',
+        title: t('common.error'),
+        description: err.message || t('changePassword.error'),
         variant: 'destructive',
       });
     } finally {
@@ -64,14 +66,14 @@ export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePassword
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Wijzig uw wachtwoord</DialogTitle>
+          <DialogTitle>{t('changePassword.title')}</DialogTitle>
           <DialogDescription>
-            U logt voor het eerst in. Kies een nieuw wachtwoord dat voldoet aan onderstaande eisen.
+            {t('changePassword.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="new-password">Nieuw wachtwoord</Label>
+            <Label htmlFor="new-password">{t('changePassword.newPassword')}</Label>
             <Input
               id="new-password"
               type="password"
@@ -102,7 +104,7 @@ export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePassword
           </ul>
 
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Bevestig wachtwoord</Label>
+            <Label htmlFor="confirm-password">{t('changePassword.confirmPassword')}</Label>
             <Input
               id="confirm-password"
               type="password"
@@ -112,13 +114,13 @@ export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePassword
               placeholder="••••••••"
             />
             {confirmPassword.length > 0 && !passwordsMatch && (
-              <p className="text-sm text-destructive">Wachtwoorden komen niet overeen.</p>
+              <p className="text-sm text-destructive">{t('changePassword.mismatch')}</p>
             )}
           </div>
 
           <Button type="submit" className="w-full" disabled={!canSubmit}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Wachtwoord opslaan
+            {t('changePassword.submit')}
           </Button>
         </form>
       </DialogContent>
