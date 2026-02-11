@@ -16,15 +16,17 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
+import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
+import { CalendarClock } from 'lucide-react';
 
 export default function AdminPage() {
-  const { user, isAdmin, isApotheker, loading } = useAuth();
+  const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
   const { data: drugs, isLoading: drugsLoading } = useDrugs({});
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -158,6 +160,16 @@ export default function AdminPage() {
               BETA
             </Badge>
           </Button>
+          {isSuperAdmin && (
+            <Button
+              variant={activeSection === 'schedule' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
+              className="gap-2"
+            >
+              <CalendarClock className="h-4 w-4" />
+              Geplande Updates
+            </Button>
+          )}
         </div>
 
         {/* Active Section */}
@@ -176,6 +188,12 @@ export default function AdminPage() {
         {activeSection === 'auto-update' && (
           <div className="mb-8">
             <AutoUpdateTherapies />
+          </div>
+        )}
+
+        {activeSection === 'schedule' && isSuperAdmin && (
+          <div className="mb-8">
+            <ScheduleAutoUpdate />
           </div>
         )}
 

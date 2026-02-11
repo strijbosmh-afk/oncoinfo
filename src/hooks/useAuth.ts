@@ -28,6 +28,7 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isApotheker, setIsApotheker] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -74,6 +75,7 @@ export function useAuth() {
     return {
       admin: roles.includes('admin'),
       apotheker: roles.includes('apotheker'),
+      superAdmin: roles.includes('super_admin'),
     };
   }, []);
 
@@ -94,6 +96,7 @@ export function useAuth() {
             if (isMounted) {
               setIsAdmin(r.admin);
               setIsApotheker(r.apotheker);
+              setIsSuperAdmin(r.superAdmin);
             }
           });
         } else {
@@ -101,6 +104,7 @@ export function useAuth() {
           setPermissions(null);
           setIsAdmin(false);
           setIsApotheker(false);
+          setIsSuperAdmin(false);
         }
       }
     );
@@ -124,6 +128,7 @@ export function useAuth() {
             setProfile(p);
             setIsAdmin(r.admin);
             setIsApotheker(r.apotheker);
+            setIsSuperAdmin(r.superAdmin);
             setPermissions(perm);
           }
         }
@@ -210,6 +215,7 @@ export function useAuth() {
     loading,
     isAdmin,
     isApotheker,
+    isSuperAdmin,
     signIn,
     signUp,
     signOut
