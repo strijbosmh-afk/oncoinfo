@@ -140,18 +140,27 @@ export function AutoUpdateTherapies() {
 
       const addedCount = data.added?.length || 0;
       const errorCount = data.errors?.length || 0;
+      const skippedCount = data.skipped?.length || 0;
 
-      // Remove added therapies from the list
-      if (data.added?.length) {
-        const addedNames = new Set(data.added.map((n: string) => n.toLowerCase()));
-        setTherapies((prev) => prev.filter((t) => !addedNames.has(t.generic_name.toLowerCase())));
+      // Remove added + skipped therapies from the list
+      if (data.added?.length || data.skipped?.length) {
+        const processedNames = new Set([
+          ...(data.added || []).map((n: string) => n.toLowerCase()),
+          ...(data.skipped || []).map((n: string) => n.toLowerCase()),
+        ]);
+        setTherapies((prev) => prev.filter((t) => !processedNames.has(t.generic_name.toLowerCase())));
       }
 
       queryClient.invalidateQueries({ queryKey: ['drugs'] });
 
+      const parts: string[] = [];
+      if (addedCount > 0) parts.push(`${addedCount} toegevoegd`);
+      if (skippedCount > 0) parts.push(`${skippedCount} overgeslagen (duplicaat)`);
+      if (errorCount > 0) parts.push(`${errorCount} fout(en)`);
+
       toast({
-        title: 'Therapieën toegevoegd',
-        description: `${addedCount} toegevoegd${errorCount > 0 ? `, ${errorCount} fout(en)` : ''}.`,
+        title: 'Therapieën verwerkt',
+        description: parts.join(', ') + '.',
         variant: errorCount > 0 ? 'destructive' : 'default',
       });
     } catch (err: any) {
