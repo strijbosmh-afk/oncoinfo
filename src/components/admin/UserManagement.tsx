@@ -19,7 +19,7 @@ import {
 import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye } from 'lucide-react';
 
 export function UserManagement() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isSuperAdmin } = useAuth();
   const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -137,7 +137,7 @@ export function UserManagement() {
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {user.role === 'admin' ? (
+                      {user.role === 'admin' || user.role === 'super_admin' ? (
                         <Shield className="h-4 w-4 text-primary" />
                       ) : (
                         <Eye className="h-4 w-4 text-muted-foreground" />
@@ -149,10 +149,10 @@ export function UserManagement() {
                           {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
                         </p>
                         <Badge
-                          variant={user.role === 'admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
-                          className={`text-xs flex-shrink-0 ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                          variant={user.role === 'admin' || user.role === 'super_admin' ? 'default' : user.role === 'apotheker' ? 'default' : 'secondary'}
+                          className={`text-xs flex-shrink-0 ${user.role === 'apotheker' ? 'bg-emerald-600 hover:bg-emerald-700' : ''} ${user.role === 'super_admin' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
                         >
-                          {user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
+                          {user.role === 'super_admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : user.role === 'apotheker' ? 'Apotheker' : 'Viewer'}
                         </Badge>
                         {user.function && (
                           <Badge variant="outline" className="text-xs flex-shrink-0 gap-1 capitalize">
@@ -214,6 +214,7 @@ export function UserManagement() {
         user={selectedUser}
         onSubmit={handleDialogSubmit}
         isLoading={createUser.isPending || updateUser.isPending}
+        callerIsSuperAdmin={isSuperAdmin}
       />
 
       {/* Delete confirmation */}
