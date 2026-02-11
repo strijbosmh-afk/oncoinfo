@@ -31,7 +31,30 @@ interface Hospital {
   branding: { primary_color?: string } | null;
   is_active: boolean;
   created_at: string;
+  default_language: string;
+  billing_country: string | null;
 }
+
+const COUNTRIES = [
+  'BE', 'NL', 'DE', 'FR', 'LU', 'GB', 'US', 'CH', 'AT', 'IT', 'ES', 'PT',
+  'IE', 'DK', 'SE', 'NO', 'FI', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'GR',
+] as const;
+
+const COUNTRY_NAMES: Record<string, string> = {
+  BE: 'België', NL: 'Nederland', DE: 'Duitsland', FR: 'Frankrijk', LU: 'Luxemburg',
+  GB: 'Verenigd Koninkrijk', US: 'Verenigde Staten', CH: 'Zwitserland', AT: 'Oostenrijk',
+  IT: 'Italië', ES: 'Spanje', PT: 'Portugal', IE: 'Ierland', DK: 'Denemarken',
+  SE: 'Zweden', NO: 'Noorwegen', FI: 'Finland', PL: 'Polen', CZ: 'Tsjechië',
+  SK: 'Slowakije', HU: 'Hongarije', RO: 'Roemenië', BG: 'Bulgarije', HR: 'Kroatië',
+  SI: 'Slovenië', GR: 'Griekenland',
+};
+
+const LANGUAGE_OPTIONS = [
+  { value: 'nl', label: 'Nederlands' },
+  { value: 'fr', label: 'Frans' },
+  { value: 'de', label: 'Duits' },
+  { value: 'en', label: 'Engels' },
+];
 
 type StaffType = 'arts' | 'verpleging' | 'apotheker';
 
@@ -338,6 +361,8 @@ export default function HospitalManagementPage() {
       setHospitals((data || []).map(h => ({
         ...h,
         branding: h.branding as Hospital['branding'],
+        default_language: (h as any).default_language || 'nl',
+        billing_country: (h as any).billing_country || null,
       })));
     }
     setLoading(false);
@@ -485,6 +510,7 @@ export default function HospitalManagementPage() {
     setLogoFile(null);
     setFormLogoUrl('');
     setLogoConfirmed(null);
+    setFormLanguage('nl');
     setDialogOpen(true);
   };
 
@@ -498,6 +524,7 @@ export default function HospitalManagementPage() {
     setLogoFile(null);
     setFormLogoUrl(h.logo_url || '');
     setLogoConfirmed(h.logo_url ? true : null);
+    setFormLanguage(h.default_language || 'nl');
     setDialogOpen(true);
   };
 
@@ -533,6 +560,7 @@ export default function HospitalManagementPage() {
       logo_url: logoUrl,
       branding: { primary_color: formPrimaryColor },
       is_active: formIsActive,
+      default_language: formLanguage,
     };
 
     if (editingHospital) {
@@ -918,7 +946,16 @@ export default function HospitalManagementPage() {
                             </div>
                             <div className="space-y-1.5">
                               <Label className="text-xs">Land</Label>
-                              <Input value={billing.billing_country} onChange={e => updateBillingField('billing_country', e.target.value)} placeholder="België" />
+                              <Select value={billing.billing_country} onValueChange={v => updateBillingField('billing_country', v)}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Kies land" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {COUNTRIES.map(code => (
+                                    <SelectItem key={code} value={COUNTRY_NAMES[code]}>{COUNTRY_NAMES[code]}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                         </div>
@@ -1334,6 +1371,19 @@ export default function HospitalManagementPage() {
                     Preview
                   </div>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Standaardtaal</Label>
+                <Select value={formLanguage} onValueChange={setFormLanguage}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-center gap-3">
                 <Switch checked={formIsActive} onCheckedChange={setFormIsActive} />

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,36 +19,37 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-function getRoleBadge(isAdmin: boolean, isApotheker: boolean, userFunction: string | null) {
-  if (userFunction === 'arts') return { label: 'Arts', icon: Stethoscope, className: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' };
-  if (userFunction === 'apotheek' || isApotheker) return { label: 'Apotheek', icon: FlaskConical, className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' };
-  if (isAdmin) return { label: 'Admin', icon: Shield, className: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700' };
-  if (userFunction === 'verpleegkundige') return { label: 'Verpleegk.', icon: User, className: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700' };
-  return { label: 'Viewer', icon: Eye, className: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' };
+function getRoleBadge(isAdmin: boolean, isApotheker: boolean, userFunction: string | null, t: (key: string) => string) {
+  if (userFunction === 'arts') return { label: t('roles.arts'), icon: Stethoscope, className: 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700' };
+  if (userFunction === 'apotheek' || isApotheker) return { label: t('roles.apotheker'), icon: FlaskConical, className: 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700' };
+  if (isAdmin) return { label: t('roles.admin'), icon: Shield, className: 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700' };
+  if (userFunction === 'verpleegkundige') return { label: t('roles.verpleegkundige'), icon: User, className: 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-700' };
+  return { label: t('roles.viewer'), icon: Eye, className: 'bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600' };
 }
 
-function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, userFunction, permissions }: {
+function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, userFunction, permissions, t }: {
   displayName: string;
   roleBadge: { label: string };
   isAdmin: boolean;
   isApotheker: boolean;
   userFunction: string | null;
   permissions: { can_add_treatments?: boolean; can_modify_treatments?: boolean; can_delete_treatments?: boolean } | null;
+  t: (key: string) => string;
 }) {
   return (
     <div className="space-y-1.5 text-xs">
       <p className="font-semibold">{displayName} – {roleBadge.label}</p>
       <div className="space-y-0.5">
-        <p>Rechten:</p>
+        <p>{t('header.rights')}:</p>
         <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
-          {isAdmin && <li>Volledige beheertoegang</li>}
-          {isApotheker && <li>Medicijnbeheer</li>}
-          {userFunction && <li>Functie: {userFunction}</li>}
-          {permissions?.can_add_treatments && <li>Behandelingen toevoegen</li>}
-          {permissions?.can_modify_treatments && <li>Behandelingen wijzigen</li>}
-          {permissions?.can_delete_treatments && <li>Behandelingen verwijderen</li>}
+          {isAdmin && <li>{t('header.fullAccess')}</li>}
+          {isApotheker && <li>{t('header.drugManagement')}</li>}
+          {userFunction && <li>{t('header.function')}: {userFunction}</li>}
+          {permissions?.can_add_treatments && <li>{t('header.addTreatments')}</li>}
+          {permissions?.can_modify_treatments && <li>{t('header.modifyTreatments')}</li>}
+          {permissions?.can_delete_treatments && <li>{t('header.deleteTreatments')}</li>}
           {!isAdmin && !isApotheker && !permissions?.can_add_treatments && !permissions?.can_modify_treatments && !permissions?.can_delete_treatments && (
-            <li>Alleen lezen</li>
+            <li>{t('header.readOnly')}</li>
           )}
         </ul>
       </div>
@@ -58,12 +60,12 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, us
 export function Header() {
   const { user, profile, permissions, isAdmin, isApotheker, signOut, loading } = useAuth();
   const { hospital } = useHospital();
+  const { t } = useTranslation();
 
   const userFunction = profile?.function ?? null;
-  const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction);
+  const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction, t);
   const RoleIcon = roleBadge.icon;
 
-  // Display first_name + last_name if available, fallback to username
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || profile?.username || user?.email?.split('@')[0] || '';
 
   return (
@@ -84,7 +86,6 @@ export function Header() {
 
           {user && displayName && (
             <>
-              {/* Desktop: full name + badge with tooltip */}
               <div className="hidden sm:flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">|</span>
                 <span className="text-sm font-medium text-foreground capitalize truncate max-w-[120px]">{displayName}</span>
@@ -104,13 +105,13 @@ export function Header() {
                         isApotheker={isApotheker}
                         userFunction={userFunction}
                         permissions={permissions}
+                        t={t}
                       />
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
 
-              {/* Mobile: compact badge only (name shown in dropdown) */}
               <div className="flex sm:hidden items-center gap-1.5 min-w-0">
                 <span className="text-xs text-muted-foreground">|</span>
                 <span className="text-xs font-medium text-foreground capitalize truncate max-w-[60px]">{displayName}</span>
@@ -127,12 +128,12 @@ export function Header() {
         <nav className="flex items-center gap-1 sm:gap-2 shrink-0">
           {user && (
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/drugs">Medicijnen</Link>
+              <Link to="/drugs">{t('nav.drugs')}</Link>
             </Button>
           )}
           {user && (
             <Button variant="ghost" size="icon" asChild className="sm:hidden h-8 w-8">
-              <Link to="/drugs" aria-label="Medicijnen">
+              <Link to="/drugs" aria-label={t('nav.drugs')}>
                 <FlaskConical className="h-4 w-4" />
               </Link>
             </Button>
@@ -151,7 +152,6 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover">
-                {/* User info with role badge in dropdown */}
                 <div className="px-3 py-2 space-y-1.5">
                   <p className="text-sm font-medium capitalize">{displayName}</p>
                   <Badge variant="outline" className={`gap-1 text-xs ${roleBadge.className}`}>
@@ -166,6 +166,7 @@ export function Header() {
                       isApotheker={isApotheker}
                       userFunction={userFunction}
                       permissions={permissions}
+                      t={t}
                     />
                   </div>
                 </div>
@@ -175,7 +176,7 @@ export function Header() {
                     <DropdownMenuItem asChild>
                       <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
                         <Shield className="h-4 w-4" />
-                        Beheerportaal
+                        {t('nav.admin')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -186,13 +187,13 @@ export function Header() {
                   className="flex items-center gap-2 cursor-pointer text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  Uitloggen
+                  {t('auth.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Button asChild size="sm">
-              <Link to="/login">Inloggen</Link>
+              <Link to="/login">{t('auth.login')}</Link>
             </Button>
           )}
         </nav>

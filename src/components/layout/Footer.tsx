@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t bg-card py-8 mt-auto">
       <div className="container">
@@ -16,16 +19,15 @@ export function Footer() {
           
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/drugs" className="hover:text-foreground transition-colors">
-              Medicijnen
+              {t('footer.drugs')}
             </Link>
             <Link to="/contact" className="hover:text-foreground transition-colors">
-              Contact
+              {t('footer.contact')}
             </Link>
           </nav>
 
           <p className="text-xs text-muted-foreground max-w-xs text-center md:text-right">
-            Medicijninformatie is uitsluitend bedoeld voor educatieve doeleinden. 
-            Raadpleeg medische professionals voor behandelbeslissingen.
+            {t('footer.disclaimer')}
           </p>
         </div>
       </div>
