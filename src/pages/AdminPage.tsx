@@ -17,7 +17,8 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
-import { CalendarClock } from 'lucide-react';
+import { HospitalManagement } from '@/components/admin/HospitalManagement';
+import { CalendarClock, Building2 } from 'lucide-react';
 
 export default function AdminPage() {
   const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
@@ -26,7 +27,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'hospitals' | null>(null);
 
   // Calculate statistics
   const totalDrugs = drugs?.length || 0;
@@ -170,6 +171,16 @@ export default function AdminPage() {
               Geplande Updates
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button
+              variant={activeSection === 'hospitals' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'hospitals' ? null : 'hospitals')}
+              className="gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              Ziekenhuizen
+            </Button>
+          )}
         </div>
 
         {/* Active Section */}
@@ -194,6 +205,12 @@ export default function AdminPage() {
         {activeSection === 'schedule' && isSuperAdmin && (
           <div className="mb-8">
             <ScheduleAutoUpdate />
+          </div>
+        )}
+
+        {activeSection === 'hospitals' && isSuperAdmin && (
+          <div className="mb-8">
+            <HospitalManagement />
           </div>
         )}
 
