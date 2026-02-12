@@ -1738,21 +1738,11 @@ export default function HospitalManagementPage() {
                                   <p className="font-medium text-sm">{member.name}</p>
                                   {member.specialization && <p className="text-xs text-muted-foreground">{member.specialization}</p>}
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => removeStaffMember(member.id)} className="text-destructive h-8 w-8">
-                                  <X className="h-4 w-4" />
-                                </Button>
                               </div>
                             ))}
-                            <div className="border-t pt-4 space-y-3">
-                              <p className="text-sm font-medium">Toevoegen</p>
-                              <div className="flex gap-2">
-                                <Input placeholder="Naam" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} className="flex-1" />
-                                <Input placeholder="Specialisatie / functie" value={newStaffSpec} onChange={e => setNewStaffSpec(e.target.value)} className="flex-1" />
-                                <Button onClick={addStaffMember} size="icon" disabled={!newStaffName.trim()}>
-                                  <Plus className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
+                            <p className="text-xs text-muted-foreground text-center pt-2">
+                              Medewerkers kunnen worden beheerd via Gebruikersbeheer
+                            </p>
                           </TabsContent>
                         );
                       })}
