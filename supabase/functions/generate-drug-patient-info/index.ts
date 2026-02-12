@@ -563,7 +563,7 @@ function generatePatientInfoHtml(
       background: white; overflow: auto;
     }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
-    .logo-header img { max-height: 50px; width: auto; }
+    .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: 22px; margin-bottom: 4px; }
     .header-title .subtitle { color: #666; font-size: 13px; }
@@ -588,7 +588,7 @@ function generatePatientInfoHtml(
     .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
     @media print {
       body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .logo-header img { max-height: 50px !important; }
+      .logo-header img { max-height: 55px !important; max-width: 200px !important; }
     }
   </style>
 </head>
