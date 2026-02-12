@@ -565,7 +565,7 @@ function generatePatientInfoHtml(
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
     .logo-name { display: flex; align-items: center; gap: 10px; }
     .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
-    .hospital-name { font-size: 15px; font-weight: 600; color: ${hospitalColor}; }
+    .hospital-name { font-size: 20px; font-weight: 800; color: ${hospitalColor}; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: 22px; margin-bottom: 4px; }
     .header-title .subtitle { color: #666; font-size: 13px; }
