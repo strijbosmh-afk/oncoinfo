@@ -9,6 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+export interface HospitalOption {
+  id: string;
+  name: string;
+}
+
 interface UserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +25,7 @@ interface UserDialogProps {
     first_name?: string | null;
     last_name?: string | null;
     function?: string | null;
+    hospital_id?: string | null;
     role: 'admin' | 'viewer' | 'apotheker' | 'super_admin';
     is_physician?: boolean;
     can_add_treatments?: boolean;
@@ -29,6 +35,7 @@ interface UserDialogProps {
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
   callerIsSuperAdmin?: boolean;
+  hospitals?: HospitalOption[];
 }
 
 function generatePassword(length = 12): string {
@@ -40,7 +47,7 @@ function generatePassword(length = 12): string {
   return pw;
 }
 
-export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin }: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [] }: UserDialogProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -48,6 +55,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [lastName, setLastName] = useState('');
   const [userFunction, setUserFunction] = useState('');
   const [password, setPassword] = useState('');
+  const [hospitalId, setHospitalId] = useState('');
   const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker' | 'super_admin'>('viewer');
   const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -65,6 +73,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setFirstName(user.first_name || '');
         setLastName(user.last_name || '');
         setUserFunction(user.function || '');
+        setHospitalId(user.hospital_id || '');
         setRole(user.role);
         setPassword('');
         setShowPassword(false);
@@ -77,6 +86,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setFirstName('');
         setLastName('');
         setUserFunction('');
+        setHospitalId('');
         setPassword(generatePassword());
         setRole('viewer');
         setSendEmail(true);
@@ -105,7 +115,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
   const handleSubmit = () => {
     setAttempted(true);
-    if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction) return;
+    if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId) return;
 
     if (mode === 'create') {
       if (!password.trim()) return;
@@ -115,6 +125,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         function: userFunction,
+        hospital_id: hospitalId,
         password: password.trim(),
         role,
         send_email: sendEmail,
@@ -135,6 +146,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.can_add_treatments = canAdd;
       changes.can_delete_treatments = canDelete;
       changes.can_modify_treatments = canModify;
+      changes.hospital_id = hospitalId;
 
       onSubmit(changes);
     }
@@ -198,6 +210,23 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
             </Select>
             {attempted && !userFunction && (
               <p className="text-xs text-destructive">{t('userDialog.functionRequired')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
+            <Select value={hospitalId} onValueChange={setHospitalId}>
+              <SelectTrigger className={attempted && !hospitalId ? 'border-destructive' : ''}>
+                <SelectValue placeholder={t('userDialog.hospitalPlaceholder')} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {hospitals.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {attempted && !hospitalId && (
+              <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
             )}
           </div>
 
@@ -334,7 +363,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || (mode === 'create' && !password.trim())}
+            disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId || (mode === 'create' && !password.trim())}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             {mode === 'create' ? t('userDialog.create') : t('common.save')}

@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
       }
 
       case 'update': {
-        const { user_id, email, username, password, role,
+        const { user_id, email, username, password, role, hospital_id,
           first_name, last_name, function: userFunction,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
 
@@ -341,13 +341,14 @@ Deno.serve(async (req) => {
         }
 
         // Update profile fields
-        const profileUpdate: Record<string, string> = {};
+        const profileUpdate: Record<string, any> = {};
         if (email) profileUpdate.email = email;
         if (username) profileUpdate.username = username;
         if (role) profileUpdate.role = role;
         if (first_name !== undefined) profileUpdate.first_name = first_name;
         if (last_name !== undefined) profileUpdate.last_name = last_name;
         if (userFunction !== undefined) profileUpdate.function = userFunction;
+        if (hospital_id !== undefined) profileUpdate.hospital_id = hospital_id;
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);
