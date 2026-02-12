@@ -44,13 +44,12 @@ export default function LoginPage() {
     });
 
     supabase
-      .from('hospitals')
+      .from('hospitals_public' as any)
       .select('id, name, slug, logo_url')
-      .eq('is_active', true)
       .order('name')
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         if (data) {
-          setHospitals(data);
+          setHospitals(data as Hospital[]);
           // Restore last used hospital from localStorage, or auto-select if only one
           const lastHospitalId = localStorage.getItem('last-hospital-id');
           if (lastHospitalId && data.some(h => h.id === lastHospitalId)) {

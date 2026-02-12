@@ -45,7 +45,7 @@ export function UserManagement() {
 
   // Fetch all active hospitals for the dialog dropdown
   useEffect(() => {
-    supabase.from('hospitals').select('id, name').eq('is_active', true).order('name').then(({ data }) => {
+    supabase.from('hospitals_public' as any).select('id, name').order('name').then(({ data }) => {
       if (data) setAllHospitals(data.map((h: any) => ({ id: h.id, name: h.name })));
     });
   }, []);
