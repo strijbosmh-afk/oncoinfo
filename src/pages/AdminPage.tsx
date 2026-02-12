@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -95,6 +95,13 @@ export default function AdminPage() {
   return (
     <Layout>
       <div className="container py-8">
+        <button 
+          onClick={() => navigate('/home')}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {t('drugs.backToCategories', 'Terug naar specialiteiten')}
+        </button>
         <h1 className="text-3xl font-bold mb-2">{t('admin.title')}</h1>
         <p className="text-muted-foreground mb-8">{t('admin.description')}</p>
 
