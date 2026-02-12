@@ -112,8 +112,8 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
               {drug.approved_indications && drug.approved_indications.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {drug.approved_indications.slice(0, 3).map((ind) => (
-                    <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200">
-                      {tMed(ind)}
+                    <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200 max-w-full">
+                      <span className="line-clamp-2">{tMed(ind)}</span>
                     </Badge>
                   ))}
                   {drug.approved_indications.length > 3 && (
