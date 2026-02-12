@@ -331,7 +331,9 @@ export function generateStaticPreviewHtml(
     }
     .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
+    .logo-name { display: flex; align-items: center; gap: 10px; }
     .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
+    .hospital-name { font-size: 14px; font-weight: 600; color: ${hospitalColor}; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
     .header-title .subtitle { color: #666; font-size: 12px; }
@@ -358,7 +360,10 @@ export function generateStaticPreviewHtml(
 <body>
   <div class="preview-badge">${labels.preview}</div>
   <div class="logo-header">
-    ${hospitalLogoUrl ? `<img src="${hospitalLogoUrl}" alt="${hospitalName}" />` : `<img src="/images/logo-rzt.png" alt="Logo" />`}
+    <div class="logo-name">
+      ${hospitalLogoUrl ? `<img src="${hospitalLogoUrl}" alt="${hospitalName}" />` : `<img src="/images/logo-rzt.png" alt="Logo" />`}
+      <span class="hospital-name">${hospitalName}</span>
+    </div>
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
       <p class="subtitle">${labels.title}</p>
