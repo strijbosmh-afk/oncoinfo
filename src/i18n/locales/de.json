@@ -533,7 +533,9 @@
     "canDelete": "Kann Behandlungen löschen",
     "sendEmail": "Zugangsdaten per E-Mail senden",
     "create": "Erstellen",
-    "hospital": "Krankenhaus"
+    "hospital": "Krankenhaus",
+    "hospitalPlaceholder": "Krankenhaus auswählen",
+    "hospitalRequired": "Krankenhaus ist erforderlich"
   },
   "changePassword": {
     "title": "Passwort ändern",

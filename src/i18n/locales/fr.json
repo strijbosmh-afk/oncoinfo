@@ -533,7 +533,9 @@
     "canDelete": "Peut supprimer des traitements",
     "sendEmail": "Envoyer les identifiants par e-mail",
     "create": "Créer",
-    "hospital": "Hôpital"
+    "hospital": "Hôpital",
+    "hospitalPlaceholder": "Sélectionner un hôpital",
+    "hospitalRequired": "L'hôpital est obligatoire"
   },
   "changePassword": {
     "title": "Modifiez votre mot de passe",

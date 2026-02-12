@@ -16,7 +16,8 @@ async function humanizeSideEffects(
     return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
   }
 
-  const lang = language === 'fr' ? 'French' : 'Dutch';
+  const langMap: Record<string, string> = { fr: 'French', de: 'German', en: 'English', nl: 'Dutch' };
+  const lang = langMap[language] || 'Dutch';
 
   const prompt = `You are writing patient-friendly information about the medication "${drugName}" in ${lang}.
 
@@ -88,12 +89,16 @@ ${seriousText || 'None provided'}`;
   }
 }
 
-async function translateToFrench(textsMap: Record<string, string | null>): Promise<Record<string, string | null>> {
+async function translateContent(textsMap: Record<string, string | null>, targetLang: string): Promise<Record<string, string | null>> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) {
     console.error('LOVABLE_API_KEY not configured, skipping translation');
     return textsMap;
   }
+
+  const langNames: Record<string, string> = { fr: 'French', de: 'German', en: 'English' };
+  const langName = langNames[targetLang];
+  if (!langName) return textsMap;
 
   // Filter out null/empty values
   const toTranslate: Record<string, string> = {};
@@ -103,9 +108,9 @@ async function translateToFrench(textsMap: Record<string, string | null>): Promi
 
   if (Object.keys(toTranslate).length === 0) return textsMap;
 
-  const prompt = `You are a medical translator. Translate the following Dutch medical patient information texts to clear, correct French suitable for patients. Keep medical terms accurate. Preserve bullet point format (lines starting with •). Do NOT add any explanation, just return the translations.
+  const prompt = `You are a medical translator. Translate the following Dutch medical patient information texts to clear, correct ${langName} suitable for patients. Keep medical terms accurate. Preserve bullet point format (lines starting with •). Do NOT add any explanation, just return the translations.
 
-Return a JSON object with the same keys, each value being the French translation.
+Return a JSON object with the same keys, each value being the ${langName} translation.
 
 Texts to translate:
 ${JSON.stringify(toTranslate, null, 2)}`;
@@ -120,7 +125,7 @@ ${JSON.stringify(toTranslate, null, 2)}`;
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: 'You are a professional medical translator specializing in Dutch to French translation for oncology patient information. Always return valid JSON only, no markdown formatting.' },
+          { role: 'system', content: `You are a professional medical translator specializing in Dutch to ${langName} translation for oncology patient information. Always return valid JSON only, no markdown formatting.` },
           { role: 'user', content: prompt }
         ],
       }),
@@ -347,8 +352,8 @@ Deno.serve(async (req) => {
       console.log('Side effects humanized');
     }
 
-    // Translate content if French (skip side effects — already generated in French by humanize)
-    if (language === 'fr') {
+    // Translate content if not Dutch (skip side effects — already generated in target language by humanize)
+    if (language !== 'nl') {
       const textsToTranslate: Record<string, string | null> = {
         introduction: introductionText,
         usage: usageText,
@@ -358,8 +363,8 @@ Deno.serve(async (req) => {
         monitoring: monitoringText,
       };
 
-      console.log('Translating content to French...');
-      const translated = await translateToFrench(textsToTranslate);
+      console.log(`Translating content to ${language}...`);
+      const translated = await translateContent(textsToTranslate, language);
       
       introductionText = translated.introduction ?? introductionText;
       usageText = translated.usage ?? usageText;
@@ -421,43 +426,86 @@ function generatePatientInfoHtml(
   hospitalColor: string = '#6b2d5b',
   doctorsList: string[] = [],
 ): string {
-  const isFr = language === 'fr';
-  
-  const labels = isFr ? {
-    title: 'Information pour les patients',
-    whatIs: `Qu'est-ce que ${drug.generic_name} ?`,
-    usedFor: 'À quoi sert-il ?',
-    howGiven: 'Comment est-il administré ?',
-    whenNot: 'Quand ne pas utiliser',
-    sideEffects: 'Effets secondaires possibles',
-    commonSE: 'Fréquents',
-    seriousSE: 'Graves - Contactez immédiatement votre médecin',
-    selfCare: 'Ce que vous pouvez faire vous-même',
-    tips: 'Conseils importants',
-    monitoring: 'Contrôles',
-    contact: 'Contact',
-    physician: 'Médecin',
-    nurse: 'Infirmier(ère)',
-    phone: 'Tél',
-    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
-  } : {
-    title: 'Informatie voor patiënten',
-    whatIs: `Wat is ${drug.generic_name}?`,
-    usedFor: 'Waarvoor wordt het gebruikt?',
-    howGiven: 'Hoe wordt het gegeven?',
-    whenNot: 'Wanneer niet gebruiken',
-    sideEffects: 'Mogelijke bijwerkingen',
-    commonSE: 'Veel voorkomend',
-    seriousSE: 'Ernstig - Neem direct contact op',
-    selfCare: 'Wat kunt u zelf doen?',
-    tips: 'Belangrijke tips',
-    monitoring: 'Controles',
-    contact: 'Contact',
-    physician: 'Arts',
-    nurse: 'Verpleegkundige',
-    phone: 'Tel',
-    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
+  const allLabels: Record<string, any> = {
+    nl: {
+      title: 'Informatie voor patiënten',
+      whatIs: `Wat is ${drug.generic_name}?`,
+      usedFor: 'Waarvoor wordt het gebruikt?',
+      howGiven: 'Hoe wordt het gegeven?',
+      whenNot: 'Wanneer niet gebruiken',
+      sideEffects: 'Mogelijke bijwerkingen',
+      commonSE: 'Veel voorkomend',
+      seriousSE: 'Ernstig - Neem direct contact op',
+      selfCare: 'Wat kunt u zelf doen?',
+      tips: 'Belangrijke tips',
+      monitoring: 'Controles',
+      contact: 'Contact',
+      physician: 'Arts',
+      nurse: 'Verpleegkundige',
+      phone: 'Tel',
+      footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
+      pageTitle: 'Patiëntinformatie',
+    },
+    fr: {
+      title: 'Information pour les patients',
+      whatIs: `Qu'est-ce que ${drug.generic_name} ?`,
+      usedFor: 'À quoi sert-il ?',
+      howGiven: 'Comment est-il administré ?',
+      whenNot: 'Quand ne pas utiliser',
+      sideEffects: 'Effets secondaires possibles',
+      commonSE: 'Fréquents',
+      seriousSE: 'Graves - Contactez immédiatement votre médecin',
+      selfCare: 'Ce que vous pouvez faire vous-même',
+      tips: 'Conseils importants',
+      monitoring: 'Contrôles',
+      contact: 'Contact',
+      physician: 'Médecin',
+      nurse: 'Infirmier(ère)',
+      phone: 'Tél',
+      footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
+      pageTitle: 'Information patient',
+    },
+    de: {
+      title: 'Informationen für Patienten',
+      whatIs: `Was ist ${drug.generic_name}?`,
+      usedFor: 'Wofür wird es verwendet?',
+      howGiven: 'Wie wird es verabreicht?',
+      whenNot: 'Wann nicht anwenden',
+      sideEffects: 'Mögliche Nebenwirkungen',
+      commonSE: 'Häufig',
+      seriousSE: 'Schwerwiegend - Kontaktieren Sie sofort Ihren Arzt',
+      selfCare: 'Was können Sie selbst tun?',
+      tips: 'Wichtige Hinweise',
+      monitoring: 'Kontrollen',
+      contact: 'Kontakt',
+      physician: 'Arzt',
+      nurse: 'Pflegekraft',
+      phone: 'Tel',
+      footer: `${hospitalName} - Onkologie | ${new Date().toLocaleDateString('de-DE')} | Diese Information ergänzt das Gespräch mit Ihrem Arzt.`,
+      pageTitle: 'Patienteninformation',
+    },
+    en: {
+      title: 'Patient Information',
+      whatIs: `What is ${drug.generic_name}?`,
+      usedFor: 'What is it used for?',
+      howGiven: 'How is it given?',
+      whenNot: 'When not to use',
+      sideEffects: 'Possible side effects',
+      commonSE: 'Common',
+      seriousSE: 'Serious - Contact your doctor immediately',
+      selfCare: 'What can you do yourself?',
+      tips: 'Important tips',
+      monitoring: 'Check-ups',
+      contact: 'Contact',
+      physician: 'Physician',
+      nurse: 'Nurse',
+      phone: 'Phone',
+      footer: `${hospitalName} - Oncology | ${new Date().toLocaleDateString('en-GB')} | This information supplements the conversation with your doctor.`,
+      pageTitle: 'Patient information',
+    },
   };
+
+  const labels = allLabels[language] || allLabels.nl;
 
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
@@ -474,7 +522,7 @@ function generatePatientInfoHtml(
     }).join('')}</ul>`;
   };
 
-  const htmlLang = isFr ? 'fr' : 'nl';
+  const htmlLang = language;
 
   return `
 <!DOCTYPE html>
@@ -482,7 +530,7 @@ function generatePatientInfoHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${isFr ? 'Information patient' : 'Patiëntinformatie'} - ${drug.generic_name}</title>
+  <title>${labels.pageTitle} - ${drug.generic_name}</title>
   <style>
     @page { size: A4; margin: 12mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
