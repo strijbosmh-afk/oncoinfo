@@ -372,27 +372,28 @@ export default function DrugDetailPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <TabsList className="w-max">
-                <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.overview')}</TabsTrigger>
-                <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.dosing')}</TabsTrigger>
-                <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.sideEffects')}</TabsTrigger>
-                <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.monitoring')}</TabsTrigger>
-              </TabsList>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="w-max">
+                  <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.overview')}</TabsTrigger>
+                  <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.dosing')}</TabsTrigger>
+                  <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.sideEffects')}</TabsTrigger>
+                  <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.monitoring')}</TabsTrigger>
+                </TabsList>
+              </div>
               <Button 
                 onClick={handleOpenStaffDialog} 
                 disabled={isGeneratingPdf}
                 variant="outline"
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4 ml-2"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4 shrink-0"
               >
                 {isGeneratingPdf ? (
                   <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
                   <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 )}
-                <span className="hidden xs:inline">{t('patientFolder.patientInfo')}</span>
-                <span className="xs:hidden">{t('patientFolder.patientInfoShort')}</span>
+                Patiënten Info
               </Button>
             </div>
             <div className="flex items-center">
