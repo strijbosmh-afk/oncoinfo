@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
       if (hospital) {
         hospitalName = hospital.name;
         hospitalColor = (hospital.branding as any)?.primary_color || '#6b2d5b';
-        hospitalLogoUrl = hospital.logo_url;
+        hospitalLogoUrl = (hospital.branding as any)?.patient_folder_logo_url || hospital.logo_url;
       }
     }
 
