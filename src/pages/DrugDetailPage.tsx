@@ -69,18 +69,63 @@ export default function DrugDetailPage() {
 
   useEffect(() => {
     if (!hospital?.id) return;
-    supabase
-      .from('hospital_doctors')
-      .select('id, name, staff_type, specialization')
-      .eq('hospital_id', hospital.id)
-      .eq('is_active', true)
-      .order('display_order')
-      .then(({ data }) => {
-        if (data) {
-          setHospitalDoctors(data.filter(d => d.staff_type === 'doctor'));
-          setHospitalNurses(data.filter(d => d.staff_type === 'nurse' || d.staff_type === 'pharmacist'));
-        }
-      });
+
+    const fetchStaff = async () => {
+      // Fetch from hospital_doctors table
+      const { data: hdData } = await supabase
+        .from('hospital_doctors')
+        .select('id, name, staff_type, specialization')
+        .eq('hospital_id', hospital.id)
+        .eq('is_active', true)
+        .order('display_order');
+
+      const doctors: HospitalDoctor[] = (hdData || []).filter(d => d.staff_type === 'doctor' || d.staff_type === 'arts');
+      const nurses: HospitalDoctor[] = (hdData || []).filter(d => d.staff_type === 'nurse' || d.staff_type === 'pharmacist' || d.staff_type === 'verpleegkundige' || d.staff_type === 'apotheker');
+
+      // Also fetch physicians from profiles (function = 'arts') as fallback/supplement
+      const { data: profileDoctors } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, function')
+        .eq('hospital_id', hospital.id);
+
+      if (profileDoctors) {
+        const existingNames = new Set(doctors.map(d => d.name.toLowerCase()));
+        profileDoctors
+          .filter(p => p.function === 'arts' && p.first_name && p.last_name)
+          .forEach(p => {
+            const fullName = `${p.first_name} ${p.last_name}`;
+            if (!existingNames.has(fullName.toLowerCase())) {
+              doctors.push({
+                id: p.user_id,
+                name: fullName,
+                staff_type: 'arts',
+                specialization: null,
+              });
+              existingNames.add(fullName.toLowerCase());
+            }
+          });
+
+        // Also add pharmacists from profiles
+        profileDoctors
+          .filter(p => p.function === 'apotheker' && p.first_name && p.last_name)
+          .forEach(p => {
+            const fullName = `${p.first_name} ${p.last_name}`;
+            if (!existingNames.has(fullName.toLowerCase())) {
+              nurses.push({
+                id: p.user_id,
+                name: fullName,
+                staff_type: 'apotheker',
+                specialization: null,
+              });
+            }
+          });
+      }
+
+      setHospitalDoctors(doctors);
+      setHospitalNurses(nurses);
+    };
+
+    fetchStaff();
   }, [hospital?.id]);
 
   // Staff selection state

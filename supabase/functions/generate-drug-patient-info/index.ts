@@ -213,16 +213,38 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch hospital doctors
+    // Fetch hospital doctors from hospital_doctors + profiles
     let doctorsList: string[] = [];
     if (userProfile?.hospital_id) {
       const { data: doctors } = await supabase
         .from('hospital_doctors')
-        .select('name')
+        .select('name, staff_type')
         .eq('hospital_id', userProfile.hospital_id)
         .eq('is_active', true)
         .order('display_order');
-      if (doctors) doctorsList = doctors.map((d: any) => d.name);
+      if (doctors) {
+        doctorsList = doctors
+          .filter((d: any) => d.staff_type === 'doctor' || d.staff_type === 'arts')
+          .map((d: any) => d.name);
+      }
+
+      // Also fetch physicians from profiles as supplement
+      const { data: profileDoctors } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, function')
+        .eq('hospital_id', userProfile.hospital_id);
+      if (profileDoctors) {
+        const existingNames = new Set(doctorsList.map(n => n.toLowerCase()));
+        profileDoctors
+          .filter((p: any) => p.function === 'arts' && p.first_name && p.last_name)
+          .forEach((p: any) => {
+            const fullName = `${p.first_name} ${p.last_name}`;
+            if (!existingNames.has(fullName.toLowerCase())) {
+              doctorsList.push(fullName);
+              existingNames.add(fullName.toLowerCase());
+            }
+          });
+      }
     }
  
     const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '' } = await req.json();
