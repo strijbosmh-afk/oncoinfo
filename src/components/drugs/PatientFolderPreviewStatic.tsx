@@ -21,6 +21,9 @@ export function generateStaticPreviewHtml(
   includeDosing: boolean,
   includeSideEffects: boolean,
   folderMode: 'compact' | 'uitgebreid' = 'compact',
+  hospitalName: string = 'OncoInfo',
+  hospitalLogoUrl: string | null = null,
+  hospitalColor: string = '#6b2d5b',
 ): string {
   const isFr = language === 'fr';
   const brandNamesText = drug.brand_names?.length > 0 ? ` (${drug.brand_names.join(', ')})` : '';
@@ -41,7 +44,7 @@ export function generateStaticPreviewHtml(
     physician: 'Médecin',
     nurse: 'Infirmier(ère)',
     phone: 'Tél',
-    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
+    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('fr-BE')} | Cette information complète l'entretien avec votre médecin.`,
     preview: 'APERÇU - La version finale contiendra des descriptions adaptées aux patients.',
   } : {
     title: 'Informatie voor patiënten',
@@ -59,7 +62,7 @@ export function generateStaticPreviewHtml(
     physician: 'Arts',
     nurse: 'Verpleegkundige',
     phone: 'Tel',
-    footer: `RZ Tienen - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
+    footer: `${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.`,
     preview: 'VOORBEELD - De definitieve versie bevat patiëntvriendelijke beschrijvingen.',
   };
 
@@ -284,15 +287,15 @@ export function generateStaticPreviewHtml(
       font-size: 13px; line-height: 1.5; color: #1a1a1a;
       padding: 10mm; background: white;
     }
-    .preview-badge { background: #6b2d5b; color: white; text-align: center; padding: 6px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
-    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid #6b2d5b; }
+    .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
+    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
     .logo-header img { max-height: 45px; width: auto; }
     .header-title { text-align: right; }
-    .header-title h1 { color: #6b2d5b; font-size: 20px; margin-bottom: 2px; }
+    .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
     .header-title .subtitle { color: #666; font-size: 12px; }
     .content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
     .section { margin-bottom: 8px; }
-    .section h2 { color: #6b2d5b; font-size: 14px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+    .section h2 { color: ${hospitalColor}; font-size: 14px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
     .section p { margin-bottom: 4px; color: #333; font-size: 12px; }
     .section ul { margin-left: 14px; margin-bottom: 4px; }
     .section li { margin-bottom: 2px; color: #333; font-size: 12px; }
@@ -302,10 +305,10 @@ export function generateStaticPreviewHtml(
     .danger-box h3 { color: #cc0000; font-size: 12px; margin-bottom: 3px; }
     .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
     .selfcare-box h3 { color: #2e7d32; font-size: 12px; margin-bottom: 3px; }
-    .info-box { background: #f5e6f0; border-left: 3px solid #6b2d5b; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
+    .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
     .full-width { grid-column: 1 / -1; }
     .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; margin-top: 10px; font-size: 11px; }
-    .contact-section h2 { font-size: 13px; margin-bottom: 6px; color: #6b2d5b; }
+    .contact-section h2 { font-size: 13px; margin-bottom: 6px; color: ${hospitalColor}; }
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .footer { margin-top: 10px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 10px; color: #666; text-align: center; }
   </style>
@@ -313,7 +316,7 @@ export function generateStaticPreviewHtml(
 <body>
   <div class="preview-badge">${labels.preview}</div>
   <div class="logo-header">
-    <img src="/images/logo-rzt.png" alt="RZ Tienen Logo" />
+    ${hospitalLogoUrl ? `<img src="${hospitalLogoUrl}" alt="${hospitalName}" />` : `<img src="/images/logo-rzt.png" alt="Logo" />`}
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
       <p class="subtitle">${labels.title}</p>

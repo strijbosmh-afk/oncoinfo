@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -40,22 +40,12 @@ import {
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PHYSICIAN_GROUPS = [
-  {
-    label: 'Oncologie',
-    physicians: ['Dr. A. Caeyman', 'Dr. M. Strijbos'],
-  },
-  {
-    label: 'Urologie',
-    physicians: ['Dr. E. Baten', 'Dr. J. Berkers', 'Dr. A. Claikens', 'Dr. L. Del Favero', 'Dr. K. Peeters', 'Dr. K. Slabbaert', 'Dr. J. Van Nuffel', 'Dr. L. Van Wynsberge'],
-  },
-  {
-    label: 'Gynaecologie',
-    physicians: ['Dr. L. Claes', 'Dr. M. Van Goitsenhoven'],
-  },
-] as const;
-
-const NURSES = ['Mireille Pycke'] as const;
+interface HospitalDoctor {
+  id: string;
+  name: string;
+  staff_type: string;
+  specialization: string | null;
+}
 
 export default function DrugDetailPage() {
   const { t } = useTranslation();
@@ -71,10 +61,30 @@ export default function DrugDetailPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Hospital staff from database
+  const [hospitalDoctors, setHospitalDoctors] = useState<HospitalDoctor[]>([]);
+  const [hospitalNurses, setHospitalNurses] = useState<HospitalDoctor[]>([]);
+
+  useEffect(() => {
+    if (!hospital?.id) return;
+    supabase
+      .from('hospital_doctors')
+      .select('id, name, staff_type, specialization')
+      .eq('hospital_id', hospital.id)
+      .eq('is_active', true)
+      .order('display_order')
+      .then(({ data }) => {
+        if (data) {
+          setHospitalDoctors(data.filter(d => d.staff_type === 'doctor'));
+          setHospitalNurses(data.filter(d => d.staff_type === 'nurse' || d.staff_type === 'pharmacist'));
+        }
+      });
+  }, [hospital?.id]);
+
   // Staff selection state
   const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false);
-  const [selectedPhysician, setSelectedPhysician] = useState<string>(PHYSICIAN_GROUPS[0].physicians[0]);
-  const [nurseSelection, setNurseSelection] = useState<string>(NURSES[0]);
+  const [selectedPhysician, setSelectedPhysician] = useState<string>('');
+  const [nurseSelection, setNurseSelection] = useState<string>('');
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
   const billingCountry = hospital?.billing_country || '';
@@ -120,7 +130,9 @@ export default function DrugDetailPage() {
 
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
     drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
-    effectiveIncludeDosing, includeSideEffects, folderMode
+    effectiveIncludeDosing, includeSideEffects, folderMode,
+    hospital?.name || 'OncoInfo', hospital?.logo_url || null,
+    (hospital?.branding as any)?.primary_color || '#6b2d5b'
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -710,26 +722,32 @@ export default function DrugDetailPage() {
                   <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[40vh] lg:max-h-none">
                     <div className="space-y-2 sm:space-y-3">
                       <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3">
-                        {PHYSICIAN_GROUPS.map((group) => (
-                          <div key={group.label} className="space-y-1">
-                            <Label className="text-[11px] sm:text-xs text-muted-foreground">{group.label}</Label>
-                            <Select
-                              value={(group.physicians as readonly string[]).includes(selectedPhysician) ? selectedPhysician : ''}
-                              onValueChange={setSelectedPhysician}
-                            >
-                              <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
-                                <SelectValue placeholder={t('patientFolder.select')} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {group.physicians.map((doc) => (
-                                  <SelectItem key={doc} value={doc}>{doc}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ))}
-                      </div>
+                      {(() => {
+                        // Group doctors by specialization
+                        const groups = new Map<string, HospitalDoctor[]>();
+                        hospitalDoctors.forEach(doc => {
+                          const key = doc.specialization || t('patientFolder.general');
+                          if (!groups.has(key)) groups.set(key, []);
+                          groups.get(key)!.push(doc);
+                        });
+                        return (
+                          <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                            <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                              <SelectValue placeholder={t('patientFolder.select')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from(groups.entries()).map(([spec, docs]) => (
+                                <SelectGroup key={spec}>
+                                  <SelectLabel className="text-[11px]">{spec}</SelectLabel>
+                                  {docs.map(doc => (
+                                    <SelectItem key={doc.id} value={doc.name}>{doc.name}</SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        );
+                      })()}
                     </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -746,10 +764,10 @@ export default function DrugDetailPage() {
                         }}
                         className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
                       >
-                        {NURSES.map((nurse) => (
-                          <div key={nurse} className="flex items-center gap-2">
-                            <RadioGroupItem value={nurse} id={`nurse-${nurse}`} />
-                            <Label htmlFor={`nurse-${nurse}`} className="font-normal cursor-pointer text-xs sm:text-sm">{nurse}</Label>
+                        {hospitalNurses.map((nurse) => (
+                          <div key={nurse.id} className="flex items-center gap-2">
+                            <RadioGroupItem value={nurse.name} id={`nurse-${nurse.id}`} />
+                            <Label htmlFor={`nurse-${nurse.id}`} className="font-normal cursor-pointer text-xs sm:text-sm">{nurse.name}</Label>
                           </div>
                         ))}
                         <div className="flex items-center gap-2">
