@@ -331,7 +331,7 @@ export function generateStaticPreviewHtml(
     }
     .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
-    .logo-header img { max-height: 45px; width: auto; }
+    .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
     .header-title .subtitle { color: #666; font-size: 12px; }
