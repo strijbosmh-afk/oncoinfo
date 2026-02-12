@@ -563,7 +563,9 @@ function generatePatientInfoHtml(
       background: white; overflow: auto;
     }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
+    .logo-name { display: flex; align-items: center; gap: 10px; }
     .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
+    .hospital-name { font-size: 15px; font-weight: 600; color: ${hospitalColor}; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: 22px; margin-bottom: 4px; }
     .header-title .subtitle { color: #666; font-size: 13px; }
@@ -594,7 +596,10 @@ function generatePatientInfoHtml(
 </head>
 <body>
   <div class="logo-header">
-    <img src="${logoUrl}" alt="${hospitalName} Logo" />
+    <div class="logo-name">
+      <img src="${logoUrl}" alt="${hospitalName} Logo" />
+      <span class="hospital-name">${hospitalName}</span>
+    </div>
     <div class="header-title">
       <h1>${drug.generic_name}${brandNamesText}</h1>
       <p class="subtitle">${labels.title}</p>
