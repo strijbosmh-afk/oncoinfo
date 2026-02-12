@@ -70,6 +70,9 @@ export const DRUG_CLASSES = [
   'ALK-remmer',
   'EGFR-remmer',
   'Angiogeneseremmer',
+  'BRAF/MEK-remmer',
+  'KRAS-remmer',
+  'FGFR-remmer',
 ] as const;
 
 export const COMBINATION_SUBTYPES = [
@@ -102,6 +105,18 @@ export const DRUG_DISEASE_AREAS = [
   'NSCLC',
   'SCLC',
   'Mesothelioom',
+  'Colorectaal carcinoom',
+  'Maagcarcinoom',
+  'Oesofaguscarcinoom',
+  'Pancreascarcinoom',
+  'Hepatocellulair carcinoom',
+  'Galwegcarcinoom',
+  'Melanoom',
+  'Merkelcelcarcinoom',
+  'Cutaan plaveiselcelcarcinoom',
+  'Hoofd-halscarcinoom',
+  'Nasofarynxcarcinoom',
+  'Speekselkliercarcinoom',
   'Supportive Care',
 ] as const;
 
@@ -149,6 +164,36 @@ export const DRUG_CATEGORIES = {
       { key: 'mesothelioma', label: 'Mesothelioom', description: 'Pleuraal mesothelioom' }
     ],
     drugClasses: ['Chemotherapie', 'IO/ICI', 'ALK-remmer', 'EGFR-remmer', 'TKI', 'Angiogeneseremmer', 'Combinatietherapie']
+  },
+  digestive: {
+    name: 'Digestieve',
+    diseaseAreas: [
+      { key: 'colorectal', label: 'Colorectaal carcinoom', description: 'Colon- en rectumcarcinoom' },
+      { key: 'gastric', label: 'Maagcarcinoom', description: 'Maag- en slokdarmkanker' },
+      { key: 'esophageal', label: 'Oesofaguscarcinoom', description: 'Slokdarmkanker' },
+      { key: 'pancreatic', label: 'Pancreascarcinoom', description: 'Alvleesklierkanker' },
+      { key: 'hepatocellular', label: 'Hepatocellulair carcinoom', description: 'Levercelkanker (HCC)' },
+      { key: 'biliary', label: 'Galwegcarcinoom', description: 'Galweg- en galblaaskanker' }
+    ],
+    drugClasses: ['Chemotherapie', 'IO/ICI', 'EGFR-remmer', 'Angiogeneseremmer', 'TKI', 'Combinatietherapie', 'HER2-remmers', 'PARPi']
+  },
+  skin: {
+    name: 'Huid',
+    diseaseAreas: [
+      { key: 'melanoma', label: 'Melanoom', description: 'Cutaan melanoom' },
+      { key: 'merkel', label: 'Merkelcelcarcinoom', description: 'Merkelcelcarcinoom' },
+      { key: 'cutaneous_scc', label: 'Cutaan plaveiselcelcarcinoom', description: 'Cutaan SCC' }
+    ],
+    drugClasses: ['IO/ICI', 'BRAF/MEK-remmer', 'Combinatietherapie']
+  },
+  head_neck: {
+    name: 'Hoofd & Hals',
+    diseaseAreas: [
+      { key: 'hnscc', label: 'Hoofd-halscarcinoom', description: 'Plaveiselcelcarcinoom hoofd-hals' },
+      { key: 'nasopharyngeal', label: 'Nasofarynxcarcinoom', description: 'Nasofarynxcarcinoom' },
+      { key: 'salivary', label: 'Speekselkliercarcinoom', description: 'Speekselklierkanker' }
+    ],
+    drugClasses: ['Chemotherapie', 'IO/ICI', 'EGFR-remmer', 'Combinatietherapie']
   },
   other: {
     name: 'Overige',

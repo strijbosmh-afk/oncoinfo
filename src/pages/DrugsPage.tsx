@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -225,6 +225,9 @@ const categoryIcons: Record<DrugCategoryKey, React.ElementType> = {
   urology: Stethoscope,
   gynecology: Baby,
   respiratory: Wind,
+  digestive: UtensilsCrossed,
+  skin: Palette,
+  head_neck: Ear,
   other: MoreHorizontal
 };
 
@@ -233,6 +236,9 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
   urology: { text: 'text-blue-500', bg: 'bg-blue-500/10' },
   gynecology: { text: 'text-purple-500', bg: 'bg-purple-500/10' },
   respiratory: { text: 'text-sky-500', bg: 'bg-sky-500/10' },
+  digestive: { text: 'text-orange-500', bg: 'bg-orange-500/10' },
+  skin: { text: 'text-amber-500', bg: 'bg-amber-500/10' },
+  head_neck: { text: 'text-teal-500', bg: 'bg-teal-500/10' },
   other: { text: 'text-emerald-500', bg: 'bg-emerald-500/10' }
 };
 
