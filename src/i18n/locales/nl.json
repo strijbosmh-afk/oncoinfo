@@ -533,7 +533,9 @@
     "canDelete": "Kan behandelingen verwijderen",
     "sendEmail": "Inloggegevens per e-mail versturen",
     "create": "Aanmaken",
-    "hospital": "Ziekenhuis"
+    "hospital": "Ziekenhuis",
+    "hospitalPlaceholder": "Selecteer ziekenhuis",
+    "hospitalRequired": "Ziekenhuis is verplicht"
   },
   "changePassword": {
     "title": "Wijzig uw wachtwoord",

@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUserManagement, type ManagedUser } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { UserDialog } from './UserDialog';
+import { UserDialog, type HospitalOption } from './UserDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,14 @@ export function UserManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState<string>('all');
   const [functionFilter, setFunctionFilter] = useState<string>('all');
+  const [allHospitals, setAllHospitals] = useState<HospitalOption[]>([]);
+
+  // Fetch all active hospitals for the dialog dropdown
+  useEffect(() => {
+    supabase.from('hospitals').select('id, name').eq('is_active', true).order('name').then(({ data }) => {
+      if (data) setAllHospitals(data.map((h: any) => ({ id: h.id, name: h.name })));
+    });
+  }, []);
 
   // Derive unique hospitals and functions for filter dropdowns
   const hospitals = useMemo(() => {
@@ -361,6 +370,7 @@ export function UserManagement() {
         onSubmit={handleDialogSubmit}
         isLoading={createUser.isPending || updateUser.isPending}
         callerIsSuperAdmin={isSuperAdmin}
+        hospitals={allHospitals}
       />
 
       {/* Delete confirmation */}
