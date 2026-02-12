@@ -128,7 +128,13 @@
     "exportError": "Fout bij exporteren favorieten",
     "clear": "Wissen",
     "dosing": "Dosering",
-    "sideEffects": "Bijwerkingen"
+    "sideEffects": "Bijwerkingen",
+    "orderSaved": "Volgorde opgeslagen",
+    "orderSaveError": "Fout bij opslaan volgorde",
+    "orderReset": "Volgorde hersteld naar standaard",
+    "orderResetError": "Fout bij herstellen volgorde",
+    "resetDefault": "Standaard herstellen",
+    "dragInstruction": "Sleep de kaarten om de volgorde aan te passen. Klik op \"Opslaan\" om de wijzigingen te bewaren."
   },
   "drugDetail": {
     "overview": "Overzicht",

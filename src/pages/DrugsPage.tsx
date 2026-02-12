@@ -6,6 +6,7 @@ import { useDrugs } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserDrugOrder } from '@/hooks/useUserDrugOrder';
+import { useTranslatedStrings } from '@/hooks/useTranslatedStrings';
 import { DrugFilters, DRUG_CLASSES, DRUG_DISEASE_AREAS, Drug, DRUG_CATEGORIES, DrugCategoryKey } from '@/types/drug';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -72,11 +73,13 @@ interface DrugCardProps {
   drug: Drug;
   isFavorite: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
+  translateTerm?: (term: string) => string;
 }
 
-function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
+function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCardProps) {
   const { t } = useTranslation();
-  const tMed = useMedicalTranslation();
+  const tMedLocal = useMedicalTranslation();
+  const tMed = translateTerm || tMedLocal;
   const isCombo = drug.drug_class === 'Combinatietherapie';
   
   if (isCombo) {
@@ -262,6 +265,18 @@ export default function DrugsPage() {
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const { isAdmin } = useAuth();
   const { applyUserOrder } = useUserDrugOrder();
+
+  // Batch-translate all drug card terms via AI
+  const allCardTerms = useMemo(() => {
+    if (!drugs) return [];
+    return drugs.flatMap(drug => [
+      ...(drug.approved_indications || []),
+      ...(drug.disease_areas || []),
+      drug.drug_class,
+      drug.administration_route || '',
+    ]).filter(Boolean);
+  }, [drugs]);
+  const { translate: tCardBatch } = useTranslatedStrings(allCardTerms);
 
   // Filter drugs based on selected subtype/stage
   const filteredDrugs = useMemo(() => {
@@ -853,6 +868,7 @@ export default function DrugsPage() {
                     e.stopPropagation();
                     toggleFavorite(drug.id);
                   }}
+                  translateTerm={tCardBatch}
                 />
               ))}
             </div>

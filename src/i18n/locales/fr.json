@@ -128,7 +128,13 @@
     "exportError": "Erreur lors de l'exportation des favoris",
     "clear": "Effacer",
     "dosing": "Posologie",
-    "sideEffects": "Effets secondaires"
+    "sideEffects": "Effets secondaires",
+    "orderSaved": "Ordre enregistré",
+    "orderSaveError": "Erreur lors de l'enregistrement de l'ordre",
+    "orderReset": "Ordre réinitialisé par défaut",
+    "orderResetError": "Erreur lors de la réinitialisation de l'ordre",
+    "resetDefault": "Réinitialiser par défaut",
+    "dragInstruction": "Faites glisser les cartes pour ajuster l'ordre. Cliquez sur \"Enregistrer\" pour sauvegarder les modifications."
   },
   "drugDetail": {
     "overview": "Aperçu",
