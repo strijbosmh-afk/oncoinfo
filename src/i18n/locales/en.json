@@ -533,7 +533,9 @@
     "canDelete": "Can delete treatments",
     "sendEmail": "Send credentials by email",
     "create": "Create",
-    "hospital": "Hospital"
+    "hospital": "Hospital",
+    "hospitalPlaceholder": "Select hospital",
+    "hospitalRequired": "Hospital is required"
   },
   "changePassword": {
     "title": "Change your password",

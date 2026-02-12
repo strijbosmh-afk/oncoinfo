@@ -47,7 +47,7 @@ serve(async (req) => {
  
      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-     const { trial_id, drug_name, include_dosing = true, include_side_effects = true } = await req.json();
+     const { trial_id, drug_name, include_dosing = true, include_side_effects = true, language = 'nl' } = await req.json();
      
     if (!trial_id) {
       return new Response(
@@ -97,7 +97,10 @@ Results summary: ${JSON.stringify(trial.results_summary) || "Not available"}
 Safety highlights: ${trial.safety_highlights || "Not available"}
 `;
 
-    const systemPrompt = `Je bent een medisch schrijver die patiëntinformatie schrijft in het Nederlands.
+    const langConfig: Record<string, { name: string; locale: string; prompt: string; userMsg: string }> = {
+      nl: {
+        name: 'Nederlands', locale: 'nl-NL',
+        prompt: `Je bent een medisch schrijver die patiëntinformatie schrijft in het Nederlands.
 Schrijf een duidelijke, begrijpelijke patiëntinformatiebrief over het voorgeschreven medicijn.
 
 De brief moet bevatten:
@@ -110,7 +113,68 @@ De brief moet bevatten:
 7. Contactinformatie placeholder
 
 Schrijf in eenvoudig Nederlands, vermijd medisch jargon, en wees geruststellend maar eerlijk.
-Formatteer als HTML voor PDF generatie.`;
+Formatteer als HTML voor PDF generatie.`,
+        userMsg: `Genereer een patiëntinformatiebrief voor het medicijn "${selectedDrug}" gebaseerd op deze trial:\n\n${trialContext}`,
+      },
+      fr: {
+        name: 'Français', locale: 'fr-BE',
+        prompt: `Vous êtes un rédacteur médical qui écrit des informations pour les patients en français.
+Rédigez une lettre d'information patient claire et compréhensible sur le médicament prescrit.
+
+La lettre doit contenir :
+1. Titre et introduction
+2. Qu'est-ce que ce médicament et à quoi sert-il
+3. Ce que l'étude a montré (résultats en termes simples)
+4. ${include_dosing ? "Comment le médicament est administré (posologie/schéma)" : ""}
+5. ${include_side_effects ? "Effets secondaires possibles et que faire" : ""}
+6. Points d'attention importants
+7. Placeholder pour les coordonnées
+
+Écrivez en français simple, évitez le jargon médical, soyez rassurant mais honnête.
+Formatez en HTML pour la génération PDF.`,
+        userMsg: `Générez une lettre d'information patient pour le médicament "${selectedDrug}" basée sur cet essai clinique :\n\n${trialContext}`,
+      },
+      de: {
+        name: 'Deutsch', locale: 'de-DE',
+        prompt: `Sie sind ein medizinischer Autor, der Patienteninformationen auf Deutsch verfasst.
+Schreiben Sie einen klaren, verständlichen Patienteninformationsbrief über das verschriebene Medikament.
+
+Der Brief soll enthalten:
+1. Titel und Einleitung
+2. Was ist dieses Medikament und wofür wird es verwendet
+3. Was die Studie gezeigt hat (Ergebnisse in einfacher Sprache)
+4. ${include_dosing ? "Wie wird das Medikament verabreicht (Dosierung/Schema)" : ""}
+5. ${include_side_effects ? "Mögliche Nebenwirkungen und was zu tun ist" : ""}
+6. Wichtige Hinweise
+7. Platzhalter für Kontaktinformationen
+
+Schreiben Sie in einfachem Deutsch, vermeiden Sie medizinischen Fachjargon, seien Sie beruhigend aber ehrlich.
+Formatieren Sie als HTML für die PDF-Generierung.`,
+        userMsg: `Erstellen Sie einen Patienteninformationsbrief für das Medikament "${selectedDrug}" basierend auf dieser Studie:\n\n${trialContext}`,
+      },
+      en: {
+        name: 'English', locale: 'en-GB',
+        prompt: `You are a medical writer who writes patient information in English.
+Write a clear, understandable patient information letter about the prescribed medication.
+
+The letter should contain:
+1. Title and introduction
+2. What is this medication and what is it used for
+3. What the study showed (results in simple language)
+4. ${include_dosing ? "How the medication is given (dosing/schedule)" : ""}
+5. ${include_side_effects ? "Possible side effects and what to do" : ""}
+6. Important points to note
+7. Contact information placeholder
+
+Write in simple English, avoid medical jargon, be reassuring but honest.
+Format as HTML for PDF generation.`,
+        userMsg: `Generate a patient information letter for the medication "${selectedDrug}" based on this trial:\n\n${trialContext}`,
+      },
+    };
+
+    const lc = langConfig[language] || langConfig.nl;
+
+    const systemPrompt = lc.prompt;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -122,20 +186,20 @@ Formatteer als HTML voor PDF generatie.`;
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Genereer een patiëntinformatiebrief voor het medicijn "${selectedDrug}" gebaseerd op deze trial:\n\n${trialContext}` }
+          { role: "user", content: lc.userMsg }
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "generate_patient_info",
-              description: "Generate patient information document in Dutch",
+              description: `Generate patient information document in ${lc.name}`,
               parameters: {
                 type: "object",
                 properties: {
                   title: {
                     type: "string",
-                    description: "Document title in Dutch"
+                    description: `Document title in ${lc.name}`
                   },
                   drug_name: {
                     type: "string",
@@ -143,19 +207,23 @@ Formatteer als HTML voor PDF generatie.`;
                   },
                   introduction: {
                     type: "string",
-                    description: "Introduction paragraph in Dutch"
+                    description: `Introduction paragraph in ${lc.name}`
                   },
                   what_is_it: {
                     type: "string",
-                    description: "What is this medication and what is it used for (Dutch)"
+                    description: `What is this medication and what is it used for (${lc.name})`
                   },
                   study_results: {
                     type: "string",
-                    description: "What the study showed in simple terms (Dutch)"
+                    description: `What the study showed in simple terms (${lc.name})`
+                  },
+                  study_results: {
+                    type: "string",
+                    description: `What the study showed in simple terms (${lc.name})`
                   },
                   dosing: {
                     type: "string",
-                    description: "Dosing and administration information (Dutch)"
+                    description: `Dosing and administration information (${lc.name})`
                   },
                   side_effects: {
                     type: "array",
@@ -172,12 +240,12 @@ Formatteer als HTML voor PDF generatie.`;
                   important_notes: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Important notes and warnings (Dutch)"
+                    description: `Important notes and warnings (${lc.name})`
                   },
                   when_to_contact_doctor: {
                     type: "array",
                     items: { type: "string" },
-                    description: "When to contact the doctor (Dutch)"
+                    description: `When to contact the doctor (${lc.name})`
                   }
                 },
                 required: ["title", "drug_name", "introduction", "what_is_it", "study_results"]
@@ -206,7 +274,7 @@ Formatteer als HTML voor PDF generatie.`;
     const patientInfo = JSON.parse(toolCall.function.arguments);
 
     // Generate HTML for PDF with hospital branding
-    const html = generatePatientPdfHtml(patientInfo, trial, include_dosing, include_side_effects, hospital, hospitalDoctors);
+    const html = generatePatientPdfHtml(patientInfo, trial, include_dosing, include_side_effects, hospital, hospitalDoctors, language);
 
     return new Response(
       JSON.stringify({ 
@@ -227,13 +295,102 @@ Formatteer als HTML voor PDF generatie.`;
   }
 });
 
-function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean, hospital: any, doctors: any[]): string {
+function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean, hospital: any, doctors: any[], language: string = 'nl'): string {
   const primaryColor = hospital?.branding?.primary_color || '#0077b6';
   const hospitalName = hospital?.name || 'OncoInfo';
   const logoUrl = hospital?.logo_url || '';
+
+  const localeMap: Record<string, string> = { nl: 'nl-NL', fr: 'fr-BE', de: 'de-DE', en: 'en-GB' };
+  const locale = localeMap[language] || 'nl-NL';
+
+  const pdfLabels: Record<string, any> = {
+    nl: {
+      headerTitle: `Patiëntinformatie – ${hospitalName}`,
+      whatIs: 'Wat is dit medicijn?',
+      studyResults: 'Wat heeft het onderzoek aangetoond?',
+      basedOn: 'Gebaseerd op',
+      study: 'studie',
+      dateUnknown: 'datum onbekend',
+      dosing: 'Dosering en toediening',
+      sideEffects: 'Mogelijke bijwerkingen',
+      whatToDo: 'Wat te doen:',
+      contactDoctor: 'Neem contact op met uw arts als:',
+      importantNotes: 'Belangrijke aandachtspunten',
+      questions: 'Heeft u vragen?',
+      questionsDesc: 'Neem dan contact op met uw behandelend arts of verpleegkundige:',
+      yourDoctors: 'Uw artsen:',
+      department: 'Afdeling:',
+      departmentPlaceholder: '[Afdeling invullen]',
+      footer: 'Dit document is gegenereerd ter ondersteuning van uw behandeling. Het vervangt niet het gesprek met uw arts.',
+      generatedOn: 'Gegenereerd op:',
+    },
+    fr: {
+      headerTitle: `Information patient – ${hospitalName}`,
+      whatIs: 'Qu\'est-ce que ce médicament ?',
+      studyResults: 'Qu\'a montré l\'étude ?',
+      basedOn: 'Basé sur',
+      study: 'étude',
+      dateUnknown: 'date inconnue',
+      dosing: 'Posologie et administration',
+      sideEffects: 'Effets secondaires possibles',
+      whatToDo: 'Que faire :',
+      contactDoctor: 'Contactez votre médecin si :',
+      importantNotes: 'Points d\'attention importants',
+      questions: 'Vous avez des questions ?',
+      questionsDesc: 'Contactez votre médecin traitant ou infirmier(ère) :',
+      yourDoctors: 'Vos médecins :',
+      department: 'Service :',
+      departmentPlaceholder: '[À compléter]',
+      footer: 'Ce document a été généré pour accompagner votre traitement. Il ne remplace pas l\'entretien avec votre médecin.',
+      generatedOn: 'Généré le :',
+    },
+    de: {
+      headerTitle: `Patienteninformation – ${hospitalName}`,
+      whatIs: 'Was ist dieses Medikament?',
+      studyResults: 'Was hat die Studie gezeigt?',
+      basedOn: 'Basierend auf',
+      study: 'Studie',
+      dateUnknown: 'Datum unbekannt',
+      dosing: 'Dosierung und Verabreichung',
+      sideEffects: 'Mögliche Nebenwirkungen',
+      whatToDo: 'Was tun:',
+      contactDoctor: 'Kontaktieren Sie Ihren Arzt, wenn:',
+      importantNotes: 'Wichtige Hinweise',
+      questions: 'Haben Sie Fragen?',
+      questionsDesc: 'Kontaktieren Sie Ihren behandelnden Arzt oder Ihre Pflegekraft:',
+      yourDoctors: 'Ihre Ärzte:',
+      department: 'Abteilung:',
+      departmentPlaceholder: '[Abteilung eintragen]',
+      footer: 'Dieses Dokument wurde zur Unterstützung Ihrer Behandlung erstellt. Es ersetzt nicht das Gespräch mit Ihrem Arzt.',
+      generatedOn: 'Erstellt am:',
+    },
+    en: {
+      headerTitle: `Patient Information – ${hospitalName}`,
+      whatIs: 'What is this medication?',
+      studyResults: 'What did the study show?',
+      basedOn: 'Based on',
+      study: 'study',
+      dateUnknown: 'date unknown',
+      dosing: 'Dosing and administration',
+      sideEffects: 'Possible side effects',
+      whatToDo: 'What to do:',
+      contactDoctor: 'Contact your doctor if:',
+      importantNotes: 'Important points',
+      questions: 'Do you have questions?',
+      questionsDesc: 'Contact your treating physician or nurse:',
+      yourDoctors: 'Your physicians:',
+      department: 'Department:',
+      departmentPlaceholder: '[Fill in department]',
+      footer: 'This document was generated to support your treatment. It does not replace the conversation with your doctor.',
+      generatedOn: 'Generated on:',
+    },
+  };
+
+  const l = pdfLabels[language] || pdfLabels.nl;
+
   return `
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <title>${info.title}</title>
@@ -386,7 +543,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
   <div class="header">
     ${logoUrl ? `<img src="${logoUrl}" alt="${hospitalName}" />` : ''}
     <div>
-      <h1>Patiëntinformatie – ${hospitalName}</h1>
+      <h1>${l.headerTitle}</h1>
       <p class="subtitle">${info.title}</p>
     </div>
   </div>
@@ -397,19 +554,19 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
   </div>
 
   <div class="section">
-    <h3>Wat is dit medicijn?</h3>
+    <h3>${l.whatIs}</h3>
     <p>${info.what_is_it}</p>
   </div>
 
   <div class="section">
-    <h3>Wat heeft het onderzoek aangetoond?</h3>
+    <h3>${l.studyResults}</h3>
     <p>${info.study_results}</p>
-    <p class="study-reference">Gebaseerd op: ${trial.acronym} studie (${trial.publication_year || 'datum onbekend'})</p>
+    <p class="study-reference">${l.basedOn}: ${trial.acronym} ${l.study} (${trial.publication_year || l.dateUnknown})</p>
   </div>
 
   ${includeDosing && info.dosing ? `
   <div class="section">
-    <h3>Dosering en toediening</h3>
+    <h3>${l.dosing}</h3>
     <div class="info-box">
       <p>${info.dosing}</p>
     </div>
@@ -418,14 +575,14 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
 
   ${includeSideEffects && info.side_effects ? `
   <div class="section">
-    <h3>Mogelijke bijwerkingen</h3>
+    <h3>${l.sideEffects}</h3>
     ${info.side_effects.map((cat: any) => `
       <div class="side-effects-box">
         <h4>${cat.category}</h4>
         <ul>
           ${cat.effects.map((e: string) => `<li>${e}</li>`).join('')}
         </ul>
-        ${cat.action ? `<p><strong>Wat te doen:</strong> ${cat.action}</p>` : ''}
+        ${cat.action ? `<p><strong>${l.whatToDo}</strong> ${cat.action}</p>` : ''}
       </div>
     `).join('')}
   </div>
@@ -433,7 +590,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
 
   ${info.when_to_contact_doctor ? `
   <div class="section">
-    <h3>Neem contact op met uw arts als:</h3>
+    <h3>${l.contactDoctor}</h3>
     <div class="warning-box">
       <ul>
         ${info.when_to_contact_doctor.map((item: string) => `<li>${item}</li>`).join('')}
@@ -444,7 +601,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
 
   ${info.important_notes ? `
   <div class="section">
-    <h3>Belangrijke aandachtspunten</h3>
+    <h3>${l.importantNotes}</h3>
     <ul>
       ${info.important_notes.map((note: string) => `<li>${note}</li>`).join('')}
     </ul>
@@ -452,21 +609,21 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
   ` : ''}
 
   <div class="contact-section">
-    <h3>Heeft u vragen?</h3>
-    <p>Neem dan contact op met uw behandelend arts of verpleegkundige:</p>
+    <h3>${l.questions}</h3>
+    <p>${l.questionsDesc}</p>
     ${doctors.length > 0 ? `
-      <p><strong>Uw artsen:</strong></p>
+      <p><strong>${l.yourDoctors}</strong></p>
       <ul>
         ${doctors.map((d: any) => `<li>${d.name}${d.specialization ? ` – ${d.specialization}` : ''}</li>`).join('')}
       </ul>
     ` : `
-      <p><strong>Afdeling:</strong> [Afdeling invullen]</p>
+      <p><strong>${l.department}</strong> ${l.departmentPlaceholder}</p>
     `}
   </div>
 
   <div class="footer">
-    <p>Dit document is gegenereerd ter ondersteuning van uw behandeling. Het vervangt niet het gesprek met uw arts.</p>
-    <p>Gegenereerd op: ${new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    <p>${l.footer}</p>
+    <p>${l.generatedOn} ${new Date().toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
   </div>
 </body>
 </html>
