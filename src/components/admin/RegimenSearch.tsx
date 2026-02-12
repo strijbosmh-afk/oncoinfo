@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe } from 'lucide-react';
-import { DRUG_CLASSES, DRUG_DISEASE_AREAS } from '@/types/drug';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe, Trash2 } from 'lucide-react';
+import { DRUG_CLASSES, DRUG_DISEASE_AREAS, ADMINISTRATION_ROUTES } from '@/types/drug';
 
 interface PubMedResult {
   pmid: string;
@@ -98,6 +100,11 @@ export function RegimenSearch() {
     brand_names: '',
     administration_route: '',
     study_name: '',
+    is_combination: false,
+    is_on_zvz: false,
+    components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }] as {
+      name: string; dose: string; route: string; interval: string; cycle_length: string;
+    }[],
   });
 
   const searchMutation = useMutation({
@@ -227,6 +234,21 @@ export function RegimenSearch() {
 
   const addDrugMutation = useMutation({
     mutationFn: async () => {
+      const dosingInfo: any = {};
+      if (editingDrug.is_combination && editingDrug.components.length > 0) {
+        const componentDetails = editingDrug.components
+          .filter(c => c.name)
+          .map(c => {
+            const parts = [c.name];
+            if (c.dose) parts.push(c.dose);
+            if (c.route) parts.push(c.route);
+            if (c.interval) parts.push(c.interval);
+            if (c.cycle_length) parts.push(`cyclus: ${c.cycle_length} dagen`);
+            return parts.join(' ');
+          });
+        dosingInfo.standard_dose = componentDetails.join(' + ');
+      }
+
       const { error } = await supabase.from('drugs').insert({
         generic_name: editingDrug.generic_name,
         drug_class: editingDrug.drug_class,
@@ -235,6 +257,8 @@ export function RegimenSearch() {
         brand_names: editingDrug.brand_names ? editingDrug.brand_names.split(',').map(b => b.trim()) : [],
         administration_route: editingDrug.administration_route || null,
         common_regimens: editingDrug.study_name ? [editingDrug.study_name.trim()] : [],
+        is_on_zvz: editingDrug.is_on_zvz,
+        dosing_info: Object.keys(dosingInfo).length > 0 ? dosingInfo : null,
       });
       if (error) throw error;
     },
@@ -256,6 +280,9 @@ export function RegimenSearch() {
       brand_names: '',
       administration_route: '',
       study_name: '',
+      is_combination: false,
+      is_on_zvz: false,
+      components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
   };
@@ -269,8 +296,36 @@ export function RegimenSearch() {
       brand_names: regimen.brand_names || '',
       administration_route: regimen.administration_route || '',
       study_name: regimen.study_name || '',
+      is_combination: false,
+      is_on_zvz: false,
+      components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
+  };
+
+  const updateComponent = (index: number, field: string, value: string) => {
+    setEditingDrug(prev => ({
+      ...prev,
+      components: prev.components.map((c, i) => i === index ? { ...c, [field]: value } : c),
+    }));
+  };
+
+  const addComponent = () => {
+    if (editingDrug.components.length < 3) {
+      setEditingDrug(prev => ({
+        ...prev,
+        components: [...prev.components, { name: '', dose: '', route: '', interval: '', cycle_length: '' }],
+      }));
+    }
+  };
+
+  const removeComponent = (index: number) => {
+    if (editingDrug.components.length > 1) {
+      setEditingDrug(prev => ({
+        ...prev,
+        components: prev.components.filter((_, i) => i !== index),
+      }));
+    }
   };
 
   return (
@@ -667,57 +722,105 @@ export function RegimenSearch() {
 
         {/* Add Drug Dialog */}
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nieuw Medicijn Toevoegen</DialogTitle>
+              <DialogTitle>Nieuw Medicijn / Combinatie Toevoegen</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* Combination toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Combinatietherapie</Label>
+                  <p className="text-xs text-muted-foreground">Voeg een schema met 2 of 3 middelen toe</p>
+                </div>
+                <Switch
+                  checked={editingDrug.is_combination}
+                  onCheckedChange={(v) => setEditingDrug(prev => ({
+                    ...prev,
+                    is_combination: v,
+                    drug_class: v ? 'Combinatietherapie' : prev.drug_class === 'Combinatietherapie' ? '' : prev.drug_class,
+                  }))}
+                />
+              </div>
+
               <div className="space-y-2">
-                <Label>Generieke naam *</Label>
+                <Label>Naam therapie / schema *</Label>
                 <Input
                   value={editingDrug.generic_name}
                   onChange={(e) => setEditingDrug({ ...editingDrug, generic_name: e.target.value })}
-                  placeholder="Bijv. Pembrolizumab"
+                  placeholder={editingDrug.is_combination ? 'Bijv. ADT + Docetaxel + Darolutamide' : 'Bijv. Pembrolizumab'}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Merknamen (kommagescheiden)</Label>
-                <Input
-                  value={editingDrug.brand_names}
-                  onChange={(e) => setEditingDrug({ ...editingDrug, brand_names: e.target.value })}
-                  placeholder="Bijv. Keytruda"
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Merknamen (kommagescheiden)</Label>
+                  <Input
+                    value={editingDrug.brand_names}
+                    onChange={(e) => setEditingDrug({ ...editingDrug, brand_names: e.target.value })}
+                    placeholder="Bijv. Keytruda"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Studienaam</Label>
+                  <Input
+                    value={editingDrug.study_name}
+                    onChange={(e) => setEditingDrug({ ...editingDrug, study_name: e.target.value })}
+                    placeholder="Bijv. ARASENS, KEYNOTE-426"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Medicijnklasse *</Label>
+                  <Select
+                    value={editingDrug.drug_class}
+                    onValueChange={(v) => setEditingDrug({ ...editingDrug, drug_class: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Kies klasse..." /></SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {DRUG_CLASSES.map(c => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {!editingDrug.is_combination && (
+                  <div className="space-y-2">
+                    <Label>Toedieningsweg</Label>
+                    <Select
+                      value={editingDrug.administration_route}
+                      onValueChange={(v) => setEditingDrug({ ...editingDrug, administration_route: v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Kies..." /></SelectTrigger>
+                      <SelectContent className="bg-popover">
+                        {ADMINISTRATION_ROUTES.map(r => (
+                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              {/* RIZIV toggle */}
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={editingDrug.is_on_zvz}
+                  onCheckedChange={(v) => setEditingDrug({ ...editingDrug, is_on_zvz: v })}
                 />
+                <Label className="text-sm">RIZIV-terugbetaald</Label>
               </div>
-              <div className="space-y-2">
-                <Label>Studienaam</Label>
-                <Input
-                  value={editingDrug.study_name}
-                  onChange={(e) => setEditingDrug({ ...editingDrug, study_name: e.target.value })}
-                  placeholder="Bijv. KEYNOTE-426, CheckMate 214"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Medicijnklasse *</Label>
-                <Select
-                  value={editingDrug.drug_class}
-                  onValueChange={(v) => setEditingDrug({ ...editingDrug, drug_class: v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Kies klasse..." /></SelectTrigger>
-                  <SelectContent className="bg-popover">
-                    {DRUG_CLASSES.map(c => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div className="space-y-2">
                 <Label>Ziektegebieden</Label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {DRUG_DISEASE_AREAS.map(area => (
                     <Badge
                       key={area}
                       variant={editingDrug.disease_areas.includes(area) ? 'default' : 'outline'}
-                      className="cursor-pointer"
+                      className="cursor-pointer text-xs"
                       onClick={() => {
                         setEditingDrug(prev => ({
                           ...prev,
@@ -732,6 +835,74 @@ export function RegimenSearch() {
                   ))}
                 </div>
               </div>
+
+              {/* Combination components */}
+              {editingDrug.is_combination && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Componenten ({editingDrug.components.length}/3)</Label>
+                      {editingDrug.components.length < 3 && (
+                        <Button variant="outline" size="sm" onClick={addComponent} className="gap-1 h-7 text-xs">
+                          <Plus className="h-3 w-3" /> Component
+                        </Button>
+                      )}
+                    </div>
+                    {editingDrug.components.map((comp, idx) => (
+                      <div key={idx} className="rounded-lg border p-3 space-y-2 bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">Middel {idx + 1}</span>
+                          {editingDrug.components.length > 1 && (
+                            <Button variant="ghost" size="sm" onClick={() => removeComponent(idx)} className="h-6 w-6 p-0">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            value={comp.name}
+                            onChange={(e) => updateComponent(idx, 'name', e.target.value)}
+                            placeholder="Naam (bijv. Docetaxel)"
+                            className="text-sm"
+                          />
+                          <Input
+                            value={comp.dose}
+                            onChange={(e) => updateComponent(idx, 'dose', e.target.value)}
+                            placeholder="Dosering (bijv. 75 mg/m²)"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Select value={comp.route} onValueChange={(v) => updateComponent(idx, 'route', v)}>
+                            <SelectTrigger className="text-sm h-9"><SelectValue placeholder="Route" /></SelectTrigger>
+                            <SelectContent className="bg-popover">
+                              <SelectItem value="PO">PO (Oraal)</SelectItem>
+                              <SelectItem value="IV">IV (Intraveneus)</SelectItem>
+                              <SelectItem value="SC">SC (Subcutaan)</SelectItem>
+                              <SelectItem value="IM">IM (Intramusculair)</SelectItem>
+                              <SelectItem value="Continu">Continu</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={comp.interval}
+                            onChange={(e) => updateComponent(idx, 'interval', e.target.value)}
+                            placeholder="Interval (bijv. q3w)"
+                            className="text-sm"
+                          />
+                          <Input
+                            value={comp.cycle_length}
+                            onChange={(e) => updateComponent(idx, 'cycle_length', e.target.value)}
+                            placeholder="Cyclusdagen"
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <div className="space-y-2">
                 <Label>Werkingsmechanisme</Label>
                 <Textarea
@@ -740,21 +911,6 @@ export function RegimenSearch() {
                   placeholder="Beschrijf het werkingsmechanisme..."
                   rows={2}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Toedieningsweg</Label>
-                <Select
-                  value={editingDrug.administration_route}
-                  onValueChange={(v) => setEditingDrug({ ...editingDrug, administration_route: v })}
-                >
-                  <SelectTrigger><SelectValue placeholder="Kies..." /></SelectTrigger>
-                  <SelectContent className="bg-popover">
-                    <SelectItem value="Oraal">Oraal</SelectItem>
-                    <SelectItem value="Intraveneus">Intraveneus</SelectItem>
-                    <SelectItem value="Subcutaan">Subcutaan</SelectItem>
-                    <SelectItem value="Intramusculair">Intramusculair</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
             <DialogFooter>
