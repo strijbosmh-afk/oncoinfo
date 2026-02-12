@@ -51,7 +51,13 @@ export default function LoginPage() {
       .then(({ data }) => {
         if (data) {
           setHospitals(data);
-          if (data.length === 1) setHospitalId(data[0].id);
+          // Restore last used hospital from localStorage, or auto-select if only one
+          const lastHospitalId = localStorage.getItem('last-hospital-id');
+          if (lastHospitalId && data.some(h => h.id === lastHospitalId)) {
+            setHospitalId(lastHospitalId);
+          } else if (data.length === 1) {
+            setHospitalId(data[0].id);
+          }
         }
       });
   }, [navigate]);
@@ -82,6 +88,9 @@ export default function LoginPage() {
           refresh_token: session.refresh_token,
         });
       }
+
+      // Persist last used hospital for next login
+      localStorage.setItem('last-hospital-id', hospitalId);
 
       navigate('/home');
     } catch {
