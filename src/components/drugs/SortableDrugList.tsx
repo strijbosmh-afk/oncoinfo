@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DndContext,
   closestCenter,
@@ -23,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserDrugOrder } from '@/hooks/useUserDrugOrder';
+import { useTranslatedStrings } from '@/hooks/useTranslatedStrings';
 
 interface SortableDrugListProps {
   combinationDrugs: Drug[];
@@ -45,11 +47,22 @@ export function SortableDrugList({
   isEditMode,
   onEditModeChange,
 }: SortableDrugListProps) {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [localCombinations, setLocalCombinations] = useState<Drug[]>(combinationDrugs);
   const [localIndividuals, setLocalIndividuals] = useState<Drug[]>(individualDrugs);
   const queryClient = useQueryClient();
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
+
+  // Collect all translatable strings from drug cards
+  const allDrugs = [...combinationDrugs, ...individualDrugs];
+  const allTerms = allDrugs.flatMap(drug => [
+    ...(drug.approved_indications || []),
+    ...(drug.disease_areas || []),
+    drug.drug_class,
+    drug.administration_route || '',
+  ]).filter(Boolean);
+  const { translate: tCard } = useTranslatedStrings(allTerms);
 
   // Sync local state when props change (but not during edit mode)
   if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs)) {
@@ -128,11 +141,11 @@ export function SortableDrugList({
         await saveOrder.mutateAsync(orders);
       }
       
-      toast.success('Volgorde opgeslagen');
+      toast.success(t('drugs.orderSaved'));
       onEditModeChange(false);
     } catch (err) {
       console.error('Error saving order:', err);
-      toast.error('Fout bij opslaan volgorde');
+      toast.error(t('drugs.orderSaveError'));
     } finally {
       setIsSaving(false);
     }
@@ -143,11 +156,11 @@ export function SortableDrugList({
     try {
       await saveOrder.mutateAsync([]);
       await queryClient.invalidateQueries({ queryKey: ['drugs'] });
-      toast.success('Volgorde hersteld naar standaard');
+      toast.success(t('drugs.orderReset'));
       onEditModeChange(false);
     } catch (err) {
       console.error('Error resetting order:', err);
-      toast.error('Fout bij herstellen volgorde');
+      toast.error(t('drugs.orderResetError'));
     } finally {
       setIsSaving(false);
     }
@@ -177,7 +190,7 @@ export function SortableDrugList({
                 className="gap-2 text-muted-foreground"
               >
                 <RotateCcw className="h-4 w-4" />
-                Standaard herstellen
+                {t('drugs.resetDefault')}
               </Button>
             )}
             <Button
@@ -188,7 +201,7 @@ export function SortableDrugList({
               className="gap-2"
             >
               <X className="h-4 w-4" />
-              Annuleren
+              {t('common.cancel')}
             </Button>
             <Button
               size="sm"
@@ -201,13 +214,13 @@ export function SortableDrugList({
               ) : (
                 <Check className="h-4 w-4" />
               )}
-              Opslaan
+              {t('common.save')}
             </Button>
           </div>
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
             <p className="text-sm text-amber-800 dark:text-amber-200 flex items-center gap-2">
               <GripVertical className="h-4 w-4" />
-              Sleep de kaarten om de volgorde aan te passen. Klik op "Opslaan" om de wijzigingen te bewaren.
+              {t('drugs.dragInstruction')}
             </p>
           </div>
         </>
@@ -218,7 +231,7 @@ export function SortableDrugList({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Layers className="h-5 w-5 text-amber-600" />
-            <h2 className="text-xl font-semibold">Combinatieschema's</h2>
+            <h2 className="text-xl font-semibold">{t('drugs.combinations')}</h2>
             <Badge className="bg-amber-100 text-amber-800 border-amber-200">
               {localCombinations.length}
             </Badge>
@@ -244,6 +257,7 @@ export function SortableDrugList({
                       toggleFavorite(drug.id);
                     }}
                     isEditMode={isEditMode}
+                    translateTerm={tCard}
                   />
                 ))}
               </div>
@@ -257,7 +271,7 @@ export function SortableDrugList({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Individuele Medicijnen</h2>
+            <h2 className="text-xl font-semibold">{t('drugs.individualDrugs')}</h2>
             <Badge variant="secondary">{localIndividuals.length}</Badge>
           </div>
           <DndContext
@@ -281,6 +295,7 @@ export function SortableDrugList({
                       toggleFavorite(drug.id);
                     }}
                     isEditMode={isEditMode}
+                    translateTerm={tCard}
                   />
                 ))}
               </div>

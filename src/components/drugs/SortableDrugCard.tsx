@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Star, Layers, GripVertical } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
@@ -34,9 +35,13 @@ interface SortableDrugCardProps {
   isFavorite: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
   isEditMode: boolean;
+  translateTerm?: (term: string) => string;
 }
 
-export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMode }: SortableDrugCardProps) {
+export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMode, translateTerm }: SortableDrugCardProps) {
+  const { t } = useTranslation();
+  const tMed = translateTerm || ((s: string) => s);
+  
   const {
     attributes,
     listeners,
@@ -71,7 +76,7 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
           <button
             onClick={onToggleFavorite}
             className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-amber-100 transition-colors"
-            aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+            aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
           >
             <Star
               className={`h-5 w-5 transition-colors ${
@@ -94,9 +99,9 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
                   )}
                 </div>
               </div>
-              <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                Combinatieschema
-              </Badge>
+            <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+              {t('drugs.combinationRegimen')}
+            </Badge>
               {drug.is_on_zvz && (
                 <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
                   ✓ RIZIV
@@ -108,7 +113,7 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
                 <div className="flex flex-wrap gap-1">
                   {drug.approved_indications.slice(0, 3).map((ind) => (
                     <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200">
-                      {ind}
+                      {tMed(ind)}
                     </Badge>
                   ))}
                   {drug.approved_indications.length > 3 && (
@@ -140,7 +145,7 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
         <button
           onClick={onToggleFavorite}
           className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
-          aria-label={isFavorite ? 'Verwijder uit favorieten' : 'Voeg toe aan favorieten'}
+          aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
         >
           <Star
             className={`h-5 w-5 transition-colors ${
@@ -162,8 +167,8 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
                 )}
               </div>
               <div className="flex flex-col items-end gap-1">
-                <Badge className={getDrugClassColor(drug.drug_class)}>
-                  {drug.drug_class}
+              <Badge className={getDrugClassColor(drug.drug_class)}>
+                  {tMed(drug.drug_class)}
                 </Badge>
                 {drug.is_on_zvz && (
                   <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
@@ -175,15 +180,15 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
           </CardHeader>
           <CardContent>
             {drug.administration_route && (
-              <p className="text-sm text-muted-foreground mb-2">
-                {drug.administration_route}
+             <p className="text-sm text-muted-foreground mb-2">
+               {tMed(drug.administration_route)}
               </p>
             )}
             {drug.disease_areas.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {drug.disease_areas.slice(0, 3).map((area) => (
                   <Badge key={area} variant="outline" className="text-xs">
-                    {area}
+                    {tMed(area)}
                   </Badge>
                 ))}
                 {drug.disease_areas.length > 3 && (

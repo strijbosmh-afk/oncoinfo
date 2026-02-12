@@ -128,7 +128,13 @@
     "exportError": "Error exporting favorites",
     "clear": "Clear",
     "dosing": "Dosing",
-    "sideEffects": "Side effects"
+    "sideEffects": "Side effects",
+    "orderSaved": "Order saved",
+    "orderSaveError": "Error saving order",
+    "orderReset": "Order reset to default",
+    "orderResetError": "Error resetting order",
+    "resetDefault": "Reset to default",
+    "dragInstruction": "Drag the cards to adjust the order. Click \"Save\" to save your changes."
   },
   "drugDetail": {
     "overview": "Overview",
