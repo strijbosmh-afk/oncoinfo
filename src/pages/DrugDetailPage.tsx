@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
+import { useTranslatedDrug } from '@/hooks/useTranslatedDrug';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
@@ -51,6 +52,7 @@ export default function DrugDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const { data: drug, isLoading, error } = useDrug(id || '');
+  const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { user } = useAuth();
   const { hospital } = useHospital();
@@ -378,9 +380,15 @@ export default function DrugDetailPage() {
           </div>
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+            {isTranslating && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t('drugDetail.translating')}
+              </div>
+            )}
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               {/* Mechanism of Action */}
-              {drug.mechanism_of_action && (
+              {td?.mechanism_of_action && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -389,13 +397,13 @@ export default function DrugDetailPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">{drug.mechanism_of_action}</p>
+                    <p className="text-muted-foreground">{td.mechanism_of_action}</p>
                   </CardContent>
                 </Card>
               )}
 
               {/* Indications */}
-              {drug.approved_indications && drug.approved_indications.length > 0 && (
+              {td?.approved_indications && td.approved_indications.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -405,7 +413,7 @@ export default function DrugDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {drug.approved_indications.map((indication, i) => (
+                      {td.approved_indications.map((indication, i) => (
                         <li key={i}>{indication}</li>
                       ))}
                     </ul>
@@ -432,14 +440,14 @@ export default function DrugDetailPage() {
               )}
 
               {/* Common Regimens */}
-              {drug.common_regimens && drug.common_regimens.length > 0 && (
+              {td?.common_regimens && td.common_regimens.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle>{t('drugDetail.commonRegimens')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {drug.common_regimens.map((regimen, i) => (
+                      {td.common_regimens.map((regimen, i) => (
                         <li key={i}>{regimen}</li>
                       ))}
                     </ul>
@@ -458,37 +466,37 @@ export default function DrugDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {drug.dosing_info ? (
+                {td?.dosing_info ? (
                   <>
-                    {drug.dosing_info.standard_dose && (
+                    {td.dosing_info.standard_dose && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
-                        <p className="text-muted-foreground">{drug.dosing_info.standard_dose}</p>
+                        <p className="text-muted-foreground">{td.dosing_info.standard_dose}</p>
                       </div>
                     )}
-                    {drug.dosing_info.frequency && (
+                    {td.dosing_info.frequency && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.frequency')}</h4>
-                        <p className="text-muted-foreground">{drug.dosing_info.frequency}</p>
+                        <p className="text-muted-foreground">{td.dosing_info.frequency}</p>
                       </div>
                     )}
-                    {drug.dosing_info.duration && (
+                    {td.dosing_info.duration && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.duration')}</h4>
-                        <p className="text-muted-foreground">{drug.dosing_info.duration}</p>
+                        <p className="text-muted-foreground">{td.dosing_info.duration}</p>
                       </div>
                     )}
-                    {drug.dosing_info.max_dose && (
+                    {td.dosing_info.max_dose && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.maxDose')}</h4>
-                        <p className="text-muted-foreground">{drug.dosing_info.max_dose}</p>
+                        <p className="text-muted-foreground">{td.dosing_info.max_dose}</p>
                       </div>
                     )}
-                    {drug.dosing_info.dose_adjustments && drug.dosing_info.dose_adjustments.length > 0 && (
+                    {td.dosing_info.dose_adjustments && td.dosing_info.dose_adjustments.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">{t('drugDetail.doseAdjustments')}</h4>
                         <div className="space-y-2">
-                          {drug.dosing_info.dose_adjustments.map((adj, i) => (
+                          {td.dosing_info.dose_adjustments.map((adj, i) => (
                             <div key={i} className="text-sm">
                               <span className="font-medium">{adj.condition}:</span>{' '}
                               <span className="text-muted-foreground">{adj.adjustment}</span>
@@ -514,7 +522,7 @@ export default function DrugDetailPage() {
 
           <TabsContent value="side-effects" className="space-y-4 sm:space-y-6">
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {(drug.side_effects?.common || drug.side_effects?.veel_voorkomend) && (
+              {(td?.side_effects?.common || td?.side_effects?.veel_voorkomend) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -524,7 +532,7 @@ export default function DrugDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {(drug.side_effects.common || drug.side_effects.veel_voorkomend)?.map((effect: string, i: number) => (
+                      {(td.side_effects!.common || td.side_effects!.veel_voorkomend)?.map((effect: string, i: number) => (
                         <li key={i}>{effect}</li>
                       ))}
                     </ul>
@@ -532,7 +540,7 @@ export default function DrugDetailPage() {
                 </Card>
               )}
 
-              {(drug.side_effects?.serious || drug.side_effects?.ernstig) && (
+              {(td?.side_effects?.serious || td?.side_effects?.ernstig) && (
                 <Card className="border-destructive/50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-destructive">
@@ -542,7 +550,7 @@ export default function DrugDetailPage() {
                   </CardHeader>
                   <CardContent>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      {(drug.side_effects.serious || drug.side_effects.ernstig)?.map((effect: string, i: number) => (
+                      {(td.side_effects!.serious || td.side_effects!.ernstig)?.map((effect: string, i: number) => (
                         <li key={i}>{effect}</li>
                       ))}
                     </ul>
@@ -551,7 +559,7 @@ export default function DrugDetailPage() {
               )}
             </div>
 
-            {drug.contraindications && drug.contraindications.length > 0 && (
+            {td?.contraindications && td.contraindications.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -561,7 +569,7 @@ export default function DrugDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    {drug.contraindications.map((contra, i) => (
+                    {td.contraindications.map((contra, i) => (
                       <li key={i}>{contra}</li>
                     ))}
                   </ul>
@@ -569,7 +577,7 @@ export default function DrugDetailPage() {
               </Card>
             )}
 
-            {drug.side_effects?.management && Object.keys(drug.side_effects.management).length > 0 && (
+            {td?.side_effects?.management && Object.keys(td.side_effects.management).length > 0 && (
               <Card className="border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
@@ -579,7 +587,7 @@ export default function DrugDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {Object.entries(drug.side_effects.management).map(([key, value]) => (
+                    {Object.entries(td.side_effects.management).map(([key, value]) => (
                       <div key={key} className="text-sm">
                         <span className="font-medium capitalize">{key}:</span>{' '}
                         <span className="text-muted-foreground">{value}</span>
@@ -590,7 +598,7 @@ export default function DrugDetailPage() {
               </Card>
             )}
 
-            {!drug.side_effects?.common && !drug.side_effects?.veel_voorkomend && !drug.side_effects?.serious && !drug.side_effects?.ernstig && (
+            {!td?.side_effects?.common && !td?.side_effects?.veel_voorkomend && !td?.side_effects?.serious && !td?.side_effects?.ernstig && (
               <Card>
                 <CardContent className="py-8 text-center">
                   <p className="text-muted-foreground">{t('drugDetail.noSideEffects')}</p>
@@ -598,7 +606,7 @@ export default function DrugDetailPage() {
               </Card>
             )}
 
-            {drug.drug_interactions && drug.drug_interactions.length > 0 && (
+            {td?.drug_interactions && td.drug_interactions.length > 0 && (
                <Card className="border-orange-500/50 bg-orange-50/50 dark:bg-orange-950/20">
                 <CardHeader>
                    <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
@@ -614,7 +622,7 @@ export default function DrugDetailPage() {
                      </p>
                    </div>
                    <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                    {drug.drug_interactions.map((interaction, i) => (
+                    {td.drug_interactions.map((interaction, i) => (
                        <li key={i} className="leading-relaxed">{interaction}</li>
                     ))}
                   </ul>
@@ -645,14 +653,14 @@ export default function DrugDetailPage() {
               </Card>
             )}
 
-            {drug.patient_counseling_points && drug.patient_counseling_points.length > 0 && (
+            {td?.patient_counseling_points && td.patient_counseling_points.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>{t('drugDetail.patientCounseling')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    {drug.patient_counseling_points.map((point, i) => (
+                    {td.patient_counseling_points.map((point, i) => (
                       <li key={i}>{point}</li>
                     ))}
                   </ul>
