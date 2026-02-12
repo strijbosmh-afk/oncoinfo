@@ -133,7 +133,8 @@ export default function DrugDetailPage() {
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
     drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
     effectiveIncludeDosing, includeSideEffects, folderMode,
-    hospital?.name || 'OncoInfo', hospital?.logo_url || null,
+    hospital?.name || 'OncoInfo',
+    (hospital?.branding as any)?.patient_folder_logo_url || hospital?.logo_url || null,
     (hospital?.branding as any)?.primary_color || '#6b2d5b'
   ) : '';
 
