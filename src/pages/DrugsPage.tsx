@@ -34,6 +34,15 @@ const DRUG_CLASS_FULL_NAMES: Record<string, string> = {
   'G-CSF': 'Granulocyte Colony-Stimulating Factor',
 };
 
+/** Translate a Dutch medical term using the medicalTerms i18n section, with fallback to the original */
+function useMedicalTranslation() {
+  const { t } = useTranslation();
+  return (term: string) => {
+    const translated = t(`medicalTerms.${term}`, { defaultValue: '' });
+    return translated || term;
+  };
+}
+
 const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
     'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
@@ -67,6 +76,7 @@ interface DrugCardProps {
 
 function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
   const { t } = useTranslation();
+  const tMed = useMedicalTranslation();
   const isCombo = drug.drug_class === 'Combinatietherapie';
   
   if (isCombo) {
@@ -112,7 +122,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
               <div className="flex flex-wrap gap-1">
                 {drug.approved_indications.slice(0, 3).map((ind) => (
                   <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200">
-                    {ind}
+                    {tMed(ind)}
                   </Badge>
                 ))}
                 {drug.approved_indications.length > 3 && (
@@ -160,7 +170,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Badge className={getDrugClassColor(drug.drug_class)}>
-                      {drug.drug_class}
+                      {tMed(drug.drug_class)}
                     </Badge>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -169,7 +179,7 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
                 </Tooltip>
               ) : (
                 <Badge className={getDrugClassColor(drug.drug_class)}>
-                  {drug.drug_class}
+                  {tMed(drug.drug_class)}
                 </Badge>
               )}
               {drug.is_on_zvz && (
@@ -181,16 +191,16 @@ function DrugCard({ drug, isFavorite, onToggleFavorite }: DrugCardProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {drug.administration_route && (
+          {drug.administration_route && tMed(drug.administration_route) && (
             <p className="text-sm text-muted-foreground mb-2">
-              {drug.administration_route}
+              {tMed(drug.administration_route)}
             </p>
           )}
           {drug.disease_areas.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {drug.disease_areas.slice(0, 3).map((area) => (
                 <Badge key={area} variant="outline" className="text-xs">
-                  {area}
+                  {tMed(area)}
                 </Badge>
               ))}
               {drug.disease_areas.length > 3 && (
@@ -225,6 +235,7 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
 
 export default function DrugsPage() {
   const { t } = useTranslation();
+  const tMed = useMedicalTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') as DrugCategoryKey | null;
   const selectedSubtype = searchParams.get('subtype');
@@ -562,10 +573,10 @@ export default function DrugsPage() {
                     </div>
                   );
                 })()}
-                <h1 className="text-3xl font-bold">{categoryConfig.name}</h1>
+                <h1 className="text-3xl font-bold">{t(`medicalTerms.cat_${category}`, categoryConfig.name)}</h1>
               </div>
               <p className="text-muted-foreground">
-                {t('drugs.browseFor', { category: categoryConfig.name.toLowerCase() })}
+                {t('drugs.browseFor', { category: t(`medicalTerms.cat_${category}`, categoryConfig.name).toLowerCase() })}
               </p>
             </>
           ) : (
@@ -584,33 +595,25 @@ export default function DrugsPage() {
             <span className="text-sm text-muted-foreground">{t('drugs.activeFilter')}</span>
             {selectedSubtype && (
               <Badge variant="secondary" className="gap-1">
-                {category === 'breast' && 'subtypes' in (categoryConfig || {}) 
-                  ? (categoryConfig as any).subtypes.find((s: any) => s.key === selectedSubtype)?.label 
-                  : selectedSubtype}
+                {t(`medicalTerms.sub_${selectedSubtype}`, selectedSubtype)}
                 <button onClick={() => handleSubtypeClick(selectedSubtype)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             {selectedStage && (
               <Badge variant="secondary" className="gap-1">
-                {category === 'breast' && 'stages' in (categoryConfig || {})
-                  ? (categoryConfig as any).stages.find((s: any) => s.key === selectedStage)?.label
-                  : selectedStage}
+                {t(`medicalTerms.stage_${selectedStage}`, selectedStage)}
                 <button onClick={() => handleStageClick(selectedStage)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             {selectedSubcategory && (
               <Badge variant="secondary" className="gap-1">
-                {category === 'other' && 'subcategories' in (categoryConfig || {})
-                  ? (categoryConfig as any).subcategories.find((s: any) => s.key === selectedSubcategory)?.label
-                  : selectedSubcategory}
+                {t(`medicalTerms.sc_${selectedSubcategory}`, selectedSubcategory)}
                 <button onClick={() => handleSubcategoryClick(selectedSubcategory)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
             {selectedDiseaseArea && (
               <Badge variant="secondary" className="gap-1">
-                {(category === 'urology' || category === 'gynecology' || category === 'respiratory') && 'diseaseAreas' in (categoryConfig || {})
-                  ? (categoryConfig as any).diseaseAreas.find((s: any) => s.key === selectedDiseaseArea)?.label
-                  : selectedDiseaseArea}
+                {t(`medicalTerms.da_${selectedDiseaseArea}`, selectedDiseaseArea)}
                 <button onClick={() => handleDiseaseAreaClick(selectedDiseaseArea)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
             )}
@@ -640,8 +643,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{subtype.label}</h4>
-                        <p className="text-xs text-muted-foreground">{subtype.description}</p>
+                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
+                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.sub_${subtype.key}_desc`, subtype.description)}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -657,8 +660,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium">{stage.label}</h4>
-                        <p className="text-xs text-muted-foreground">{stage.description}</p>
+                        <h4 className="font-medium">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
+                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.stage_${stage.key}_desc`, stage.description)}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -677,8 +680,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-blue-700 dark:text-blue-400">{area.label}</h4>
-                        <p className="text-xs text-muted-foreground">{area.description}</p>
+                        <h4 className="font-medium text-blue-700 dark:text-blue-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -697,8 +700,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-purple-700 dark:text-purple-400">{area.label}</h4>
-                        <p className="text-xs text-muted-foreground">{area.description}</p>
+                        <h4 className="font-medium text-purple-700 dark:text-purple-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -717,8 +720,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-sky-700 dark:text-sky-400">{area.label}</h4>
-                        <p className="text-xs text-muted-foreground">{area.description}</p>
+                        <h4 className="font-medium text-sky-700 dark:text-sky-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -737,8 +740,8 @@ export default function DrugsPage() {
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-emerald-700 dark:text-emerald-400">{subcat.label}</h4>
-                        <p className="text-xs text-muted-foreground">{subcat.description}</p>
+                        <h4 className="font-medium text-emerald-700 dark:text-emerald-400">{t(`medicalTerms.sc_${subcat.key}`, subcat.label)}</h4>
+                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.sc_${subcat.key}_desc`, subcat.description)}</p>
                       </CardContent>
                     </Card>
                   ))}
@@ -911,7 +914,7 @@ export default function DrugsPage() {
                               htmlFor={`class-${drugClass}`}
                               className="text-sm cursor-pointer"
                             >
-                              {drugClass}
+                              {tMed(drugClass)}
                             </label>
                           );
                           return (
@@ -960,7 +963,7 @@ export default function DrugsPage() {
                               htmlFor={`disease-${disease}`}
                               className="text-sm cursor-pointer"
                             >
-                              {disease}
+                              {tMed(disease)}
                             </label>
                           </div>
                         ))}
