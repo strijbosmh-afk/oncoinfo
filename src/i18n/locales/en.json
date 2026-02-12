@@ -395,6 +395,7 @@
     "description": "Manage accounts and roles",
     "users": "users",
     "newUser": "New user",
+    "addToHospital": "Add to hospital",
     "searchPlaceholder": "Search by name or email...",
     "allHospitals": "All hospitals",
     "allFunctions": "All functions",

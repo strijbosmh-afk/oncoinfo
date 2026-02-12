@@ -395,6 +395,7 @@
     "description": "Gérer les comptes et les rôles",
     "users": "utilisateurs",
     "newUser": "Nouvel utilisateur",
+    "addToHospital": "Ajouter à l'hôpital",
     "searchPlaceholder": "Rechercher par nom ou e-mail...",
     "allHospitals": "Tous les hôpitaux",
     "allFunctions": "Toutes les fonctions",

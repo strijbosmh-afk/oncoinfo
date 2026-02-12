@@ -395,6 +395,7 @@
     "description": "Konten und Rollen verwalten",
     "users": "Benutzer",
     "newUser": "Neuer Benutzer",
+    "addToHospital": "Zum Krankenhaus hinzufügen",
     "searchPlaceholder": "Nach Name oder E-Mail suchen...",
     "allHospitals": "Alle Krankenhäuser",
     "allFunctions": "Alle Funktionen",
