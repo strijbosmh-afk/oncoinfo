@@ -380,8 +380,22 @@ export default function DrugDetailPage() {
                 <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.sideEffects')}</TabsTrigger>
                 <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.monitoring')}</TabsTrigger>
               </TabsList>
+              <Button 
+                onClick={handleOpenStaffDialog} 
+                disabled={isGeneratingPdf}
+                variant="outline"
+                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4 ml-2"
+              >
+                {isGeneratingPdf ? (
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                ) : (
+                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                )}
+                <span className="hidden xs:inline">{t('patientFolder.patientInfo')}</span>
+                <span className="xs:hidden">{t('patientFolder.patientInfoShort')}</span>
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
@@ -408,20 +422,6 @@ export default function DrugDetailPage() {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button 
-                onClick={handleOpenStaffDialog} 
-                disabled={isGeneratingPdf}
-                variant="outline"
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
-              >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                ) : (
-                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                )}
-                <span className="hidden xs:inline">{t('patientFolder.title')}</span>
-                <span className="xs:hidden">{t('patientFolder.titleShort')}</span>
-              </Button>
             </div>
           </div>
 

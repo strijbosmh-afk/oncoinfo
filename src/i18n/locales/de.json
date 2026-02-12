@@ -171,6 +171,8 @@
   "patientFolder": {
     "title": "Patientenmappe",
     "titleShort": "Mappe",
+    "patientInfo": "Patienten Info",
+    "patientInfoShort": "Info",
     "settings": "Einstellungen",
     "physician": "Arzt",
     "nurse": "Pflegekraft",

@@ -171,6 +171,8 @@
   "patientFolder": {
     "title": "Patiëntenfolder",
     "titleShort": "Folder",
+    "patientInfo": "Patiënten Info",
+    "patientInfoShort": "Info",
     "settings": "Instellingen",
     "physician": "Arts",
     "nurse": "Verpleegkundige",

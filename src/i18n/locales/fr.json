@@ -171,6 +171,8 @@
   "patientFolder": {
     "title": "Fiche patient",
     "titleShort": "Fiche",
+    "patientInfo": "Info Patient",
+    "patientInfoShort": "Info",
     "settings": "Paramètres",
     "physician": "Médecin",
     "nurse": "Infirmier(ère)",

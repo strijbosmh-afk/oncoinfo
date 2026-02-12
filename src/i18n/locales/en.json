@@ -171,6 +171,8 @@
   "patientFolder": {
     "title": "Patient Folder",
     "titleShort": "Folder",
+    "patientInfo": "Patient Info",
+    "patientInfoShort": "Info",
     "settings": "Settings",
     "physician": "Physician",
     "nurse": "Nurse",
