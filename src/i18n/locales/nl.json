@@ -395,6 +395,7 @@
     "description": "Beheer accounts en rollen",
     "users": "gebruikers",
     "newUser": "Nieuwe gebruiker",
+    "addToHospital": "Toevoegen aan ziekenhuis",
     "searchPlaceholder": "Zoek op naam of e-mail...",
     "allHospitals": "Alle ziekenhuizen",
     "allFunctions": "Alle functies",

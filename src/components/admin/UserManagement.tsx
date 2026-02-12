@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus } from 'lucide-react';
 
 export function UserManagement() {
   const { t } = useTranslation();
@@ -28,6 +28,7 @@ export function UserManagement() {
   const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [preselectedHospital, setPreselectedHospital] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -78,9 +79,10 @@ export function UserManagement() {
     });
   }, [users, searchQuery, hospitalFilter, functionFilter]);
 
-  const handleCreate = () => {
+  const handleCreate = (preselectedHospitalId?: string) => {
     setDialogMode('create');
     setSelectedUser(null);
+    setPreselectedHospital(preselectedHospitalId || null);
     setDialogOpen(true);
   };
 
@@ -159,10 +161,25 @@ export function UserManagement() {
                 )}
               </CardDescription>
             </div>
-            <Button onClick={handleCreate} className="gap-2">
-              <Plus className="h-4 w-4" />
-              {t('userMgmt.newUser')}
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button onClick={() => handleCreate(hospitalFilter !== 'all' ? hospitalFilter : undefined)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                {t('userMgmt.newUser')}
+              </Button>
+              {isSuperAdmin && hospitalFilter === 'all' && (
+                <Select onValueChange={(id) => handleCreate(id)}>
+                  <SelectTrigger className="w-auto gap-2 border-dashed">
+                    <UserPlus className="h-4 w-4" />
+                    <span>{t('userMgmt.addToHospital')}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allHospitals.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -371,6 +388,7 @@ export function UserManagement() {
         isLoading={createUser.isPending || updateUser.isPending}
         callerIsSuperAdmin={isSuperAdmin}
         hospitals={allHospitals}
+        preselectedHospitalId={preselectedHospital || undefined}
       />
 
       {/* Delete confirmation */}

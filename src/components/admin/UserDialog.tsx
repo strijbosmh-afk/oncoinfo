@@ -36,6 +36,7 @@ interface UserDialogProps {
   isLoading: boolean;
   callerIsSuperAdmin?: boolean;
   hospitals?: HospitalOption[];
+  preselectedHospitalId?: string;
 }
 
 function generatePassword(length = 12): string {
@@ -47,7 +48,7 @@ function generatePassword(length = 12): string {
   return pw;
 }
 
-export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [] }: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -86,7 +87,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setFirstName('');
         setLastName('');
         setUserFunction('');
-        setHospitalId('');
+        setHospitalId(preselectedHospitalId || '');
         setPassword(generatePassword());
         setRole('viewer');
         setSendEmail(true);
