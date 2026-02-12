@@ -47,7 +47,7 @@ interface Hospital {
   name: string;
   slug: string;
   logo_url: string | null;
-  branding: { primary_color?: string } | null;
+  branding: { primary_color?: string; patient_folder_logo_url?: string } | null;
   is_active: boolean;
   created_at: string;
   default_language: string;
@@ -361,6 +361,8 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
   };
   const [editing, setEditing] = useState(false);
   const [logoUrl, setLogoUrl] = useState(hospital.logo_url || '');
+  const [patientFolderLogoUrl, setPatientFolderLogoUrl] = useState(hospital.branding?.patient_folder_logo_url || '');
+  const [uploadingPatientLogo, setUploadingPatientLogo] = useState(false);
   const [language, setLanguage] = useState(hospital.default_language || 'nl');
   const [country, setCountry] = useState(hospital.billing_country || '');
   const [color, setColor] = useState(hospital.branding?.primary_color || '#6b2d5b');
@@ -370,6 +372,7 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
 
   useEffect(() => {
     setLogoUrl(hospital.logo_url || '');
+    setPatientFolderLogoUrl(hospital.branding?.patient_folder_logo_url || '');
     setLanguage(hospital.default_language || 'nl');
     setCountry(hospital.billing_country || '');
     setColor(hospital.branding?.primary_color || '#6b2d5b');
@@ -386,7 +389,7 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
         logo_url: logoUrl || null,
         default_language: language,
         billing_country: country || null,
-        branding: { primary_color: color },
+        branding: { primary_color: color, patient_folder_logo_url: patientFolderLogoUrl || undefined },
         is_active: active,
         slug,
       })
@@ -400,7 +403,7 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
         logo_url: logoUrl || null,
         default_language: language,
         billing_country: country || null,
-        branding: { primary_color: color },
+        branding: { primary_color: color, patient_folder_logo_url: patientFolderLogoUrl || undefined },
         is_active: active,
         slug,
       });
@@ -492,6 +495,15 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
               <p className="text-xs text-muted-foreground break-all bg-muted/50 p-2 rounded">{hospital.logo_url}</p>
             ) : (
               <p className="text-xs text-muted-foreground italic">Geen logo ingesteld</p>
+            )}
+            <p className="text-sm font-semibold mt-4">Logo Patiëntenfolder</p>
+            {hospital.branding?.patient_folder_logo_url ? (
+              <div className="flex items-center gap-2">
+                <img src={hospital.branding.patient_folder_logo_url} alt="Patient folder logo" className="h-8 w-auto rounded object-contain border bg-background" />
+                <p className="text-xs text-muted-foreground truncate">{hospital.branding.patient_folder_logo_url.split('/').pop()?.split('?')[0]}</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Gebruikt standaard logo</p>
             )}
             <p className="text-sm font-semibold mt-4">Aangemaakt</p>
             <p className="text-xs text-muted-foreground">{new Date(hospital.created_at).toLocaleDateString('nl-BE', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -620,6 +632,60 @@ function GeneralInfoSection({ hospital, hospitalFeatureCounts, onSaved }: {
             </div>
             {logoUrl && (
               <LogoPreview logoUrl={logoUrl} hospitalName={hospital.name} primaryColor={color} />
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Logo Patiëntenfolder (optioneel)</Label>
+            <p className="text-[11px] text-muted-foreground">Alternatief logo voor de patiëntenfolder. Als leeg, wordt het standaard logo gebruikt.</p>
+            <div className="flex items-center gap-2">
+              <Input value={patientFolderLogoUrl} onChange={e => setPatientFolderLogoUrl(e.target.value)} placeholder="URL of upload een afbeelding" className="flex-1" />
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    e.target.value = '';
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast({ title: 'Bestand te groot', description: 'Max 2MB toegestaan.', variant: 'destructive' });
+                      return;
+                    }
+                    setUploadingPatientLogo(true);
+                    const ext = file.name.split('.').pop() || 'png';
+                    const path = `logos/${hospital.id}-patient-folder.${ext}`;
+                    const { error: uploadError } = await supabase.storage
+                      .from('public-assets')
+                      .upload(path, file, { upsert: true, contentType: file.type });
+                    if (uploadError) {
+                      toast({ title: 'Upload mislukt', description: uploadError.message, variant: 'destructive' });
+                    } else {
+                      const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(path);
+                      setPatientFolderLogoUrl(`${urlData.publicUrl}?t=${Date.now()}`);
+                      toast({ title: 'Logo geüpload' });
+                    }
+                    setUploadingPatientLogo(false);
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" className="gap-1.5 whitespace-nowrap" disabled={uploadingPatientLogo} asChild>
+                  <span>
+                    {uploadingPatientLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                    Uploaden
+                  </span>
+                </Button>
+              </label>
+              {patientFolderLogoUrl && (
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setPatientFolderLogoUrl('')}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {patientFolderLogoUrl && (
+              <div className="flex items-center gap-2 mt-1">
+                <img src={patientFolderLogoUrl} alt="Patient folder logo" className="h-8 w-auto rounded object-contain border bg-background" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <span className="text-[11px] text-muted-foreground truncate flex-1">{patientFolderLogoUrl.split('/').pop()?.split('?')[0]}</span>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3">

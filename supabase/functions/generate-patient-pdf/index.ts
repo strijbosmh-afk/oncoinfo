@@ -298,7 +298,7 @@ Format as HTML for PDF generation.`,
 function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean, hospital: any, doctors: any[], language: string = 'nl'): string {
   const primaryColor = hospital?.branding?.primary_color || '#0077b6';
   const hospitalName = hospital?.name || 'OncoInfo';
-  const logoUrl = hospital?.logo_url || '';
+  const logoUrl = hospital?.branding?.patient_folder_logo_url || hospital?.logo_url || '';
 
   const localeMap: Record<string, string> = { nl: 'nl-NL', fr: 'fr-BE', de: 'de-DE', en: 'en-GB' };
   const locale = localeMap[language] || 'nl-NL';
