@@ -1822,7 +1822,7 @@ export default function HospitalManagementPage() {
 
         {/* Hospital Create/Edit Dialog */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingHospital ? 'Ziekenhuis Bewerken' : 'Nieuw Ziekenhuis'}</DialogTitle>
             </DialogHeader>
