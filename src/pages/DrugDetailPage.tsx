@@ -54,7 +54,7 @@ export default function DrugDetailPage() {
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { hospital } = useHospital();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
@@ -130,7 +130,8 @@ export default function DrugDetailPage() {
 
   // Staff selection state
   const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false);
-  const [selectedPhysician, setSelectedPhysician] = useState<string>('');
+  const loggedInFullName = profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : '';
+  const [selectedPhysician, setSelectedPhysician] = useState<string>(loggedInFullName);
   const [nurseSelection, setNurseSelection] = useState<string>('');
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
@@ -143,6 +144,12 @@ export default function DrugDetailPage() {
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
 
+  // Default physician to logged-in user when profile loads
+  useEffect(() => {
+    if (!selectedPhysician && profile?.first_name && profile?.last_name) {
+      setSelectedPhysician(`${profile.first_name} ${profile.last_name}`);
+    }
+  }, [profile]);
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: string = 'nl', phoneNumber?: string) => {
     if (!drug) return;
     
