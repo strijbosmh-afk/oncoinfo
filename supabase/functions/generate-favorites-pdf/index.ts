@@ -222,6 +222,11 @@ function generateCombinedHtml(drugs: any[], includeDosing: boolean, includeSideE
     <p><strong>Tel:</strong> _____________</p>
   </div>
 
+  <div style="margin-top: 6px; padding: 5px 8px; border: 1.5px solid #cc0000; border-radius: 4px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; font-size: 7px; margin-bottom: 2px;">⚠ Belangrijke mededeling</p>
+    <p style="font-size: 6.5px; color: #444; line-height: 1.4;">Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.</p>
+  </div>
+
   <div class="footer">
     <p>${hospitalName} - Oncologie | ${new Date().toLocaleDateString('nl-NL')} | Deze informatie is bedoeld als aanvulling op het gesprek met uw arts.</p>
   </div>
