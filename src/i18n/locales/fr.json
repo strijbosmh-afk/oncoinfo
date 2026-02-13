@@ -257,7 +257,9 @@
   "footer": {
     "drugs": "Médicaments",
     "contact": "Contact",
-    "disclaimer": "Les informations sur les médicaments sont uniquement destinées à des fins éducatives. Consultez des professionnels de la santé pour les décisions de traitement."
+    "disclaimer": "Les informations sur les médicaments sont uniquement destinées à des fins éducatives. Consultez des professionnels de la santé pour les décisions de traitement.",
+    "disclaimerTitle": "Important — Pas un dispositif médical",
+    "disclaimerFull": "OncoInfo n'est pas un dispositif médical et n'est pas réglementé par le MDR (Medical Device Regulation). Les informations fournies sont uniquement destinées à servir de référence éducative et informative pour les professionnels de santé. Le contenu peut contenir des erreurs, des omissions ou des données obsolètes. N'utilisez jamais ces informations comme seule base pour des décisions cliniques. Consultez toujours les informations officielles du produit (RCP) et les recommandations en vigueur. Les développeurs déclinent toute responsabilité pour tout dommage résultant de l'utilisation de cette application."
   },
   "notFound": {
     "title": "404",

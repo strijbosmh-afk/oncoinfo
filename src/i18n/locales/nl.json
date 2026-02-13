@@ -257,7 +257,9 @@
   "footer": {
     "drugs": "Medicijnen",
     "contact": "Contact",
-    "disclaimer": "Medicijninformatie is uitsluitend bedoeld voor educatieve doeleinden. Raadpleeg medische professionals voor behandelbeslissingen."
+    "disclaimer": "Medicijninformatie is uitsluitend bedoeld voor educatieve doeleinden. Raadpleeg medische professionals voor behandelbeslissingen.",
+    "disclaimerTitle": "Belangrijk — Geen medisch hulpmiddel",
+    "disclaimerFull": "OncoInfo is geen medisch hulpmiddel en valt niet onder de MDR (Medical Device Regulation). De verstrekte informatie is uitsluitend bedoeld als educatief en informatief naslagwerk voor zorgprofessionals. De inhoud kan fouten, onvolledigheden of verouderde gegevens bevatten. Gebruik deze informatie nooit als enige basis voor klinische beslissingen. Raadpleeg altijd de officiële productinformatie (SmPC) en actuele richtlijnen. De ontwikkelaars aanvaarden geen aansprakelijkheid voor eventuele schade die voortvloeit uit het gebruik van deze applicatie."
   },
   "notFound": {
     "title": "404",
