@@ -265,18 +265,24 @@ export default function DrugDetailPage() {
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      // Handle multi-page PDFs if content is longer than one page
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-      
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
+      // Only add content that fits on one A4 page - avoid empty second pages
+      if (imgHeight <= pdfHeight) {
+        // Content fits on one page
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        // Multi-page: only add pages with actual content (5mm threshold)
+        let heightLeft = imgHeight;
+        let position = 0;
+        
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
+        
+        while (heightLeft > 5) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
       }
       
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
