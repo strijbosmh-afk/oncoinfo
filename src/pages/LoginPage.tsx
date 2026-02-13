@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const languageFlags: { code: string; label: string; flag: string }[] = [
@@ -185,6 +185,16 @@ export default function LoginPage() {
                 </TooltipProvider>
               </div>
             </form>
+
+            {/* Disclaimer on login page */}
+            <div className="mt-6 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {t('footer.disclaimerFull')}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
