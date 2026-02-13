@@ -137,15 +137,15 @@ export function generateStaticPreviewHtml(
         ? [...drug.common_regimens] 
         : drug.common_regimens.slice(0, 3);
     }
-    // Add instruction to always follow physician's instructions for oral medications
+    // Add instruction to always follow physician's instructions for oral medications (as first item, bold)
     if (drug.administration_route?.toLowerCase() === 'oraal') {
       const followInstructions: Record<string, string> = {
-        nl: 'Volg altijd de instructies van uw behandelend arts.',
-        fr: 'Suivez toujours les instructions de votre médecin traitant.',
-        de: 'Befolgen Sie immer die Anweisungen Ihres behandelnden Arztes.',
-        en: 'Always follow your treating physician\'s instructions.',
+        nl: '<strong>Volg altijd de instructies van uw behandelend arts.</strong>',
+        fr: '<strong>Suivez toujours les instructions de votre médecin traitant.</strong>',
+        de: '<strong>Befolgen Sie immer die Anweisungen Ihres behandelnden Arztes.</strong>',
+        en: '<strong>Always follow your treating physician\'s instructions.</strong>',
       };
-      dosingItems.push(followInstructions[language] || followInstructions['nl']);
+      dosingItems.unshift(followInstructions[language] || followInstructions['nl']);
     }
   }
 
