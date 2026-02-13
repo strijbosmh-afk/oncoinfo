@@ -323,6 +323,8 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
       departmentPlaceholder: '[Afdeling invullen]',
       footer: 'Dit document is gegenereerd ter ondersteuning van uw behandeling. Het vervangt niet het gesprek met uw arts.',
       generatedOn: 'Gegenereerd op:',
+      disclaimerTitle: 'Belangrijke mededeling',
+      disclaimerText: 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel in de zin van de Europese Verordening Medische Hulpmiddelen (MDR 2017/745). De inhoud kan fouten of onvolledigheden bevatten en mag niet worden gebruikt als enige basis voor klinische beslissingen. Raadpleeg altijd uw behandelend arts of apotheker.',
     },
     fr: {
       headerTitle: `Information patient – ${hospitalName}`,
@@ -343,6 +345,8 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
       departmentPlaceholder: '[À compléter]',
       footer: 'Ce document a été généré pour accompagner votre traitement. Il ne remplace pas l\'entretien avec votre médecin.',
       generatedOn: 'Généré le :',
+      disclaimerTitle: 'Avis important',
+      disclaimerText: 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical au sens du Règlement européen relatif aux dispositifs médicaux (MDR 2017/745). Son contenu peut contenir des erreurs ou des inexactitudes et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin traitant ou pharmacien.',
     },
     de: {
       headerTitle: `Patienteninformation – ${hospitalName}`,
@@ -363,6 +367,8 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
       departmentPlaceholder: '[Abteilung eintragen]',
       footer: 'Dieses Dokument wurde zur Unterstützung Ihrer Behandlung erstellt. Es ersetzt nicht das Gespräch mit Ihrem Arzt.',
       generatedOn: 'Erstellt am:',
+      disclaimerTitle: 'Wichtiger Hinweis',
+      disclaimerText: 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt im Sinne der Europäischen Medizinprodukteverordnung (MDR 2017/745). Der Inhalt kann Fehler oder Ungenauigkeiten enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren behandelnden Arzt oder Apotheker.',
     },
     en: {
       headerTitle: `Patient Information – ${hospitalName}`,
@@ -383,6 +389,8 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
       departmentPlaceholder: '[Fill in department]',
       footer: 'This document was generated to support your treatment. It does not replace the conversation with your doctor.',
       generatedOn: 'Generated on:',
+      disclaimerTitle: 'Important notice',
+      disclaimerText: 'This document is intended for informational purposes only and is not a medical device within the meaning of the European Medical Devices Regulation (MDR 2017/745). Its content may contain errors or inaccuracies and should not be used as the sole basis for clinical decisions. Always consult your treating physician or pharmacist.',
     },
   };
 
@@ -619,6 +627,11 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     ` : `
       <p><strong>${l.department}</strong> ${l.departmentPlaceholder}</p>
     `}
+  </div>
+
+  <div style="margin-top: 25px; padding: 15px; border: 2px solid #cc0000; border-radius: 8px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; margin-bottom: 6px; font-size: 10pt;">⚠ ${l.disclaimerTitle}</p>
+    <p style="font-size: 8.5pt; color: #444; line-height: 1.5;">${l.disclaimerText}</p>
   </div>
 
   <div class="footer">

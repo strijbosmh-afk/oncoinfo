@@ -406,6 +406,11 @@ export function generateStaticPreviewHtml(
     </div>
   </div>
 
+  <div style="margin-top: 10px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; font-size: 8px; margin-bottom: 3px;">⚠ ${isFr ? 'Avis important' : 'Belangrijke mededeling'}</p>
+    <p style="font-size: 7px; color: #444; line-height: 1.4;">${isFr ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+  </div>
+
   <div class="footer"><p>${labels.footer}</p></div>
 </body>
 </html>`;
