@@ -277,9 +277,12 @@ Deno.serve(async (req) => {
 
     // Fetch logo - use hospital logo or fallback
     let logoDataUri = '';
+    const APP_URL = 'https://oncoinfo.lovable.app';
     const logoSourceUrl = hospitalLogoUrl
-      ? (hospitalLogoUrl.startsWith('http') ? hospitalLogoUrl : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospitalLogoUrl}`)
-      : `${supabaseUrl}/storage/v1/object/public/public-assets/logo-rzt.png`;
+      ? (hospitalLogoUrl.startsWith('http') ? hospitalLogoUrl
+        : hospitalLogoUrl.startsWith('/') ? `${APP_URL}${hospitalLogoUrl}`
+        : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospitalLogoUrl}`)
+      : `${APP_URL}/images/logo-rzt.png`;
     try {
       const logoResponse = await fetch(logoSourceUrl);
       if (logoResponse.ok) {
@@ -559,8 +562,8 @@ function generatePatientInfoHtml(
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 14px; line-height: 1.5; color: #1a1a1a;
-      width: 210mm; min-height: 297mm; margin: 0 auto; padding: 12mm;
-      background: white; overflow: auto;
+      width: 210mm; margin: 0 auto; padding: 12mm;
+      background: white;
     }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
     .logo-name { display: flex; align-items: center; gap: 10px; }
@@ -691,6 +694,11 @@ function generatePatientInfoHtml(
       <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
       <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
     </div>
+  </div>
+
+  <div style="margin-top: 12px; padding: 10px 12px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+    <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not be used as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
   </div>
 
   <div class="footer">
