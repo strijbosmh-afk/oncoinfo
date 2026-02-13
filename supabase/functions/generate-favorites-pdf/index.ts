@@ -58,11 +58,14 @@ Deno.serve(async (req) => {
        if (hospital) {
          hospitalName = hospital.name;
          hospitalColor = (hospital.branding as any)?.primary_color || '#6b2d5b';
-         if (hospital.logo_url) {
-           hospitalLogoUrl = hospital.logo_url.startsWith('http')
-             ? hospital.logo_url
-             : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospital.logo_url}`;
-         }
+          if (hospital.logo_url) {
+            const APP_URL = 'https://oncoinfo.lovable.app';
+            hospitalLogoUrl = hospital.logo_url.startsWith('http')
+              ? hospital.logo_url
+              : hospital.logo_url.startsWith('/')
+                ? `${APP_URL}${hospital.logo_url}`
+                : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospital.logo_url}`;
+          }
        }
      }
  

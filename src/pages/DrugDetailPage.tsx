@@ -179,7 +179,13 @@ export default function DrugDetailPage() {
     drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
     effectiveIncludeDosing, includeSideEffects, folderMode,
     hospital?.name || 'OncoInfo',
-    (hospital?.branding as any)?.patient_folder_logo_url || hospital?.logo_url || null,
+    (() => {
+      const rawUrl = (hospital?.branding as any)?.patient_folder_logo_url || hospital?.logo_url || null;
+      if (!rawUrl) return null;
+      if (rawUrl.startsWith('http')) return rawUrl;
+      if (rawUrl.startsWith('/')) return `${window.location.origin}${rawUrl}`;
+      return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/${rawUrl}`;
+    })(),
     (hospital?.branding as any)?.primary_color || '#6b2d5b'
   ) : '';
 

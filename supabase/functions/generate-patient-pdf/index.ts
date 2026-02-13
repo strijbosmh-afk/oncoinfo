@@ -298,7 +298,14 @@ Format as HTML for PDF generation.`,
 function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, includeSideEffects: boolean, hospital: any, doctors: any[], language: string = 'nl'): string {
   const primaryColor = hospital?.branding?.primary_color || '#0077b6';
   const hospitalName = hospital?.name || 'OncoInfo';
-  const logoUrl = hospital?.branding?.patient_folder_logo_url || hospital?.logo_url || '';
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || '';
+  const APP_URL = 'https://oncoinfo.lovable.app';
+  const rawLogoUrl = hospital?.branding?.patient_folder_logo_url || hospital?.logo_url || '';
+  const logoUrl = rawLogoUrl
+    ? (rawLogoUrl.startsWith('http') ? rawLogoUrl
+      : rawLogoUrl.startsWith('/') ? `${APP_URL}${rawLogoUrl}`
+      : `${SUPABASE_URL}/storage/v1/object/public/public-assets/${rawLogoUrl}`)
+    : '';
 
   const localeMap: Record<string, string> = { nl: 'nl-NL', fr: 'fr-BE', de: 'de-DE', en: 'en-GB' };
   const locale = localeMap[language] || 'nl-NL';
