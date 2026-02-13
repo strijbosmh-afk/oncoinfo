@@ -359,15 +359,15 @@ Deno.serve(async (req) => {
         drug.common_regimens.forEach((r: string) => parts.push(`• ${r}`));
       }
       if (di.notes) parts.push(`• ${di.notes}`);
-      // Add instruction for oral medications
+      // Add instruction for oral medications (as first item, bold)
       if (drug.administration_route?.toLowerCase() === 'oraal') {
         const followMsg: Record<string, string> = {
-          nl: 'Volg altijd de instructies van uw behandelend arts.',
-          fr: 'Suivez toujours les instructions de votre médecin traitant.',
-          de: 'Befolgen Sie immer die Anweisungen Ihres behandelnden Arztes.',
-          en: 'Always follow your treating physician\'s instructions.',
+          nl: '<strong>Volg altijd de instructies van uw behandelend arts.</strong>',
+          fr: '<strong>Suivez toujours les instructions de votre médecin traitant.</strong>',
+          de: '<strong>Befolgen Sie immer die Anweisungen Ihres behandelnden Arztes.</strong>',
+          en: '<strong>Always follow your treating physician\'s instructions.</strong>',
         };
-        parts.push(`• ${followMsg[language] || followMsg['nl']}`);
+        parts.unshift(`• ${followMsg[language] || followMsg['nl']}`);
       }
       dosingStructured = parts.join('\n');
     }
