@@ -10,6 +10,7 @@ interface Drug {
   patient_counseling_points?: string[] | null;
   monitoring_requirements?: string[] | null;
   common_regimens?: string[] | null;
+  administration_route?: string | null;
 }
 
 export function generateStaticPreviewHtml(
@@ -135,6 +136,16 @@ export function generateStaticPreviewHtml(
       dosingItems = folderMode === 'uitgebreid' 
         ? [...drug.common_regimens] 
         : drug.common_regimens.slice(0, 3);
+    }
+    // Add instruction to always follow physician's instructions for oral medications
+    if (drug.administration_route?.toLowerCase() === 'oraal') {
+      const followInstructions: Record<string, string> = {
+        nl: 'Volg altijd de instructies van uw behandelend arts.',
+        fr: 'Suivez toujours les instructions de votre médecin traitant.',
+        de: 'Befolgen Sie immer die Anweisungen Ihres behandelnden Arztes.',
+        en: 'Always follow your treating physician\'s instructions.',
+      };
+      dosingItems.push(followInstructions[language] || followInstructions['nl']);
     }
   }
 
