@@ -127,15 +127,8 @@ export function generateStaticPreviewHtml(
         if (di.frequency) dosingItems.push(di.frequency);
         if (drug.cycle_length_days) dosingItems.push(`${isFr ? 'Cycle' : 'Cyclus'}: ${drug.cycle_length_days} ${isFr ? 'jours' : 'dagen'}`);
         if (di.duration) dosingItems.push(`${isFr ? 'Durée' : 'Duur'}: ${di.duration}`);
-        if (di.max_dose && folderMode === 'uitgebreid') dosingItems.push(`Max: ${di.max_dose}`);
       }
       if (di.notes) dosingItems.push(di.notes);
-      // In uitgebreid mode, show dose adjustments
-      if (folderMode === 'uitgebreid' && di.dose_adjustments?.length) {
-        for (const adj of di.dose_adjustments) {
-          dosingItems.push(`${adj.condition}: ${adj.adjustment}`);
-        }
-      }
     }
     // Fallback to common_regimens
     if (dosingItems.length === 0 && drug.common_regimens?.length > 0) {
