@@ -114,18 +114,20 @@ export default function DrugDetailPage() {
             }
           });
 
-        // Also add pharmacists from profiles
+        // Also add pharmacists and nurses from profiles
+        const nurseExistingNames = new Set(nurses.map(n => n.name.toLowerCase()));
         profileDoctors
-          .filter(p => p.function === 'apotheker' && p.first_name && p.last_name)
+          .filter(p => (p.function === 'apotheker' || p.function === 'verpleegkundige') && p.first_name && p.last_name)
           .forEach(p => {
             const fullName = `${p.first_name} ${p.last_name}`;
-            if (!existingNames.has(fullName.toLowerCase())) {
+            if (!nurseExistingNames.has(fullName.toLowerCase())) {
               nurses.push({
                 id: p.user_id,
                 name: fullName,
-                staff_type: 'apotheker',
+                staff_type: p.function || 'verpleegkundige',
                 specialization: null,
               });
+              nurseExistingNames.add(fullName.toLowerCase());
             }
           });
       }
