@@ -138,7 +138,7 @@ const Index = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-1.5 text-xs font-medium border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                      className="h-9 gap-1.5 text-xs font-medium border-orange-200 text-foreground hover:border-orange-400 hover:bg-orange-50 active:text-foreground focus:text-foreground dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
                     >
                       <Zap className="h-3.5 w-3.5 text-orange-400 fill-orange-400 shrink-0" />
                       {drug.generic_name}
