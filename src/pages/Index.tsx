@@ -286,7 +286,7 @@ const Index = () => {
             {t('disclaimer.text', 'Dit platform is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.')}
           </p>
         </div>
-        <p className="text-xs text-muted-foreground/60 text-center mt-3">© Michiel Strijbos</p>
+        <p className="text-xs text-muted-foreground/60 text-center mt-3">© DRMSoftware</p>
       </div>
     </Layout>
   );

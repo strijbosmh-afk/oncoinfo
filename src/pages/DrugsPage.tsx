@@ -1153,7 +1153,7 @@ export default function DrugsPage() {
                 <p className="text-sm text-muted-foreground pt-2">
                   {t('drugs.totalFound', { count: filteredDrugs?.length })}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">© Michiel Strijbos</p>
+                <p className="text-xs text-muted-foreground mt-1">© DRMSoftware</p>
               </div>
             )}
           </div>
