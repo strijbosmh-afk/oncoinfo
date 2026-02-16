@@ -50,6 +50,12 @@ interface HospitalDoctor {
   specialization: string | null;
 }
 
+interface PremedicatieItem {
+  name: string;
+  route: 'PO' | 'SC';
+  timing: string;
+}
+
 export default function DrugDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -147,32 +153,42 @@ export default function DrugDetailPage() {
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
-  const [selectedPremedicatie, setSelectedPremedicatie] = useState<string[]>([]);
-  const [customPremedicatie, setCustomPremedicatie] = useState('');
+  const [selectedPremedicatie, setSelectedPremedicatie] = useState<PremedicatieItem[]>([]);
+  const [showAddPremedicatie, setShowAddPremedicatie] = useState(false);
+  const [newPremName, setNewPremName] = useState('');
+  const [newPremRoute, setNewPremRoute] = useState<'PO' | 'SC'>('PO');
+  const [newPremTiming, setNewPremTiming] = useState('');
 
-  const defaultPremedicatieItems = [
-    'Dexamethason 8mg IV',
-    'Ondansetron 8mg IV', 
-    'Granisetron 1mg IV',
-    'Paracetamol 1g PO/IV',
-    'Difenhydramine 25mg IV',
-    'Ranitidine 50mg IV',
-    'Lorazepam 1mg PO',
-    'Aprepitant 125mg PO',
-    'Clemastine 2mg IV',
+
+  const defaultPremedicatieItems: PremedicatieItem[] = [
+    { name: 'Dexamethasone 10mg', route: 'PO', timing: '12u en 1u voor therapie' },
+    { name: 'Dexamethasone 10mg', route: 'PO', timing: 'Dag 1, 2 en 3 na therapie' },
+    { name: 'Medrol 32mg', route: 'PO', timing: '12u en 1u voor therapie' },
+    { name: 'Lonquex 6mg', route: 'SC', timing: '24u na chemotherapie' },
+    { name: 'Filgrastim 48IE', route: 'SC', timing: 'Dag 1 en 2 na therapie' },
   ];
 
-  const togglePremedicatieItem = (item: string) => {
-    setSelectedPremedicatie(prev => 
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+  const premItemKey = (item: PremedicatieItem) => `${item.name}|${item.route}|${item.timing}`;
+
+  const togglePremedicatieItem = (item: PremedicatieItem) => {
+    const key = premItemKey(item);
+    setSelectedPremedicatie(prev =>
+      prev.some(i => premItemKey(i) === key) ? prev.filter(i => premItemKey(i) !== key) : [...prev, item]
     );
   };
 
   const addCustomPremedicatie = () => {
-    const trimmed = customPremedicatie.trim();
-    if (trimmed && !selectedPremedicatie.includes(trimmed)) {
-      setSelectedPremedicatie(prev => [...prev, trimmed]);
-      setCustomPremedicatie('');
+    const trimmedName = newPremName.trim();
+    const trimmedTiming = newPremTiming.trim();
+    if (trimmedName && trimmedTiming) {
+      const newItem: PremedicatieItem = { name: trimmedName, route: newPremRoute, timing: trimmedTiming };
+      if (!selectedPremedicatie.some(i => premItemKey(i) === premItemKey(newItem))) {
+        setSelectedPremedicatie(prev => [...prev, newItem]);
+      }
+      setNewPremName('');
+      setNewPremRoute('PO');
+      setNewPremTiming('');
+      setShowAddPremedicatie(false);
     }
   };
 
@@ -197,7 +213,7 @@ export default function DrugDetailPage() {
           language,
           phone_number: phoneNumber || '',
           folder_mode: folderMode,
-          premedicatie: includePremedicatie ? selectedPremedicatie : []
+          premedicatie: includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
         }
       });
 
@@ -227,7 +243,7 @@ export default function DrugDetailPage() {
       return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/${rawUrl}`;
     })(),
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
-    includePremedicatie ? selectedPremedicatie : []
+    includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -981,42 +997,32 @@ export default function DrugDetailPage() {
                       {includePremedicatie && (
                         <div className="space-y-2 pl-1">
                           {defaultPremedicatieItems.map((item) => (
-                            <label key={item} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                            <label key={premItemKey(item)} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                               <Checkbox
-                                checked={selectedPremedicatie.includes(item)}
+                                checked={selectedPremedicatie.some(i => premItemKey(i) === premItemKey(item))}
                                 onCheckedChange={() => togglePremedicatieItem(item)}
                               />
-                              {item}
+                              <span><strong>{item.name}</strong> ({item.route}) – {item.timing}</span>
                             </label>
                           ))}
-                          {selectedPremedicatie.filter(i => !defaultPremedicatieItems.includes(i)).map((item) => (
-                            <label key={item} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                          {selectedPremedicatie.filter(i => !defaultPremedicatieItems.some(d => premItemKey(d) === premItemKey(i))).map((item) => (
+                            <label key={premItemKey(item)} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                               <Checkbox
                                 checked={true}
                                 onCheckedChange={() => togglePremedicatieItem(item)}
                               />
-                              {item}
+                              <span><strong>{item.name}</strong> ({item.route}) – {item.timing}</span>
                             </label>
                           ))}
-                          <div className="flex gap-1.5 mt-1">
-                            <Input
-                              placeholder="Ander medicament..."
-                              value={customPremedicatie}
-                              onChange={(e) => setCustomPremedicatie(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && addCustomPremedicatie()}
-                              className="h-7 text-xs flex-1"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs px-2"
-                              onClick={addCustomPremedicatie}
-                              disabled={!customPremedicatie.trim()}
-                            >
-                              +
-                            </Button>
-                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs mt-1"
+                            onClick={() => setShowAddPremedicatie(true)}
+                          >
+                            + Toevoegen
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1132,6 +1138,51 @@ export default function DrugDetailPage() {
           </DialogContent>
         </Dialog>
       </div>
+      {/* Add Premedicatie Dialog */}
+      <Dialog open={showAddPremedicatie} onOpenChange={setShowAddPremedicatie}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Premedicatie toevoegen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Naam *</Label>
+              <Input
+                value={newPremName}
+                onChange={(e) => setNewPremName(e.target.value)}
+                placeholder="bv. Dexamethason 10mg"
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Toedieningsweg *</Label>
+              <RadioGroup value={newPremRoute} onValueChange={(v) => setNewPremRoute(v as 'PO' | 'SC')} className="flex gap-4">
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="PO" id="prem-po" />
+                  <Label htmlFor="prem-po" className="text-sm cursor-pointer">PO</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="SC" id="prem-sc" />
+                  <Label htmlFor="prem-sc" className="text-sm cursor-pointer">SC</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Wanneer *</Label>
+              <Input
+                value={newPremTiming}
+                onChange={(e) => setNewPremTiming(e.target.value)}
+                placeholder="bv. 12u voor therapie"
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>Annuleren</Button>
+            <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>Toevoegen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
