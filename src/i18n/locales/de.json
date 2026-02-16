@@ -45,6 +45,7 @@
   "nav": {
     "drugs": "Medikamente",
     "admin": "Verwaltungsportal",
+    "manual": "Handbuch",
     "contact": "Kontakt"
   },
   "header": {

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages } from 'lucide-react';
+import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages, BookOpen } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useTranslation } from 'react-i18next';
@@ -189,6 +189,13 @@ export function Header() {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link to="/handleiding" className="flex items-center gap-2 cursor-pointer">
+                    <BookOpen className="h-4 w-4" />
+                    {t('nav.manual')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 {isSuperAdmin && (
                   <>
                     <DropdownMenuSeparator />

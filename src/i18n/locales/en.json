@@ -45,6 +45,7 @@
   "nav": {
     "drugs": "Drugs",
     "admin": "Admin Portal",
+    "manual": "Manual",
     "contact": "Contact"
   },
   "header": {
