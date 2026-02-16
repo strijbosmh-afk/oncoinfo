@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Loader2, Download, Activity, Users, BarChart3, TrendingUp } from 'lucide-react';
+import { Loader2, Download, Activity, Users, BarChart3, TrendingUp, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -46,6 +46,7 @@ const ACTION_LABELS: Record<string, string> = {
   delete: 'Verwijdering',
   email_sent: 'E-mail verzonden',
   auto_update_scan: 'Auto-update scan',
+  print_folder: 'Folder afgedrukt',
 };
 
 export function UsageDashboard() {
@@ -163,6 +164,7 @@ export function UsageDashboard() {
   }, [filtered]);
 
   const totalLogins = useMemo(() => filtered.filter(r => r.action === 'login').length, [filtered]);
+  const totalPrintedFolders = useMemo(() => filtered.filter(r => r.action === 'print_folder').length, [filtered]);
 
   // --- Export ---
   const exportCSV = () => {
@@ -231,7 +233,7 @@ export function UsageDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -267,6 +269,19 @@ export function UsageDashboard() {
               <div>
                 <p className="text-sm text-muted-foreground">{t('dashboard.logins', 'Logins')}</p>
                 <p className="text-2xl font-bold">{totalLogins}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-purple-500/15 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t('dashboard.printedFolders', 'Afgedrukte folders')}</p>
+                <p className="text-2xl font-bold">{totalPrintedFolders}</p>
               </div>
             </div>
           </CardContent>

@@ -479,6 +479,22 @@ export default function DrugDetailPage() {
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       
       document.body.removeChild(tempIframe);
+
+      // Log folder print to audit_log
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const { data: profile } = await supabase.from('profiles').select('username, hospital_id').eq('user_id', currentUser.id).single();
+        await supabase.from('audit_log').insert({
+          user_id: currentUser.id,
+          username: profile?.username || null,
+          action: 'print_folder',
+          entity_type: 'patient_folder',
+          entity_id: drug.id,
+          entity_name: drug.generic_name,
+          hospital_id: profile?.hospital_id || null,
+        });
+      }
+
       toast.success(t('patientFolder.downloaded'));
     } catch (err) {
       console.error('Error downloading PDF:', err);
