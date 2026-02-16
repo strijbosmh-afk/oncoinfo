@@ -256,7 +256,12 @@ Deno.serve(async (req) => {
           email_confirm: true,
         });
 
-        if (createError) throw createError;
+        if (createError) {
+          const msg = createError.message?.includes('already been registered')
+            ? 'Er bestaat al een gebruiker met dit e-mailadres.'
+            : createError.message || 'Fout bij aanmaken gebruiker';
+          return jsonResponse({ error: msg }, 400);
+        }
 
         // Set username, name fields and hospital_id in profiles
         const profileData: Record<string, any> = { username };
