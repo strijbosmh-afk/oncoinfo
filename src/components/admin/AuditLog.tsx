@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, LogIn, Plus, Pencil, Trash2, Download, CalendarIcon, Search, ChevronLeft, ChevronRight, Mail, KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState, useMemo } from 'react';
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -31,6 +31,8 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   create: <Plus className="h-4 w-4" />,
   update: <Pencil className="h-4 w-4" />,
   delete: <Trash2 className="h-4 w-4" />,
+  email_sent: <Mail className="h-4 w-4" />,
+  password_reset: <KeyRound className="h-4 w-4" />,
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -38,6 +40,8 @@ const ACTION_LABELS: Record<string, string> = {
   create: 'Aangemaakt',
   update: 'Bijgewerkt',
   delete: 'Verwijderd',
+  email_sent: 'E-mail verstuurd',
+  password_reset: 'Wachtwoord reset',
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -45,6 +49,8 @@ const ACTION_COLORS: Record<string, string> = {
   create: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   update: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
   delete: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  email_sent: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  password_reset: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
 };
 
 export function AuditLog() {
