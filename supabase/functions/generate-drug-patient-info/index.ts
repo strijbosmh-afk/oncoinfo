@@ -567,6 +567,45 @@ function generatePatientInfoHtml(
 
   const htmlLang = language;
 
+  // Build premedicatie page HTML separately to avoid template literal nesting issues
+  let premedicatiePageHtml = '';
+  if (premedicatieItems && premedicatieItems.length > 0) {
+    const schemaTitle = language === 'fr' ? 'Schéma de prémédication' : language === 'de' ? 'Prämedikationsschema' : language === 'en' ? 'Premedication Schedule' : 'Premedicatieschema';
+    const disclaimerTitle = language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling';
+    const disclaimerText = language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745).' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745).' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745).' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745).';
+
+    const timelineItemsHtml = premedicatieItems.map((item: string) => {
+      const match = item.match(/^(.+?)\s*\((\w+)\)\s*[–\-]\s*(.+)$/);
+      const name = match ? match[1].trim() : item;
+      const route = match ? match[2] : '';
+      const timing = match ? match[3].trim() : '';
+      return '<div class="timeline-item">' +
+        '<div class="timeline-dot"></div>' +
+        '<div class="timeline-content">' +
+        '<h3>' + name + '</h3>' +
+        (route ? '<div><span class="timeline-route">' + route + '</span></div>' : '') +
+        (timing ? '<div class="timeline-timing">⏱ <strong>' + timing + '</strong></div>' : '') +
+        '</div></div>';
+    }).join('');
+
+    premedicatiePageHtml = '<!-- Premedicatie Page -->' +
+      '<div class="page-break" style="padding: 12mm;">' +
+      '<div class="logo-header"><div class="logo-name">' +
+      '<img src="' + logoUrl + '" alt="' + hospitalName + ' Logo" />' +
+      '<span class="hospital-name">' + hospitalName + '</span></div>' +
+      '<div class="header-title"><h1>' + labels.premedicatie + '</h1>' +
+      '<p class="subtitle">' + drug.generic_name + brandNamesText + '</p></div></div>' +
+      '<div style="margin-top: 24px;">' +
+      '<h2 style="color: ' + hospitalColor + '; font-size: 18px; margin-bottom: 20px; padding-bottom: 6px; border-bottom: 2px solid ' + hospitalColor + ';">' + schemaTitle + '</h2>' +
+      '<div class="timeline"><div class="timeline-line"></div>' +
+      timelineItemsHtml +
+      '</div></div>' +
+      '<div style="margin-top: 40px; padding: 10px 12px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">' +
+      '<p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 2px;">⚠ ' + disclaimerTitle + '</p>' +
+      '<p style="font-size: 8px; color: #444; line-height: 1.3;">' + disclaimerText + '</p></div>' +
+      '<div class="footer"><p>' + labels.footer + '</p></div></div>';
+  }
+
   return `
 <!DOCTYPE html>
 <html lang="${htmlLang}">
@@ -610,9 +649,21 @@ function generatePatientInfoHtml(
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${isCompact ? '8px' : '11px'}; color: #666; text-align: center; }
+    .page-break { page-break-before: always; break-before: page; padding-top: 12mm; }
+    /* Timeline styles */
+    .timeline { position: relative; margin: 20px 0; padding-left: 0; }
+    .timeline-line { position: absolute; left: 28px; top: 0; bottom: 0; width: 3px; background: ${hospitalColor}; border-radius: 2px; }
+    .timeline-item { position: relative; display: flex; align-items: flex-start; margin-bottom: 18px; padding-left: 60px; }
+    .timeline-dot { position: absolute; left: 20px; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: ${hospitalColor}; border: 3px solid white; box-shadow: 0 0 0 2px ${hospitalColor}; z-index: 1; }
+    .timeline-content { background: #f8f5f7; border: 1px solid #e8dce5; border-radius: 8px; padding: 12px 16px; flex: 1; }
+    .timeline-content h3 { font-size: 15px; color: ${hospitalColor}; margin-bottom: 4px; font-weight: 700; }
+    .timeline-route { display: inline-block; background: ${hospitalColor}; color: white; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+    .timeline-timing { font-size: 13px; color: #555; margin-top: 4px; }
+    .timeline-timing strong { color: #333; }
     @media print {
-      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''} }
+      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; ${isCompact ? 'max-height: none; overflow: visible;' : ''} }
       .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
+      .page-break { page-break-before: always; break-before: page; }
     }
   </style>
 </head>
@@ -656,9 +707,7 @@ function generatePatientInfoHtml(
     ${premedicatieItems && premedicatieItems.length > 0 ? `
     <div class="section">
       <h2>${labels.premedicatie}</h2>
-      <div class="info-box">
-        ${formatAsList(premedicatieItems.map((item: string) => `• ${item}`).join('\n'))}
-      </div>
+      <p style="font-size: ${isCompact ? '9px' : '12px'}; color: #666; font-style: italic;">Zie bijgevoegd premedicatieschema</p>
     </div>
     ` : ''}
 
@@ -732,6 +781,9 @@ function generatePatientInfoHtml(
   <div class="footer">
     <p>${labels.footer}</p>
   </div>
+
+  ${premedicatiePageHtml}
+
 </body>
 </html>
   `.trim();
