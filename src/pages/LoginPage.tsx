@@ -24,6 +24,7 @@ interface Hospital {
   name: string;
   slug: string;
   logo_url: string | null;
+  default_language: string | null;
 }
 
 export default function LoginPage() {
@@ -45,7 +46,7 @@ export default function LoginPage() {
 
     supabase
       .from('hospitals_public' as any)
-      .select('id, name, slug, logo_url')
+      .select('id, name, slug, logo_url, default_language')
       .order('name')
       .then(({ data }: { data: any }) => {
         if (data) {
@@ -90,6 +91,8 @@ export default function LoginPage() {
 
       // Persist last used hospital for next login
       localStorage.setItem('last-hospital-id', hospitalId);
+
+      // Language is auto-set by HospitalContext based on hospital's default_language
 
       navigate('/home');
     } catch {
@@ -166,7 +169,7 @@ export default function LoginPage() {
                       <TooltipTrigger asChild>
                         <button
                           type="button"
-                          onClick={() => i18n.changeLanguage(lang.code)}
+                          onClick={() => { i18n.changeLanguage(lang.code); localStorage.setItem('user-chose-language', 'true'); }}
                           className={`text-xl px-1.5 py-1 rounded-md transition-all ${
                             i18n.language === lang.code
                               ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
