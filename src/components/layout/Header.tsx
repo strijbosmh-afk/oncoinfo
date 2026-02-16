@@ -77,7 +77,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4">
+      <div className="container relative flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4">
         {/* Left: branding */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link to="/home" className="flex items-center gap-2 shrink-0">
@@ -92,9 +92,9 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Center: user name + role */}
+        {/* Center: user name + role — absolute for true center */}
         {user && displayName && (
-          <div className="flex items-center justify-center gap-2 min-w-0 flex-1">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-auto">
             <div className="hidden sm:flex items-center gap-2.5">
               <span className="text-base font-semibold text-foreground capitalize truncate max-w-[200px]">{displayName}</span>
               <TooltipProvider delayDuration={200}>
