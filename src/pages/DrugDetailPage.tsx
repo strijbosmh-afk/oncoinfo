@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useTranslatedDrug } from '@/hooks/useTranslatedDrug';
@@ -59,9 +59,29 @@ interface PremedicatieItem {
   timing: string;
 }
 
+const DISEASE_AREA_TO_CATEGORY: Record<string, string> = {
+  'Borstkanker': 'breast',
+  'Prostaatkanker': 'urology', 'Blaaskanker': 'urology', 'Niercelcarcinoom': 'urology', 'Testiskanker': 'urology', 'Peniskanker': 'urology',
+  'Ovariumkanker': 'gynecology', 'Endometriumkanker': 'gynecology', 'Cervixkanker': 'gynecology', 'Vulvakanker': 'gynecology',
+  'NSCLC': 'respiratory', 'SCLC': 'respiratory', 'Mesothelioom': 'respiratory',
+  'Colorectaal carcinoom': 'digestive', 'Maagcarcinoom': 'digestive', 'Oesofaguscarcinoom': 'digestive', 'Pancreascarcinoom': 'digestive', 'Hepatocellulair carcinoom': 'digestive', 'Galwegcarcinoom': 'digestive',
+  'Melanoom': 'skin', 'Merkelcelcarcinoom': 'skin', 'Cutaan plaveiselcelcarcinoom': 'skin',
+  'Hoofd-halscarcinoom': 'head_neck', 'Nasofarynxcarcinoom': 'head_neck', 'Speekselkliercarcinoom': 'head_neck',
+  'Supportive Care': 'other', 'Anti-emetica': 'other', 'Groeifactoren': 'other', 'Erytropoietines': 'other', 'Trombopoietine-agonisten': 'other', 'Antiresorptiva': 'other',
+};
+
+function getDrugCategory(diseaseAreas?: string[] | null): string | null {
+  if (!diseaseAreas || diseaseAreas.length === 0) return null;
+  for (const area of diseaseAreas) {
+    if (DISEASE_AREA_TO_CATEGORY[area]) return DISEASE_AREA_TO_CATEGORY[area];
+  }
+  return null;
+}
+
 export default function DrugDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -485,7 +505,7 @@ export default function DrugDetailPage() {
           <Card>
             <CardContent className="py-8 text-center">
               <p className="text-destructive">{t('drugDetail.drugNotFound')}</p>
-              <Link to="/drugs">
+              <Link to={`/drugs${drug ? `?category=${getDrugCategory(drug.disease_areas) || ''}` : ''}`}>
                 <Button variant="outline" className="mt-4">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   {t('drugs.backToOverview')}
@@ -503,7 +523,7 @@ export default function DrugDetailPage() {
       <div className="container py-4 sm:py-8">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <Link to="/drugs">
+          <Link to={`/drugs?category=${getDrugCategory(drug.disease_areas) || ''}`}>
             <Button variant="ghost" size="sm" className="mb-2 sm:mb-4 h-8 text-xs sm:text-sm">
               <ArrowLeft className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
               {t('drugs.backToDrugs')}
