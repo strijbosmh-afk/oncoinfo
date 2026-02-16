@@ -210,7 +210,7 @@ export function Header() {
                             variant={i18n.language === lang.code ? 'default' : 'outline'}
                             size="sm"
                             className="h-6 text-xs px-2"
-                            onClick={() => i18n.changeLanguage(lang.code)}
+                            onClick={() => { i18n.changeLanguage(lang.code); localStorage.setItem('user-chose-language', 'true'); }}
                           >
                             {lang.label}
                           </Button>

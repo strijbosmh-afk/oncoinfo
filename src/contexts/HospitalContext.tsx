@@ -64,7 +64,9 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
         setHospital(h);
 
         // Set language based on hospital — super admins always stay Dutch
-        if (!isSuperAdmin && h.default_language) {
+        // Only auto-set if user hasn't manually chosen a language
+        const userChoseLanguage = localStorage.getItem('user-chose-language');
+        if (!isSuperAdmin && h.default_language && !userChoseLanguage) {
           i18n.changeLanguage(h.default_language);
         }
       }
