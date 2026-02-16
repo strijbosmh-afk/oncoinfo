@@ -478,7 +478,7 @@ function generatePatientInfoHtml(
       selfCare: 'Wat kunt u zelf doen?',
       tips: 'Belangrijke tips',
       monitoring: 'Controles',
-      premedicatie: 'Premedicatie',
+      premedicatie: 'Ondersteunende medicatie',
       contact: 'Contact',
       physician: 'Arts',
       nurse: 'Verpleegkundige',
@@ -498,7 +498,7 @@ function generatePatientInfoHtml(
       selfCare: 'Ce que vous pouvez faire vous-même',
       tips: 'Conseils importants',
       monitoring: 'Contrôles',
-      premedicatie: 'Prémédication',
+      premedicatie: 'Médicaments de soutien',
       contact: 'Contact',
       physician: 'Médecin',
       nurse: 'Infirmier(ère)',
@@ -518,7 +518,7 @@ function generatePatientInfoHtml(
       selfCare: 'Was können Sie selbst tun?',
       tips: 'Wichtige Hinweise',
       monitoring: 'Kontrollen',
-      premedicatie: 'Prämedikation',
+      premedicatie: 'Begleitmedikation',
       contact: 'Kontakt',
       physician: 'Arzt',
       nurse: 'Pflegekraft',
@@ -538,7 +538,7 @@ function generatePatientInfoHtml(
       selfCare: 'What can you do yourself?',
       tips: 'Important tips',
       monitoring: 'Check-ups',
-      premedicatie: 'Premedication',
+      premedicatie: 'Supportive medication',
       contact: 'Contact',
       physician: 'Physician',
       nurse: 'Nurse',
@@ -570,7 +570,7 @@ function generatePatientInfoHtml(
   // Build premedicatie page HTML separately to avoid template literal nesting issues
   let premedicatiePageHtml = '';
   if (premedicatieItems && premedicatieItems.length > 0) {
-    const schemaTitle = language === 'fr' ? 'Schéma de prémédication' : language === 'de' ? 'Prämedikationsschema' : language === 'en' ? 'Premedication Schedule' : 'Premedicatieschema';
+    const schemaTitle = language === 'fr' ? 'Schéma des médicaments de soutien' : language === 'de' ? 'Schema Begleitmedikation' : language === 'en' ? 'Supportive medication schedule' : 'Schema ondersteunende medicatie';
     const disclaimerTitle = language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling';
     const disclaimerText = language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745).' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745).' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745).' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745).';
 
@@ -707,7 +707,7 @@ function generatePatientInfoHtml(
     ${premedicatieItems && premedicatieItems.length > 0 ? `
     <div class="section">
       <h2>${labels.premedicatie}</h2>
-      <p style="font-size: ${isCompact ? '9px' : '12px'}; color: #666; font-style: italic;">Zie bijgevoegd premedicatieschema</p>
+      <p style="font-size: ${isCompact ? '9px' : '12px'}; color: #666; font-style: italic;">${language === 'fr' ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p>
     </div>
     ` : ''}
 
