@@ -1,43 +1,49 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const FAVORITES_KEY = 'uroinfo_favorite_drugs';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export function useFavorites() {
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  // Load favorites from localStorage on mount
+  const fetchFavorites = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_favorites' as any)
+      .select('drug_id')
+      .eq('user_id', user.id);
+    setFavorites((data as any[] || []).map((d: any) => d.drug_id));
+  }, [user?.id]);
+
   useEffect(() => {
-    const stored = localStorage.getItem(FAVORITES_KEY);
-    if (stored) {
-      try {
-        setFavorites(JSON.parse(stored));
-      } catch {
-        setFavorites([]);
-      }
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const addFavorite = useCallback(async (drugId: string) => {
+    if (!user?.id) return;
+    const { error } = await supabase
+      .from('user_favorites' as any)
+      .insert({ user_id: user.id, drug_id: drugId } as any);
+    if (!error) {
+      setFavorites(prev => [...prev, drugId]);
     }
-  }, []);
+  }, [user?.id]);
 
-  // Save favorites to localStorage when changed
-  const saveFavorites = useCallback((newFavorites: string[]) => {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
-    setFavorites(newFavorites);
-  }, []);
+  const removeFavorite = useCallback(async (drugId: string) => {
+    if (!user?.id) return;
+    await supabase
+      .from('user_favorites' as any)
+      .delete()
+      .eq('user_id', user.id)
+      .eq('drug_id', drugId);
+    setFavorites(prev => prev.filter(id => id !== drugId));
+  }, [user?.id]);
 
-  const addFavorite = useCallback((drugId: string) => {
-    const newFavorites = [...favorites, drugId];
-    saveFavorites(newFavorites);
-  }, [favorites, saveFavorites]);
-
-  const removeFavorite = useCallback((drugId: string) => {
-    const newFavorites = favorites.filter(id => id !== drugId);
-    saveFavorites(newFavorites);
-  }, [favorites, saveFavorites]);
-
-  const toggleFavorite = useCallback((drugId: string) => {
+  const toggleFavorite = useCallback(async (drugId: string) => {
     if (favorites.includes(drugId)) {
-      removeFavorite(drugId);
+      await removeFavorite(drugId);
     } else {
-      addFavorite(drugId);
+      await addFavorite(drugId);
     }
   }, [favorites, addFavorite, removeFavorite]);
 
