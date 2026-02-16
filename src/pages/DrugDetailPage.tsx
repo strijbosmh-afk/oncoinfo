@@ -488,7 +488,6 @@ export default function DrugDetailPage() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
               <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <TabsList className="w-max">
@@ -498,26 +497,12 @@ export default function DrugDetailPage() {
                   <TabsTrigger value="monitoring" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.monitoring')}</TabsTrigger>
                 </TabsList>
               </div>
-              <Button 
-                onClick={handleOpenStaffDialog} 
-                disabled={isGeneratingPdf}
-                variant="outline"
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4 shrink-0"
-              >
-                {isGeneratingPdf ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                ) : (
-                  <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                )}
-                Patiënten Info
-              </Button>
-            </div>
-            <div className="flex items-center">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                    <Settings2 className="h-4 w-4" />
-                  </Button>
+              <div className="ml-4 sm:ml-6 flex items-center gap-1 shrink-0">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56" align="end">
                   <div className="space-y-3">
@@ -539,8 +524,21 @@ export default function DrugDetailPage() {
                   </div>
                 </PopoverContent>
               </Popover>
+                <Button 
+                  onClick={handleOpenStaffDialog} 
+                  disabled={isGeneratingPdf}
+                  variant="outline"
+                  className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-4"
+                >
+                  {isGeneratingPdf ? (
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  )}
+                  Patiënten Info
+                </Button>
+              </div>
             </div>
-          </div>
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             {isTranslating && (
