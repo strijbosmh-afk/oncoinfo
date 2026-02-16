@@ -33,6 +33,7 @@ interface SortableDrugListProps {
   isFavorite: (id: string) => boolean;
   isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
+  toggleMostUsed: (id: string) => void;
   isAdmin: boolean;
   isEditMode: boolean;
   onEditModeChange: (editing: boolean) => void;
@@ -45,6 +46,7 @@ export function SortableDrugList({
   isFavorite,
   isMostUsed,
   toggleFavorite,
+  toggleMostUsed,
   isAdmin,
   isEditMode,
   onEditModeChange,
@@ -259,6 +261,11 @@ export function SortableDrugList({
                       e.stopPropagation();
                       toggleFavorite(drug.id);
                     }}
+                    onToggleMostUsed={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMostUsed(drug.id);
+                    }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
                   />
@@ -297,6 +304,11 @@ export function SortableDrugList({
                       e.preventDefault();
                       e.stopPropagation();
                       toggleFavorite(drug.id);
+                    }}
+                    onToggleMostUsed={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMostUsed(drug.id);
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
