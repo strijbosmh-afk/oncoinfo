@@ -976,7 +976,7 @@ export default function DrugDetailPage() {
                 </div>
 
                 <CollapsibleContent className="lg:!block">
-                  <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[40vh] lg:max-h-none">
+                  <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[60vh] lg:max-h-[calc(90vh-80px)]">
                     <div className="space-y-2 sm:space-y-3">
                       <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
                       {(() => {
