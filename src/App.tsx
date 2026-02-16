@@ -14,6 +14,7 @@ import AdminPage from "./pages/AdminPage";
 import HospitalManagementPage from "./pages/HospitalManagementPage";
 import NotFound from "./pages/NotFound";
 import ColorPreview from "./pages/ColorPreview";
+import UserManualPage from "./pages/UserManualPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
             <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><HospitalManagementPage /></ProtectedRoute>} />
             <Route path="/color-preview" element={<ColorPreview />} />
+            <Route path="/handleiding" element={<ProtectedRoute><UserManualPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
