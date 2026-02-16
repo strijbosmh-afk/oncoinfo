@@ -67,6 +67,7 @@
     "verpleegkundige": "Pfleger(in)"
   },
   "home": {
+    "mostUsed": "Meistverwendet",
     "chooseSpecialty": "Fachgebiet wählen",
     "orChooseDrug": "Oder wählen Sie direkt ein Medikament oder Schema",
     "searchPlaceholder": "Suche nach Wirkstoff, Markenname oder Schema...",

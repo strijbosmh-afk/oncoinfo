@@ -67,6 +67,7 @@
     "verpleegkundige": "Verpleegk."
   },
   "home": {
+    "mostUsed": "Meest gebruikt",
     "chooseSpecialty": "Kies Specialiteit",
     "orChooseDrug": "Of kies direct een geneesmiddel of schema",
     "searchPlaceholder": "Zoek op stofnaam, merknaam of schema...",

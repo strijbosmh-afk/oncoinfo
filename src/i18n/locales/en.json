@@ -67,6 +67,7 @@
     "verpleegkundige": "Nurse"
   },
   "home": {
+    "mostUsed": "Most used",
     "chooseSpecialty": "Choose Specialty",
     "orChooseDrug": "Or choose a drug or regimen directly",
     "searchPlaceholder": "Search by generic name, brand name, or regimen...",
