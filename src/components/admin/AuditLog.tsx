@@ -124,6 +124,33 @@ export function AuditLog() {
     });
   };
 
+  const FIELD_LABELS: Record<string, string> = {
+    generic_name: 'Naam',
+    drug_class: 'Klasse',
+    disease_areas: 'Ziektegebieden',
+    approved_indications: 'Indicaties',
+    side_effects: 'Bijwerkingen',
+    dosing_info: 'Dosering',
+    is_on_zvz: 'RIZIV-status',
+    mechanism_of_action: 'Werkingsmechanisme',
+    administration_route: 'Toedieningsweg',
+    contraindications: 'Contra-indicaties',
+    monitoring_requirements: 'Monitoring',
+    unit_price: 'Eenheidsprijs',
+    brand_names: 'Merknamen',
+    common_regimens: 'Behandelschema\'s',
+    reference_links: 'Referenties',
+    type: 'Type',
+  };
+
+  const formatValue = (key: string, value: any): string => {
+    if (key === 'is_on_zvz') return value ? 'Ja' : 'Nee';
+    if (key === 'unit_price') return value != null ? `€${value}` : '–';
+    if (Array.isArray(value)) return value.join(', ');
+    if (value === null || value === undefined) return '–';
+    return String(value);
+  };
+
   const renderDetails = (entry: AuditEntry) => {
     if (!entry.details || Object.keys(entry.details).length === 0) return null;
     if (entry.action === 'login') return null;
@@ -132,14 +159,15 @@ export function AuditLog() {
     const changes: string[] = [];
 
     for (const [key, value] of Object.entries(details)) {
+      const label = FIELD_LABELS[key] || key;
       if (typeof value === 'object' && value !== null && 'old' in value && 'new' in value) {
-        changes.push(`${key}: "${value.old}" → "${value.new}"`);
+        changes.push(`${label}: ${formatValue(key, value.old)} → ${formatValue(key, value.new)}`);
+      } else if (typeof value === 'string' && value === 'gewijzigd') {
+        changes.push(`${label} gewijzigd`);
       } else if (typeof value === 'string') {
-        changes.push(`${key}: ${value}`);
-      } else if (key === 'drug_class') {
-        changes.push(`Klasse: ${value}`);
-      } else if (key === 'disease_areas' && Array.isArray(value)) {
-        changes.push(`Gebieden: ${value.join(', ')}`);
+        changes.push(`${label}: ${value}`);
+      } else if (Array.isArray(value)) {
+        changes.push(`${label}: ${value.join(', ')}`);
       }
     }
 
