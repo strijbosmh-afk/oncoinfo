@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -20,6 +20,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SortableDrugList } from '@/components/drugs/SortableDrugList';
+import { useHospital } from '@/contexts/HospitalContext';
+
+const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
+  breast: ['Borstkanker'],
+  urology: ['Prostaatkanker', 'Blaaskanker', 'Niercelcarcinoom', 'Testiskanker', 'Peniskanker'],
+  gynecology: ['Ovariumkanker', 'Endometriumkanker', 'Cervixkanker', 'Vulvakanker'],
+  respiratory: ['NSCLC', 'SCLC', 'Mesothelioom'],
+  digestive: ['Colorectaal carcinoom', 'Maagcarcinoom', 'Oesofaguscarcinoom', 'Pancreascarcinoom', 'Hepatocellulair carcinoom', 'Galwegcarcinoom'],
+  skin: ['Melanoom', 'Merkelcelcarcinoom', 'Cutaan plaveiselcelcarcinoom'],
+  head_neck: ['Hoofd-halscarcinoom', 'Nasofarynxcarcinoom', 'Speekselkliercarcinoom'],
+  other: ['Supportive Care', 'Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'],
+};
 
 const DRUG_CLASS_FULL_NAMES: Record<string, string> = {
   'IO/ICI': 'Immune Checkpoint Inhibitor',
@@ -262,6 +274,35 @@ export default function DrugsPage() {
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
+  const navigate = useNavigate();
+  const { hospital } = useHospital();
+  const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
+
+  // Fetch hospital disciplines for access check
+  useEffect(() => {
+    if (!hospital?.id) return;
+    const fetchDisciplines = async () => {
+      const { data } = await supabase
+        .from('hospital_disciplines')
+        .select('disease_area, is_enabled')
+        .eq('hospital_id', hospital.id);
+      setDisciplines(data || []);
+    };
+    fetchDisciplines();
+  }, [hospital?.id]);
+
+  // Redirect if category's disciplines are all disabled
+  useEffect(() => {
+    if (!category || !disciplines || disciplines.length === 0) return;
+    const areas = CATEGORY_DISCIPLINE_MAP[category];
+    if (!areas) return;
+    const enabledAreas = new Set(disciplines.filter(d => d.is_enabled).map(d => d.disease_area));
+    const hasAnyEnabled = areas.some(area => enabledAreas.has(area));
+    if (!hasAnyEnabled) {
+      toast.info('Deze functie werd uitgeschakeld voor uw instelling.');
+      navigate('/home');
+    }
+  }, [category, disciplines, navigate]);
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
