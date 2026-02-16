@@ -43,22 +43,23 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
     }
 
     const fetchHospital = async () => {
+      // Use hospitals_public view to avoid exposing billing data to non-admin users
       const { data, error } = await supabase
-        .from('hospitals')
+        .from('hospitals_public')
         .select('*')
         .eq('id', profile.hospital_id)
         .maybeSingle();
 
       if (!error && data) {
         const h: Hospital = {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
+          id: data.id!,
+          name: data.name!,
+          slug: data.slug!,
           logo_url: data.logo_url,
           branding: data.branding as Hospital['branding'],
-          is_active: data.is_active,
-          default_language: (data as any).default_language || 'nl',
-          billing_country: (data as any).billing_country || null,
+          is_active: data.is_active!,
+          default_language: data.default_language || 'nl',
+          billing_country: null,
         };
         setHospital(h);
 
