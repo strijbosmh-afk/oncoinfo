@@ -43,7 +43,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Ce que vous pouvez faire vous-même',
       tips: 'Conseils importants',
       monitoring: 'Contrôles',
-      premedicatie: 'Prémédication',
+      premedicatie: 'Médicaments de soutien',
       contact: 'Contact',
       physician: 'Médecin',
       nurse: 'Infirmier(ère)',
@@ -63,7 +63,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'What you can do yourself',
       tips: 'Important tips',
       monitoring: 'Check-ups',
-      premedicatie: 'Premedication',
+      premedicatie: 'Supportive medication',
       contact: 'Contact',
       physician: 'Physician',
       nurse: 'Nurse',
@@ -83,7 +83,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Was Sie selbst tun können',
       tips: 'Wichtige Hinweise',
       monitoring: 'Kontrolluntersuchungen',
-      premedicatie: 'Prämedikation',
+      premedicatie: 'Begleitmedikation',
       contact: 'Kontakt',
       physician: 'Arzt',
       nurse: 'Pflegekraft',
@@ -103,7 +103,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Wat kunt u zelf doen?',
       tips: 'Belangrijke tips',
       monitoring: 'Controles',
-      premedicatie: 'Premedicatie',
+      premedicatie: 'Ondersteunende medicatie',
       contact: 'Contact',
       physician: 'Arts',
       nurse: 'Verpleegkundige',
@@ -392,7 +392,7 @@ export function generateStaticPreviewHtml(
     ${introText ? `<div class="section"><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
     ${usageItems.length > 0 ? `<div class="section"><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
     ${includeDosing && dosingItems.length > 0 ? `<div class="section"><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
-    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><p style="font-size: 12px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma de prémédication ci-joint' : 'Zie bijgevoegd premedicatieschema'}</p></div>` : ''}
+    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><p style="font-size: 12px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p></div>` : ''}
     ${contraItems.length > 0 ? `<div class="section"><h2>${labels.whenNot}</h2>${listHtml(contraItems)}</div>` : ''}
 
     ${includeSideEffects && (commonSE.length > 0 || seriousSE.length > 0) ? `
@@ -445,7 +445,7 @@ export function generateStaticPreviewHtml(
       </div>
     </div>
     <div style="margin-top: 20px;">
-      <h2 style="color: ${hospitalColor}; font-size: 16px; margin-bottom: 16px; padding-bottom: 4px; border-bottom: 2px solid ${hospitalColor};">${isFr ? 'Schéma de prémédication' : 'Premedicatieschema'}</h2>
+      <h2 style="color: ${hospitalColor}; font-size: 16px; margin-bottom: 16px; padding-bottom: 4px; border-bottom: 2px solid ${hospitalColor};">${isFr ? 'Schéma des médicaments de soutien' : language === 'de' ? 'Schema Begleitmedikation' : language === 'en' ? 'Supportive medication schedule' : 'Schema ondersteunende medicatie'}</h2>
       <div class="timeline">
         <div class="timeline-line"></div>
         ${premedicatieItems.map(item => {

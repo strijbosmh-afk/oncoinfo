@@ -988,7 +988,7 @@ export default function DrugDetailPage() {
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs sm:text-sm font-medium">Premedicatie</Label>
+                        <Label className="text-xs sm:text-sm font-medium">Ondersteunende medicatie</Label>
                         <Switch
                           checked={includePremedicatie}
                           onCheckedChange={setIncludePremedicatie}
