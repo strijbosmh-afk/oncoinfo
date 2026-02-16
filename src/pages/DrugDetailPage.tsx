@@ -232,6 +232,27 @@ export default function DrugDetailPage() {
       if (!selectedPhysician) {
         setSelectedPhysician(fullName);
       }
+      // If doctor has a dedicated nurse, pre-select that nurse
+      if (!nurseSelection && !isNurseCustom && profile.dedicated_nurse_id) {
+        const fetchDedicatedNurse = async () => {
+          const { data } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', profile.dedicated_nurse_id!)
+            .maybeSingle();
+          if (data?.first_name && data?.last_name) {
+            const nurseName = `${data.first_name} ${data.last_name}`;
+            const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === nurseName.toLowerCase());
+            if (matchingNurse) {
+              setNurseSelection(matchingNurse.name);
+            } else {
+              setIsNurseCustom(true);
+              setCustomNurse(nurseName);
+            }
+          }
+        };
+        fetchDedicatedNurse();
+      }
     }
   }, [profile, hospitalNurses]);
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: string = 'nl', phoneNumber?: string) => {
