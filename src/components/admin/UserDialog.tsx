@@ -186,14 +186,14 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? t('userDialog.createTitle') : t('userDialog.editTitle')}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0 pr-1">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="user-firstname">{t('userDialog.firstName')} *</Label>
