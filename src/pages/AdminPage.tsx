@@ -231,7 +231,7 @@ export default function AdminPage() {
 
         {/* Active Section */}
         {activeSection === 'users' && isAdmin && (
-          <div className="mb-8">
+          <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <UserManagement />
           </div>
         )}
