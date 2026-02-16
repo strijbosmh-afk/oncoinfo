@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
       }
     }
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '' } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact' } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -304,13 +304,14 @@ Deno.serve(async (req) => {
       console.error('Could not fetch logo:', e);
     }
 
-    // Prepare content texts
-    const maxIndications = 4;
-    const maxCommonSideEffects = 5;
-    const maxSeriousSideEffects = 3;
-    const maxCounselingPoints = 4;
-    const maxContraindications = 4;
-    const maxMonitoring = 4;
+    // Prepare content texts — compact mode limits content to fit 1 page
+    const isCompact = folder_mode === 'compact';
+    const maxIndications = isCompact ? 3 : 6;
+    const maxCommonSideEffects = isCompact ? 4 : 8;
+    const maxSeriousSideEffects = isCompact ? 2 : 5;
+    const maxCounselingPoints = isCompact ? 3 : 6;
+    const maxContraindications = isCompact ? 3 : 6;
+    const maxMonitoring = isCompact ? 3 : 6;
 
     let introductionText = customContent?.introduction || drug.mechanism_of_action || null;
     let usageText = customContent?.usage_info || 
@@ -420,7 +421,7 @@ Deno.serve(async (req) => {
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
       tipsText, monitoringText, phone_number, selfCareTips,
-      hospitalName, hospitalColor, doctorsList
+      hospitalName, hospitalColor, doctorsList, folder_mode
     );
 
     return new Response(
@@ -460,7 +461,9 @@ function generatePatientInfoHtml(
   hospitalName: string = 'RZ Tienen',
   hospitalColor: string = '#6b2d5b',
   doctorsList: string[] = [],
+  folderMode: string = 'compact',
 ): string {
+  const isCompact = folderMode === 'compact';
   const allLabels: Record<string, any> = {
     nl: {
       title: 'Informatie voor patiënten',
@@ -567,43 +570,44 @@ function generatePatientInfoHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${labels.pageTitle} - ${drug.generic_name}</title>
   <style>
-    @page { size: A4; margin: 12mm; }
+    @page { size: A4; margin: ${isCompact ? '10mm' : '12mm'}; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 14px; line-height: 1.5; color: #1a1a1a;
-      width: 210mm; margin: 0 auto; padding: 12mm;
+      font-size: ${isCompact ? '11px' : '14px'}; line-height: ${isCompact ? '1.35' : '1.5'}; color: #1a1a1a;
+      width: 210mm; margin: 0 auto; padding: ${isCompact ? '10mm' : '12mm'};
       background: white;
+      ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''}
     }
-    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
+    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: ${isCompact ? '6px' : '12px'}; padding-bottom: ${isCompact ? '5px' : '10px'}; border-bottom: 2px solid ${hospitalColor}; }
     .logo-name { display: flex; align-items: center; gap: 10px; }
-    .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
-    .hospital-name { font-size: 20px; font-weight: 800; color: ${hospitalColor}; }
+    .logo-header img { max-height: ${isCompact ? '40px' : '55px'}; max-width: 200px; width: auto; height: auto; object-fit: contain; }
+    .hospital-name { font-size: ${isCompact ? '16px' : '20px'}; font-weight: 800; color: ${hospitalColor}; }
     .header-title { text-align: right; }
-    .header-title h1 { color: ${hospitalColor}; font-size: 22px; margin-bottom: 4px; }
-    .header-title .subtitle { color: #666; font-size: 13px; }
-    .content { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-    .section { margin-bottom: 10px; }
-    .section h2 { color: ${hospitalColor}; font-size: 15px; margin-bottom: 6px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
-    .section p { margin-bottom: 4px; color: #333; font-size: 13px; }
-    .section ul { margin-left: 14px; margin-bottom: 6px; }
-    .section li { margin-bottom: 3px; color: #333; font-size: 13px; }
-    .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
-    .warning-box h3 { color: #cc7a00; font-size: 13px; margin-bottom: 4px; }
-    .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
-    .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 4px; }
-    .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
-    .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 8px 10px; margin: 6px 0; border-radius: 0 3px 3px 0; }
-    .selfcare-box h3 { color: #2e7d32; font-size: 13px; margin-bottom: 4px; }
+    .header-title h1 { color: ${hospitalColor}; font-size: ${isCompact ? '17px' : '22px'}; margin-bottom: 2px; }
+    .header-title .subtitle { color: #666; font-size: ${isCompact ? '11px' : '13px'}; }
+    .content { display: grid; grid-template-columns: 1fr 1fr; gap: ${isCompact ? '8px' : '14px'}; margin-top: ${isCompact ? '8px' : '14px'}; }
+    .section { margin-bottom: ${isCompact ? '4px' : '10px'}; }
+    .section h2 { color: ${hospitalColor}; font-size: ${isCompact ? '12px' : '15px'}; margin-bottom: ${isCompact ? '3px' : '6px'}; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+    .section p { margin-bottom: ${isCompact ? '2px' : '4px'}; color: #333; font-size: ${isCompact ? '10px' : '13px'}; }
+    .section ul { margin-left: 14px; margin-bottom: ${isCompact ? '3px' : '6px'}; }
+    .section li { margin-bottom: ${isCompact ? '1px' : '3px'}; color: #333; font-size: ${isCompact ? '10px' : '13px'}; }
+    .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
+    .warning-box h3 { color: #cc7a00; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
+    .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
+    .danger-box h3 { color: #cc0000; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
+    .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
+    .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
+    .selfcare-box h3 { color: #2e7d32; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
     .full-width { grid-column: 1 / -1; }
-    .contact-section { background: #f5f5f5; padding: 10px 12px; border-radius: 4px; margin-top: 12px; font-size: 12px; }
-    .contact-section h2 { font-size: 14px; margin-bottom: 8px; color: ${hospitalColor}; }
-    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .contact-section { background: #f5f5f5; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border-radius: 4px; margin-top: ${isCompact ? '6px' : '12px'}; font-size: ${isCompact ? '10px' : '12px'}; }
+    .contact-section h2 { font-size: ${isCompact ? '11px' : '14px'}; margin-bottom: ${isCompact ? '4px' : '8px'}; color: ${hospitalColor}; }
+    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
-    .footer { margin-top: 12px; padding-top: 8px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
+    .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${isCompact ? '8px' : '11px'}; color: #666; text-align: center; }
     @media print {
-      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .logo-header img { max-height: 55px !important; max-width: 200px !important; }
+      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''} }
+      .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
     }
   </style>
 </head>
@@ -689,7 +693,7 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${monitoringText ? `
+    ${!isCompact && monitoringText ? `
     <div class="section">
       <h2>${labels.monitoring}</h2>
       ${formatAsList(monitoringText)}
@@ -706,9 +710,9 @@ function generatePatientInfoHtml(
     </div>
   </div>
 
-  <div style="margin-top: 12px; padding: 10px 12px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-    <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not be used as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+  <div style="margin-top: ${isCompact ? '6px' : '12px'}; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; font-size: ${isCompact ? '7px' : '9px'}; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+    <p style="font-size: ${isCompact ? '6.5px' : '8px'}; color: #444; line-height: 1.3;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not be used as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
   </div>
 
   <div class="footer">
