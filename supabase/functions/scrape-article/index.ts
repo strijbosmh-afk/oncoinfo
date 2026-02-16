@@ -3,6 +3,77 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Allowlist of domains permitted for scraping
+const ALLOWED_DOMAINS = [
+  "pubmed.ncbi.nlm.nih.gov",
+  "ncbi.nlm.nih.gov",
+  "clinicaltrials.gov",
+  "doi.org",
+  "dx.doi.org",
+  "nejm.org",
+  "thelancet.com",
+  "bmj.com",
+  "nature.com",
+  "cell.com",
+  "asco.org",
+  "ascopubs.org",
+  "esmo.org",
+  "annalsofoncology.org",
+  "jco.ascopubs.org",
+  "wiley.com",
+  "onlinelibrary.wiley.com",
+  "springer.com",
+  "link.springer.com",
+  "sciencedirect.com",
+  "elsevier.com",
+  "ema.europa.eu",
+  "fda.gov",
+  "accessdata.fda.gov",
+  "cancer.gov",
+  "cochranelibrary.com",
+  "who.int",
+  "riziv.fgov.be",
+  "cbg-meb.nl",
+  "farmacotherapeutischkompas.nl",
+  "bcfi.be",
+];
+
+function isAllowedUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+
+    // Only allow http/https
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Block private/internal IP ranges
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "[::1]" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("169.254.") ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return false;
+    }
+
+    // Check against allowlist (match domain or subdomain)
+    return ALLOWED_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -11,9 +82,17 @@ Deno.serve(async (req) => {
   try {
     const { url } = await req.json();
 
-    if (!url) {
+    if (!url || typeof url !== "string") {
       return new Response(
         JSON.stringify({ error: "URL is verplicht" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Enforce max URL length
+    if (url.length > 2048) {
+      return new Response(
+        JSON.stringify({ error: "URL is te lang (max 2048 tekens)" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -21,6 +100,17 @@ Deno.serve(async (req) => {
     let formattedUrl = url.trim();
     if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
       formattedUrl = `https://${formattedUrl}`;
+    }
+
+    // Validate URL against allowlist and block private IPs
+    if (!isAllowedUrl(formattedUrl)) {
+      console.warn("Blocked URL:", formattedUrl);
+      return new Response(
+        JSON.stringify({
+          error: "Deze URL is niet toegestaan. Alleen wetenschappelijke en medische bronnen worden ondersteund (bijv. PubMed, ClinicalTrials.gov, NEJM, The Lancet, etc.)."
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     console.log("Scraping URL:", formattedUrl);
