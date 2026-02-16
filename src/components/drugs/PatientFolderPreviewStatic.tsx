@@ -327,38 +327,38 @@ export function generateStaticPreviewHtml(
   <meta charset="UTF-8">
   <style>
     @page { size: A4; margin: 12mm; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 13px; line-height: 1.5; color: #1a1a1a;
-      padding: 10mm; background: white;
-    }
-    .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 11px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
-    .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
-    .logo-name { display: flex; align-items: center; gap: 10px; }
-    .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
-    .hospital-name { font-size: 18px; font-weight: 800; color: ${hospitalColor}; }
-    .header-title { text-align: right; }
-    .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
-    .header-title .subtitle { color: #666; font-size: 12px; }
-    .content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-    .section { margin-bottom: 8px; }
-    .section h2 { color: ${hospitalColor}; font-size: 14px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
-    .section p { margin-bottom: 4px; color: #333; font-size: 12px; }
-    .section ul { margin-left: 14px; margin-bottom: 4px; }
-    .section li { margin-bottom: 2px; color: #333; font-size: 12px; }
-    .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-    .warning-box h3 { color: #cc7a00; font-size: 12px; margin-bottom: 3px; }
-    .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-    .danger-box h3 { color: #cc0000; font-size: 12px; margin-bottom: 3px; }
-    .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-    .selfcare-box h3 { color: #2e7d32; font-size: 12px; margin-bottom: 3px; }
-    .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-    .full-width { grid-column: 1 / -1; }
-    .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; margin-top: 10px; font-size: 11px; }
-    .contact-section h2 { font-size: 13px; margin-bottom: 6px; color: ${hospitalColor}; }
-    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .footer { margin-top: 10px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 10px; color: #666; text-align: center; }
+     * { margin: 0; padding: 0; box-sizing: border-box; }
+     body {
+       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+       font-size: 14px; line-height: 1.55; color: #1a1a1a;
+       padding: 10mm; background: white;
+     }
+     .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 12px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
+     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
+     .logo-name { display: flex; align-items: center; gap: 10px; }
+     .logo-header img { max-height: 55px; max-width: 200px; width: auto; height: auto; object-fit: contain; }
+     .hospital-name { font-size: 18px; font-weight: 800; color: ${hospitalColor}; }
+     .header-title { text-align: right; }
+     .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
+     .header-title .subtitle { color: #666; font-size: 13px; }
+     .content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+     .section { margin-bottom: 8px; }
+     .section h2 { color: ${hospitalColor}; font-size: 15px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+     .section p { margin-bottom: 4px; color: #333; font-size: 13px; }
+     .section ul { margin-left: 14px; margin-bottom: 4px; }
+     .section li { margin-bottom: 2px; color: #333; font-size: 13px; }
+     .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
+     .warning-box h3 { color: #cc7a00; font-size: 13px; margin-bottom: 3px; }
+     .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
+     .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 3px; }
+     .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
+     .selfcare-box h3 { color: #2e7d32; font-size: 13px; margin-bottom: 3px; }
+     .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
+     .full-width { grid-column: 1 / -1; }
+     .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; margin-top: 10px; font-size: 12px; }
+     .contact-section h2 { font-size: 14px; margin-bottom: 6px; color: ${hospitalColor}; }
+     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+     .footer { margin-top: 10px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
   </style>
 </head>
 <body>
@@ -410,9 +410,9 @@ export function generateStaticPreviewHtml(
     </div>
   </div>
 
-  <div style="margin-top: 10px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-    <p style="font-weight: 700; color: #cc0000; font-size: 8px; margin-bottom: 3px;">⚠ ${isFr ? 'Avis important' : 'Belangrijke mededeling'}</p>
-    <p style="font-size: 7px; color: #444; line-height: 1.4;">${isFr ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+  <div class="disclaimer-box" style="margin-top: 10px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${isFr ? 'Avis important' : 'Belangrijke mededeling'}</p>
+    <p style="font-size: 8px; color: #444; line-height: 1.4;">${isFr ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
   </div>
 
   <div class="footer"><p>${labels.footer}</p></div>
