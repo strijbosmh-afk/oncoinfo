@@ -816,6 +816,21 @@ export default function HospitalManagementPage() {
   const [newStaffName, setNewStaffName] = useState('');
   const [newStaffSpec, setNewStaffSpec] = useState('');
 
+  // Hospital app users (from profiles)
+  interface HospitalUser {
+    id: string;
+    user_id: string;
+    first_name: string | null;
+    last_name: string | null;
+    username: string | null;
+    function: string | null;
+    discipline: string | null;
+    role: string;
+    app_roles: string[];
+  }
+  const [hospitalUsers, setHospitalUsers] = useState<HospitalUser[]>([]);
+  const [hospitalUsersLoading, setHospitalUsersLoading] = useState(false);
+
   // Disciplines
   const [hospitalDisciplines, setHospitalDisciplines] = useState<HospitalDiscipline[]>([]);
   const [disciplinesLoading, setDisciplinesLoading] = useState(false);
@@ -895,8 +910,9 @@ export default function HospitalManagementPage() {
     setDisciplinesLoading(true);
     setFeaturesLoading(true);
     setBillingLoading(true);
+    setHospitalUsersLoading(true);
 
-    const [staffRes, discRes, featRes, billingRes] = await Promise.all([
+    const [staffRes, discRes, featRes, billingRes, usersRes, rolesRes] = await Promise.all([
       supabase
         .from('hospital_doctors')
         .select('*')
@@ -915,11 +931,33 @@ export default function HospitalManagementPage() {
         .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
         .eq('id', h.id)
         .single(),
+      supabase
+        .from('profiles')
+        .select('id, user_id, first_name, last_name, username, function, discipline, role')
+        .eq('hospital_id', h.id)
+        .order('last_name'),
+      supabase
+        .from('user_roles')
+        .select('user_id, role'),
     ]);
 
     setStaffMembers((staffRes.data || []) as StaffMember[]);
     setHospitalDisciplines((discRes.data || []) as HospitalDiscipline[]);
     setHospitalFeatures((featRes.data || []) as HospitalFeature[]);
+
+    // Build user list with roles
+    const rolesMap = new Map<string, string[]>();
+    (rolesRes.data || []).forEach((r: any) => {
+      const existing = rolesMap.get(r.user_id) || [];
+      existing.push(r.role);
+      rolesMap.set(r.user_id, existing);
+    });
+    const users: HospitalUser[] = (usersRes.data || []).map((p: any) => ({
+      ...p,
+      app_roles: rolesMap.get(p.user_id) || [],
+    }));
+    setHospitalUsers(users);
+
     if (billingRes.data) {
       setBilling({
         billing_name: billingRes.data.billing_name || '',
@@ -945,6 +983,7 @@ export default function HospitalManagementPage() {
     setDisciplinesLoading(false);
     setFeaturesLoading(false);
     setBillingLoading(false);
+    setHospitalUsersLoading(false);
   }, []);
 
   const saveBilling = async () => {
@@ -1777,54 +1816,63 @@ export default function HospitalManagementPage() {
                   </p>
                 </CollapsibleSection>
 
-                {/* Staff section */}
+                {/* Staff section - App Users */}
                 <CollapsibleSection
                   title="Medewerkers"
                   icon={UserPlus}
-                  badge={staffMembers.length > 0 ? (
-                    <Badge variant="outline" className="text-xs">{staffMembers.length}</Badge>
+                  badge={hospitalUsers.length > 0 ? (
+                    <Badge variant="outline" className="text-xs">{hospitalUsers.length}</Badge>
                   ) : undefined}
                 >
-                  {staffLoading ? (
+                  {hospitalUsersLoading ? (
                     <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : hospitalUsers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Geen gebruikers gevonden voor dit ziekenhuis
+                    </p>
                   ) : (
-                    <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType)}>
-                      <TabsList className="w-full">
-                        {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
-                          const Icon = staffTypeIcons[type];
-                          const count = staffMembers.filter(s => s.staff_type === type).length;
-                          return (
-                            <TabsTrigger key={type} value={type} className="flex-1 gap-1.5">
-                              <Icon className="h-3.5 w-3.5" />
-                              {staffTypeLabels[type]} ({count})
-                            </TabsTrigger>
-                          );
-                        })}
-                      </TabsList>
-                      {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
-                        const filtered = staffMembers.filter(s => s.staff_type === type);
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-[1fr_120px_140px] gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                        <span>Naam</span>
+                        <span>Functie</span>
+                        <span>Rol</span>
+                      </div>
+                      {hospitalUsers.map(u => {
+                        const displayName = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || '—';
+                        const roleLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+                          super_admin: { label: 'Super Admin', variant: 'destructive' },
+                          admin: { label: 'Admin', variant: 'default' },
+                          apotheker: { label: 'Apotheker', variant: 'secondary' },
+                          viewer: { label: 'Viewer', variant: 'outline' },
+                        };
                         return (
-                          <TabsContent key={type} value={type} className="space-y-3 mt-4">
-                            {filtered.length === 0 && (
-                              <p className="text-sm text-muted-foreground text-center py-4">
-                                Nog geen {staffTypeLabels[type].toLowerCase()} toegevoegd
-                              </p>
-                            )}
-                            {filtered.map(member => (
-                              <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                <div>
-                                  <p className="font-medium text-sm">{member.name}</p>
-                                  {member.specialization && <p className="text-xs text-muted-foreground">{member.specialization}</p>}
-                                </div>
-                              </div>
-                            ))}
-                            <p className="text-xs text-muted-foreground text-center pt-2">
-                              Medewerkers kunnen worden beheerd via Gebruikersbeheer
-                            </p>
-                          </TabsContent>
+                          <div key={u.id} className="grid grid-cols-[1fr_120px_140px] gap-2 items-center px-3 py-2.5 border rounded-lg">
+                            <div>
+                              <p className="font-medium text-sm">{displayName}</p>
+                              {u.username && displayName !== u.username && (
+                                <p className="text-xs text-muted-foreground">@{u.username}</p>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">{u.function || '—'}</p>
+                            <div className="flex flex-wrap gap-1">
+                              {u.app_roles.length > 0 ? u.app_roles.map(role => {
+                                const info = roleLabels[role] || { label: role, variant: 'outline' as const };
+                                return (
+                                  <Badge key={role} variant={info.variant} className="text-[10px] px-1.5 py-0">
+                                    {info.label}
+                                  </Badge>
+                                );
+                              }) : (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Viewer</Badge>
+                              )}
+                            </div>
+                          </div>
                         );
                       })}
-                    </Tabs>
+                      <p className="text-xs text-muted-foreground text-center pt-2">
+                        Medewerkers kunnen worden beheerd via Gebruikersbeheer
+                      </p>
+                    </div>
                   )}
                 </CollapsibleSection>
               </div>
