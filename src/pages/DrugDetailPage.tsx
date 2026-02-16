@@ -402,22 +402,54 @@ export default function DrugDetailPage() {
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      // Content already contains the disclaimer in the HTML, so just render pages cleanly
-      if (imgHeight <= pdfHeight) {
+      // Disclaimer text for every page footer
+      const disclaimerText = selectedLanguage === 'fr'
+        ? '⚠ Ce document est uniquement informatif et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin.'
+        : selectedLanguage === 'de'
+        ? '⚠ Dieses Dokument dient nur zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt.'
+        : selectedLanguage === 'en'
+        ? '⚠ This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician.'
+        : '⚠ Dit document is uitsluitend informatief en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw arts.';
+
+      // Reserve space at bottom of each page for disclaimer
+      const disclaimerBoxHeight = 12;
+      const contentAreaHeight = pdfHeight - disclaimerBoxHeight;
+
+      const addDisclaimerToPage = (pdfDoc: any) => {
+        const boxY = pdfHeight - disclaimerBoxHeight;
+        // White background to cover any content behind it
+        pdfDoc.setFillColor(255, 255, 255);
+        pdfDoc.rect(0, boxY - 1, pdfWidth, disclaimerBoxHeight + 1, 'F');
+        // Red border
+        pdfDoc.setDrawColor(204, 0, 0);
+        pdfDoc.setLineWidth(0.3);
+        pdfDoc.roundedRect(8, boxY, pdfWidth - 16, disclaimerBoxHeight - 2, 1, 1, 'S');
+        // Red text
+        pdfDoc.setFontSize(6.5);
+        pdfDoc.setTextColor(180, 0, 0);
+        pdfDoc.text(disclaimerText, pdfWidth / 2, boxY + (disclaimerBoxHeight - 2) / 2 + 1, { align: 'center', maxWidth: pdfWidth - 22 });
+        pdfDoc.setTextColor(0, 0, 0);
+      };
+
+      if (imgHeight <= contentAreaHeight) {
+        // Content fits on one page
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        addDisclaimerToPage(pdf);
       } else {
-        // Multi-page: slice the image across pages
+        // Multi-page: slice image, each page uses contentAreaHeight
         let heightLeft = imgHeight;
         let position = 0;
         
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        addDisclaimerToPage(pdf);
+        heightLeft -= contentAreaHeight;
         
         while (heightLeft > 5) {
-          position = heightLeft - imgHeight;
+          position -= contentAreaHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight;
+          addDisclaimerToPage(pdf);
+          heightLeft -= contentAreaHeight;
         }
       }
       
