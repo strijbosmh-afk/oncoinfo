@@ -1059,6 +1059,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_specialty_order: {
+        Row: {
+          created_at: string
+          id: string
+          specialty_keys: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          specialty_keys?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          specialty_keys?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       hospitals_public: {

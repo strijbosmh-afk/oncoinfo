@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -12,6 +11,15 @@ import { useTranslation } from 'react-i18next';
 import { useHospital } from '@/contexts/HospitalContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSpecialtyOrder } from '@/hooks/useSpecialtyOrder';
+import { SortableSpecialtyCard } from '@/components/home/SortableSpecialtyCard';
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, rectSortingStrategy,
+} from '@dnd-kit/sortable';
 
 // Map each category to the discipline disease_area keys it requires
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
@@ -25,16 +33,34 @@ const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   other: ['Supportive Care', 'Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'],
 };
 
+const LIBRARY_CONFIG: Record<string, { icon: any; color: string; bgColor: string }> = {
+  breast: { icon: Heart, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+  urology: { icon: Stethoscope, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+  gynecology: { icon: Baby, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+  respiratory: { icon: Wind, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
+  digestive: { icon: UtensilsCrossed, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  skin: { icon: Palette, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+  head_neck: { icon: Ear, color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
+  other: { icon: MoreHorizontal, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+};
+
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults } = useDrugs(searchQuery.length >= 2 ? { search: searchQuery } : undefined);
   const { t } = useTranslation();
   const { hospital } = useHospital();
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   const { mostUsed } = useMostUsed();
   const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
+  const [isReordering, setIsReordering] = useState(false);
+  const { order: specialtyOrder, saveOrder, loaded: orderLoaded } = useSpecialtyOrder();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
 
   // Fetch drug details for most-used items
   useEffect(() => {
@@ -48,7 +74,6 @@ const Index = () => {
         .select('id, generic_name, drug_class')
         .in('id', mostUsed.map(m => m.drug_id));
       if (data) {
-        // Maintain display_order
         const ordered = mostUsed
           .map(m => data.find(d => d.id === m.drug_id))
           .filter(Boolean) as typeof data;
@@ -71,36 +96,42 @@ const Index = () => {
     fetch();
   }, [hospital?.id]);
 
-  // Determine which categories are disabled
   const disabledCategories = useMemo(() => {
-    // If no disciplines configured at all, everything is enabled (backwards compatible)
     if (!disciplines || disciplines.length === 0) return new Set<string>();
-
-    const enabledAreas = new Set(
-      disciplines.filter(d => d.is_enabled).map(d => d.disease_area)
-    );
-
+    const enabledAreas = new Set(disciplines.filter(d => d.is_enabled).map(d => d.disease_area));
     const disabled = new Set<string>();
     for (const [category, areas] of Object.entries(CATEGORY_DISCIPLINE_MAP)) {
-      // A category is disabled if NONE of its discipline areas are enabled
-      const hasAnyEnabled = areas.some(area => enabledAreas.has(area));
-      if (!hasAnyEnabled) {
-        disabled.add(category);
-      }
+      if (!areas.some(area => enabledAreas.has(area))) disabled.add(category);
     }
     return disabled;
   }, [disciplines]);
 
-  const drugLibraries = [
-    { key: 'breast', title: t('home.breast'), description: t('home.breastDesc'), icon: Heart, href: '/drugs?category=breast', color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
-    { key: 'urology', title: t('home.urology'), description: t('home.urologyDesc'), icon: Stethoscope, href: '/drugs?category=urology', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-    { key: 'gynecology', title: t('home.gynecology'), description: t('home.gynecologyDesc'), icon: Baby, href: '/drugs?category=gynecology', color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-    { key: 'respiratory', title: t('home.respiratory'), description: t('home.respiratoryDesc'), icon: Wind, href: '/drugs?category=respiratory', color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
-    { key: 'digestive', title: t('home.digestive'), description: t('home.digestiveDesc'), icon: UtensilsCrossed, href: '/drugs?category=digestive', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-    { key: 'skin', title: t('home.skin'), description: t('home.skinDesc'), icon: Palette, href: '/drugs?category=skin', color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
-    { key: 'head_neck', title: t('home.headNeck'), description: t('home.headNeckDesc'), icon: Ear, href: '/drugs?category=head_neck', color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
-    { key: 'other', title: t('home.other'), description: t('home.otherDesc'), icon: MoreHorizontal, href: '/drugs?category=other', color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
-  ];
+  const sortedLibraries = useMemo(() => {
+    return specialtyOrder.map(key => {
+      const config = LIBRARY_CONFIG[key];
+      if (!config) return null;
+      return {
+        key,
+        title: t(`home.${key === 'head_neck' ? 'headNeck' : key}`),
+        description: t(`home.${key === 'head_neck' ? 'headNeck' : key}Desc`),
+        icon: config.icon,
+        href: `/drugs?category=${key}`,
+        color: config.color,
+        bgColor: config.bgColor,
+      };
+    }).filter(Boolean) as Array<{ key: string; title: string; description: string; icon: any; href: string; color: string; bgColor: string }>;
+  }, [specialtyOrder, t]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = specialtyOrder.indexOf(active.id as string);
+    const newIndex = specialtyOrder.indexOf(over.id as string);
+    const newOrder = [...specialtyOrder];
+    newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, active.id as string);
+    saveOrder(newOrder);
+  }, [specialtyOrder, saveOrder]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,9 +148,7 @@ const Index = () => {
   const handleDisabledCategoryClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toast.info('Deze functie werd uitgeschakeld voor uw instelling.', {
-      duration: 3000,
-    });
+    toast.info('Deze functie werd uitgeschakeld voor uw instelling.', { duration: 3000 });
   };
 
   return (
@@ -151,61 +180,44 @@ const Index = () => {
             </div>
           )}
 
-          <h2 className="text-2xl font-bold text-center mb-10">
-            {t('home.chooseSpecialty')}
-          </h2>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {drugLibraries.map((library) => {
-              const isDisabled = disabledCategories.has(library.key);
-
-              if (isDisabled) {
-                return (
-                  <div key={library.title} onClick={handleDisabledCategoryClick} className="cursor-not-allowed">
-                    <Card className="h-full relative overflow-hidden border-2 border-muted opacity-50 grayscale">
-                      <div className="absolute top-3 right-3 z-10">
-                        <Lock className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <CardHeader className="relative pb-2">
-                        <div className={`h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-4`}>
-                          <library.icon className="h-7 w-7 text-muted-foreground" />
-                        </div>
-                        <CardTitle className="text-xl text-muted-foreground">{library.title}</CardTitle>
-                        <CardDescription>{library.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="relative pt-0">
-                        <Button variant="ghost" className="w-full" disabled>
-                          {t('home.viewDrugs')}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                );
-              }
-
-              return (
-                <Link key={library.title} to={library.href}>
-                  <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <CardHeader className="relative pb-2">
-                      <div className={`h-14 w-14 rounded-xl ${library.bgColor} flex items-center justify-center mb-4`}>
-                        <library.icon className={`h-7 w-7 ${library.color}`} />
-                      </div>
-                      <CardTitle className="text-xl">{library.title}</CardTitle>
-                      <CardDescription>{library.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="relative pt-0">
-                      <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
-                        {t('home.viewDrugs')}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          <div className="flex items-center justify-center gap-3 mb-10">
+            <h2 className="text-2xl font-bold text-center">
+              {t('home.chooseSpecialty')}
+            </h2>
+            {user && (
+              <Button
+                variant={isReordering ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setIsReordering(r => !r)}
+                className="gap-1.5"
+              >
+                <GripVertical className="h-4 w-4" />
+                {isReordering ? t('home.done', 'Klaar') : t('home.reorder', 'Herschik')}
+              </Button>
+            )}
           </div>
+
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                {sortedLibraries.map((library) => (
+                  <SortableSpecialtyCard
+                    key={library.key}
+                    id={library.key}
+                    title={library.title}
+                    description={library.description}
+                    icon={library.icon}
+                    href={library.href}
+                    color={library.color}
+                    bgColor={library.bgColor}
+                    isDisabled={disabledCategories.has(library.key)}
+                    isReordering={isReordering}
+                    onDisabledClick={handleDisabledCategoryClick}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           <h2 className="text-2xl font-bold text-center mt-12 mb-6">
             {t('home.orChooseDrug')}
