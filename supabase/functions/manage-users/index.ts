@@ -205,6 +205,9 @@ Deno.serve(async (req) => {
             const perm = permissions?.find((p: any) => p.user_id === u.id);
             const isSA = userRoles.includes('super_admin');
             const hospId = profile?.hospital_id || null;
+            // Resolve dedicated nurse name
+            const nurseId = profile?.dedicated_nurse_id || null;
+            const nurseProfile = nurseId ? profiles?.find((p: any) => p.id === nurseId) : null;
             return {
               id: u.id,
               email: u.email,
@@ -224,6 +227,8 @@ Deno.serve(async (req) => {
               can_delete_treatments: perm?.can_delete_treatments ?? false,
               can_modify_treatments: perm?.can_modify_treatments ?? false,
               is_super_admin: isSA,
+              dedicated_nurse_id: nurseId,
+              dedicated_nurse_name: nurseProfile ? `${nurseProfile.first_name || ''} ${nurseProfile.last_name || ''}`.trim() : null,
             };
           })
           // Hide super_admin from non-super-admin callers
@@ -237,7 +242,8 @@ Deno.serve(async (req) => {
       case 'create': {
         const { email, username, password, role, send_email, login_url,
           first_name, last_name, function: userFunction, hospital_id,
-          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
+          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
+          dedicated_nurse_id } = params;
 
         if (!email || !username || !password || !role) {
           return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
@@ -260,6 +266,7 @@ Deno.serve(async (req) => {
         // Assign hospital: use provided hospital_id, or caller's hospital
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
         profileData.hospital_id = hospital_id || callerHospitalId;
+        if (dedicated_nurse_id) profileData.dedicated_nurse_id = dedicated_nurse_id;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
         const assignedRole = role === 'super_admin' || role === 'admin' || role === 'apotheker' ? role : 'viewer';
@@ -332,7 +339,8 @@ Deno.serve(async (req) => {
       case 'update': {
         const { user_id, email, username, password, role, hospital_id,
           first_name, last_name, function: userFunction,
-          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments } = params;
+          is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
+          dedicated_nurse_id } = params;
 
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
@@ -369,6 +377,7 @@ Deno.serve(async (req) => {
         if (last_name !== undefined) profileUpdate.last_name = last_name;
         if (userFunction !== undefined) profileUpdate.function = userFunction;
         if (hospital_id !== undefined) profileUpdate.hospital_id = hospital_id;
+        if (dedicated_nurse_id !== undefined) profileUpdate.dedicated_nurse_id = dedicated_nurse_id || null;
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);

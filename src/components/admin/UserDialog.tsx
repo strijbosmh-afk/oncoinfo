@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface HospitalOption {
   id: string;
@@ -31,6 +32,7 @@ interface UserDialogProps {
     can_add_treatments?: boolean;
     can_delete_treatments?: boolean;
     can_modify_treatments?: boolean;
+    dedicated_nurse_id?: string | null;
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
@@ -64,7 +66,32 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [canDelete, setCanDelete] = useState(false);
   const [canModify, setCanModify] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [dedicatedNurseId, setDedicatedNurseId] = useState('');
+  const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
+
+  // Fetch nurses from the same hospital when function is 'arts' and hospitalId changes
+  useEffect(() => {
+    if (userFunction === 'arts' && hospitalId) {
+      const fetchNurses = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .eq('hospital_id', hospitalId)
+          .eq('function', 'verpleegkundige');
+        setAvailableNurses(
+          (data || []).map((p) => ({
+            id: p.id,
+            name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Onbekend',
+          }))
+        );
+      };
+      fetchNurses();
+    } else {
+      setAvailableNurses([]);
+      setDedicatedNurseId('');
+    }
+  }, [userFunction, hospitalId]);
 
   useEffect(() => {
     if (open) {
@@ -81,6 +108,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanAdd(user.can_add_treatments ?? false);
         setCanDelete(user.can_delete_treatments ?? false);
         setCanModify(user.can_modify_treatments ?? false);
+        setDedicatedNurseId(user.dedicated_nurse_id || '');
       } else {
         setEmail('');
         setUsername('');
@@ -95,6 +123,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanAdd(false);
         setCanDelete(false);
         setCanModify(false);
+        setDedicatedNurseId('');
       }
       setAttempted(false);
     }
@@ -134,6 +163,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         can_add_treatments: canAdd,
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,
+        dedicated_nurse_id: userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null,
       });
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
@@ -148,6 +178,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.can_delete_treatments = canDelete;
       changes.can_modify_treatments = canModify;
       changes.hospital_id = hospitalId;
+      changes.dedicated_nurse_id = userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null;
 
       onSubmit(changes);
     }
@@ -213,6 +244,26 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
               <p className="text-xs text-destructive">{t('userDialog.functionRequired')}</p>
             )}
           </div>
+
+          {userFunction === 'arts' && (
+            <div className="space-y-2">
+              <Label>{t('userDialog.dedicatedNurse', 'Vaste verpleegkundige')}</Label>
+              <Select value={dedicatedNurseId} onValueChange={setDedicatedNurseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('userDialog.dedicatedNursePlaceholder', 'Selecteer verpleegkundige...')} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  <SelectItem value="none">{t('userDialog.noNurse', 'Geen')}</SelectItem>
+                  {availableNurses.map((n) => (
+                    <SelectItem key={n.id} value={n.id}>{n.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {availableNurses.length === 0 && hospitalId && (
+                <p className="text-xs text-muted-foreground">{t('userDialog.noNursesAvailable', 'Geen verpleegkundigen gevonden in dit ziekenhuis')}</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
