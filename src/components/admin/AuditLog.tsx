@@ -263,6 +263,8 @@ export function AuditLog() {
                     <SelectItem value="create">{t('auditLog.created')}</SelectItem>
                     <SelectItem value="update">{t('auditLog.updated')}</SelectItem>
                     <SelectItem value="delete">{t('auditLog.deleted')}</SelectItem>
+                    <SelectItem value="email_sent">E-mail verstuurd</SelectItem>
+                    <SelectItem value="password_reset">Wachtwoord reset</SelectItem>
                   </SelectContent>
             </Select>
             <Button
