@@ -551,16 +551,6 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
      @media print {
        body { padding: 20px; }
        .no-print { display: none; }
-       .disclaimer-print {
-         position: fixed;
-         bottom: 0;
-         left: 0;
-         right: 0;
-         padding: 8px 15px;
-         border-top: 1.5px solid #cc0000;
-         background: #fff5f5;
-         font-size: 7pt;
-       }
      }
   </style>
 </head>
@@ -651,10 +641,6 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     <p style="font-size: 9pt; color: #444; line-height: 1.5;">${l.disclaimerText}</p>
   </div>
 
-  <div class="disclaimer-print">
-    <p style="font-weight: 700; color: #cc0000; margin-bottom: 2px;">⚠ ${l.disclaimerTitle}</p>
-    <p style="color: #444;">${l.disclaimerText}</p>
-  </div>
 
   <div class="footer">
     <p>${l.footer}</p>

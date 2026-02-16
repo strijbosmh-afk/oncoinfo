@@ -21,13 +21,15 @@ interface PatientFolderEditorProps {
   previewHtml: string | null;
   iframeRef: React.RefObject<HTMLIFrameElement>;
   onRefreshPreview: () => void;
+  onUnsavedChanges?: (hasChanges: boolean) => void;
 }
 
 export function PatientFolderEditor({ 
   drug, 
   previewHtml, 
   iframeRef,
-  onRefreshPreview 
+  onRefreshPreview,
+  onUnsavedChanges 
 }: PatientFolderEditorProps) {
   const { t } = useTranslation();
   const { data: savedContent, isLoading } = usePatientFolderContent(drug.id);
@@ -86,6 +88,7 @@ export function PatientFolderEditor({
   const handleChange = (field: keyof PatientFolderContent, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
+    onUnsavedChanges?.(true);
   };
 
   const handleSave = async () => {
@@ -96,6 +99,7 @@ export function PatientFolderEditor({
       });
       toast.success(t('patientFolder.contentSaved'));
       setHasChanges(false);
+      onUnsavedChanges?.(false);
       // Refresh the preview
       onRefreshPreview();
     } catch (error) {
@@ -113,6 +117,7 @@ export function PatientFolderEditor({
       await resetMutation.mutateAsync(drug.id);
       toast.success(t('patientFolder.contentReset'));
       setHasChanges(false);
+      onUnsavedChanges?.(false);
       onRefreshPreview();
     } catch (error) {
       console.error('Error resetting content:', error);
