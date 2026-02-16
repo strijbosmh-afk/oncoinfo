@@ -42,12 +42,21 @@ interface UserDialogProps {
 }
 
 function generatePassword(length = 12): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+  // Use only alphanumeric chars to avoid email HTML rendering issues
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const all = upper + lower + digits;
+  // Ensure at least one uppercase, one lowercase, one digit
   let pw = '';
-  for (let i = 0; i < length; i++) {
-    pw += chars.charAt(Math.floor(Math.random() * chars.length));
+  pw += upper.charAt(Math.floor(Math.random() * upper.length));
+  pw += lower.charAt(Math.floor(Math.random() * lower.length));
+  pw += digits.charAt(Math.floor(Math.random() * digits.length));
+  for (let i = 3; i < length; i++) {
+    pw += all.charAt(Math.floor(Math.random() * all.length));
   }
-  return pw;
+  // Shuffle the password
+  return pw.split('').sort(() => Math.random() - 0.5).join('');
 }
 
 export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
