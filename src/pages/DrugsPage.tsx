@@ -87,10 +87,11 @@ interface DrugCardProps {
   isFavorite: boolean;
   isMostUsed: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
+  onToggleMostUsed: (e: React.MouseEvent) => void;
   translateTerm?: (term: string) => string;
 }
 
-function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, translateTerm }: DrugCardProps) {
+function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm }: DrugCardProps) {
   const { t } = useTranslation();
   const tMedLocal = useMedicalTranslation();
   const tMed = translateTerm || tMedLocal;
@@ -100,7 +101,13 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, translateTer
     return (
       <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
         <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
-          {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+          <button
+            onClick={onToggleMostUsed}
+            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            aria-label="Toggle meest gebruikt"
+          >
+            <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
+          </button>
           <button
             onClick={onToggleFavorite}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
@@ -166,7 +173,13 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, translateTer
     <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
-        {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+        <button
+          onClick={onToggleMostUsed}
+          className="p-1.5 rounded-full hover:bg-muted transition-colors"
+          aria-label="Toggle meest gebruikt"
+        >
+          <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
+        </button>
         <button
           onClick={onToggleFavorite}
           className="p-1.5 rounded-full hover:bg-muted transition-colors"
@@ -326,7 +339,7 @@ export default function DrugsPage() {
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
-  const { isMostUsed: isMostUsedCheck } = useMostUsed();
+  const { isMostUsed: isMostUsedCheck, toggleMostUsed } = useMostUsed();
   const { isAdmin } = useAuth();
   const { applyUserOrder } = useUserDrugOrder();
 
@@ -999,6 +1012,11 @@ export default function DrugsPage() {
                     e.stopPropagation();
                     toggleFavorite(drug.id);
                   }}
+                  onToggleMostUsed={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMostUsed(drug.id);
+                  }}
                   translateTerm={tCardBatch}
                 />
               ))}
@@ -1158,6 +1176,7 @@ export default function DrugsPage() {
                   isFavorite={isFavorite}
                   isMostUsed={isMostUsedCheck}
                   toggleFavorite={toggleFavorite}
+                  toggleMostUsed={toggleMostUsed}
                   isAdmin={isAdmin}
                   isEditMode={isEditMode}
                   onEditModeChange={setIsEditMode}

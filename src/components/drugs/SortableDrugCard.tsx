@@ -35,11 +35,12 @@ interface SortableDrugCardProps {
   isFavorite: boolean;
   isMostUsed: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
+  onToggleMostUsed: (e: React.MouseEvent) => void;
   isEditMode: boolean;
   translateTerm?: (term: string) => string;
 }
 
-export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, isEditMode, translateTerm }: SortableDrugCardProps) {
+export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, isEditMode, translateTerm }: SortableDrugCardProps) {
   const { t } = useTranslation();
   const tMed = translateTerm || ((s: string) => s);
   
@@ -75,7 +76,13 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
         )}
         <Card className={`h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
         <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
-          {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+          <button
+            onClick={onToggleMostUsed}
+            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            aria-label="Toggle meest gebruikt"
+          >
+            <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
+          </button>
           <button
             onClick={onToggleFavorite}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
@@ -151,7 +158,13 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
       )}
       <Card className={`h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
       <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
-        {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+        <button
+          onClick={onToggleMostUsed}
+          className="p-1.5 rounded-full hover:bg-muted transition-colors"
+          aria-label="Toggle meest gebruikt"
+        >
+          <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
+        </button>
         <button
           onClick={onToggleFavorite}
           className="p-1.5 rounded-full hover:bg-muted transition-colors"
