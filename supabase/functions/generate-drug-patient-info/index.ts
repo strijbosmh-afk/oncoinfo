@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
       }
     }
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact' } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact', premedicatie = [] } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -421,7 +421,7 @@ Deno.serve(async (req) => {
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
       tipsText, monitoringText, phone_number, selfCareTips,
-      hospitalName, hospitalColor, doctorsList, folder_mode
+      hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie
     );
 
     return new Response(
@@ -462,6 +462,7 @@ function generatePatientInfoHtml(
   hospitalColor: string = '#6b2d5b',
   doctorsList: string[] = [],
   folderMode: string = 'compact',
+  premedicatieItems: string[] = [],
 ): string {
   const isCompact = folderMode === 'compact';
   const allLabels: Record<string, any> = {
@@ -477,6 +478,7 @@ function generatePatientInfoHtml(
       selfCare: 'Wat kunt u zelf doen?',
       tips: 'Belangrijke tips',
       monitoring: 'Controles',
+      premedicatie: 'Premedicatie',
       contact: 'Contact',
       physician: 'Arts',
       nurse: 'Verpleegkundige',
@@ -496,6 +498,7 @@ function generatePatientInfoHtml(
       selfCare: 'Ce que vous pouvez faire vous-même',
       tips: 'Conseils importants',
       monitoring: 'Contrôles',
+      premedicatie: 'Prémédication',
       contact: 'Contact',
       physician: 'Médecin',
       nurse: 'Infirmier(ère)',
@@ -515,6 +518,7 @@ function generatePatientInfoHtml(
       selfCare: 'Was können Sie selbst tun?',
       tips: 'Wichtige Hinweise',
       monitoring: 'Kontrollen',
+      premedicatie: 'Prämedikation',
       contact: 'Kontakt',
       physician: 'Arzt',
       nurse: 'Pflegekraft',
@@ -534,6 +538,7 @@ function generatePatientInfoHtml(
       selfCare: 'What can you do yourself?',
       tips: 'Important tips',
       monitoring: 'Check-ups',
+      premedicatie: 'Premedication',
       contact: 'Contact',
       physician: 'Physician',
       nurse: 'Nurse',
@@ -645,6 +650,15 @@ function generatePatientInfoHtml(
         : dosingStructured ? formatAsList(dosingStructured)
         : drug.common_regimens?.length > 0 ? formatAsList(drug.common_regimens.map((r: string) => `• ${r}`).join('\n'))
         : ''}
+    </div>
+    ` : ''}
+
+    ${premedicatieItems && premedicatieItems.length > 0 ? `
+    <div class="section">
+      <h2>${labels.premedicatie}</h2>
+      <div class="info-box">
+        ${formatAsList(premedicatieItems.map((item: string) => `• ${item}`).join('\n'))}
+      </div>
     </div>
     ` : ''}
 

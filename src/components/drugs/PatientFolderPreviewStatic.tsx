@@ -25,6 +25,7 @@ export function generateStaticPreviewHtml(
   hospitalName: string = 'OncoInfo',
   hospitalLogoUrl: string | null = null,
   hospitalColor: string = '#6b2d5b',
+  premedicatieItems: string[] = [],
 ): string {
   const isFr = language === 'fr';
   const brandNamesText = drug.brand_names?.length > 0 ? ` (${drug.brand_names.join(', ')})` : '';
@@ -42,6 +43,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Ce que vous pouvez faire vous-même',
       tips: 'Conseils importants',
       monitoring: 'Contrôles',
+      premedicatie: 'Prémédication',
       contact: 'Contact',
       physician: 'Médecin',
       nurse: 'Infirmier(ère)',
@@ -61,6 +63,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'What you can do yourself',
       tips: 'Important tips',
       monitoring: 'Check-ups',
+      premedicatie: 'Premedication',
       contact: 'Contact',
       physician: 'Physician',
       nurse: 'Nurse',
@@ -80,6 +83,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Was Sie selbst tun können',
       tips: 'Wichtige Hinweise',
       monitoring: 'Kontrolluntersuchungen',
+      premedicatie: 'Prämedikation',
       contact: 'Kontakt',
       physician: 'Arzt',
       nurse: 'Pflegekraft',
@@ -99,6 +103,7 @@ export function generateStaticPreviewHtml(
       selfCare: 'Wat kunt u zelf doen?',
       tips: 'Belangrijke tips',
       monitoring: 'Controles',
+      premedicatie: 'Premedicatie',
       contact: 'Contact',
       physician: 'Arts',
       nurse: 'Verpleegkundige',
@@ -378,6 +383,7 @@ export function generateStaticPreviewHtml(
     ${introText ? `<div class="section"><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
     ${usageItems.length > 0 ? `<div class="section"><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
     ${includeDosing && dosingItems.length > 0 ? `<div class="section"><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
+    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><div class="info-box">${listHtml(premedicatieItems)}</div></div>` : ''}
     ${contraItems.length > 0 ? `<div class="section"><h2>${labels.whenNot}</h2>${listHtml(contraItems)}</div>` : ''}
 
     ${includeSideEffects && (commonSE.length > 0 || seriousSE.length > 0) ? `

@@ -40,6 +40,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Download } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 interface HospitalDoctor {
@@ -145,6 +146,35 @@ export default function DrugDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
+  const [includePremedicatie, setIncludePremedicatie] = useState(false);
+  const [selectedPremedicatie, setSelectedPremedicatie] = useState<string[]>([]);
+  const [customPremedicatie, setCustomPremedicatie] = useState('');
+
+  const defaultPremedicatieItems = [
+    'Dexamethason 8mg IV',
+    'Ondansetron 8mg IV', 
+    'Granisetron 1mg IV',
+    'Paracetamol 1g PO/IV',
+    'Difenhydramine 25mg IV',
+    'Ranitidine 50mg IV',
+    'Lorazepam 1mg PO',
+    'Aprepitant 125mg PO',
+    'Clemastine 2mg IV',
+  ];
+
+  const togglePremedicatieItem = (item: string) => {
+    setSelectedPremedicatie(prev => 
+      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+    );
+  };
+
+  const addCustomPremedicatie = () => {
+    const trimmed = customPremedicatie.trim();
+    if (trimmed && !selectedPremedicatie.includes(trimmed)) {
+      setSelectedPremedicatie(prev => [...prev, trimmed]);
+      setCustomPremedicatie('');
+    }
+  };
 
   // Default physician to logged-in user when profile loads
   useEffect(() => {
@@ -166,7 +196,8 @@ export default function DrugDetailPage() {
           nurse_name: nurseName || '',
           language,
           phone_number: phoneNumber || '',
-          folder_mode: folderMode
+          folder_mode: folderMode,
+          premedicatie: includePremedicatie ? selectedPremedicatie : []
         }
       });
 
@@ -178,7 +209,7 @@ export default function DrugDetailPage() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [drug, includeDosing, includeSideEffects, folderMode]);
+  }, [drug, includeDosing, includeSideEffects, folderMode, includePremedicatie, selectedPremedicatie]);
 
   const currentNurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
 
@@ -195,7 +226,8 @@ export default function DrugDetailPage() {
       if (rawUrl.startsWith('/')) return `${window.location.origin}${rawUrl}`;
       return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/${rawUrl}`;
     })(),
-    (hospital?.branding as any)?.primary_color || '#6b2d5b'
+    (hospital?.branding as any)?.primary_color || '#6b2d5b',
+    includePremedicatie ? selectedPremedicatie : []
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -936,6 +968,57 @@ export default function DrugDetailPage() {
                           ? t('patientFolder.compactDesc')
                           : t('patientFolder.extendedDesc')}
                       </p>
+                    </div>
+
+                    <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs sm:text-sm font-medium">Premedicatie</Label>
+                        <Switch
+                          checked={includePremedicatie}
+                          onCheckedChange={setIncludePremedicatie}
+                        />
+                      </div>
+                      {includePremedicatie && (
+                        <div className="space-y-2 pl-1">
+                          {defaultPremedicatieItems.map((item) => (
+                            <label key={item} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                              <Checkbox
+                                checked={selectedPremedicatie.includes(item)}
+                                onCheckedChange={() => togglePremedicatieItem(item)}
+                              />
+                              {item}
+                            </label>
+                          ))}
+                          {selectedPremedicatie.filter(i => !defaultPremedicatieItems.includes(i)).map((item) => (
+                            <label key={item} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                              <Checkbox
+                                checked={true}
+                                onCheckedChange={() => togglePremedicatieItem(item)}
+                              />
+                              {item}
+                            </label>
+                          ))}
+                          <div className="flex gap-1.5 mt-1">
+                            <Input
+                              placeholder="Ander medicament..."
+                              value={customPremedicatie}
+                              onChange={(e) => setCustomPremedicatie(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && addCustomPremedicatie()}
+                              className="h-7 text-xs flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs px-2"
+                              onClick={addCustomPremedicatie}
+                              disabled={!customPremedicatie.trim()}
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
