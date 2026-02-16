@@ -316,10 +316,31 @@ export default function DrugDetailPage() {
   };
 
   const handlePrint = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.focus();
-      iframeRef.current.contentWindow.print();
-    }
+    if (!previewHtml) return;
+    
+    // Create a temporary full-size iframe for printing the complete document
+    const printIframe = document.createElement('iframe');
+    printIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: 297mm; border: none;';
+    document.body.appendChild(printIframe);
+    
+    const printDoc = printIframe.contentDocument || printIframe.contentWindow?.document;
+    if (!printDoc) return;
+    
+    printDoc.open();
+    printDoc.write(previewHtml);
+    printDoc.close();
+    
+    // Wait for content and images to load before printing
+    printIframe.onload = () => {
+      setTimeout(() => {
+        printIframe.contentWindow?.focus();
+        printIframe.contentWindow?.print();
+        // Clean up after print dialog closes
+        setTimeout(() => {
+          document.body.removeChild(printIframe);
+        }, 1000);
+      }, 500);
+    };
   };
 
   const handleDownloadPdf = async () => {
