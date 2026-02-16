@@ -61,36 +61,22 @@ export function SortableSpecialtyCard({
     );
   }
 
-  if (isReordering) {
-    return (
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab active:cursor-grabbing">
-        <Card className="h-full group relative overflow-hidden border-2 border-primary/30 transition-all duration-300">
-          <div className="absolute top-3 right-3 z-10">
-            <GripVertical className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <CardHeader className="relative pb-2">
-            <div className={`h-14 w-14 rounded-xl ${bgColor} flex items-center justify-center mb-4`}>
-              <Icon className={`h-7 w-7 ${color}`} />
-            </div>
-            <CardTitle className="text-xl">{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </CardHeader>
-          <CardContent className="relative pt-0">
-            <Button variant="ghost" className="w-full" disabled>
-              {t('home.viewDrugs')}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // When reordering is enabled (logged in), card is draggable but also navigable
   return (
     <div ref={setNodeRef} style={style}>
       <Link to={href}>
         <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          {isReordering && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="absolute top-2 right-2 z-10 p-1 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity touch-none"
+              onClick={(e) => e.preventDefault()}
+            >
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
+            </div>
+          )}
           <CardHeader className="relative pb-2">
             <div className={`h-14 w-14 rounded-xl ${bgColor} flex items-center justify-center mb-4`}>
               <Icon className={`h-7 w-7 ${color}`} />

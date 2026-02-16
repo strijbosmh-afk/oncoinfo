@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, GripVertical } from 'lucide-react';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -54,7 +54,6 @@ const Index = () => {
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   const { mostUsed } = useMostUsed();
   const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
-  const [isReordering, setIsReordering] = useState(false);
   const { order: specialtyOrder, saveOrder, loaded: orderLoaded } = useSpecialtyOrder();
 
   const sensors = useSensors(
@@ -180,22 +179,9 @@ const Index = () => {
             </div>
           )}
 
-          <div className="flex items-center justify-center gap-3 mb-10">
-            <h2 className="text-2xl font-bold text-center">
-              {t('home.chooseSpecialty')}
-            </h2>
-            {user && (
-              <Button
-                variant={isReordering ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setIsReordering(r => !r)}
-                className="gap-1.5"
-              >
-                <GripVertical className="h-4 w-4" />
-                {isReordering ? t('home.done', 'Klaar') : t('home.reorder', 'Herschik')}
-              </Button>
-            )}
-          </div>
+          <h2 className="text-2xl font-bold text-center mb-10">
+            {t('home.chooseSpecialty')}
+          </h2>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
@@ -211,7 +197,7 @@ const Index = () => {
                     color={library.color}
                     bgColor={library.bgColor}
                     isDisabled={disabledCategories.has(library.key)}
-                    isReordering={isReordering}
+                    isReordering={!!user}
                     onDisabledClick={handleDisabledCategoryClick}
                   />
                 ))}
