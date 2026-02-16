@@ -37,7 +37,8 @@ import {
   FileText,
   Settings2,
   Printer,
-  ChevronDown
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -156,6 +157,7 @@ export default function DrugDetailPage() {
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
+  const [hasUnsavedEditorChanges, setHasUnsavedEditorChanges] = useState(false);
   const [selectedPremedicatie, setSelectedPremedicatie] = useState<PremedicatieItem[]>([]);
   const [showAddPremedicatie, setShowAddPremedicatie] = useState(false);
   const [newPremName, setNewPremName] = useState('');
@@ -1131,6 +1133,7 @@ export default function DrugDetailPage() {
                         previewHtml={previewHtml}
                         iframeRef={iframeRef}
                         onRefreshPreview={fetchPatientInfo}
+                        onUnsavedChanges={setHasUnsavedEditorChanges}
                       />
                     </div>
                   ) : (
@@ -1159,25 +1162,33 @@ export default function DrugDetailPage() {
 
             {/* Footer with actions */}
             {previewHtml && (
-              <div className="flex justify-end gap-2 px-4 sm:px-6 py-2 sm:py-3 border-t">
-                <Button
-                  variant="outline"
-                  onClick={handleDownloadPdf}
-                  disabled={isDownloading}
-                  className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
-                  size="sm"
-                >
-                  {isDownloading ? (
-                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  )}
-                  <span className="hidden xs:inline">{t('common.download')}</span> PDF
-                </Button>
-                <Button onClick={handlePrint} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8" size="sm">
-                  <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {t('common.print')}
-                </Button>
+              <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 border-t">
+                {hasUnsavedEditorChanges && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {t('patientFolder.saveBeforePrint', 'Sla wijzigingen op voordat u print of downloadt')}
+                  </p>
+                )}
+                <div className="flex justify-end gap-2 ml-auto">
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadPdf}
+                    disabled={isDownloading || hasUnsavedEditorChanges}
+                    className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8"
+                    size="sm"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    )}
+                    <span className="hidden xs:inline">{t('common.download')}</span> PDF
+                  </Button>
+                  <Button onClick={handlePrint} disabled={hasUnsavedEditorChanges} className="gap-1.5 sm:gap-2 text-xs sm:text-sm h-7 sm:h-8" size="sm">
+                    <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    {t('common.print')}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
