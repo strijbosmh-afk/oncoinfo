@@ -151,8 +151,8 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex flex-wrap gap-3 mb-8">
+        {/* Quick Action Buttons - Row 1 */}
+        <div className="flex flex-wrap gap-3 mb-3">
           {isAdmin && (
             <Button 
               variant={activeSection === 'users' ? 'default' : 'outline'}
@@ -199,45 +199,46 @@ export default function AdminPage() {
               {t('dashboard.title', 'Gebruiksoverzicht')}
             </Button>
           )}
+        </div>
 
-          <div className="flex gap-3 ml-auto">
+        {/* Quick Action Buttons - Row 2: Auto-update & Schedule */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          <Button
+            variant={activeSection === 'auto-update' ? 'default' : 'outline'}
+            onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+            className="gap-2"
+            disabled={!hasAutoUpdate}
+            title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
+          >
+            <Sparkles className="h-4 w-4" />
+            {t('admin.autoUpdate')}
+            {!hasAutoUpdate ? (
+              <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
+                {t('admin.notActive')}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+                {t('admin.beta')}
+              </Badge>
+            )}
+          </Button>
+          {isSuperAdmin && (
             <Button
-              variant={activeSection === 'auto-update' ? 'default' : 'outline'}
-              onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+              variant={activeSection === 'schedule' ? 'default' : 'outline'}
+              onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
               className="gap-2"
-              disabled={!hasAutoUpdate}
-              title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
+              disabled={!hasScheduledUpdates}
+              title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
             >
-              <Sparkles className="h-4 w-4" />
-              {t('admin.autoUpdate')}
-              {!hasAutoUpdate ? (
+              <CalendarClock className="h-4 w-4" />
+              {t('admin.scheduledUpdates')}
+              {!hasScheduledUpdates && (
                 <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
                   {t('admin.notActive')}
                 </Badge>
-              ) : (
-                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                  {t('admin.beta')}
-                </Badge>
               )}
             </Button>
-            {isSuperAdmin && (
-              <Button
-                variant={activeSection === 'schedule' ? 'default' : 'outline'}
-                onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
-                className="gap-2"
-                disabled={!hasScheduledUpdates}
-                title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
-              >
-                <CalendarClock className="h-4 w-4" />
-                {t('admin.scheduledUpdates')}
-                {!hasScheduledUpdates && (
-                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                    {t('admin.notActive')}
-                  </Badge>
-                )}
-              </Button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Active Section */}
