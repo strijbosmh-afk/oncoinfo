@@ -31,6 +31,7 @@ interface SortableDrugListProps {
   individualDrugs: Drug[];
   viewMode: 'all' | 'combinations' | 'individual';
   isFavorite: (id: string) => boolean;
+  isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
   isAdmin: boolean;
   isEditMode: boolean;
@@ -42,6 +43,7 @@ export function SortableDrugList({
   individualDrugs,
   viewMode,
   isFavorite,
+  isMostUsed,
   toggleFavorite,
   isAdmin,
   isEditMode,
@@ -251,6 +253,7 @@ export function SortableDrugList({
                     key={drug.id}
                     drug={drug}
                     isFavorite={isFavorite(drug.id)}
+                    isMostUsed={isMostUsed(drug.id)}
                     onToggleFavorite={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -289,6 +292,7 @@ export function SortableDrugList({
                     key={drug.id}
                     drug={drug}
                     isFavorite={isFavorite(drug.id)}
+                    isMostUsed={isMostUsed(drug.id)}
                     onToggleFavorite={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

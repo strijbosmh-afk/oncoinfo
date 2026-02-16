@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Drug } from '@/types/drug';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Layers, GripVertical } from 'lucide-react';
+import { Star, Layers, GripVertical, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -33,12 +33,13 @@ const getDrugClassColor = (drugClass: string) => {
 interface SortableDrugCardProps {
   drug: Drug;
   isFavorite: boolean;
+  isMostUsed: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
   isEditMode: boolean;
   translateTerm?: (term: string) => string;
 }
 
-export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMode, translateTerm }: SortableDrugCardProps) {
+export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, isEditMode, translateTerm }: SortableDrugCardProps) {
   const { t } = useTranslation();
   const tMed = translateTerm || ((s: string) => s);
   
@@ -73,9 +74,11 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
           </div>
         )}
         <Card className={`h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+          {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
           <button
             onClick={onToggleFavorite}
-            className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
             aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
           >
             <Star
@@ -86,8 +89,9 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
               }`}
             />
           </button>
+        </div>
           <Link to={`/drugs/${drug.id}`} className={isEditMode ? 'pointer-events-none' : ''}>
-            <CardHeader className="pb-2 pr-12">
+            <CardHeader className="pb-2 pr-16">
               <div className="flex items-start gap-2 mb-1">
                 <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
@@ -146,9 +150,11 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
         </div>
       )}
       <Card className={`h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
         <button
           onClick={onToggleFavorite}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
+          className="p-1.5 rounded-full hover:bg-muted transition-colors"
           aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
         >
           <Star
@@ -159,8 +165,9 @@ export function SortableDrugCard({ drug, isFavorite, onToggleFavorite, isEditMod
             }`}
           />
         </button>
+      </div>
         <Link to={`/drugs/${drug.id}`} className={isEditMode ? 'pointer-events-none' : ''}>
-          <CardHeader className="pb-2 pr-12">
+          <CardHeader className="pb-2 pr-16">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
