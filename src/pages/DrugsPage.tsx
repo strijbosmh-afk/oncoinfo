@@ -126,9 +126,13 @@ function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCar
             <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
               {t('drugs.combinationRegimen')}
             </Badge>
-            {drug.is_on_zvz && (
+            {drug.is_on_zvz ? (
               <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
                 ✓ RIZIV
+              </Badge>
+            ) : (
+              <Badge className="w-fit bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700">
+                ✗ Niet RIZIV
               </Badge>
             )}
           </CardHeader>
@@ -197,9 +201,13 @@ function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCar
                   {tMed(drug.drug_class)}
                 </Badge>
               )}
-              {drug.is_on_zvz && (
+              {drug.is_on_zvz ? (
                 <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
                   ✓ RIZIV
+                </Badge>
+              ) : (
+                <Badge className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700 text-xs">
+                  ✗ Niet RIZIV
                 </Badge>
               )}
             </div>

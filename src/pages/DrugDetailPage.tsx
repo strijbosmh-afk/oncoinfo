@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -54,7 +55,8 @@ export default function DrugDetailPage() {
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { user, profile } = useAuth();
+  const { user, profile, isSuperAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const { hospital } = useHospital();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
@@ -377,10 +379,34 @@ export default function DrugDetailPage() {
             {drug.administration_route && (
               <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
             )}
-            {drug.is_on_zvz && (
+            {drug.is_on_zvz ? (
               <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                RIZIV
+                ✓ RIZIV
               </Badge>
+            ) : (
+              <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
+                ✗ Niet RIZIV
+              </Badge>
+            )}
+            {isSuperAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={async () => {
+                  const newValue = !drug.is_on_zvz;
+                  const { error } = await supabase
+                    .from('drugs')
+                    .update({ is_on_zvz: newValue } as any)
+                    .eq('id', drug.id);
+                  if (!error) {
+                    queryClient.invalidateQueries({ queryKey: ['drug', drug.id] });
+                    queryClient.invalidateQueries({ queryKey: ['drugs'] });
+                  }
+                }}
+              >
+                {drug.is_on_zvz ? 'RIZIV uitschakelen' : 'RIZIV inschakelen'}
+              </Button>
             )}
             {drug.unit_price !== null && drug.unit_price !== undefined && (
               <Badge variant="outline" className="font-mono text-xs">
