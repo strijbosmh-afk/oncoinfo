@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock } from 'lucide-react';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
+import { useMostUsed } from '@/hooks/useMostUsed';
 import { useTranslation } from 'react-i18next';
 import { useHospital } from '@/contexts/HospitalContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,30 @@ const Index = () => {
   const { t } = useTranslation();
   const { hospital } = useHospital();
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
+  const { mostUsed } = useMostUsed();
+  const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
+
+  // Fetch drug details for most-used items
+  useEffect(() => {
+    if (mostUsed.length === 0) {
+      setMostUsedDrugs([]);
+      return;
+    }
+    const fetchDrugs = async () => {
+      const { data } = await supabase
+        .from('drugs')
+        .select('id, generic_name, drug_class')
+        .in('id', mostUsed.map(m => m.drug_id));
+      if (data) {
+        // Maintain display_order
+        const ordered = mostUsed
+          .map(m => data.find(d => d.id === m.drug_id))
+          .filter(Boolean) as typeof data;
+        setMostUsedDrugs(ordered);
+      }
+    };
+    fetchDrugs();
+  }, [mostUsed]);
 
   // Fetch hospital disciplines
   useEffect(() => {
@@ -99,6 +124,31 @@ const Index = () => {
     <Layout>
       <section className="flex-1 flex items-center py-8 md:py-12">
         <div className="container">
+          {mostUsedDrugs.length > 0 && (
+            <div className="mb-10">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Zap className="h-5 w-5 text-orange-400 fill-orange-400" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  {t('home.mostUsed', 'Meest gebruikt')}
+                </h3>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+                {mostUsedDrugs.map((drug) => (
+                  <Link key={drug.id} to={`/drugs/${drug.id}`}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-1.5 text-xs font-medium border-orange-200 hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                    >
+                      <Zap className="h-3.5 w-3.5 text-orange-400 fill-orange-400 shrink-0" />
+                      {drug.generic_name}
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           <h2 className="text-2xl font-bold text-center mb-10">
             {t('home.chooseSpecialty')}
           </h2>

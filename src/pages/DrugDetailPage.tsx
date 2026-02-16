@@ -6,6 +6,7 @@ import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useTranslatedDrug } from '@/hooks/useTranslatedDrug';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useMostUsed } from '@/hooks/useMostUsed';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import {
   Shield,
   ExternalLink,
   Star,
+  Zap,
   FileText,
   Settings2,
   Printer,
@@ -63,6 +65,7 @@ export default function DrugDetailPage() {
   const { data: drug, isLoading, error } = useDrug(id || '');
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { isMostUsed, toggleMostUsed } = useMostUsed();
   const { user, profile, isSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
   const { hospital } = useHospital();
@@ -512,21 +515,39 @@ export default function DrugDetailPage() {
               <Pill className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
               <h1 className="text-xl sm:text-3xl font-bold truncate">{drug.generic_name}</h1>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleFavorite(drug.id)}
-              className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
-              aria-label={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
-            >
-              <Star
-                className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
-                  isFavorite(drug.id)
-                    ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-muted-foreground hover:text-yellow-400'
-                }`}
-              />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleMostUsed(drug.id)}
+                className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                aria-label={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Toevoegen aan meest gebruikt'}
+                title={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Meest gebruikt'}
+              >
+                <Zap
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
+                    isMostUsed(drug.id)
+                      ? 'fill-orange-400 text-orange-400'
+                      : 'text-muted-foreground hover:text-orange-400'
+                  }`}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleFavorite(drug.id)}
+                className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                aria-label={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
+              >
+                <Star
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
+                    isFavorite(drug.id)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-muted-foreground hover:text-yellow-400'
+                  }`}
+                />
+              </Button>
+            </div>
           </div>
           {drug.brand_names.length > 0 && (
             <p className="text-sm sm:text-lg text-muted-foreground">
