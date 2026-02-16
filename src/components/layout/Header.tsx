@@ -78,8 +78,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4">
-        {/* Left: branding + user info */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        {/* Left: branding */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Link to="/home" className="flex items-center gap-2 shrink-0">
             {hospital?.logo_url && (
               <img src={hospital.logo_url} alt={hospital.name} className="h-7 sm:h-8 w-auto" />
@@ -90,46 +90,45 @@ export function Header() {
               {!hospital && <span className="hidden xs:inline"> – RZ Tienen</span>}
             </span>
           </Link>
-
-          {user && displayName && (
-            <>
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">|</span>
-                <span className="text-sm font-medium text-foreground capitalize truncate max-w-[120px]">{displayName}</span>
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className={`gap-1 text-xs cursor-default shrink-0 ${roleBadge.className}`}>
-                        <RoleIcon className="h-3 w-3" />
-                        {roleBadge.label}
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="max-w-xs">
-                      <RightsTooltipContent
-                        displayName={displayName}
-                        roleBadge={roleBadge}
-                        isAdmin={isAdmin}
-                        isApotheker={isApotheker}
-                        userFunction={userFunction}
-                        permissions={permissions}
-                        t={t}
-                      />
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-
-              <div className="flex sm:hidden items-center gap-1.5 min-w-0">
-                <span className="text-xs text-muted-foreground">|</span>
-                <span className="text-xs font-medium text-foreground capitalize truncate max-w-[60px]">{displayName}</span>
-                <Badge variant="outline" className={`gap-0.5 text-[10px] px-1.5 py-0 h-5 cursor-default shrink-0 ${roleBadge.className}`}>
-                  <RoleIcon className="h-2.5 w-2.5" />
-                  <span className="hidden xxs:inline">{roleBadge.label}</span>
-                </Badge>
-              </div>
-            </>
-          )}
         </div>
+
+        {/* Center: user name + role */}
+        {user && displayName && (
+          <div className="flex items-center justify-center gap-2 min-w-0 flex-1">
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground capitalize truncate max-w-[160px]">{displayName}</span>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className={`gap-1 text-xs cursor-default shrink-0 ${roleBadge.className}`}>
+                      <RoleIcon className="h-3 w-3" />
+                      {roleBadge.label}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <RightsTooltipContent
+                      displayName={displayName}
+                      roleBadge={roleBadge}
+                      isAdmin={isAdmin}
+                      isApotheker={isApotheker}
+                      userFunction={userFunction}
+                      permissions={permissions}
+                      t={t}
+                    />
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className="flex sm:hidden items-center gap-1.5 min-w-0">
+              <span className="text-xs font-medium text-foreground capitalize truncate max-w-[80px]">{displayName}</span>
+              <Badge variant="outline" className={`gap-0.5 text-[10px] px-1.5 py-0 h-5 cursor-default shrink-0 ${roleBadge.className}`}>
+                <RoleIcon className="h-2.5 w-2.5" />
+                <span className="hidden xxs:inline">{roleBadge.label}</span>
+              </Badge>
+            </div>
+          </div>
+        )}
 
         {/* Right: nav */}
         <nav className="flex items-center gap-1 sm:gap-2 shrink-0">
