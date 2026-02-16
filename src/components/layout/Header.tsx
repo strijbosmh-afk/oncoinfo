@@ -95,13 +95,13 @@ export function Header() {
         {/* Center: user name + role */}
         {user && displayName && (
           <div className="flex items-center justify-center gap-2 min-w-0 flex-1">
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground capitalize truncate max-w-[160px]">{displayName}</span>
+            <div className="hidden sm:flex items-center gap-2.5">
+              <span className="text-base font-semibold text-foreground capitalize truncate max-w-[200px]">{displayName}</span>
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge variant="outline" className={`gap-1 text-xs cursor-default shrink-0 ${roleBadge.className}`}>
-                      <RoleIcon className="h-3 w-3" />
+                    <Badge variant="outline" className={`gap-1 text-sm cursor-default shrink-0 ${roleBadge.className}`}>
+                      <RoleIcon className="h-3.5 w-3.5" />
                       {roleBadge.label}
                     </Badge>
                   </TooltipTrigger>
@@ -121,7 +121,7 @@ export function Header() {
             </div>
 
             <div className="flex sm:hidden items-center gap-1.5 min-w-0">
-              <span className="text-xs font-medium text-foreground capitalize truncate max-w-[80px]">{displayName}</span>
+              <span className="text-sm font-semibold text-foreground capitalize truncate max-w-[100px]">{displayName}</span>
               <Badge variant="outline" className={`gap-0.5 text-[10px] px-1.5 py-0 h-5 cursor-default shrink-0 ${roleBadge.className}`}>
                 <RoleIcon className="h-2.5 w-2.5" />
                 <span className="hidden xxs:inline">{roleBadge.label}</span>
