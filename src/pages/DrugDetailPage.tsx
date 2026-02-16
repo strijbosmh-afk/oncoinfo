@@ -402,45 +402,21 @@ export default function DrugDetailPage() {
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      // Disclaimer text for every page footer
-      const disclaimerText = selectedLanguage === 'fr'
-        ? '⚠ Ce document est uniquement informatif et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin.'
-        : selectedLanguage === 'de'
-        ? '⚠ Dieses Dokument dient nur zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt.'
-        : selectedLanguage === 'en'
-        ? '⚠ This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician.'
-        : '⚠ Dit document is uitsluitend informatief en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw arts.';
-
-      const addDisclaimerToPage = (pdfDoc: any) => {
-        const disclaimerY = pdfHeight - 8;
-        pdfDoc.setFontSize(6.5);
-        pdfDoc.setTextColor(180, 0, 0);
-        pdfDoc.setDrawColor(204, 0, 0);
-        pdfDoc.setLineWidth(0.3);
-        pdfDoc.roundedRect(8, disclaimerY - 4, pdfWidth - 16, 10, 1, 1, 'S');
-        pdfDoc.text(disclaimerText, pdfWidth / 2, disclaimerY, { align: 'center', maxWidth: pdfWidth - 22 });
-        pdfDoc.setTextColor(0, 0, 0);
-      };
-
-      // Only add content that fits on one A4 page - avoid empty second pages
+      // Content already contains the disclaimer in the HTML, so just render pages cleanly
       if (imgHeight <= pdfHeight) {
-        // Content fits on one page
         pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        addDisclaimerToPage(pdf);
       } else {
-        // Multi-page: only add pages with actual content (5mm threshold)
+        // Multi-page: slice the image across pages
         let heightLeft = imgHeight;
         let position = 0;
         
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        addDisclaimerToPage(pdf);
         heightLeft -= pdfHeight;
         
         while (heightLeft > 5) {
           position = heightLeft - imgHeight;
           pdf.addPage();
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          addDisclaimerToPage(pdf);
           heightLeft -= pdfHeight;
         }
       }
