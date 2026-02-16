@@ -135,13 +135,13 @@ export function Header() {
         <nav className="flex items-center gap-1 sm:gap-2 shrink-0">
           {user && (
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/drugs">{t('nav.drugs')}</Link>
+              <Link to="/handleiding">{t('nav.manual')}</Link>
             </Button>
           )}
           {user && (
             <Button variant="ghost" size="icon" asChild className="sm:hidden h-8 w-8">
-              <Link to="/drugs" aria-label={t('nav.drugs')}>
-                <FlaskConical className="h-4 w-4" />
+              <Link to="/handleiding" aria-label={t('nav.manual')}>
+                <BookOpen className="h-4 w-4" />
               </Link>
             </Button>
           )}
