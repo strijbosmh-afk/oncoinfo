@@ -967,38 +967,6 @@ export default function DrugsPage() {
                 <h2 className="text-xl font-semibold">{t('drugs.favorites')}</h2>
                 <Badge variant="secondary">{favoriteDrugs.length}</Badge>
               </div>
-              <div className="flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-3 text-sm">
-                  <label className="flex items-center gap-1.5">
-                    <Checkbox
-                      checked={exportIncludeDosing}
-                      onCheckedChange={(checked) => setExportIncludeDosing(checked as boolean)}
-                    />
-                    {t('drugs.dosing')}
-                  </label>
-                  <label className="flex items-center gap-1.5">
-                    <Checkbox
-                      checked={exportIncludeSideEffects}
-                      onCheckedChange={(checked) => setExportIncludeSideEffects(checked as boolean)}
-                    />
-                    {t('drugs.sideEffects')}
-                  </label>
-                </div>
-                <Button
-                  onClick={handleExportFavorites}
-                  disabled={isExporting}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  {isExporting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <FileText className="h-4 w-4" />
-                  )}
-                  {t('drugs.exportPdf')}
-                </Button>
-              </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {favoriteDrugs.map((drug) => (
