@@ -163,22 +163,6 @@ export default function AdminPage() {
               {t('admin.userManagement')}
             </Button>
           )}
-          <Button 
-            variant={activeSection === 'audit' ? 'default' : 'outline'}
-            onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
-            className="gap-2"
-          >
-            <ClipboardList className="h-4 w-4" />
-            {t('admin.activityLog')}
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setRegimenDialogOpen(true)} 
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t('admin.addTherapy')}
-          </Button>
           {isSuperAdmin && (
             <Button
               variant="outline"
@@ -189,6 +173,14 @@ export default function AdminPage() {
               {t('admin.hospitals')}
             </Button>
           )}
+          <Button 
+            variant={activeSection === 'audit' ? 'default' : 'outline'}
+            onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            {t('admin.activityLog')}
+          </Button>
           {isSuperAdmin && (
             <Button
               variant={activeSection === 'dashboard' ? 'default' : 'outline'}
@@ -201,8 +193,16 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Quick Action Buttons - Row 2: Auto-update & Schedule */}
+        {/* Quick Action Buttons - Row 2: Add therapy, Auto-update & Schedule */}
         <div className="flex flex-wrap gap-3 mb-8">
+          <Button 
+            variant="outline"
+            onClick={() => setRegimenDialogOpen(true)} 
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t('admin.addTherapy')}
+          </Button>
           <Button
             variant={activeSection === 'auto-update' ? 'default' : 'outline'}
             onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
