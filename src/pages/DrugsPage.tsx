@@ -664,6 +664,21 @@ export default function DrugsPage() {
         printWindow.focus();
         setTimeout(() => printWindow.print(), 500);
       }
+
+      // Log favorites export to audit_log
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        const { data: profile } = await supabase.from('profiles').select('username, hospital_id').eq('user_id', currentUser.id).single();
+        await supabase.from('audit_log').insert({
+          user_id: currentUser.id,
+          username: profile?.username || null,
+          action: 'print_folder',
+          entity_type: 'patient_folder',
+          entity_id: favorites.join(','),
+          entity_name: `Favorieten (${favorites.length})`,
+          hospital_id: profile?.hospital_id || null,
+        });
+      }
     } catch (err) {
       console.error('Error exporting favorites:', err);
       toast.error(t('drugs.exportError'));
