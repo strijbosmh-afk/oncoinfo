@@ -67,6 +67,7 @@
     "verpleegkundige": "Infirmier(ère)"
   },
   "home": {
+    "mostUsed": "Les plus utilisés",
     "chooseSpecialty": "Choisir une Spécialité",
     "orChooseDrug": "Ou choisissez directement un médicament ou un schéma",
     "searchPlaceholder": "Rechercher par nom générique, nom de marque ou schéma...",
