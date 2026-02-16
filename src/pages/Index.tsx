@@ -1,28 +1,78 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search } from 'lucide-react';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
 import { useTranslation } from 'react-i18next';
+import { useHospital } from '@/contexts/HospitalContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+// Map each category to the discipline disease_area keys it requires
+const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
+  breast: ['Borstkanker'],
+  urology: ['Prostaatkanker', 'Blaaskanker', 'Niercelcarcinoom', 'Testiskanker', 'Peniskanker'],
+  gynecology: ['Ovariumkanker', 'Endometriumkanker', 'Cervixkanker', 'Vulvakanker'],
+  respiratory: ['NSCLC', 'SCLC', 'Mesothelioom'],
+  digestive: ['Colorectaal carcinoom', 'Maagcarcinoom', 'Oesofaguscarcinoom', 'Pancreascarcinoom', 'Hepatocellulair carcinoom', 'Galwegcarcinoom'],
+  skin: ['Melanoom', 'Merkelcelcarcinoom', 'Cutaan plaveiselcelcarcinoom'],
+  head_neck: ['Hoofd-halscarcinoom', 'Nasofarynxcarcinoom', 'Speekselkliercarcinoom'],
+  other: ['Supportive Care', 'Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'],
+};
 
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults } = useDrugs(searchQuery.length >= 2 ? { search: searchQuery } : undefined);
   const { t } = useTranslation();
+  const { hospital } = useHospital();
+  const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
+
+  // Fetch hospital disciplines
+  useEffect(() => {
+    if (!hospital?.id) return;
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('hospital_disciplines')
+        .select('disease_area, is_enabled')
+        .eq('hospital_id', hospital.id);
+      setDisciplines(data || []);
+    };
+    fetch();
+  }, [hospital?.id]);
+
+  // Determine which categories are disabled
+  const disabledCategories = useMemo(() => {
+    // If no disciplines configured at all, everything is enabled (backwards compatible)
+    if (!disciplines || disciplines.length === 0) return new Set<string>();
+
+    const enabledAreas = new Set(
+      disciplines.filter(d => d.is_enabled).map(d => d.disease_area)
+    );
+
+    const disabled = new Set<string>();
+    for (const [category, areas] of Object.entries(CATEGORY_DISCIPLINE_MAP)) {
+      // A category is disabled if NONE of its discipline areas are enabled
+      const hasAnyEnabled = areas.some(area => enabledAreas.has(area));
+      if (!hasAnyEnabled) {
+        disabled.add(category);
+      }
+    }
+    return disabled;
+  }, [disciplines]);
 
   const drugLibraries = [
-    { title: t('home.breast'), description: t('home.breastDesc'), icon: Heart, href: '/drugs?category=breast', color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
-    { title: t('home.urology'), description: t('home.urologyDesc'), icon: Stethoscope, href: '/drugs?category=urology', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-    { title: t('home.gynecology'), description: t('home.gynecologyDesc'), icon: Baby, href: '/drugs?category=gynecology', color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-    { title: t('home.respiratory'), description: t('home.respiratoryDesc'), icon: Wind, href: '/drugs?category=respiratory', color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
-    { title: t('home.digestive'), description: t('home.digestiveDesc'), icon: UtensilsCrossed, href: '/drugs?category=digestive', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-    { title: t('home.skin'), description: t('home.skinDesc'), icon: Palette, href: '/drugs?category=skin', color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
-    { title: t('home.headNeck'), description: t('home.headNeckDesc'), icon: Ear, href: '/drugs?category=head_neck', color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
-    { title: t('home.other'), description: t('home.otherDesc'), icon: MoreHorizontal, href: '/drugs?category=other', color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+    { key: 'breast', title: t('home.breast'), description: t('home.breastDesc'), icon: Heart, href: '/drugs?category=breast', color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+    { key: 'urology', title: t('home.urology'), description: t('home.urologyDesc'), icon: Stethoscope, href: '/drugs?category=urology', color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+    { key: 'gynecology', title: t('home.gynecology'), description: t('home.gynecologyDesc'), icon: Baby, href: '/drugs?category=gynecology', color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+    { key: 'respiratory', title: t('home.respiratory'), description: t('home.respiratoryDesc'), icon: Wind, href: '/drugs?category=respiratory', color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
+    { key: 'digestive', title: t('home.digestive'), description: t('home.digestiveDesc'), icon: UtensilsCrossed, href: '/drugs?category=digestive', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+    { key: 'skin', title: t('home.skin'), description: t('home.skinDesc'), icon: Palette, href: '/drugs?category=skin', color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
+    { key: 'head_neck', title: t('home.headNeck'), description: t('home.headNeckDesc'), icon: Ear, href: '/drugs?category=head_neck', color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
+    { key: 'other', title: t('home.other'), description: t('home.otherDesc'), icon: MoreHorizontal, href: '/drugs?category=other', color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
   ];
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -37,6 +87,14 @@ const Index = () => {
     setSearchQuery('');
   };
 
+  const handleDisabledCategoryClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toast.info('Deze functie werd uitgeschakeld voor uw instelling.', {
+      duration: 3000,
+    });
+  };
+
   return (
     <Layout>
       <section className="py-12 md:py-16">
@@ -46,26 +104,55 @@ const Index = () => {
           </h2>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            {drugLibraries.map((library) => (
-              <Link key={library.title} to={library.href}>
-                <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardHeader className="relative pb-2">
-                    <div className={`h-14 w-14 rounded-xl ${library.bgColor} flex items-center justify-center mb-4`}>
-                      <library.icon className={`h-7 w-7 ${library.color}`} />
-                    </div>
-                    <CardTitle className="text-xl">{library.title}</CardTitle>
-                    <CardDescription>{library.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="relative pt-0">
-                    <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
-                      {t('home.viewDrugs')}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {drugLibraries.map((library) => {
+              const isDisabled = disabledCategories.has(library.key);
+
+              if (isDisabled) {
+                return (
+                  <div key={library.title} onClick={handleDisabledCategoryClick} className="cursor-not-allowed">
+                    <Card className="h-full relative overflow-hidden border-2 border-muted opacity-50 grayscale">
+                      <div className="absolute top-3 right-3 z-10">
+                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <CardHeader className="relative pb-2">
+                        <div className={`h-14 w-14 rounded-xl bg-muted flex items-center justify-center mb-4`}>
+                          <library.icon className="h-7 w-7 text-muted-foreground" />
+                        </div>
+                        <CardTitle className="text-xl text-muted-foreground">{library.title}</CardTitle>
+                        <CardDescription>{library.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="relative pt-0">
+                        <Button variant="ghost" className="w-full" disabled>
+                          {t('home.viewDrugs')}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              }
+
+              return (
+                <Link key={library.title} to={library.href}>
+                  <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardHeader className="relative pb-2">
+                      <div className={`h-14 w-14 rounded-xl ${library.bgColor} flex items-center justify-center mb-4`}>
+                        <library.icon className={`h-7 w-7 ${library.color}`} />
+                      </div>
+                      <CardTitle className="text-xl">{library.title}</CardTitle>
+                      <CardDescription>{library.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="relative pt-0">
+                      <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
+                        {t('home.viewDrugs')}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
 
           <h2 className="text-2xl font-bold text-center mt-12 mb-6">
