@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
 import { useDrugs } from '@/hooks/useDrugs';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useMostUsed } from '@/hooks/useMostUsed';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserDrugOrder } from '@/hooks/useUserDrugOrder';
 import { useTranslatedStrings } from '@/hooks/useTranslatedStrings';
@@ -14,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,11 +85,12 @@ const getDrugClassColor = (drugClass: string) => {
 interface DrugCardProps {
   drug: Drug;
   isFavorite: boolean;
+  isMostUsed: boolean;
   onToggleFavorite: (e: React.MouseEvent) => void;
   translateTerm?: (term: string) => string;
 }
 
-function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCardProps) {
+function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, translateTerm }: DrugCardProps) {
   const { t } = useTranslation();
   const tMedLocal = useMedicalTranslation();
   const tMed = translateTerm || tMedLocal;
@@ -97,21 +99,24 @@ function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCar
   if (isCombo) {
     return (
       <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
-        <button
-          onClick={onToggleFavorite}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-amber-100 transition-colors"
-          aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
-        >
-          <Star
-            className={`h-5 w-5 transition-colors ${
-              isFavorite
-                ? 'fill-yellow-400 text-yellow-400'
-                : 'text-muted-foreground hover:text-yellow-400'
-            }`}
-          />
-        </button>
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+          {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+          <button
+            onClick={onToggleFavorite}
+            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
+          >
+            <Star
+              className={`h-5 w-5 transition-colors ${
+                isFavorite
+                  ? 'fill-yellow-400 text-yellow-400'
+                  : 'text-muted-foreground hover:text-yellow-400'
+              }`}
+            />
+          </button>
+        </div>
         <Link to={`/drugs/${drug.id}`}>
-          <CardHeader className="pb-2 pr-12">
+          <CardHeader className="pb-2 pr-16">
             <div className="flex items-start gap-2 mb-1">
               <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -160,21 +165,24 @@ function DrugCard({ drug, isFavorite, onToggleFavorite, translateTerm }: DrugCar
   return (
     <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
-      <button
-        onClick={onToggleFavorite}
-        className="absolute top-3 right-3 z-10 p-1.5 rounded-full hover:bg-muted transition-colors"
-        aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
-      >
-        <Star
-          className={`h-5 w-5 transition-colors ${
-            isFavorite
-              ? 'fill-yellow-400 text-yellow-400'
-              : 'text-muted-foreground hover:text-yellow-400'
-          }`}
-        />
-      </button>
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        {isMostUsed && <Zap className="h-4 w-4 fill-orange-400 text-orange-400" />}
+        <button
+          onClick={onToggleFavorite}
+          className="p-1.5 rounded-full hover:bg-muted transition-colors"
+          aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
+        >
+          <Star
+            className={`h-5 w-5 transition-colors ${
+              isFavorite
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-muted-foreground hover:text-yellow-400'
+            }`}
+          />
+        </button>
+      </div>
       <Link to={`/drugs/${drug.id}`}>
-        <CardHeader className="pb-2 pr-12">
+        <CardHeader className="pb-2 pr-16">
           <div className="flex items-start justify-between gap-2">
             <div>
               <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
@@ -318,6 +326,7 @@ export default function DrugsPage() {
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+  const { isMostUsed: isMostUsedCheck } = useMostUsed();
   const { isAdmin } = useAuth();
   const { applyUserOrder } = useUserDrugOrder();
 
@@ -984,6 +993,7 @@ export default function DrugsPage() {
                   key={drug.id}
                   drug={drug}
                   isFavorite={true}
+                  isMostUsed={isMostUsedCheck(drug.id)}
                   onToggleFavorite={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1146,6 +1156,7 @@ export default function DrugsPage() {
                   individualDrugs={individualDrugs}
                   viewMode={viewMode}
                   isFavorite={isFavorite}
+                  isMostUsed={isMostUsedCheck}
                   toggleFavorite={toggleFavorite}
                   isAdmin={isAdmin}
                   isEditMode={isEditMode}
