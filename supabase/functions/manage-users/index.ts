@@ -89,6 +89,7 @@ async function sendCredentialsEmail(email: string, username: string, password: s
     </div>
   `;
 
+  console.log('Attempting to send credentials email to:', email);
   const result = await resend.emails.send({
     from: 'OncoInfo <admin@oncoinfo.be>',
     to: [email],
@@ -96,8 +97,10 @@ async function sendCredentialsEmail(email: string, username: string, password: s
     html: htmlContent,
   });
 
+  console.log('Resend result:', JSON.stringify(result));
+
   if (result.error) {
-    console.error('Resend error:', result.error);
+    console.error('Resend error:', JSON.stringify(result.error));
     throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
   }
 
@@ -139,6 +142,7 @@ async function sendResetEmail(email: string, username: string, password: string,
     </div>
   `;
 
+  console.log('Attempting to send reset email to:', email);
   const result = await resend.emails.send({
     from: 'OncoInfo <admin@oncoinfo.be>',
     to: [email],
@@ -146,8 +150,10 @@ async function sendResetEmail(email: string, username: string, password: string,
     html: htmlContent,
   });
 
+  console.log('Resend reset result:', JSON.stringify(result));
+
   if (result.error) {
-    console.error('Resend error:', result.error);
+    console.error('Resend error:', JSON.stringify(result.error));
     throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
   }
   return result;
