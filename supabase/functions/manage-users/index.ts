@@ -302,6 +302,20 @@ Deno.serve(async (req) => {
             }
             await sendCredentialsEmail(email, username, password, login_url, hName, hColor);
             emailSent = true;
+
+            // Audit log for email sent
+            const callerUsername = await getCallerUsername(supabase, adminUser.id);
+            const callerHospId = await getAdminHospitalId(supabase, adminUser.id);
+            await supabase.from('audit_log').insert({
+              user_id: adminUser.id,
+              username: callerUsername,
+              action: 'email_sent',
+              entity_type: 'user',
+              entity_id: newUser.user.id,
+              entity_name: username,
+              hospital_id: callerHospId,
+              details: { email_type: 'credentials', recipient: email },
+            });
           } catch (err: any) {
             console.error('Failed to send credentials email:', err);
             emailError = err.message;
@@ -440,6 +454,21 @@ Deno.serve(async (req) => {
         }
 
         await sendCredentialsEmail(email, username || '', password, login_url, hName, hColor);
+
+        // Audit log for email sent
+        const callerUsername2 = await getCallerUsername(supabase, adminUser.id);
+        const callerHospId2 = await getAdminHospitalId(supabase, adminUser.id);
+        await supabase.from('audit_log').insert({
+          user_id: adminUser.id,
+          username: callerUsername2,
+          action: 'email_sent',
+          entity_type: 'user',
+          entity_id: user_id || null,
+          entity_name: username || email,
+          hospital_id: callerHospId2,
+          details: { email_type: 'credentials', recipient: email },
+        });
+
         return jsonResponse({ success: true, email_sent: true });
       }
 
@@ -493,18 +522,30 @@ Deno.serve(async (req) => {
         const loginUrl = req.headers.get('origin') || 'https://oncoinfo.lovable.app';
         await sendResetEmail(profile.email, profile.username || '', newPassword, loginUrl, hName, hColor);
 
-        // Audit log
+        // Audit log for password reset + email sent
         const callerUsername = await getCallerUsername(supabase, adminUser.id);
-        await supabase.from('audit_log').insert({
-          user_id: adminUser.id,
-          username: callerUsername,
-          action: 'password_reset',
-          entity_type: 'user',
-          entity_id: user_id,
-          entity_name: profile.username || profile.email,
-          hospital_id: profile.hospital_id,
-          details: { initiated_by: callerUsername },
-        });
+        await supabase.from('audit_log').insert([
+          {
+            user_id: adminUser.id,
+            username: callerUsername,
+            action: 'password_reset',
+            entity_type: 'user',
+            entity_id: user_id,
+            entity_name: profile.username || profile.email,
+            hospital_id: profile.hospital_id,
+            details: { initiated_by: callerUsername },
+          },
+          {
+            user_id: adminUser.id,
+            username: callerUsername,
+            action: 'email_sent',
+            entity_type: 'user',
+            entity_id: user_id,
+            entity_name: profile.username || profile.email,
+            hospital_id: profile.hospital_id,
+            details: { email_type: 'password_reset', recipient: profile.email },
+          },
+        ]);
 
         return jsonResponse({ success: true, email_sent: true });
       }
