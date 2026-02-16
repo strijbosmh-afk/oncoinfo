@@ -414,15 +414,15 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 11pt;
-      line-height: 1.6;
-      color: #1a1a1a;
-      padding: 40px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
+     body {
+       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+       font-size: 12pt;
+       line-height: 1.6;
+       color: #1a1a1a;
+       padding: 40px;
+       max-width: 800px;
+       margin: 0 auto;
+     }
     
     .header {
       border-bottom: 3px solid ${primaryColor};
@@ -548,10 +548,20 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
       font-size: 10pt;
     }
     
-    @media print {
-      body { padding: 20px; }
-      .no-print { display: none; }
-    }
+     @media print {
+       body { padding: 20px; }
+       .no-print { display: none; }
+       .disclaimer-print {
+         position: fixed;
+         bottom: 0;
+         left: 0;
+         right: 0;
+         padding: 8px 15px;
+         border-top: 1.5px solid #cc0000;
+         background: #fff5f5;
+         font-size: 7pt;
+       }
+     }
   </style>
 </head>
 <body>
@@ -638,7 +648,12 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
 
   <div style="margin-top: 25px; padding: 15px; border: 2px solid #cc0000; border-radius: 8px; background: #fff5f5;">
     <p style="font-weight: 700; color: #cc0000; margin-bottom: 6px; font-size: 10pt;">⚠ ${l.disclaimerTitle}</p>
-    <p style="font-size: 8.5pt; color: #444; line-height: 1.5;">${l.disclaimerText}</p>
+    <p style="font-size: 9pt; color: #444; line-height: 1.5;">${l.disclaimerText}</p>
+  </div>
+
+  <div class="disclaimer-print">
+    <p style="font-weight: 700; color: #cc0000; margin-bottom: 2px;">⚠ ${l.disclaimerTitle}</p>
+    <p style="color: #444;">${l.disclaimerText}</p>
   </div>
 
   <div class="footer">
