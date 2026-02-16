@@ -363,40 +363,106 @@ export default function DrugsPage() {
      }
    }
    
-   if (category === 'other') {
-     const otherAreas = ['Overige', 'Supportive Care'];
-     const otherClasses = ['Antiresorptiva', 'Supportive Care'];
+   if (category === 'digestive') {
+     const digestiveAreas = ['Colorectaal carcinoom', 'Maagcarcinoom', 'Oesofaguscarcinoom', 'Pancreascarcinoom', 'Hepatocellulair carcinoom', 'Galwegcarcinoom', 'Cholangiocarcinoom', 'GIST'];
      result = result.filter(drug => 
-       drug.disease_areas.some(area => otherAreas.includes(area)) ||
-       otherClasses.includes(drug.drug_class)
+       drug.disease_areas.some(area => digestiveAreas.includes(area))
      );
      
-      // Filter by subcategory
-      if (selectedSubcategory) {
-        const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
-        const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
-          'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
-          'antiemetic': { areas: ['Anti-emetica'], classes: [] },
-          'gcsf': { areas: ['Groeifactoren'], classes: [] },
-          'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
-          'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
-          'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
-        };
-        const filter = subcategoryFilters[selectedSubcategory];
-        if (filter) {
-          result = result.filter(drug => {
-            const matchesArea = drug.disease_areas.some(area => filter.areas.includes(area)) ||
-              filter.classes.includes(drug.drug_class);
-            // For 'supportive' catch-all, exclude drugs that belong to a specific subcategory
-            if (filter.exclude && matchesArea) {
-              const belongsToSpecific = drug.disease_areas.some(area => filter.exclude!.includes(area)) ||
-                filter.exclude.includes(drug.drug_class);
-              return !belongsToSpecific;
-            }
-            return matchesArea;
-          });
-        }
-      }
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'colorectal': ['Colorectaal carcinoom'],
+         'gastric': ['Maagcarcinoom'],
+         'esophageal': ['Oesofaguscarcinoom'],
+         'pancreatic': ['Pancreascarcinoom'],
+         'hepatocellular': ['Hepatocellulair carcinoom'],
+         'biliary': ['Galwegcarcinoom', 'Cholangiocarcinoom']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
+   }
+
+   if (category === 'skin') {
+     const skinAreas = ['Melanoom', 'Merkelcelcarcinoom', 'Cutaan plaveiselcelcarcinoom', 'Cutaan SCC'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => skinAreas.includes(area))
+     );
+     
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'melanoma': ['Melanoom'],
+         'merkel': ['Merkelcelcarcinoom'],
+         'cutaneous_scc': ['Cutaan plaveiselcelcarcinoom', 'Cutaan SCC']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
+   }
+
+   if (category === 'head_neck') {
+     const headNeckAreas = ['Hoofd-halscarcinoom', 'Nasofarynxcarcinoom', 'Speekselkliercarcinoom'];
+     result = result.filter(drug => 
+       drug.disease_areas.some(area => headNeckAreas.includes(area))
+     );
+     
+     if (selectedDiseaseArea) {
+       const diseaseAreaMap: Record<string, string[]> = {
+         'hnscc': ['Hoofd-halscarcinoom'],
+         'nasopharyngeal': ['Nasofarynxcarcinoom'],
+         'salivary': ['Speekselkliercarcinoom']
+       };
+       const areas = diseaseAreaMap[selectedDiseaseArea];
+       if (areas) {
+         result = result.filter(drug => 
+           drug.disease_areas.some(area => areas.includes(area))
+         );
+       }
+     }
+   }
+
+   if (category === 'other') {
+      const otherAreas = ['Overige', 'Supportive Care'];
+      const otherClasses = ['Antiresorptiva', 'Supportive Care'];
+      result = result.filter(drug => 
+        drug.disease_areas.some(area => otherAreas.includes(area)) ||
+        otherClasses.includes(drug.drug_class)
+      );
+      
+       // Filter by subcategory
+       if (selectedSubcategory) {
+         const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
+         const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
+           'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
+           'antiemetic': { areas: ['Anti-emetica'], classes: [] },
+           'gcsf': { areas: ['Groeifactoren'], classes: [] },
+           'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
+           'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
+           'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
+         };
+         const filter = subcategoryFilters[selectedSubcategory];
+         if (filter) {
+           result = result.filter(drug => {
+             const matchesArea = drug.disease_areas.some(area => filter.areas.includes(area)) ||
+               filter.classes.includes(drug.drug_class);
+             // For 'supportive' catch-all, exclude drugs that belong to a specific subcategory
+             if (filter.exclude && matchesArea) {
+               const belongsToSpecific = drug.disease_areas.some(area => filter.exclude!.includes(area)) ||
+                 filter.exclude.includes(drug.drug_class);
+               return !belongsToSpecific;
+             }
+             return matchesArea;
+           });
+         }
+       }
    }
     
     // Filter by subtype (approved_indications)
