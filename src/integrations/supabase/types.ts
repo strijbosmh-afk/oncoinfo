@@ -675,6 +675,7 @@ export type Database = {
         Row: {
           created_at: string
           dedicated_nurse_id: string | null
+          discipline: string | null
           email: string | null
           first_name: string | null
           function: string | null
@@ -690,6 +691,7 @@ export type Database = {
         Insert: {
           created_at?: string
           dedicated_nurse_id?: string | null
+          discipline?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null
@@ -705,6 +707,7 @@ export type Database = {
         Update: {
           created_at?: string
           dedicated_nurse_id?: string | null
+          discipline?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null

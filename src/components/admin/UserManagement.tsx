@@ -244,7 +244,7 @@ export function UserManagement() {
                 <div className="h-8 w-8 flex-shrink-0" />
                 <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
                 {isSuperAdmin && <div className="w-[160px] text-right">{t('userDialog.hospital')}</div>}
-                <div className="w-[120px] text-right">{t('userDialog.function')}</div>
+                <div className="w-[180px] text-right">{t('userDialog.function')}</div>
                 <div className="w-[148px] flex-shrink-0" />
               </div>
 
@@ -299,7 +299,8 @@ export function UserManagement() {
                     <p className="lg:hidden text-xs text-muted-foreground truncate mt-0.5">
                       {[
                         isSuperAdmin && user.hospital_name ? user.hospital_name : null,
-                        user.function
+                        user.function,
+                        user.discipline
                       ].filter(Boolean).join(' · ') || null}
                     </p>
                   </div>
@@ -322,12 +323,17 @@ export function UserManagement() {
                     </div>
                   )}
 
-                  {/* Function - fixed width for vertical alignment */}
-                  <div className="hidden lg:flex w-[120px] justify-end flex-shrink-0">
+                  {/* Function + discipline - fixed width for vertical alignment */}
+                  <div className="hidden lg:flex w-[180px] justify-end flex-shrink-0">
                     {user.function ? (
-                      <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
-                        {user.function}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
+                          {user.function}
+                        </Badge>
+                        {user.discipline && (
+                          <span className="text-[10px] text-muted-foreground capitalize">{user.discipline}</span>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}

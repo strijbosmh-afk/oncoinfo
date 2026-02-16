@@ -215,6 +215,7 @@ Deno.serve(async (req) => {
               first_name: profile?.first_name || null,
               last_name: profile?.last_name || null,
               function: profile?.function || null,
+              discipline: profile?.discipline || null,
               hospital_id: hospId,
               hospital_name: hospId ? (hospitalMap.get(hospId)?.name || null) : null,
               hospital_color: hospId ? (hospitalMap.get(hospId)?.color || null) : null,
@@ -241,7 +242,7 @@ Deno.serve(async (req) => {
 
       case 'create': {
         const { email, username, password, role, send_email, login_url,
-          first_name, last_name, function: userFunction, hospital_id,
+          first_name, last_name, function: userFunction, discipline, hospital_id,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
           dedicated_nurse_id } = params;
 
@@ -268,6 +269,7 @@ Deno.serve(async (req) => {
         if (first_name !== undefined) profileData.first_name = first_name;
         if (last_name !== undefined) profileData.last_name = last_name;
         if (userFunction !== undefined) profileData.function = userFunction;
+        if (discipline !== undefined) profileData.discipline = discipline;
         // Assign hospital: use provided hospital_id, or caller's hospital
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
         profileData.hospital_id = hospital_id || callerHospitalId;
@@ -343,7 +345,7 @@ Deno.serve(async (req) => {
 
       case 'update': {
         const { user_id, email, username, password, role, hospital_id,
-          first_name, last_name, function: userFunction,
+          first_name, last_name, function: userFunction, discipline,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
           dedicated_nurse_id } = params;
 
@@ -381,6 +383,7 @@ Deno.serve(async (req) => {
         if (first_name !== undefined) profileUpdate.first_name = first_name;
         if (last_name !== undefined) profileUpdate.last_name = last_name;
         if (userFunction !== undefined) profileUpdate.function = userFunction;
+        if (discipline !== undefined) profileUpdate.discipline = discipline || null;
         if (hospital_id !== undefined) profileUpdate.hospital_id = hospital_id;
         if (dedicated_nurse_id !== undefined) profileUpdate.dedicated_nurse_id = dedicated_nurse_id || null;
 

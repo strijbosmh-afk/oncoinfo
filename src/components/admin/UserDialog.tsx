@@ -26,6 +26,7 @@ interface UserDialogProps {
     first_name?: string | null;
     last_name?: string | null;
     function?: string | null;
+    discipline?: string | null;
     hospital_id?: string | null;
     role: 'admin' | 'viewer' | 'apotheker' | 'super_admin';
     is_physician?: boolean;
@@ -40,6 +41,16 @@ interface UserDialogProps {
   hospitals?: HospitalOption[];
   preselectedHospitalId?: string;
 }
+
+const DISCIPLINE_OPTIONS = [
+  'medisch oncoloog',
+  'gynaecoloog',
+  'uroloog',
+  'digestief oncoloog',
+  'respiratoir oncoloog',
+  'chirurg',
+  'radiotherapeut',
+];
 
 function generatePassword(length = 12): string {
   // Use only alphanumeric chars to avoid email HTML rendering issues
@@ -76,6 +87,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [canModify, setCanModify] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [dedicatedNurseId, setDedicatedNurseId] = useState('');
+  const [discipline, setDiscipline] = useState('');
   const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
@@ -110,6 +122,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setFirstName(user.first_name || '');
         setLastName(user.last_name || '');
         setUserFunction(user.function || '');
+        setDiscipline(user.discipline || '');
         setHospitalId(user.hospital_id || '');
         setRole(user.role);
         setPassword('');
@@ -124,6 +137,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setFirstName('');
         setLastName('');
         setUserFunction('');
+        setDiscipline('');
         setHospitalId(preselectedHospitalId || '');
         setPassword(generatePassword());
         setRole('viewer');
@@ -145,6 +159,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       setCanDelete(false);
       setCanModify(false);
     }
+    // Clear discipline when not arts
+    if (userFunction !== 'arts') {
+      setDiscipline('');
+    }
   }, [userFunction, mode]);
 
   const handleCopyPassword = () => {
@@ -155,6 +173,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const handleSubmit = () => {
     setAttempted(true);
     if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId) return;
+    if (userFunction === 'arts' && !discipline) return;
 
     if (mode === 'create') {
       if (!password.trim()) return;
@@ -164,6 +183,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         function: userFunction,
+        discipline: userFunction === 'arts' ? discipline : null,
         hospital_id: hospitalId,
         password: password.trim(),
         role,
@@ -183,6 +203,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.first_name = firstName.trim();
       changes.last_name = lastName.trim();
       changes.function = userFunction;
+      changes.discipline = userFunction === 'arts' ? discipline : null;
       changes.can_add_treatments = canAdd;
       changes.can_delete_treatments = canDelete;
       changes.can_modify_treatments = canModify;
@@ -253,6 +274,25 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
               <p className="text-xs text-destructive">{t('userDialog.functionRequired')}</p>
             )}
           </div>
+
+          {userFunction === 'arts' && (
+            <div className="space-y-2">
+              <Label>{t('userDialog.discipline', 'Discipline')} *</Label>
+              <Select value={discipline} onValueChange={setDiscipline}>
+                <SelectTrigger className={attempted && userFunction === 'arts' && !discipline ? 'border-destructive' : ''}>
+                  <SelectValue placeholder={t('userDialog.disciplinePlaceholder', 'Selecteer discipline...')} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {DISCIPLINE_OPTIONS.map((d) => (
+                    <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {attempted && userFunction === 'arts' && !discipline && (
+                <p className="text-xs text-destructive">{t('userDialog.disciplineRequired', 'Discipline is verplicht voor artsen')}</p>
+              )}
+            </div>
+          )}
 
           {userFunction === 'arts' && (
             <div className="space-y-2">
@@ -424,7 +464,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId || (mode === 'create' && !password.trim())}
+            disabled={isLoading || !email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId || (mode === 'create' && !password.trim()) || (userFunction === 'arts' && !discipline)}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             {mode === 'create' ? t('userDialog.create') : t('common.save')}
