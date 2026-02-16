@@ -128,11 +128,6 @@ const Index = () => {
         <div className="container">
           {mostUsedDrugs.length > 0 && (
             <div className="mb-10">
-              {profile && (
-                <p className="text-center text-2xl sm:text-3xl font-semibold text-foreground mb-4 capitalize">
-                  {[profile.first_name, profile.last_name].filter(Boolean).join(' ')}
-                </p>
-              )}
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-orange-400 fill-orange-400" />
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
