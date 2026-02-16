@@ -18,8 +18,9 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
-import { CalendarClock, Building2 } from 'lucide-react';
+import { CalendarClock, Building2, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { UsageDashboard } from '@/components/admin/UsageDashboard';
 
 export default function AdminPage() {
   const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
@@ -29,7 +30,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | null>(null);
   const navigate = useNavigate();
 
   const [hasAutoUpdate, setHasAutoUpdate] = useState(false);
@@ -188,6 +189,16 @@ export default function AdminPage() {
               {t('admin.hospitals')}
             </Button>
           )}
+          {isSuperAdmin && (
+            <Button
+              variant={activeSection === 'dashboard' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'dashboard' ? null : 'dashboard')}
+              className="gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {t('dashboard.title', 'Gebruiksoverzicht')}
+            </Button>
+          )}
 
           <div className="flex gap-3 ml-auto">
             <Button
@@ -251,6 +262,12 @@ export default function AdminPage() {
         {activeSection === 'schedule' && isSuperAdmin && (
           <div className="mb-8">
             <ScheduleAutoUpdate />
+          </div>
+        )}
+
+        {activeSection === 'dashboard' && isSuperAdmin && (
+          <div className="mb-8">
+            <UsageDashboard />
           </div>
         )}
 
