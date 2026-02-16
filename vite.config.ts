@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "images/logo-rzt.png"],
+      includeAssets: ["favicon.png", "pwa-icon-192.png", "pwa-icon-512.png", "images/logo-rzt.png"],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
       },
@@ -26,20 +26,27 @@ export default defineConfig(({ mode }) => ({
         name: "OncoInfo - Medicijnbibliotheek",
         short_name: "OncoInfo",
         description: "Compleet geneesmiddelenoverzicht voor oncologie",
-        theme_color: "#6b21a8",
+        theme_color: "#6b2d5b",
         background_color: "#f5f0f7",
         display: "standalone",
         start_url: "/",
+        orientation: "any",
         icons: [
           {
-            src: "/favicon.png",
+            src: "/pwa-icon-192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/favicon.png",
+            src: "/pwa-icon-512.png",
             sizes: "512x512",
             type: "image/png",
+          },
+          {
+            src: "/pwa-icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
         ],
       },
