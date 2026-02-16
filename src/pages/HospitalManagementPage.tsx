@@ -199,19 +199,31 @@ const DISCIPLINE_CATEGORIES: DisciplineCategory[] = [
     ],
   },
   {
-    key: 'digestive', label: 'Digestieve oncologie', description: 'Gastro-intestinale tumoren', icon: Utensils,
-    subDisciplines: [],
-    isPlaceholder: true,
+    key: 'digestive', label: 'Digestieve oncologie', description: 'Colorectaal, Maag, Slokdarm, Pancreas, Lever, Galweg', icon: Utensils,
+    subDisciplines: [
+      { key: 'Colorectaal carcinoom', label: 'Colorectaal carcinoom' },
+      { key: 'Maagcarcinoom', label: 'Maagcarcinoom' },
+      { key: 'Oesofaguscarcinoom', label: 'Oesofaguscarcinoom' },
+      { key: 'Pancreascarcinoom', label: 'Pancreascarcinoom' },
+      { key: 'Hepatocellulair carcinoom', label: 'Hepatocellulair carcinoom' },
+      { key: 'Galwegcarcinoom', label: 'Galwegcarcinoom' },
+    ],
   },
   {
-    key: 'skin', label: 'Huidtumoren', description: 'Dermatologische oncologie', icon: Sun,
-    subDisciplines: [],
-    isPlaceholder: true,
+    key: 'skin', label: 'Huidtumoren', description: 'Melanoom, Merkelcel, Cutaan SCC', icon: Sun,
+    subDisciplines: [
+      { key: 'Melanoom', label: 'Melanoom' },
+      { key: 'Merkelcelcarcinoom', label: 'Merkelcelcarcinoom' },
+      { key: 'Cutaan plaveiselcelcarcinoom', label: 'Cutaan plaveiselcelcarcinoom' },
+    ],
   },
   {
-    key: 'headneck', label: 'Hoofd & Halstumoren', description: 'Hoofd-halstumoren', icon: CircleUser,
-    subDisciplines: [],
-    isPlaceholder: true,
+    key: 'headneck', label: 'Hoofd & Halstumoren', description: 'HNSCC, Nasofarynx, Speekselklier', icon: CircleUser,
+    subDisciplines: [
+      { key: 'Hoofd-halscarcinoom', label: 'Hoofd-halscarcinoom' },
+      { key: 'Nasofarynxcarcinoom', label: 'Nasofarynxcarcinoom' },
+      { key: 'Speekselkliercarcinoom', label: 'Speekselkliercarcinoom' },
+    ],
   },
 ];
 
