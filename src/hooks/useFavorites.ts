@@ -21,31 +21,41 @@ export function useFavorites() {
 
   const addFavorite = useCallback(async (drugId: string) => {
     if (!user?.id) return;
-    const { error } = await supabase
+    // Optimistic update
+    setFavorites(prev => prev.includes(drugId) ? prev : [...prev, drugId]);
+    await supabase
       .from('user_favorites' as any)
-      .insert({ user_id: user.id, drug_id: drugId } as any);
-    if (!error) {
-      setFavorites(prev => [...prev, drugId]);
-    }
-  }, [user?.id]);
+      .upsert({ user_id: user.id, drug_id: drugId } as any, { onConflict: 'user_id,drug_id' });
+    // Re-sync from DB
+    await fetchFavorites();
+  }, [user?.id, fetchFavorites]);
 
   const removeFavorite = useCallback(async (drugId: string) => {
     if (!user?.id) return;
+    setFavorites(prev => prev.filter(id => id !== drugId));
     await supabase
       .from('user_favorites' as any)
       .delete()
       .eq('user_id', user.id)
       .eq('drug_id', drugId);
-    setFavorites(prev => prev.filter(id => id !== drugId));
-  }, [user?.id]);
+    await fetchFavorites();
+  }, [user?.id, fetchFavorites]);
 
   const toggleFavorite = useCallback(async (drugId: string) => {
-    if (favorites.includes(drugId)) {
+    // Always check current DB state to avoid stale toggling across devices
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_favorites' as any)
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('drug_id', drugId);
+    
+    if ((data as any[] || []).length > 0) {
       await removeFavorite(drugId);
     } else {
       await addFavorite(drugId);
     }
-  }, [favorites, addFavorite, removeFavorite]);
+  }, [user?.id, addFavorite, removeFavorite]);
 
   const isFavorite = useCallback((drugId: string) => {
     return favorites.includes(drugId);
