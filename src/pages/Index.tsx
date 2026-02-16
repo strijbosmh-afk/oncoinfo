@@ -97,7 +97,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <section className="py-12 md:py-16">
+      <section className="flex-1 flex items-center py-8 md:py-12">
         <div className="container">
           <h2 className="text-2xl font-bold text-center mb-10">
             {t('home.chooseSpecialty')}
