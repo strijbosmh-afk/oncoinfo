@@ -399,8 +399,21 @@ Deno.serve(async (req) => {
         monitoring: monitoringText,
       };
 
+      // Also translate premedicatie timing texts
+      const premTextsToTranslate: Record<string, string | null> = {};
+      if (premedicatie && premedicatie.length > 0) {
+        premedicatie.forEach((item: string, idx: number) => {
+          premTextsToTranslate[`prem_${idx}`] = item;
+        });
+      }
+
       console.log(`Translating content to ${language}...`);
-      const translated = await translateContent(textsToTranslate, language);
+      const [translated, translatedPrem] = await Promise.all([
+        translateContent(textsToTranslate, language),
+        Object.keys(premTextsToTranslate).length > 0 
+          ? translateContent(premTextsToTranslate, language) 
+          : Promise.resolve({} as Record<string, string | null>),
+      ]);
       
       introductionText = translated.introduction ?? introductionText;
       usageText = translated.usage ?? usageText;
@@ -412,6 +425,16 @@ Deno.serve(async (req) => {
       contraindicationsText = translated.contraindications ?? contraindicationsText;
       tipsText = translated.tips ?? tipsText;
       monitoringText = translated.monitoring ?? monitoringText;
+
+      // Apply translated premedicatie items
+      if (premedicatie && premedicatie.length > 0) {
+        for (let idx = 0; idx < premedicatie.length; idx++) {
+          if (translatedPrem[`prem_${idx}`]) {
+            premedicatie[idx] = translatedPrem[`prem_${idx}`];
+          }
+        }
+      }
+
       console.log('Translation complete');
     }
 
@@ -649,6 +672,8 @@ function generatePatientInfoHtml(
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${isCompact ? '8px' : '11px'}; color: #666; text-align: center; }
+    .page-container { position: relative; min-height: 273mm; padding-bottom: 24mm; }
+    .page-bottom { position: absolute; bottom: 0; left: 0; right: 0; }
     .page-break { page-break-before: always; break-before: page; padding-top: 12mm; }
     /* Timeline styles */
     .timeline { position: relative; margin: 20px 0; padding-left: 0; }
@@ -679,6 +704,7 @@ function generatePatientInfoHtml(
     </div>
   </div>
 
+  <div class="page-container">
   <div class="content">
     ${introductionText ? `
     <div class="section">
@@ -762,7 +788,7 @@ function generatePatientInfoHtml(
       ${formatAsList(monitoringText)}
     </div>
     ` : ''}
-  </div>
+  </div> <!-- end content grid -->
 
   <div class="contact-section full-width">
     <h2>${labels.contact}</h2>
@@ -773,14 +799,16 @@ function generatePatientInfoHtml(
     </div>
   </div>
 
-  <div style="margin-top: ${isCompact ? '6px' : '12px'}; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-    <p style="font-weight: 700; color: #cc0000; font-size: ${isCompact ? '7px' : '9px'}; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-    <p style="font-size: ${isCompact ? '6.5px' : '8px'}; color: #444; line-height: 1.3;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not be used as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+  <div class="page-bottom">
+    <div style="padding: ${isCompact ? '5px 8px' : '10px 12px'}; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+      <p style="font-weight: 700; color: #cc0000; font-size: ${isCompact ? '7px' : '9px'}; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+      <p style="font-size: ${isCompact ? '6.5px' : '8px'}; color: #444; line-height: 1.3;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen verwendet werden. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not be used as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+    </div>
+    <div class="footer">
+      <p>${labels.footer}</p>
+    </div>
   </div>
-
-  <div class="footer">
-    <p>${labels.footer}</p>
-  </div>
+  </div> <!-- end page-container -->
 
   ${premedicatiePageHtml}
 

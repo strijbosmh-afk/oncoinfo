@@ -1026,25 +1026,15 @@ export default function DrugDetailPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
-                      <div className="space-y-1.5 sm:space-y-3">
+                    <div className="space-y-1.5 sm:space-y-3">
                         <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
-                        {(isMultiLang || isDACH) ? (
-                          <div className="flex gap-1.5 sm:gap-2">
-                            {isMultiLang && (
-                              <>
-                                <Button type="button" variant={selectedLanguage === 'nl' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('nl')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">NL</Button>
-                                <Button type="button" variant={selectedLanguage === 'fr' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('fr')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">FR</Button>
-                              </>
-                            )}
-                            {isDACH && (
-                              <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground pt-1">
-                            {defaultFolderLang === 'fr' ? 'Français' : defaultFolderLang === 'de' ? 'Deutsch' : defaultFolderLang === 'en' ? 'English' : 'Nederlands'}
-                          </p>
-                        )}
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <Button type="button" variant={selectedLanguage === 'nl' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('nl')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">NL</Button>
+                          <Button type="button" variant={selectedLanguage === 'fr' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('fr')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">FR</Button>
+                          {isDACH && (
+                            <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-3">
@@ -1140,7 +1130,7 @@ export default function DrugDetailPage() {
       <Dialog open={showAddPremedicatie} onOpenChange={setShowAddPremedicatie}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Premedicatie toevoegen</DialogTitle>
+            <DialogTitle>Ondersteunende medicatie toevoegen</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
