@@ -140,7 +140,8 @@ export default function DrugDetailPage() {
   // Staff selection state
   const [isStaffDialogOpen, setIsStaffDialogOpen] = useState(false);
   const loggedInFullName = profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : '';
-  const [selectedPhysician, setSelectedPhysician] = useState<string>(loggedInFullName);
+  const isLoggedInNurse = profile?.function === 'verpleegkundige' || profile?.function === 'apotheker';
+  const [selectedPhysician, setSelectedPhysician] = useState<string>('');
   const [nurseSelection, setNurseSelection] = useState<string>('');
   const [customNurse, setCustomNurse] = useState('');
   const [isNurseCustom, setIsNurseCustom] = useState(false);
@@ -192,12 +193,45 @@ export default function DrugDetailPage() {
     }
   };
 
-  // Default physician to logged-in user when profile loads
+  // Default physician/nurse based on logged-in user's function
   useEffect(() => {
-    if (!selectedPhysician && profile?.first_name && profile?.last_name) {
-      setSelectedPhysician(`${profile.first_name} ${profile.last_name}`);
+    if (!profile?.first_name || !profile?.last_name) return;
+    const fullName = `${profile.first_name} ${profile.last_name}`;
+
+    if (isLoggedInNurse) {
+      // Nurse/pharmacist logged in: set them as nurse, leave physician for selection
+      if (!nurseSelection && !isNurseCustom) {
+        // Check if the nurse is in the hospitalNurses list
+        const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === fullName.toLowerCase());
+        if (matchingNurse) {
+          setNurseSelection(matchingNurse.name);
+        } else {
+          setIsNurseCustom(true);
+          setCustomNurse(fullName);
+        }
+      }
+      // If nurse has a dedicated doctor, pre-select that doctor
+      if (!selectedPhysician && profile.dedicated_nurse_id) {
+        // Find the dedicated doctor's name from profiles data
+        const fetchDedicatedDoctor = async () => {
+          const { data } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', profile.dedicated_nurse_id!)
+            .maybeSingle();
+          if (data?.first_name && data?.last_name) {
+            setSelectedPhysician(`${data.first_name} ${data.last_name}`);
+          }
+        };
+        fetchDedicatedDoctor();
+      }
+    } else {
+      // Doctor/other: set them as physician (existing behavior)
+      if (!selectedPhysician) {
+        setSelectedPhysician(fullName);
+      }
     }
-  }, [profile]);
+  }, [profile, hospitalNurses]);
   const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: string = 'nl', phoneNumber?: string) => {
     if (!drug) return;
     
