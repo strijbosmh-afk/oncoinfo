@@ -944,6 +944,35 @@ export type Database = {
           },
         ]
       }
+      user_favorites: {
+        Row: {
+          created_at: string
+          drug_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          drug_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          drug_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_most_used: {
         Row: {
           created_at: string
