@@ -944,6 +944,38 @@ export type Database = {
           },
         ]
       }
+      user_most_used: {
+        Row: {
+          created_at: string
+          display_order: number
+          drug_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          drug_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          drug_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_most_used_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           can_add_treatments: boolean
