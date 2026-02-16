@@ -9,6 +9,7 @@ export interface ManagedUser {
   first_name: string | null;
   last_name: string | null;
   function: string | null;
+  discipline: string | null;
   hospital_id: string | null;
   hospital_name: string | null;
   hospital_color: string | null;
