@@ -674,6 +674,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          dedicated_nurse_id: string | null
           email: string | null
           first_name: string | null
           function: string | null
@@ -688,6 +689,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dedicated_nurse_id?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null
@@ -702,6 +704,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dedicated_nurse_id?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null
@@ -715,6 +718,13 @@ export type Database = {
           username?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_dedicated_nurse_id_fkey"
+            columns: ["dedicated_nurse_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_hospital_id_fkey"
             columns: ["hospital_id"]

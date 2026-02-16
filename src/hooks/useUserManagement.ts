@@ -19,6 +19,8 @@ export interface ManagedUser {
   can_add_treatments: boolean;
   can_delete_treatments: boolean;
   can_modify_treatments: boolean;
+  dedicated_nurse_id: string | null;
+  dedicated_nurse_name: string | null;
 }
 
 async function callManageUsers(action: string, params: Record<string, unknown> = {}) {
