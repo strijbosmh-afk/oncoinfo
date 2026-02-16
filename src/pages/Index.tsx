@@ -129,7 +129,7 @@ const Index = () => {
           {mostUsedDrugs.length > 0 && (
             <div className="mb-10">
               {profile && (
-                <p className="text-center text-lg font-medium text-foreground mb-4 capitalize">
+                <p className="text-center text-2xl sm:text-3xl font-semibold text-foreground mb-4 capitalize">
                   {[profile.first_name, profile.last_name].filter(Boolean).join(' ')}
                 </p>
               )}
