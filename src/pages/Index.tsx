@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap } from 'lucide-react';
@@ -30,6 +31,7 @@ const Index = () => {
   const { data: searchResults } = useDrugs(searchQuery.length >= 2 ? { search: searchQuery } : undefined);
   const { t } = useTranslation();
   const { hospital } = useHospital();
+  const { profile } = useAuth();
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   const { mostUsed } = useMostUsed();
   const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
@@ -126,6 +128,11 @@ const Index = () => {
         <div className="container">
           {mostUsedDrugs.length > 0 && (
             <div className="mb-10">
+              {profile && (
+                <p className="text-center text-lg font-medium text-foreground mb-4 capitalize">
+                  {[profile.first_name, profile.last_name].filter(Boolean).join(' ')}
+                </p>
+              )}
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Zap className="h-5 w-5 text-orange-400 fill-orange-400" />
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
