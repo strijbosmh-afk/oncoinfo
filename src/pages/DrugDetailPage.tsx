@@ -1006,7 +1006,7 @@ export default function DrugDetailPage() {
 
         {/* Patient Folder Dialog – settings + live preview */}
         <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[95vh] sm:max-h-[90vh] flex flex-col w-[98vw] sm:w-[95vw] lg:w-full p-0">
+          <DialogContent className="max-w-7xl max-h-[98vh] sm:max-h-[95vh] flex flex-col w-[99vw] sm:w-[97vw] lg:w-[95vw] xl:w-full p-0">
             <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-5 pb-0">
               <DialogTitle className="flex items-center gap-2 text-sm sm:text-base">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -1016,7 +1016,7 @@ export default function DrugDetailPage() {
 
             <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
               {/* Left: settings */}
-              <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="lg:w-[380px] shrink-0 border-b lg:border-b-0 lg:border-r">
+              <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen} className="lg:w-[420px] shrink-0 border-b lg:border-b-0 lg:border-r">
                 <div className="flex items-center justify-between p-3 sm:p-4 lg:hidden">
                   <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="gap-2 text-xs font-medium w-full justify-between h-8">
@@ -1033,7 +1033,7 @@ export default function DrugDetailPage() {
                 </div>
 
                 <CollapsibleContent className="lg:!block">
-                  <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[60vh] lg:max-h-[calc(90vh-80px)]">
+                  <div className="p-3 pt-0 sm:p-6 sm:pt-0 lg:pt-6 overflow-y-auto space-y-3 sm:space-y-4 max-h-[60vh] lg:max-h-[calc(95vh-80px)]">
                     <div className="space-y-2 sm:space-y-3">
                       <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
                       {(() => {
