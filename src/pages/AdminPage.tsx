@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DRUG_CLASSES } from '@/types/drug';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { AuditLog } from '@/components/admin/AuditLog';
@@ -21,10 +22,11 @@ import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
 import { CalendarClock, Building2, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UsageDashboard } from '@/components/admin/UsageDashboard';
+import { toast } from 'sonner';
 
 export default function AdminPage() {
   const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
-  const { data: drugs, isLoading: drugsLoading } = useDrugs({});
+  const { data: drugs, isLoading: drugsLoading, refetch: refetchDrugs } = useDrugs({});
   const { t } = useTranslation();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +34,9 @@ export default function AdminPage() {
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | null>(null);
   const navigate = useNavigate();
+
+  const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [hasAutoUpdate, setHasAutoUpdate] = useState(false);
   const [hasScheduledUpdates, setHasScheduledUpdates] = useState(false);
@@ -67,6 +72,28 @@ export default function AdminPage() {
       return matchesSearch && matchesClass;
     });
   }, [drugs, searchQuery, filterClass]);
+
+  const handleDeleteDrug = useCallback(async () => {
+    if (!drugToDelete) return;
+    setIsDeleting(true);
+    try {
+      await supabase.from('patient_folder_content').delete().eq('drug_id', drugToDelete.id);
+      await supabase.from('hospital_drug_visibility').delete().eq('drug_id', drugToDelete.id);
+      await supabase.from('user_favorites').delete().eq('drug_id', drugToDelete.id);
+      await supabase.from('user_most_used').delete().eq('drug_id', drugToDelete.id);
+      await supabase.from('user_drug_order').delete().eq('drug_id', drugToDelete.id);
+
+      const { error } = await supabase.from('drugs').delete().eq('id', drugToDelete.id);
+      if (error) throw error;
+      toast.success(`"${drugToDelete.name}" is verwijderd`);
+      await refetchDrugs();
+    } catch (err: any) {
+      toast.error(t('common.error') + ': ' + (err.message || 'Onbekende fout'));
+    } finally {
+      setIsDeleting(false);
+      setDrugToDelete(null);
+    }
+  }, [drugToDelete, refetchDrugs, t]);
 
   if (loading) {
     return (
@@ -153,7 +180,6 @@ export default function AdminPage() {
 
         {/* Navigation — grouped by function */}
         <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
-          {/* Primary management actions */}
           <div className="flex flex-wrap gap-2 flex-1">
             {isAdmin && (
               <Button 
@@ -195,10 +221,8 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* Separator on desktop */}
           <div className="hidden sm:block w-px h-8 bg-border self-center" />
 
-          {/* Content & automation tools */}
           <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline"
@@ -278,7 +302,6 @@ export default function AdminPage() {
           </div>
         )}
 
-
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
             <TabsTrigger value="overview">{t('admin.overview')}</TabsTrigger>
@@ -336,7 +359,7 @@ export default function AdminPage() {
                   <div className="grid gap-2">
                     <p className="text-sm text-muted-foreground">{t('drugs.found', { count: filteredDrugs.length })}</p>
                     {filteredDrugs.slice(0, 50).map(drug => (
-                      <div key={drug.id} className="drug-row flex justify-between items-center p-3 border rounded-lg cursor-default">
+                      <div key={drug.id} className="drug-row flex justify-between items-center p-3 border rounded-lg cursor-default group/row hover:border-destructive/30 transition-colors">
                         <div className="flex items-center gap-3">
                           {drug.drug_class === 'Combinatietherapie' ? (
                             <Layers className="h-4 w-4 text-amber-600" />
@@ -348,9 +371,20 @@ export default function AdminPage() {
                             <p className="text-xs text-muted-foreground">{drug.drug_class}</p>
                           </div>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {drug.disease_areas?.join(', ')}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            {drug.disease_areas?.join(', ')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDrugToDelete({ id: drug.id, name: drug.generic_name })}
+                            title={t('common.delete')}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     {filteredDrugs.length > 50 && (
@@ -363,9 +397,9 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
         </Tabs>
 
+        {/* Add Therapy Dialog */}
         <Dialog open={regimenDialogOpen} onOpenChange={setRegimenDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -374,6 +408,31 @@ export default function AdminPage() {
             <RegimenSearch />
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!drugToDelete} onOpenChange={(open) => !open && setDrugToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Geneesmiddel verwijderen</AlertDialogTitle>
+              <AlertDialogDescription>
+                Weet u zeker dat u <strong>"{drugToDelete?.name}"</strong> permanent wilt verwijderen? 
+                Dit verwijdert ook alle bijbehorende patiëntenfolders, zichtbaarheidsinstellingen en gebruikersvoorkeuren. 
+                Deze actie kan niet ongedaan worden gemaakt.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteDrug}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                {t('common.delete')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );
