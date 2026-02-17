@@ -166,6 +166,7 @@ export type Database = {
           generic_name: string
           hospital_id: string | null
           id: string
+          is_archived: boolean
           is_on_zvz: boolean | null
           mechanism_of_action: string | null
           monitoring_requirements: string[] | null
@@ -194,6 +195,7 @@ export type Database = {
           generic_name: string
           hospital_id?: string | null
           id?: string
+          is_archived?: boolean
           is_on_zvz?: boolean | null
           mechanism_of_action?: string | null
           monitoring_requirements?: string[] | null
@@ -222,6 +224,7 @@ export type Database = {
           generic_name?: string
           hospital_id?: string | null
           id?: string
+          is_archived?: boolean
           is_on_zvz?: boolean | null
           mechanism_of_action?: string | null
           monitoring_requirements?: string[] | null
