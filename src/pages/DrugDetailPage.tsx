@@ -418,6 +418,10 @@ export default function DrugDetailPage() {
       
       await new Promise(resolve => setTimeout(resolve, 600));
 
+      // Hide HTML disclaimers before capture — jsPDF overlay is the single source
+      const htmlDisclaimers = Array.from(iframeDoc.querySelectorAll('.disclaimer-box')) as HTMLElement[];
+      htmlDisclaimers.forEach(el => { el.style.display = 'none'; });
+
       // Find separate pages: .page-container (main) and .page-break (premedicatie)
       const pageContainer = iframeDoc.querySelector('.page-container') as HTMLElement;
       const pageBreaks = Array.from(iframeDoc.querySelectorAll('.page-break')) as HTMLElement[];
@@ -425,11 +429,9 @@ export default function DrugDetailPage() {
       const pagesToRender: HTMLElement[] = [];
       if (pageContainer) {
         // Temporarily remove overflow:hidden for full capture
-        const origStyle = pageContainer.style.cssText;
         pageContainer.style.maxHeight = 'none';
         pageContainer.style.overflow = 'visible';
         pagesToRender.push(pageContainer);
-        // We'll restore after capture
       }
       pagesToRender.push(...pageBreaks);
 
