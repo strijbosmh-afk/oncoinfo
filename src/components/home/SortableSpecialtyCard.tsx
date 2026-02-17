@@ -1,3 +1,4 @@
+import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Link } from 'react-router-dom';
@@ -28,6 +29,14 @@ export function SortableSpecialtyCard({
   const {
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id, disabled: !isReordering });
+  const wasDraggingRef = React.useRef(false);
+
+  // Track when a drag operation occurred to prevent Link navigation on drop
+  React.useEffect(() => {
+    if (isDragging) {
+      wasDraggingRef.current = true;
+    }
+  }, [isDragging]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -62,9 +71,17 @@ export function SortableSpecialtyCard({
   }
 
   // When reordering is enabled (logged in), card is draggable but also navigable
+  const handleLinkClick = (e: React.MouseEvent) => {
+    if (wasDraggingRef.current) {
+      e.preventDefault();
+      // Reset after a short delay to allow normal clicks again
+      setTimeout(() => { wasDraggingRef.current = false; }, 100);
+    }
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
-      <Link to={href}>
+      <Link to={href} onClick={handleLinkClick}>
         <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           {isReordering && (
