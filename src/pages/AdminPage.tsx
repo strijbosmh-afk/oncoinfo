@@ -108,42 +108,42 @@ export default function AdminPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+          <Card className="stat-card bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{t('admin.totalDrugs')}</p>
                   <p className="text-3xl font-bold">{totalDrugs}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center stat-icon">
                   <Pill className="h-6 w-6 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
+          <Card className="stat-card bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{t('admin.combinationRegimens')}</p>
                   <p className="text-3xl font-bold">{combinationDrugs}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center stat-icon">
                   <Layers className="h-6 w-6 text-amber-500" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+          <Card className="stat-card bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{t('admin.individualDrugs')}</p>
                   <p className="text-3xl font-bold">{individualDrugs}</p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center stat-icon">
                   <FileText className="h-6 w-6 text-blue-500" />
                 </div>
               </div>
@@ -336,7 +336,7 @@ export default function AdminPage() {
                   <div className="grid gap-2">
                     <p className="text-sm text-muted-foreground">{t('drugs.found', { count: filteredDrugs.length })}</p>
                     {filteredDrugs.slice(0, 50).map(drug => (
-                      <div key={drug.id} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div key={drug.id} className="drug-row flex justify-between items-center p-3 border rounded-lg cursor-default">
                         <div className="flex items-center gap-3">
                           {drug.drug_class === 'Combinatietherapie' ? (
                             <Layers className="h-4 w-4 text-amber-600" />

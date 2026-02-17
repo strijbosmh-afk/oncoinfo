@@ -122,4 +122,57 @@
   .shadow-medical {
     box-shadow: 0 4px 20px -4px hsl(var(--primary) / 0.15);
   }
+
+  /* Micro-interaction: cards lift on hover */
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-hover:hover {
+    @apply -translate-y-0.5 shadow-lg;
+  }
+
+  /* Micro-interaction: icon buttons pulse subtly on hover */
+  .icon-interact [data-slot="icon"],
+  .icon-interact svg {
+    @apply transition-transform duration-200 ease-out;
+  }
+  .icon-interact:hover [data-slot="icon"],
+  .icon-interact:hover svg {
+    @apply scale-110;
+  }
+
+  /* Micro-interaction: stat cards */
+  .stat-card {
+    @apply transition-all duration-300 ease-out;
+  }
+  .stat-card:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+  .stat-card:hover .stat-icon {
+    @apply scale-110;
+  }
+  .stat-icon {
+    @apply transition-transform duration-300 ease-out;
+  }
+
+  /* Micro-interaction: search results */
+  .search-result {
+    @apply transition-all duration-150 ease-out;
+  }
+  .search-result:hover {
+    @apply bg-muted/70 pl-5;
+  }
+
+  /* Micro-interaction: drug list items */
+  .drug-row {
+    @apply transition-all duration-150 ease-out;
+  }
+  .drug-row:hover {
+    @apply bg-muted/30 -translate-x-px shadow-sm;
+  }
+
+  /* Micro-interaction: tabs */
+  [role="tab"] {
+    @apply transition-all duration-200 ease-out;
+  }
 }
