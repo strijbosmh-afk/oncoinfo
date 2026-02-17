@@ -294,7 +294,9 @@ export function UserManagement() {
                     <p className="text-xs text-muted-foreground truncate">
                       {user.username && <span className="font-medium">{user.username}</span>}
                       {user.username && ' · '}{user.email}
-                      {' · '}<span className="text-muted-foreground/70">Laatste login: {formatDate(user.last_sign_in_at)}</span>
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/70 truncate">
+                      Laatste login: {formatDate(user.last_sign_in_at)}
                     </p>
                     {/* Show hospital & function inline on smaller screens */}
                     <p className="lg:hidden text-xs text-muted-foreground truncate mt-0.5">
