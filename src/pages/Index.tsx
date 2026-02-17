@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
@@ -46,7 +46,9 @@ const LIBRARY_CONFIG: Record<string, { icon: any; color: string; bgColor: string
 const Index = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
   const { data: searchResults } = useDrugs(searchQuery.length >= 2 ? { search: searchQuery } : undefined);
+  const searchRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const { hospital } = useHospital();
   const { user, profile } = useAuth();
@@ -91,6 +93,17 @@ const Index = () => {
     };
     fetch();
   }, [hospital?.id]);
+
+  // Close search results on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const disabledCategories = useMemo(() => {
     if (!disciplines || disciplines.length === 0) return new Set<string>();
@@ -139,6 +152,7 @@ const Index = () => {
   const handleResultClick = (drugId: string) => {
     navigate(`/drugs/${drugId}`);
     setSearchQuery('');
+    setShowResults(false);
   };
 
   const handleDisabledCategoryClick = (e: React.MouseEvent) => {
@@ -178,7 +192,7 @@ const Index = () => {
           )}
 
           {/* Search — prominently placed for quick drug lookup */}
-          <div className="max-w-2xl mx-auto mb-10">
+          <div className="max-w-2xl mx-auto mb-10" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -186,12 +200,13 @@ const Index = () => {
                   type="text"
                   placeholder={t('home.searchPlaceholder')}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
+                  onFocus={() => setShowResults(true)}
                   className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 focus:border-primary"
                 />
               </div>
               
-              {searchQuery.length >= 2 && searchResults && searchResults.length > 0 && (
+              {showResults && searchQuery.length >= 2 && searchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto">
                   {searchResults.slice(0, 8).map((drug) => (
                     <button
@@ -224,7 +239,7 @@ const Index = () => {
                 </div>
               )}
               
-              {searchQuery.length >= 2 && searchResults && searchResults.length === 0 && (
+              {showResults && searchQuery.length >= 2 && searchResults && searchResults.length === 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 p-4 text-center text-muted-foreground">
                   {t('drugs.noResultsFor')} "{searchQuery}"
                 </div>
