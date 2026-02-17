@@ -418,9 +418,18 @@ export default function DrugDetailPage() {
       
       await new Promise(resolve => setTimeout(resolve, 600));
 
-      // Hide HTML disclaimers before capture — jsPDF overlay is the single source
-      const htmlDisclaimers = Array.from(iframeDoc.querySelectorAll('.disclaimer-box')) as HTMLElement[];
-      htmlDisclaimers.forEach(el => { el.style.display = 'none'; });
+      // Hide ALL HTML disclaimers before capture — jsPDF overlay is the single source
+      // Match both .disclaimer-box class and inline-styled disclaimer divs (red border)
+      const allElements = Array.from(iframeDoc.querySelectorAll('div')) as HTMLElement[];
+      allElements.forEach(el => {
+        const hasDisclaimerClass = el.classList.contains('disclaimer-box');
+        const hasRedBorder = el.style.border?.includes('#cc0000') || el.style.borderColor?.includes('#cc0000');
+        const textContent = el.textContent || '';
+        const isDisclaimerByContent = (textContent.includes('MDR 2017/745') || textContent.includes('Belangrijke mededeling') || textContent.includes('Important notice') || textContent.includes('Avis important') || textContent.includes('Wichtiger Hinweis')) && el.children.length <= 2 && textContent.length < 500;
+        if (hasDisclaimerClass || hasRedBorder || isDisclaimerByContent) {
+          el.style.display = 'none';
+        }
+      });
 
       // Find separate pages: .page-container (main) and .page-break (premedicatie)
       const pageContainer = iframeDoc.querySelector('.page-container') as HTMLElement;
