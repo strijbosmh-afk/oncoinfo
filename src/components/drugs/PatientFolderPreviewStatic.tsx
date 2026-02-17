@@ -426,8 +426,8 @@ export function generateStaticPreviewHtml(
   </div>
 
   <div class="disclaimer-box" style="margin-top: 10px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${isFr ? 'Avis important' : 'Belangrijke mededeling'}</p>
-    <p style="font-size: 8px; color: #444; line-height: 1.4;">${isFr ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+    <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
   </div>
 
   <div class="footer"><p>${labels.footer}</p></div>
@@ -465,8 +465,8 @@ export function generateStaticPreviewHtml(
       </div>
     </div>
     <div style="margin-top: 30px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-      <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${isFr ? 'Avis important' : 'Belangrijke mededeling'}</p>
-      <p style="font-size: 8px; color: #444; line-height: 1.4;">${isFr ? 'Ce document est uniquement destiné à des fins informatives.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745).'}</p>
+      <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+      <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
     </div>
     <div class="footer"><p>${labels.footer}</p></div>
   </div>
