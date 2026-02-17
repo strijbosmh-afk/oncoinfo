@@ -131,13 +131,7 @@ const Index = () => {
     }).filter(Boolean) as Array<{ key: string; title: string; description: string; icon: any; href: string; color: string; bgColor: string }>;
   }, [specialtyOrder, t]);
 
-  const justDraggedRef = useRef(false);
-
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    justDraggedRef.current = true;
-    // Block Link clicks for a short window after drop
-    setTimeout(() => { justDraggedRef.current = false; }, 300);
-
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = specialtyOrder.indexOf(active.id as string);
@@ -258,7 +252,6 @@ const Index = () => {
             {t('home.chooseSpecialty')}
           </h2>
 
-          <div onClickCapture={(e) => { if (justDraggedRef.current) { e.preventDefault(); e.stopPropagation(); } }}>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
@@ -280,7 +273,6 @@ const Index = () => {
               </div>
             </SortableContext>
           </DndContext>
-          </div>
         </div>
       </section>
 
