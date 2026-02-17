@@ -21,7 +21,6 @@ import {
   SortableContext, rectSortingStrategy,
 } from '@dnd-kit/sortable';
 
-// Map each category to the discipline disease_area keys it requires
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],
   urology: ['Prostaatkanker', 'Blaaskanker', 'Niercelcarcinoom', 'Testiskanker', 'Peniskanker'],
@@ -61,7 +60,6 @@ const Index = () => {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   );
 
-  // Fetch drug details for most-used items
   useEffect(() => {
     if (mostUsed.length === 0) {
       setMostUsedDrugs([]);
@@ -82,7 +80,6 @@ const Index = () => {
     fetchDrugs();
   }, [mostUsed]);
 
-  // Fetch hospital disciplines
   useEffect(() => {
     if (!hospital?.id) return;
     const fetch = async () => {
@@ -152,13 +149,14 @@ const Index = () => {
 
   return (
     <Layout>
-      <section className="flex-1 flex items-center py-8 md:py-12">
+      <section className="flex-1 flex items-center py-6 md:py-10">
         <div className="container">
+          {/* Quick access: most used drugs — at the very top for power users */}
           {mostUsedDrugs.length > 0 && (
-            <div className="mb-10">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Zap className="h-5 w-5 text-orange-400 fill-orange-400" />
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Zap className="h-4 w-4 text-orange-400 fill-orange-400" />
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {t('home.mostUsed', 'Meest gebruikt')}
                 </h3>
               </div>
@@ -168,9 +166,9 @@ const Index = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-1.5 text-xs font-medium border-orange-200 !text-foreground hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                      className="h-8 gap-1.5 text-xs font-medium border-orange-200 !text-foreground hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
                     >
-                      <Zap className="h-3.5 w-3.5 text-orange-400 fill-orange-400 shrink-0" />
+                      <Zap className="h-3 w-3 text-orange-400 fill-orange-400 shrink-0" />
                       {drug.generic_name}
                     </Button>
                   </Link>
@@ -179,37 +177,8 @@ const Index = () => {
             </div>
           )}
 
-          <h2 className="text-2xl font-bold text-center mb-10">
-            {t('home.chooseSpecialty')}
-          </h2>
-
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-                {sortedLibraries.map((library) => (
-                  <SortableSpecialtyCard
-                    key={library.key}
-                    id={library.key}
-                    title={library.title}
-                    description={library.description}
-                    icon={library.icon}
-                    href={library.href}
-                    color={library.color}
-                    bgColor={library.bgColor}
-                    isDisabled={disabledCategories.has(library.key)}
-                    isReordering={!!user}
-                    onDisabledClick={handleDisabledCategoryClick}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-
-          <h2 className="text-2xl font-bold text-center mt-12 mb-6">
-            {t('home.orChooseDrug')}
-          </h2>
-
-          <div className="max-w-2xl mx-auto">
+          {/* Search — prominently placed for quick drug lookup */}
+          <div className="max-w-2xl mx-auto mb-10">
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -262,6 +231,33 @@ const Index = () => {
               )}
             </form>
           </div>
+
+          {/* Specialty cards — browse by category */}
+          <h2 className="text-xl font-bold text-center mb-6">
+            {t('home.chooseSpecialty')}
+          </h2>
+
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+                {sortedLibraries.map((library) => (
+                  <SortableSpecialtyCard
+                    key={library.key}
+                    id={library.key}
+                    title={library.title}
+                    description={library.description}
+                    icon={library.icon}
+                    href={library.href}
+                    color={library.color}
+                    bgColor={library.bgColor}
+                    isDisabled={disabledCategories.has(library.key)}
+                    isReordering={!!user}
+                    onDisabledClick={handleDisabledCategoryClick}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </section>
 

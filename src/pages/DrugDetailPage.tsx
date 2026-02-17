@@ -546,17 +546,82 @@ export default function DrugDetailPage() {
             </Button>
           </Link>
 
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2 min-w-0">
-              <Pill className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
-              <h1 className="text-xl sm:text-3xl font-bold truncate">{drug.generic_name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                <Pill className="h-6 w-6 sm:h-8 sm:w-8 text-primary shrink-0" />
+                <h1 className="text-xl sm:text-3xl font-bold truncate">{drug.generic_name}</h1>
+              </div>
+              {drug.brand_names.length > 0 && (
+                <p className="text-sm sm:text-lg text-muted-foreground mb-2">
+                  {drug.brand_names.join(', ')}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <Badge variant="default" className="text-xs">{drug.drug_class}</Badge>
+                {drug.administration_route && (
+                  <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
+                )}
+                {drug.is_on_zvz ? (
+                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                    ✓ RIZIV
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
+                    ✗ Niet RIZIV
+                  </Badge>
+                )}
+                {isSuperAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={async () => {
+                      const newValue = !drug.is_on_zvz;
+                      const { error } = await supabase
+                        .from('drugs')
+                        .update({ is_on_zvz: newValue } as any)
+                        .eq('id', drug.id);
+                      if (!error) {
+                        queryClient.invalidateQueries({ queryKey: ['drug', drug.id] });
+                        queryClient.invalidateQueries({ queryKey: ['drugs'] });
+                      }
+                    }}
+                  >
+                    {drug.is_on_zvz ? 'RIZIV uitschakelen' : 'RIZIV inschakelen'}
+                  </Button>
+                )}
+                {drug.unit_price !== null && drug.unit_price !== undefined && (
+                  <Badge variant="outline" className="font-mono text-xs">
+                    €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
+                  </Badge>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1">
+
+            {/* Action buttons — vertically stacked on right for easy access */}
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleFavorite(drug.id)}
+                className="h-9 w-9 sm:h-10 sm:w-10"
+                aria-label={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
+                title={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
+              >
+                <Star
+                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
+                    isFavorite(drug.id)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-muted-foreground hover:text-yellow-400'
+                  }`}
+                />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => toggleMostUsed(drug.id)}
-                className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
+                className="h-9 w-9 sm:h-10 sm:w-10"
                 aria-label={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Toevoegen aan meest gebruikt'}
                 title={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Meest gebruikt'}
               >
@@ -568,67 +633,7 @@ export default function DrugDetailPage() {
                   }`}
                 />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => toggleFavorite(drug.id)}
-                className="shrink-0 h-8 w-8 sm:h-10 sm:w-10"
-                aria-label={isFavorite(drug.id) ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
-              >
-                <Star
-                  className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
-                    isFavorite(drug.id)
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-muted-foreground hover:text-yellow-400'
-                  }`}
-                />
-              </Button>
             </div>
-          </div>
-          {drug.brand_names.length > 0 && (
-            <p className="text-sm sm:text-lg text-muted-foreground">
-              {drug.brand_names.join(', ')}
-            </p>
-          )}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
-            <Badge variant="default" className="text-xs">{drug.drug_class}</Badge>
-            {drug.administration_route && (
-              <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
-            )}
-            {drug.is_on_zvz ? (
-              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                ✓ RIZIV
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
-                ✗ Niet RIZIV
-              </Badge>
-            )}
-            {isSuperAdmin && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={async () => {
-                  const newValue = !drug.is_on_zvz;
-                  const { error } = await supabase
-                    .from('drugs')
-                    .update({ is_on_zvz: newValue } as any)
-                    .eq('id', drug.id);
-                  if (!error) {
-                    queryClient.invalidateQueries({ queryKey: ['drug', drug.id] });
-                    queryClient.invalidateQueries({ queryKey: ['drugs'] });
-                  }
-                }}
-              >
-                {drug.is_on_zvz ? 'RIZIV uitschakelen' : 'RIZIV inschakelen'}
-              </Button>
-            )}
-            {drug.unit_price !== null && drug.unit_price !== undefined && (
-              <Badge variant="outline" className="font-mono text-xs">
-                €{drug.unit_price.toFixed(2)}{drug.price_unit ? `/${drug.price_unit}` : ''}
-              </Badge>
-            )}
           </div>
         </div>
 

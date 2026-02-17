@@ -151,94 +151,100 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Quick Action Buttons - Row 1 */}
-        <div className="flex flex-wrap gap-3 mb-3">
-          {isAdmin && (
-            <Button 
-              variant={activeSection === 'users' ? 'default' : 'outline'}
-              onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
-              className="gap-2"
-            >
-              <Users className="h-4 w-4" />
-              {t('admin.userManagement')}
-            </Button>
-          )}
-          {isSuperAdmin && (
-            <Button
-              variant="outline"
-              onClick={() => navigate('/admin/hospitals')}
-              className="gap-2"
-            >
-              <Building2 className="h-4 w-4" />
-              {t('admin.hospitals')}
-            </Button>
-          )}
-          <Button 
-            variant={activeSection === 'audit' ? 'default' : 'outline'}
-            onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
-            className="gap-2"
-          >
-            <ClipboardList className="h-4 w-4" />
-            {t('admin.activityLog')}
-          </Button>
-          {isSuperAdmin && (
-            <Button
-              variant={activeSection === 'dashboard' ? 'default' : 'outline'}
-              onClick={() => setActiveSection(activeSection === 'dashboard' ? null : 'dashboard')}
-              className="gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              {t('dashboard.title', 'Gebruiksoverzicht')}
-            </Button>
-          )}
-        </div>
-
-        {/* Quick Action Buttons - Row 2: Add therapy, Auto-update & Schedule */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          <Button 
-            variant="outline"
-            onClick={() => setRegimenDialogOpen(true)} 
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t('admin.addTherapy')}
-          </Button>
-          <Button
-            variant={activeSection === 'auto-update' ? 'default' : 'outline'}
-            onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
-            className="gap-2"
-            disabled={!hasAutoUpdate}
-            title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
-          >
-            <Sparkles className="h-4 w-4" />
-            {t('admin.autoUpdate')}
-            {!hasAutoUpdate ? (
-              <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                {t('admin.notActive')}
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                {t('admin.beta')}
-              </Badge>
+        {/* Navigation — grouped by function */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
+          {/* Primary management actions */}
+          <div className="flex flex-wrap gap-2 flex-1">
+            {isAdmin && (
+              <Button 
+                variant={activeSection === 'users' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
+                className="gap-2"
+              >
+                <Users className="h-4 w-4" />
+                {t('admin.userManagement')}
+              </Button>
             )}
-          </Button>
-          {isSuperAdmin && (
-            <Button
-              variant={activeSection === 'schedule' ? 'default' : 'outline'}
-              onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
+            {isSuperAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/admin/hospitals')}
+                className="gap-2"
+              >
+                <Building2 className="h-4 w-4" />
+                {t('admin.hospitals')}
+              </Button>
+            )}
+            <Button 
+              variant={activeSection === 'audit' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
               className="gap-2"
-              disabled={!hasScheduledUpdates}
-              title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
             >
-              <CalendarClock className="h-4 w-4" />
-              {t('admin.scheduledUpdates')}
-              {!hasScheduledUpdates && (
+              <ClipboardList className="h-4 w-4" />
+              {t('admin.activityLog')}
+            </Button>
+            {isSuperAdmin && (
+              <Button
+                variant={activeSection === 'dashboard' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'dashboard' ? null : 'dashboard')}
+                className="gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                {t('dashboard.title', 'Gebruiksoverzicht')}
+              </Button>
+            )}
+          </div>
+
+          {/* Separator on desktop */}
+          <div className="hidden sm:block w-px h-8 bg-border self-center" />
+
+          {/* Content & automation tools */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setRegimenDialogOpen(true)} 
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              {t('admin.addTherapy')}
+            </Button>
+            <Button
+              variant={activeSection === 'auto-update' ? 'default' : 'outline'}
+              onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
+              className="gap-2"
+              disabled={!hasAutoUpdate}
+              title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t('admin.autoUpdate')}
+              {!hasAutoUpdate ? (
                 <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
                   {t('admin.notActive')}
                 </Badge>
+              ) : (
+                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+                  {t('admin.beta')}
+                </Badge>
               )}
             </Button>
-          )}
+            {isSuperAdmin && (
+              <Button
+                variant={activeSection === 'schedule' ? 'default' : 'outline'}
+                onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
+                className="gap-2"
+                disabled={!hasScheduledUpdates}
+                title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
+              >
+                <CalendarClock className="h-4 w-4" />
+                {t('admin.scheduledUpdates')}
+                {!hasScheduledUpdates && (
+                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
+                    {t('admin.notActive')}
+                  </Badge>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Active Section */}
