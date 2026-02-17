@@ -427,12 +427,12 @@ export default function DrugDetailPage() {
       
       // Disclaimer text for every page footer
       const disclaimerText = selectedLanguage === 'fr'
-        ? '⚠ Ce document est uniquement informatif et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin.'
+        ? '⚠ Avis important — Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs. Consultez toujours votre médecin ou pharmacien.'
         : selectedLanguage === 'de'
-        ? '⚠ Dieses Dokument dient nur zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt.'
+        ? '⚠ Wichtiger Hinweis — Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten. Konsultieren Sie immer Ihren Arzt oder Apotheker.'
         : selectedLanguage === 'en'
-        ? '⚠ This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician.'
-        : '⚠ Dit document is uitsluitend informatief en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw arts.';
+        ? '⚠ Important notice — This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors. Always consult your physician or pharmacist.'
+        : '⚠ Belangrijke mededeling — Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten. Raadpleeg altijd uw behandelend arts of apotheker.';
 
       // Reserve space at bottom of each page for disclaimer
       const disclaimerBoxHeight = 12;
