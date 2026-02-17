@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, LogIn } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const languageFlags: { code: string; label: string; flag: string }[] = [
@@ -51,7 +51,6 @@ export default function LoginPage() {
       .then(({ data }: { data: any }) => {
         if (data) {
           setHospitals(data as Hospital[]);
-          // Restore last used hospital from localStorage, or auto-select if only one
           const lastHospitalId = localStorage.getItem('last-hospital-id');
           if (lastHospitalId && data.some(h => h.id === lastHospitalId)) {
             setHospitalId(lastHospitalId);
@@ -89,11 +88,7 @@ export default function LoginPage() {
         });
       }
 
-      // Persist last used hospital for next login
       localStorage.setItem('last-hospital-id', hospitalId);
-
-      // Language is auto-set by HospitalContext based on hospital's default_language
-
       navigate('/home');
     } catch {
       toast({
@@ -106,11 +101,39 @@ export default function LoginPage() {
     }
   };
 
+  const isFormComplete = username.trim() && password.trim() && hospitalId;
+
   return (
     <Layout>
-      <div className="container flex items-center justify-center py-16 min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+      <div className="container flex items-center justify-center py-12 sm:py-16 min-h-[calc(100vh-200px)]">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center pb-4">
+            {/* Language selector at top — always accessible */}
+            <div className="flex items-center justify-center gap-1 mb-4">
+              <TooltipProvider delayDuration={200}>
+                {languageFlags.map((lang) => (
+                  <Tooltip key={lang.code}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => { i18n.changeLanguage(lang.code); localStorage.setItem('user-chose-language', 'true'); }}
+                        className={`text-xl px-1.5 py-1 rounded-md transition-all ${
+                          i18n.language === lang.code
+                            ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
+                            : 'opacity-50 hover:opacity-80 hover:bg-muted'
+                        }`}
+                        aria-label={lang.label}
+                      >
+                        {lang.flag}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      {lang.label}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </TooltipProvider>
+            </div>
             <CardTitle className="text-2xl">{t('auth.welcome')}</CardTitle>
             <CardDescription>
               {t('auth.loginDescription')}
@@ -118,10 +141,11 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignIn} className="space-y-4">
+              {/* Hospital selector — first, most important choice */}
               <div className="space-y-2">
                 <Label htmlFor="hospital">{t('auth.hospital')}</Label>
                 <Select value={hospitalId} onValueChange={setHospitalId}>
-                  <SelectTrigger id="hospital">
+                  <SelectTrigger id="hospital" className="h-11">
                     <SelectValue placeholder={t('auth.selectHospital')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -133,63 +157,53 @@ export default function LoginPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="username">{t('auth.username')}</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder={t('auth.usernamePlaceholder')}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  autoComplete="username"
-                />
+
+              {/* Credentials — grouped visually */}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="username">{t('auth.username')}</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder={t('auth.usernamePlaceholder')}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    autoComplete="username"
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t('auth.password')}</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="h-11"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading || !hospitalId}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+
+              {/* Primary CTA — prominent, full width */}
+              <Button 
+                type="submit" 
+                className="w-full h-11 text-base gap-2" 
+                disabled={isLoading || !isFormComplete}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <LogIn className="h-4 w-4" />
+                )}
                 {t('auth.login')}
               </Button>
-
-              <div className="flex items-center justify-center gap-1 pt-1">
-                <TooltipProvider delayDuration={200}>
-                  {languageFlags.map((lang) => (
-                    <Tooltip key={lang.code}>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={() => { i18n.changeLanguage(lang.code); localStorage.setItem('user-chose-language', 'true'); }}
-                          className={`text-xl px-1.5 py-1 rounded-md transition-all ${
-                            i18n.language === lang.code
-                              ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
-                              : 'opacity-50 hover:opacity-80 hover:bg-muted'
-                          }`}
-                          aria-label={lang.label}
-                        >
-                          {lang.flag}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" className="text-xs">
-                        {lang.label}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </TooltipProvider>
-              </div>
             </form>
 
-            {/* Disclaimer on login page */}
+            {/* Disclaimer — bottom, less prominent */}
             <div className="mt-6 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />

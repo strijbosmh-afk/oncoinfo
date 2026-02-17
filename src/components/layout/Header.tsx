@@ -133,16 +133,22 @@ export function Header() {
         {/* Right: nav */}
         <nav className="flex items-center gap-1 sm:gap-2 shrink-0">
           {user && (
-            <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link to="/handleiding">{t('nav.manual')}</Link>
-            </Button>
-          )}
-          {user && (
-            <Button variant="ghost" size="icon" asChild className="sm:hidden h-8 w-8">
-              <Link to="/handleiding" aria-label={t('nav.manual')}>
-                <BookOpen className="h-4 w-4" />
-              </Link>
-            </Button>
+            <>
+              <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex gap-1.5">
+                <Link to="/handleiding">
+                  <BookOpen className="h-4 w-4" />
+                  {t('nav.manual')}
+                </Link>
+              </Button>
+              {(isAdmin || isApotheker) && (
+                <Button variant="outline" size="sm" asChild className="hidden md:inline-flex gap-1.5">
+                  <Link to="/admin">
+                    <Shield className="h-4 w-4" />
+                    {t('nav.admin')}
+                  </Link>
+                </Button>
+              )}
+            </>
           )}
           
           {loading ? (
