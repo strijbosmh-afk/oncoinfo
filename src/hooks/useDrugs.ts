@@ -35,7 +35,7 @@ export function useDrugs(filters?: DrugFilters) {
   return useQuery({
     queryKey: ['drugs', filters],
     queryFn: async () => {
-      let query = supabase.from('drugs').select('*');
+      let query = supabase.from('drugs').select('*').eq('is_archived', false);
 
       if (filters?.drug_class?.length) {
         // Include Combinatietherapie when Chemotherapie is selected

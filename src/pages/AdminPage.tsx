@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2 } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,7 +36,12 @@ export default function AdminPage() {
   const navigate = useNavigate();
 
   const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [drugToArchive, setDrugToArchive] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedDrugs, setArchivedDrugs] = useState<any[]>([]);
+  const [archivedLoading, setArchivedLoading] = useState(false);
 
   const [hasAutoUpdate, setHasAutoUpdate] = useState(false);
   const [hasScheduledUpdates, setHasScheduledUpdates] = useState(false);
@@ -85,8 +90,9 @@ export default function AdminPage() {
 
       const { error } = await supabase.from('drugs').delete().eq('id', drugToDelete.id);
       if (error) throw error;
-      toast.success(`"${drugToDelete.name}" is verwijderd`);
+      toast.success(`"${drugToDelete.name}" is permanent verwijderd`);
       await refetchDrugs();
+      fetchArchivedDrugs();
     } catch (err: any) {
       toast.error(t('common.error') + ': ' + (err.message || 'Onbekende fout'));
     } finally {
@@ -94,6 +100,46 @@ export default function AdminPage() {
       setDrugToDelete(null);
     }
   }, [drugToDelete, refetchDrugs, t]);
+
+  const handleArchiveDrug = useCallback(async () => {
+    if (!drugToArchive) return;
+    setIsArchiving(true);
+    try {
+      const { error } = await supabase.from('drugs').update({ is_archived: true } as any).eq('id', drugToArchive.id);
+      if (error) throw error;
+      toast.success(`"${drugToArchive.name}" is gearchiveerd`);
+      await refetchDrugs();
+      fetchArchivedDrugs();
+    } catch (err: any) {
+      toast.error(t('common.error') + ': ' + (err.message || 'Onbekende fout'));
+    } finally {
+      setIsArchiving(false);
+      setDrugToArchive(null);
+    }
+  }, [drugToArchive, refetchDrugs, t]);
+
+  const handleRestoreDrug = useCallback(async (drugId: string, drugName: string) => {
+    try {
+      const { error } = await supabase.from('drugs').update({ is_archived: false } as any).eq('id', drugId);
+      if (error) throw error;
+      toast.success(`"${drugName}" is hersteld`);
+      await refetchDrugs();
+      fetchArchivedDrugs();
+    } catch (err: any) {
+      toast.error(t('common.error') + ': ' + (err.message || 'Onbekende fout'));
+    }
+  }, [refetchDrugs, t]);
+
+  const fetchArchivedDrugs = useCallback(async () => {
+    setArchivedLoading(true);
+    const { data } = await supabase.from('drugs').select('id, generic_name, drug_class, disease_areas, updated_at').eq('is_archived', true).order('updated_at', { ascending: false });
+    setArchivedDrugs(data || []);
+    setArchivedLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (showArchived) fetchArchivedDrugs();
+  }, [showArchived, fetchArchivedDrugs]);
 
   if (loading) {
     return (
@@ -306,6 +352,10 @@ export default function AdminPage() {
           <TabsList className="flex-wrap">
             <TabsTrigger value="overview">{t('admin.overview')}</TabsTrigger>
             <TabsTrigger value="drugs">{t('admin.drugsTab')} ({totalDrugs})</TabsTrigger>
+            <TabsTrigger value="archived" onClick={() => setShowArchived(true)} className="gap-1.5">
+              <Archive className="h-3.5 w-3.5" />
+              Archief
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
@@ -378,11 +428,11 @@ export default function AdminPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setDrugToDelete({ id: drug.id, name: drug.generic_name })}
-                            title={t('common.delete')}
+                            className="h-8 w-8 opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+                            onClick={() => setDrugToArchive({ id: drug.id, name: drug.generic_name })}
+                            title="Archiveren"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Archive className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -392,6 +442,68 @@ export default function AdminPage() {
                         {t('drugs.andMore', { count: filteredDrugs.length - 50 })}
                       </p>
                     )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="archived" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Archive className="h-5 w-5" />
+                  Gearchiveerde geneesmiddelen
+                </CardTitle>
+                <CardDescription>
+                  Gearchiveerde geneesmiddelen zijn niet zichtbaar voor gebruikers. U kunt ze herstellen of permanent verwijderen.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {archivedLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : archivedDrugs.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Geen gearchiveerde geneesmiddelen</p>
+                ) : (
+                  <div className="grid gap-2">
+                    <p className="text-sm text-muted-foreground">{archivedDrugs.length} gearchiveerd</p>
+                    {archivedDrugs.map(drug => (
+                      <div key={drug.id} className="flex justify-between items-center p-3 border rounded-lg border-dashed border-muted-foreground/30 group/row hover:border-primary/40 transition-colors">
+                        <div className="flex items-center gap-3">
+                          {drug.drug_class === 'Combinatietherapie' ? (
+                            <Layers className="h-4 w-4 text-amber-600/50" />
+                          ) : (
+                            <Pill className="h-4 w-4 text-primary/50" />
+                          )}
+                          <div>
+                            <p className="font-medium text-muted-foreground">{drug.generic_name}</p>
+                            <p className="text-xs text-muted-foreground/70">{drug.drug_class} · {drug.disease_areas?.join(', ')}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-primary hover:text-primary"
+                            onClick={() => handleRestoreDrug(drug.id, drug.generic_name)}
+                          >
+                            <ArchiveRestore className="h-4 w-4" />
+                            Herstellen
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDrugToDelete({ id: drug.id, name: drug.generic_name })}
+                            title="Permanent verwijderen"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -409,14 +521,38 @@ export default function AdminPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Archive Confirmation Dialog */}
+        <AlertDialog open={!!drugToArchive} onOpenChange={(open) => !open && setDrugToArchive(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Geneesmiddel archiveren</AlertDialogTitle>
+              <AlertDialogDescription>
+                Weet u zeker dat u <strong>"{drugToArchive?.name}"</strong> wilt archiveren?
+                Het geneesmiddel wordt niet meer getoond aan gebruikers, maar kan op elk moment worden hersteld.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isArchiving}>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleArchiveDrug}
+                disabled={isArchiving}
+                className="bg-amber-600 text-white hover:bg-amber-700"
+              >
+                {isArchiving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Archive className="h-4 w-4 mr-2" />}
+                Archiveren
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Permanent Delete Confirmation Dialog */}
         <AlertDialog open={!!drugToDelete} onOpenChange={(open) => !open && setDrugToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Geneesmiddel verwijderen</AlertDialogTitle>
+              <AlertDialogTitle>Permanent verwijderen</AlertDialogTitle>
               <AlertDialogDescription>
-                Weet u zeker dat u <strong>"{drugToDelete?.name}"</strong> permanent wilt verwijderen? 
-                Dit verwijdert ook alle bijbehorende patiëntenfolders, zichtbaarheidsinstellingen en gebruikersvoorkeuren. 
+                Weet u zeker dat u <strong>"{drugToDelete?.name}"</strong> permanent wilt verwijderen?
+                Dit verwijdert ook alle bijbehorende patiëntenfolders, zichtbaarheidsinstellingen en gebruikersvoorkeuren.
                 Deze actie kan niet ongedaan worden gemaakt.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -428,7 +564,7 @@ export default function AdminPage() {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                {t('common.delete')}
+                Permanent verwijderen
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
