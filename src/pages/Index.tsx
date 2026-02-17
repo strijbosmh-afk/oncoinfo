@@ -198,7 +198,7 @@ const Index = () => {
                       key={drug.id}
                       type="button"
                       onClick={() => handleResultClick(drug.id)}
-                      className="w-full px-4 py-3 text-left hover:bg-muted/50 flex items-center justify-between border-b last:border-b-0"
+                      className="search-result w-full px-4 py-3 text-left flex items-center justify-between border-b last:border-b-0"
                     >
                       <div>
                         <p className="font-medium">{drug.generic_name}</p>
