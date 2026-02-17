@@ -52,6 +52,28 @@ async function isSuperAdmin(supabase: ReturnType<typeof createClient>, userId: s
   return !!data;
 }
 
+/**
+ * Verify that the target user belongs to the caller's hospital.
+ * Super admins are exempt. Throws 403 if isolation is violated.
+ */
+async function enforceHospitalIsolation(
+  supabase: ReturnType<typeof createClient>,
+  callerId: string,
+  targetUserId: string
+): Promise<void> {
+  if (await isSuperAdmin(supabase, callerId)) return;
+
+  const callerHospitalId = await getAdminHospitalId(supabase, callerId);
+  if (!callerHospitalId) {
+    throw { message: 'Uw account is niet aan een ziekenhuis gekoppeld', status: 403 };
+  }
+
+  const targetHospitalId = await getAdminHospitalId(supabase, targetUserId);
+  if (targetHospitalId !== callerHospitalId) {
+    throw { message: 'U heeft geen toegang tot gebruikers van een ander ziekenhuis', status: 403 };
+  }
+}
+
 async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'RZ Tienen', primaryColor = '#6b2d5b') {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) {
@@ -272,7 +294,13 @@ Deno.serve(async (req) => {
         if (discipline !== undefined) profileData.discipline = discipline;
         // Assign hospital: use provided hospital_id, or caller's hospital
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
-        profileData.hospital_id = hospital_id || callerHospitalId;
+        const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
+        // Non-super-admins can only create users in their own hospital
+        const targetHospitalId = hospital_id || callerHospitalId;
+        if (!callerIsSuper && targetHospitalId !== callerHospitalId) {
+          return jsonResponse({ error: 'U kunt alleen gebruikers aanmaken in uw eigen ziekenhuis' }, 403);
+        }
+        profileData.hospital_id = targetHospitalId;
         if (dedicated_nurse_id) profileData.dedicated_nurse_id = dedicated_nurse_id;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
@@ -353,6 +381,9 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
         }
 
+        // Enforce hospital isolation
+        await enforceHospitalIsolation(supabase, adminUser.id, user_id);
+
         // Block modifications to super_admin accounts by non-super-admins
         const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
         const targetIsSuper = await isSuperAdmin(supabase, user_id);
@@ -384,7 +415,13 @@ Deno.serve(async (req) => {
         if (last_name !== undefined) profileUpdate.last_name = last_name;
         if (userFunction !== undefined) profileUpdate.function = userFunction;
         if (discipline !== undefined) profileUpdate.discipline = discipline || null;
-        if (hospital_id !== undefined) profileUpdate.hospital_id = hospital_id;
+        if (hospital_id !== undefined) {
+          // Non-super-admins cannot move users to another hospital
+          if (!callerIsSuper && hospital_id !== await getAdminHospitalId(supabase, adminUser.id)) {
+            return jsonResponse({ error: 'U kunt gebruikers niet verplaatsen naar een ander ziekenhuis' }, 403);
+          }
+          profileUpdate.hospital_id = hospital_id;
+        }
         if (dedicated_nurse_id !== undefined) profileUpdate.dedicated_nurse_id = dedicated_nurse_id || null;
 
         if (Object.keys(profileUpdate).length > 0) {
@@ -430,6 +467,9 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'U kunt uw eigen account niet verwijderen' }, 400);
         }
 
+        // Enforce hospital isolation
+        await enforceHospitalIsolation(supabase, adminUser.id, user_id);
+
         // Block deletion of super_admin account
         if (await isSuperAdmin(supabase, user_id)) {
           return jsonResponse({ error: 'Het super admin account kan niet worden verwijderd' }, 403);
@@ -451,6 +491,11 @@ Deno.serve(async (req) => {
 
         if (!email || !password || !login_url) {
           return jsonResponse({ error: 'email, password en login_url zijn verplicht' }, 400);
+        }
+
+        // Enforce hospital isolation
+        if (user_id) {
+          await enforceHospitalIsolation(supabase, adminUser.id, user_id);
         }
 
         // Also update the password so it matches what we send
@@ -495,6 +540,9 @@ Deno.serve(async (req) => {
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
         }
+
+        // Enforce hospital isolation
+        await enforceHospitalIsolation(supabase, adminUser.id, user_id);
 
         // Block reset of super_admin by non-super-admin
         const callerIsSuper2 = await isSuperAdmin(supabase, adminUser.id);
