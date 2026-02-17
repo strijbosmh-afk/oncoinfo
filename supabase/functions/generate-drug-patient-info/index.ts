@@ -642,9 +642,8 @@ function generatePatientInfoHtml(
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: ${isCompact ? '11px' : '14px'}; line-height: ${isCompact ? '1.35' : '1.5'}; color: #1a1a1a;
-      width: 210mm; margin: 0 auto; padding: ${isCompact ? '10mm' : '12mm'};
+      width: 210mm; margin: 0 auto; padding: 0;
       background: white;
-      ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''}
     }
     .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: ${isCompact ? '6px' : '12px'}; padding-bottom: ${isCompact ? '5px' : '10px'}; border-bottom: 2px solid ${hospitalColor}; }
     .logo-name { display: flex; align-items: center; gap: 10px; }
@@ -672,9 +671,9 @@ function generatePatientInfoHtml(
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${isCompact ? '8px' : '11px'}; color: #666; text-align: center; }
-    .page-container { position: relative; }
+    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''} }
     .page-bottom { margin-top: 8px; }
-    .page-break { page-break-before: always; break-before: page; padding-top: 12mm; }
+    .page-break { page-break-before: always; break-before: page; padding: 12mm; }
     /* Timeline styles */
     .timeline { position: relative; margin: 20px 0; padding-left: 0; }
     .timeline-line { position: absolute; left: 28px; top: 0; bottom: 0; width: 3px; background: ${hospitalColor}; border-radius: 2px; }
@@ -686,7 +685,8 @@ function generatePatientInfoHtml(
     .timeline-timing { font-size: 13px; color: #555; margin-top: 4px; }
     .timeline-timing strong { color: #333; }
     @media print {
-      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; ${isCompact ? 'max-height: none; overflow: visible;' : ''} }
+      body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page-container { max-height: none !important; overflow: visible !important; }
       .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
       .page-break { page-break-before: always; break-before: page; }
     }

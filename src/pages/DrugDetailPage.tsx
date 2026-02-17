@@ -376,55 +376,10 @@ export default function DrugDetailPage() {
         import('html2canvas')
       ]);
       
-      // Parse the full HTML to extract both styles and body content
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(previewHtml, 'text/html');
-      
-      if (!doc.body) {
-        throw new Error('Could not parse HTML content');
-      }
-      
-      // Create a container with an iframe to render the full HTML with styles
-      const tempIframe = document.createElement('iframe');
-      tempIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: auto; border: none;';
-      document.body.appendChild(tempIframe);
-      
-      const iframeDoc = tempIframe.contentDocument || tempIframe.contentWindow?.document;
-      if (!iframeDoc) throw new Error('Could not access iframe document');
-      
-      // Write the complete HTML (with styles) into the iframe
-      iframeDoc.open();
-      iframeDoc.write(previewHtml);
-      iframeDoc.close();
-      
-      // Wait for images to load
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const iframeBody = iframeDoc.body;
-      
-      // Convert the fully styled content to canvas
-      const canvas = await html2canvas(iframeBody, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: iframeBody.scrollWidth,
-        windowHeight: iframeBody.scrollHeight,
-      });
-      
-      // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       // Disclaimer text for every page footer
       const disclaimerText = selectedLanguage === 'fr'
         ? '⚠ Avis important — Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs. Consultez toujours votre médecin ou pharmacien.'
@@ -434,50 +389,101 @@ export default function DrugDetailPage() {
         ? '⚠ Important notice — This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors. Always consult your physician or pharmacist.'
         : '⚠ Belangrijke mededeling — Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten. Raadpleeg altijd uw behandelend arts of apotheker.';
 
-      // Reserve space at bottom of each page for disclaimer
       const disclaimerBoxHeight = 12;
-      const contentAreaHeight = pdfHeight - disclaimerBoxHeight;
 
       const addDisclaimerToPage = (pdfDoc: any) => {
         const boxY = pdfHeight - disclaimerBoxHeight;
-        // White background to cover any content behind it
         pdfDoc.setFillColor(255, 255, 255);
         pdfDoc.rect(0, boxY - 1, pdfWidth, disclaimerBoxHeight + 1, 'F');
-        // Red border
         pdfDoc.setDrawColor(204, 0, 0);
         pdfDoc.setLineWidth(0.3);
         pdfDoc.roundedRect(8, boxY, pdfWidth - 16, disclaimerBoxHeight - 2, 1, 1, 'S');
-        // Red text
         pdfDoc.setFontSize(6.5);
         pdfDoc.setTextColor(180, 0, 0);
         pdfDoc.text(disclaimerText, pdfWidth / 2, boxY + (disclaimerBoxHeight - 2) / 2 + 1, { align: 'center', maxWidth: pdfWidth - 22 });
         pdfDoc.setTextColor(0, 0, 0);
       };
 
-      if (imgHeight <= contentAreaHeight) {
-        // Content fits on one page
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-        addDisclaimerToPage(pdf);
-      } else {
-        // Multi-page: slice image, each page uses contentAreaHeight
-        let heightLeft = imgHeight;
-        let position = 0;
-        
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        addDisclaimerToPage(pdf);
-        heightLeft -= contentAreaHeight;
-        
-        while (heightLeft > 5) {
-          position -= contentAreaHeight;
+      // Create iframe to render HTML
+      const tempIframe = document.createElement('iframe');
+      tempIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: auto; border: none;';
+      document.body.appendChild(tempIframe);
+      
+      const iframeDoc = tempIframe.contentDocument || tempIframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error('Could not access iframe document');
+      
+      iframeDoc.open();
+      iframeDoc.write(previewHtml);
+      iframeDoc.close();
+      
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Find separate pages: .page-container (main) and .page-break (premedicatie)
+      const pageContainer = iframeDoc.querySelector('.page-container') as HTMLElement;
+      const pageBreaks = Array.from(iframeDoc.querySelectorAll('.page-break')) as HTMLElement[];
+      
+      const pagesToRender: HTMLElement[] = [];
+      if (pageContainer) {
+        // Temporarily remove overflow:hidden for full capture
+        const origStyle = pageContainer.style.cssText;
+        pageContainer.style.maxHeight = 'none';
+        pageContainer.style.overflow = 'visible';
+        pagesToRender.push(pageContainer);
+        // We'll restore after capture
+      }
+      pagesToRender.push(...pageBreaks);
+
+      // If no structured pages found, fall back to body
+      if (pagesToRender.length === 0) {
+        pagesToRender.push(iframeDoc.body);
+      }
+
+      const contentAreaHeight = pdfHeight - disclaimerBoxHeight;
+      let isFirstPdfPage = true;
+
+      for (const pageEl of pagesToRender) {
+        const canvas = await html2canvas(pageEl, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          windowWidth: pageEl.scrollWidth || 794,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        if (!isFirstPdfPage) {
           pdf.addPage();
+        }
+
+        if (imgHeight <= contentAreaHeight) {
+          // Fits on one page
+          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+          addDisclaimerToPage(pdf);
+        } else {
+          // Multi-page slice for this section
+          let heightLeft = imgHeight;
+          let position = 0;
+          
           pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
           addDisclaimerToPage(pdf);
           heightLeft -= contentAreaHeight;
+          
+          while (heightLeft > 5) {
+            position -= contentAreaHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            addDisclaimerToPage(pdf);
+            heightLeft -= contentAreaHeight;
+          }
         }
+
+        isFirstPdfPage = false;
       }
       
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
-      
       document.body.removeChild(tempIframe);
 
       // Log folder print to audit_log
