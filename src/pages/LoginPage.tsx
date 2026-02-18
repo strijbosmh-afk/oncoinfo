@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,19 +19,9 @@ const languageFlags: { code: string; label: string; flag: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
 ];
 
-interface Hospital {
-  id: string;
-  name: string;
-  slug: string;
-  logo_url: string | null;
-  default_language: string | null;
-}
-
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [hospitalId, setHospitalId] = useState('563a8e73-cdd5-44e3-8ec9-8893808c6a5d');
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,49 +33,16 @@ export default function LoginPage() {
         navigate('/home', { replace: true });
       }
     });
-
-    const fetchHospitals = async (retries = 3) => {
-      for (let i = 0; i < retries; i++) {
-        try {
-          const { data, error } = await (supabase
-            .from('hospitals_public' as any)
-            .select('id, name, slug, logo_url, default_language')
-            .order('name') as any);
-
-          if (error) {
-            console.warn(`Hospital fetch attempt ${i + 1} failed:`, error.message);
-            if (i < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); continue; }
-            break;
-          }
-
-          if (data) {
-            setHospitals(data as Hospital[]);
-            const lastHospitalId = localStorage.getItem('last-hospital-id');
-            if (lastHospitalId && data.some((h: Hospital) => h.id === lastHospitalId)) {
-              setHospitalId(lastHospitalId);
-            } else if (data.length === 1) {
-              setHospitalId(data[0].id);
-            }
-          }
-          return; // success
-        } catch (err) {
-          console.warn(`Hospital fetch attempt ${i + 1} network error:`, err);
-          if (i < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); }
-        }
-      }
-    };
-
-    fetchHospitals();
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim() || !hospitalId) return;
+    if (!username.trim() || !password.trim()) return;
 
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('login-with-username', {
-        body: { username: username.trim(), password, hospital_id: hospitalId },
+        body: { username: username.trim(), password },
       });
 
       if (error || data?.error) {
@@ -105,7 +62,6 @@ export default function LoginPage() {
         });
       }
 
-      localStorage.setItem('last-hospital-id', hospitalId);
       navigate('/home');
     } catch {
       toast({
@@ -118,7 +74,7 @@ export default function LoginPage() {
     }
   };
 
-  const isFormComplete = username.trim() && password.trim() && hospitalId;
+  const isFormComplete = username.trim() && password.trim();
 
   return (
     <Layout>
@@ -158,24 +114,6 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignIn} className="space-y-4">
-              {/* Hospital selector — first, most important choice */}
-              <div className="space-y-2">
-                <Label htmlFor="hospital">{t('auth.hospital')}</Label>
-                <Select value={hospitalId} onValueChange={setHospitalId}>
-                  <SelectTrigger id="hospital" className="h-11">
-                    <SelectValue placeholder={t('auth.selectHospital')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hospitals.map((h) => (
-                      <SelectItem key={h.id} value={h.id}>
-                        {h.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Credentials — grouped visually */}
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label htmlFor="username">{t('auth.username')}</Label>
