@@ -10,12 +10,7 @@ interface ProtectedRouteProps {
   requireAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, requireAdmin: _requireAdmin = false }: ProtectedRouteProps) {
-  // TODO: TIJDELIJK UITGESCHAKELD — Login bypass voor development
-  // Herstel de originele code hieronder om login weer te activeren.
-  return <>{children}</>;
-
-  /* ORIGINELE CODE — BEWAARD VOOR HERSTEL
+export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, loading, isAdmin, isApotheker, isSuperAdmin, profile } = useAuth();
   const { hospital, loading: hospitalLoading } = useHospital();
   const [passwordChanged, setPasswordChanged] = useState(false);
@@ -70,5 +65,4 @@ export function ProtectedRoute({ children, requireAdmin: _requireAdmin = false }
       {children}
     </>
   );
-  */
 }
