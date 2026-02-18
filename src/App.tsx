@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { HospitalProvider } from "@/contexts/HospitalContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -28,8 +28,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/login" element={<LoginPage />} />
+              {/* TIJDELIJK UITGESCHAKELD — login bypass */}
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route path="/login" element={<Navigate to="/home" replace />} />
               <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
               <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/drugs" element={<ProtectedRoute><DrugsPage /></ProtectedRoute>} />
