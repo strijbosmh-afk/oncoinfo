@@ -44,21 +44,38 @@ export default function LoginPage() {
       }
     });
 
-    supabase
-      .from('hospitals_public' as any)
-      .select('id, name, slug, logo_url, default_language')
-      .order('name')
-      .then(({ data }: { data: any }) => {
-        if (data) {
-          setHospitals(data as Hospital[]);
-          const lastHospitalId = localStorage.getItem('last-hospital-id');
-          if (lastHospitalId && data.some(h => h.id === lastHospitalId)) {
-            setHospitalId(lastHospitalId);
-          } else if (data.length === 1) {
-            setHospitalId(data[0].id);
+    const fetchHospitals = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const { data, error } = await (supabase
+            .from('hospitals_public' as any)
+            .select('id, name, slug, logo_url, default_language')
+            .order('name') as any);
+
+          if (error) {
+            console.warn(`Hospital fetch attempt ${i + 1} failed:`, error.message);
+            if (i < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); continue; }
+            break;
           }
+
+          if (data) {
+            setHospitals(data as Hospital[]);
+            const lastHospitalId = localStorage.getItem('last-hospital-id');
+            if (lastHospitalId && data.some((h: Hospital) => h.id === lastHospitalId)) {
+              setHospitalId(lastHospitalId);
+            } else if (data.length === 1) {
+              setHospitalId(data[0].id);
+            }
+          }
+          return; // success
+        } catch (err) {
+          console.warn(`Hospital fetch attempt ${i + 1} network error:`, err);
+          if (i < retries - 1) { await new Promise(r => setTimeout(r, 1000 * (i + 1))); }
         }
-      });
+      }
+    };
+
+    fetchHospitals();
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
