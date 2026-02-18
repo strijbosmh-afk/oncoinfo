@@ -28,9 +28,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* TIJDELIJK UITGESCHAKELD — login bypass */}
-              <Route path="/" element={<Navigate to="/home" replace />} />
-              <Route path="/login" element={<Navigate to="/home" replace />} />
+              <Route path="/" element={<LoginPage />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
               <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/drugs" element={<ProtectedRoute><DrugsPage /></ProtectedRoute>} />
