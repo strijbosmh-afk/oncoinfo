@@ -30,7 +30,7 @@ interface Hospital {
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [hospitalId, setHospitalId] = useState('');
+  const [hospitalId, setHospitalId] = useState('563a8e73-cdd5-44e3-8ec9-8893808c6a5d');
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
