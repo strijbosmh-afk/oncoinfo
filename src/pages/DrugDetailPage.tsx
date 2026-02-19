@@ -1163,12 +1163,6 @@ export default function DrugDetailPage() {
                           </Select>
                         );
                       })()}
-                      <Input
-                        placeholder="Telefoonnummer arts"
-                        value={physicianPhone}
-                        onChange={(e) => setPhysicianPhone(e.target.value)}
-                        className="h-7 sm:h-8 text-xs sm:text-sm"
-                      />
                     </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
