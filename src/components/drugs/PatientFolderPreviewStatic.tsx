@@ -461,7 +461,8 @@ export function generateStaticPreviewHtml(
   </div>
 
   ${premedicatieItems.length > 0 ? `
-  <div class="page-break">
+  <div class="page-break" style="display: flex; flex-direction: column; min-height: calc(297mm - 24mm);">
+    <div class="page-content">
     <div class="logo-header">
       <div class="logo-name">
         ${hospitalLogoUrl ? `<img src="${hospitalLogoUrl}" alt="${hospitalName}" />` : `<img src="/images/logo-rzt.png" alt="Logo" />`}
@@ -491,6 +492,7 @@ export function generateStaticPreviewHtml(
           </div>`;
         }).join('')}
       </div>
+    </div>
     </div>
 
     <div class="page-footer-block">
