@@ -51,6 +51,7 @@ interface HospitalDoctor {
   name: string;
   staff_type: string;
   specialization: string | null;
+  phone_number?: string | null;
 }
 
 interface PremedicatieItem {
@@ -118,7 +119,7 @@ export default function DrugDetailPage() {
       // Also fetch physicians from profiles (function = 'arts') as fallback/supplement
       const { data: profileDoctors } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, function')
+        .select('user_id, first_name, last_name, function, phone_number')
         .eq('hospital_id', hospital.id);
 
       if (profileDoctors) {
@@ -150,6 +151,7 @@ export default function DrugDetailPage() {
                 name: fullName,
                 staff_type: p.function || 'verpleegkundige',
                 specialization: null,
+                phone_number: p.phone_number,
               });
               nurseExistingNames.add(fullName.toLowerCase());
             }
@@ -232,14 +234,14 @@ export default function DrugDetailPage() {
         const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === fullName.toLowerCase());
         if (matchingNurse) {
           setNurseSelection(matchingNurse.name);
+          // Use the nurse's phone number from the list (which comes from profiles)
+          if (matchingNurse.phone_number) {
+            setCustomPhone(matchingNurse.phone_number);
+          }
         } else {
           setIsNurseCustom(true);
           setCustomNurse(fullName);
         }
-      }
-      // Pre-fill phone number from profile
-      if (!customPhone && profile.phone_number) {
-        setCustomPhone(profile.phone_number);
       }
       // If nurse has a dedicated doctor, pre-select that doctor
       if (!selectedPhysician && profile.dedicated_nurse_id) {
@@ -1100,6 +1102,11 @@ export default function DrugDetailPage() {
                           } else {
                             setIsNurseCustom(false);
                             setNurseSelection(val);
+                            // Auto-fill phone number from selected nurse
+                            const selectedNurse = hospitalNurses.find(n => n.name === val);
+                            if (selectedNurse?.phone_number) {
+                              setCustomPhone(selectedNurse.phone_number);
+                            }
                           }
                         }}
                         className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
