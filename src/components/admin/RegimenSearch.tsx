@@ -110,6 +110,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
     cycle_length_days: '',
     is_combination: false,
     is_on_zvz: false,
+    registration_trial: '',
     components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }] as {
       name: string; dose: string; route: string; interval: string; cycle_length: string;
     }[],
@@ -269,6 +270,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
         administration_route: editingDrug.administration_route || null,
         common_regimens: editingDrug.study_name ? [editingDrug.study_name.trim()] : [],
         is_on_zvz: editingDrug.is_on_zvz,
+        registration_trial: editingDrug.registration_trial || null,
         cycle_length_days: editingDrug.cycle_length_days ? parseInt(editingDrug.cycle_length_days) : null,
         dosing_info: Object.keys(dosingInfo).length > 0 ? dosingInfo : null,
       });
@@ -305,6 +307,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
         standard_dose: drug.standard_dose || prev.standard_dose,
         dosing_frequency: drug.dosing_frequency || prev.dosing_frequency,
         cycle_length_days: drug.cycle_length_days ? String(drug.cycle_length_days) : prev.cycle_length_days,
+        registration_trial: drug.registration_trial || prev.registration_trial,
       }));
       setQuickDrugName('');
       toast({ title: 'AI-verrijking voltooid', description: `Informatie voor "${drug.generic_name}" is ingevuld. Controleer en pas aan indien nodig.` });
@@ -328,6 +331,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
       cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
+      registration_trial: '',
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
@@ -347,6 +351,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
       cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
+      registration_trial: '',
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
@@ -866,6 +871,14 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
                     value={editingDrug.study_name}
                     onChange={(e) => setEditingDrug({ ...editingDrug, study_name: e.target.value })}
                     placeholder="Bijv. ARASENS, KEYNOTE-426"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Registratiestudie (Phase III)</Label>
+                  <Input
+                    value={editingDrug.registration_trial}
+                    onChange={(e) => setEditingDrug({ ...editingDrug, registration_trial: e.target.value })}
+                    placeholder="Bijv. KEYNOTE-048, CheckMate 214"
                   />
                 </div>
               </div>

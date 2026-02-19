@@ -37,7 +37,7 @@ Gebruik tool calling om je antwoord te structureren.`;
 
     const userPrompt = `Geef gedetailleerde oncologische informatie over het geneesmiddel: "${drug_name.trim()}"
 
-Denk aan: generieke naam, merknamen (vooral Belgische markt), medicijnklasse, werkingsmechanisme, ziektegebieden, toedieningsweg, standaarddosering, frequentie van toediening, cyclusduur in dagen, en goedgekeurde indicaties.`;
+Denk aan: generieke naam, merknamen (vooral Belgische markt), medicijnklasse, werkingsmechanisme, ziektegebieden, toedieningsweg, standaarddosering, frequentie van toediening, cyclusduur in dagen, goedgekeurde indicaties, en de registratiestudie (pivotal Phase III trial die tot goedkeuring leidde, bijv. KEYNOTE-048).`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -77,6 +77,7 @@ Denk aan: generieke naam, merknamen (vooral Belgische markt), medicijnklasse, we
                   items: { type: 'string' },
                   description: 'EMA-approved indications in Dutch',
                 },
+                registration_trial: { type: 'string', description: 'Name/acronym of the pivotal registration Phase III trial that led to approval, e.g. KEYNOTE-048, CheckMate 214. Leave empty if unknown.' },
               },
               required: ['generic_name'],
               additionalProperties: false,

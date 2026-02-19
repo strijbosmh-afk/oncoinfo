@@ -173,6 +173,7 @@ export type Database = {
           patient_counseling_points: string[] | null
           price_unit: string | null
           reference_links: string[] | null
+          registration_trial: string | null
           side_effects: Json | null
           unit_price: number | null
           updated_at: string
@@ -202,6 +203,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           price_unit?: string | null
           reference_links?: string[] | null
+          registration_trial?: string | null
           side_effects?: Json | null
           unit_price?: number | null
           updated_at?: string
@@ -231,6 +233,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           price_unit?: string | null
           reference_links?: string[] | null
+          registration_trial?: string | null
           side_effects?: Json | null
           unit_price?: number | null
           updated_at?: string
