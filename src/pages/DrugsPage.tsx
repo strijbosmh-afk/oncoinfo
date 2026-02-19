@@ -301,7 +301,7 @@ export default function DrugsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'individual'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arpi' | 'lhrh' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital } = useHospital();
@@ -574,17 +574,22 @@ export default function DrugsPage() {
   }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
 
   // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
-  const { combinationDrugs, hormonalDrugs, cdk46Drugs, individualDrugs } = useMemo(() => {
+  const { combinationDrugs, hormonalDrugs, cdk46Drugs, arpiDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
     const isBreast = category === 'breast';
+    const isUrology = category === 'urology';
     const hormonal = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie') : [];
     const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
+    const arpi = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARPI') : [];
+    const lhrh = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'LHRH agonist' || drug.drug_class === 'Hormoontherapie') : [];
     const excludedClasses = isBreast 
       ? ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i']
-      : ['Combinatietherapie'];
+      : isUrology
+        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie']
+        : ['Combinatietherapie'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
-    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, individualDrugs: individuals };
+    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, arpiDrugs: arpi, lhrhDrugs: lhrh, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder, category]);
 
   // Get display drug classes based on category
@@ -1040,6 +1045,32 @@ export default function DrugsPage() {
                   </Badge>
                 </Button>
               )}
+              {category === 'urology' && arpiDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'arpi' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('arpi')}
+                  className="gap-2"
+                >
+                  ARPI
+                  <Badge variant={viewMode === 'arpi' ? 'secondary' : 'outline'} className="ml-1">
+                    {arpiDrugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'urology' && lhrhDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'lhrh' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('lhrh')}
+                  className="gap-2"
+                >
+                  LHRH
+                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-1">
+                    {lhrhDrugs.length}
+                  </Badge>
+                </Button>
+              )}
               <Button
                 variant={viewMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
@@ -1249,6 +1280,8 @@ export default function DrugsPage() {
                   combinationDrugs={combinationDrugs}
                   hormonalDrugs={hormonalDrugs}
                   cdk46Drugs={cdk46Drugs}
+                  arpiDrugs={arpiDrugs}
+                  lhrhDrugs={lhrhDrugs}
                   individualDrugs={individualDrugs}
                   viewMode={viewMode}
                   isFavorite={isFavorite}
