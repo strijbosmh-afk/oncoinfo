@@ -350,7 +350,11 @@ export function UserManagement() {
                             <div className="hidden lg:flex w-[180px] justify-end flex-shrink-0">
                               {user.function ? (
                                 <div className="flex flex-col items-end gap-0.5">
-                                  <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
+                                  <Badge variant="outline" className={`text-xs capitalize whitespace-nowrap ${
+                                    user.function === 'arts' ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' :
+                                    user.function === 'verpleegkundige' ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700' :
+                                    user.function === 'apotheker' ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700' : ''
+                                  }`}>
                                     {user.function}
                                   </Badge>
                                   {user.discipline && (
