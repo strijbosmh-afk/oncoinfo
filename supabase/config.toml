@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.reset-password-request]
 verify_jwt = false
+
+[functions.enrich-drug-info]
+verify_jwt = false

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe, Trash2 } from 'lucide-react';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe, Trash2, Wand2 } from 'lucide-react';
 import { DRUG_CLASSES, DRUG_DISEASE_AREAS, ADMINISTRATION_ROUTES } from '@/types/drug';
 
 interface PubMedResult {
@@ -92,6 +92,7 @@ export function RegimenSearch() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [articleUrl, setArticleUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [quickDrugName, setQuickDrugName] = useState('');
   const [editingDrug, setEditingDrug] = useState({
     generic_name: '',
     drug_class: '',
@@ -271,6 +272,38 @@ export function RegimenSearch() {
     },
   });
 
+  const enrichMutation = useMutation({
+    mutationFn: async (drugName: string) => {
+      const { data, error } = await supabase.functions.invoke('enrich-drug-info', {
+        body: { drug_name: drugName },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      const drug = data.drug;
+      setEditingDrug({
+        generic_name: drug.generic_name || quickDrugName,
+        drug_class: drug.drug_class || '',
+        disease_areas: drug.disease_areas || [],
+        mechanism_of_action: drug.mechanism_of_action || '',
+        brand_names: drug.brand_names || '',
+        administration_route: drug.administration_route || '',
+        study_name: '',
+        is_combination: false,
+        is_on_zvz: false,
+        components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
+      });
+      setAddDialogOpen(true);
+      setQuickDrugName('');
+      toast({ title: 'AI-verrijking voltooid', description: `Informatie voor "${drug.generic_name}" is ingevuld. Controleer en pas aan indien nodig.` });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'AI-verrijking mislukt', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const openAddDialog = (prefill?: { title?: string; disease?: string }) => {
     setEditingDrug({
       generic_name: prefill?.title || '',
@@ -338,6 +371,46 @@ export function RegimenSearch() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Quick add by drug name with AI enrichment */}
+        <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wand2 className="h-4 w-4 text-primary" />
+            <Label className="text-sm font-semibold">Snel toevoegen op basis van naam</Label>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">AI</Badge>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={quickDrugName}
+              onChange={(e) => setQuickDrugName(e.target.value)}
+              placeholder="Typ een medicijnnaam, bijv. Pembrolizumab, Olaparib..."
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && quickDrugName.trim().length >= 2) {
+                  e.preventDefault();
+                  enrichMutation.mutate(quickDrugName.trim());
+                }
+              }}
+            />
+            <Button
+              onClick={() => enrichMutation.mutate(quickDrugName.trim())}
+              disabled={quickDrugName.trim().length < 2 || enrichMutation.isPending}
+              className="gap-2"
+            >
+              {enrichMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {enrichMutation.isPending ? 'AI zoekt...' : 'Verrijken & toevoegen'}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            AI zoekt automatisch medicijnklasse, werkingsmechanisme, indicaties en meer op.
+          </p>
+        </div>
+
+        <Separator />
+
         {/* Search form */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
