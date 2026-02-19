@@ -958,7 +958,7 @@ export default function DrugsPage() {
                   onClick={() => setViewMode('hormonal')}
                   className="gap-2"
                 >
-                  SERM/AI
+                  Antihormonaal
                   <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-1">
                     {hormonalDrugs.length}
                   </Badge>
