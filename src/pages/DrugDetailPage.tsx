@@ -317,6 +317,7 @@ export default function DrugDetailPage() {
           language,
           phone_number: phoneNumber || '',
           folder_mode: folderMode,
+          font_size: folderFontSize,
           premedicatie: includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
         }
       });
@@ -329,7 +330,7 @@ export default function DrugDetailPage() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [drug, includeDosing, includeSideEffects, folderMode, includePremedicatie, selectedPremedicatie]);
+  }, [drug, includeDosing, includeSideEffects, folderMode, folderFontSize, includePremedicatie, selectedPremedicatie]);
 
   const currentNurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
 
