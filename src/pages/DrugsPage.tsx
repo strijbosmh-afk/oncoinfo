@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
@@ -301,6 +302,8 @@ export default function DrugsPage() {
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneCount, setMilestoneCount] = useState(0);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
@@ -692,6 +695,17 @@ export default function DrugsPage() {
           entity_name: `Favorieten (${favorites.length})`,
           hospital_id: profile?.hospital_id || null,
         });
+
+        // Check milestone
+        const { count: folderCount } = await supabase
+          .from('audit_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id)
+          .eq('action', 'print_folder');
+        if (folderCount && folderCount % 100 === 0) {
+          setMilestoneCount(folderCount);
+          setShowMilestone(true);
+        }
       }
     } catch (err) {
       console.error('Error exporting favorites:', err);
@@ -1294,6 +1308,7 @@ export default function DrugsPage() {
           </div>
         </div>
       </div>
+      <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
     </Layout>
   );
 }
