@@ -608,7 +608,54 @@
     "error": "Passwort konnte nicht geändert werden.",
     "ruleLength": "Mindestens 8 Zeichen",
     "ruleUppercase": "Mindestens 1 Großbuchstabe",
-    "ruleSpecial": "Mindestens 1 Ziffer oder Sonderzeichen"
+    "ruleSpecial": "Mindestens 1 Ziffer oder Sonderzeichen",
+    "expiredTitle": "Passwort abgelaufen",
+    "expiredDesc": "Ihr Konto ist älter als 3 Tage und das Passwort wurde noch nie geändert. Bitte legen Sie unten ein neues Passwort fest, um fortzufahren."
+  },
+  "forgotPassword": {
+    "link": "Passwort vergessen?",
+    "title": "Passwort vergessen",
+    "description": "Geben Sie Ihren Benutzernamen ein. Wenn Ihr Konto eine E-Mail-Adresse hat, erhalten Sie einen Link zum Zurücksetzen Ihres Passworts.",
+    "sent": "Wenn ein Konto mit diesem Benutzernamen existiert, wurde eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts gesendet. Überprüfen Sie auch Ihren Spam-Ordner.",
+    "errorTitle": "Fehler",
+    "errorDesc": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+    "usernameLabel": "Benutzername",
+    "usernamePlaceholder": "Ihr Benutzername",
+    "cancel": "Abbrechen",
+    "sendLink": "Reset-Link senden"
+  },
+  "resetPassword": {
+    "title": "Neues Passwort festlegen",
+    "description": "Wählen Sie ein starkes Passwort, das Sie noch nicht verwendet haben.",
+    "invalidLink": "Ungültiger oder abgelaufener Link. Bitte fordern Sie einen neuen Passwort-Reset auf der Anmeldeseite an.",
+    "backToLogin": "Zurück zur Anmeldeseite",
+    "changed": "Passwort geändert",
+    "changedDesc": "Ihr Passwort wurde erfolgreich geändert.",
+    "redirecting": "Sie werden zur Anmeldeseite weitergeleitet...",
+    "changeError": "Passwort konnte nicht geändert werden."
+  },
+  "mostUsed": {
+    "maxReached": "Maximum {{max}} meistverwendete Schemata erreicht",
+    "remove": "Aus meistverwendeten entfernen",
+    "add": "Zu meistverwendeten hinzufügen",
+    "toggle": "Meistverwendete umschalten",
+    "label": "Meistverwendet"
+  },
+  "usageDashboard": {
+    "actionLogin": "Anmeldung",
+    "actionUpdate": "Änderung",
+    "actionCreate": "Erstellung",
+    "actionDelete": "Löschung",
+    "actionEmailSent": "E-Mail gesendet",
+    "actionAutoUpdateScan": "Auto-Update-Scan",
+    "actionPrintFolder": "Ordner gedruckt"
+  },
+  "hospitalMgmt": {
+    "lookupSuccess": "Krankenhaus gefunden",
+    "lookupSuccessDesc": "{{name}} — bestätigen Sie das Logo",
+    "lookupFailed": "Suche fehlgeschlagen",
+    "lookupRetry": "Bitte versuchen Sie es erneut",
+    "noHospital": "Kein Krankenhaus"
   },
   "medicalTerms": {
     "Borstkanker": "Brustkrebs",

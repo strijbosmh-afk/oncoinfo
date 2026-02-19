@@ -290,7 +290,7 @@ export default function LoginPage() {
                 onClick={() => { setShowForgotPassword(true); setResetUsername(username); setResetSent(false); }}
                 className="w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
               >
-                Wachtwoord vergeten?
+                {t('forgotPassword.link')}
               </button>
             </form>
 
@@ -312,16 +312,16 @@ export default function LoginPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <KeyRound className="h-5 w-5 text-primary" />
-                Wachtwoord vergeten
+                {t('forgotPassword.title')}
               </DialogTitle>
               <DialogDescription>
-                Voer uw gebruikersnaam in. Als uw account een e-mailadres heeft, ontvangt u een link om uw wachtwoord te herstellen.
+                {t('forgotPassword.description')}
               </DialogDescription>
             </DialogHeader>
             {resetSent ? (
               <div className="py-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Als er een account met deze gebruikersnaam bestaat, is er een e-mail verzonden met instructies om uw wachtwoord te herstellen. Controleer ook uw spam-map.
+                  {t('forgotPassword.sent')}
                 </p>
               </div>
             ) : (
@@ -335,29 +335,29 @@ export default function LoginPage() {
                   });
                   setResetSent(true);
                 } catch {
-                  toast({ title: 'Fout', description: 'Er is iets misgegaan. Probeer het opnieuw.', variant: 'destructive' });
+                  toast({ title: t('forgotPassword.errorTitle'), description: t('forgotPassword.errorDesc'), variant: 'destructive' });
                 } finally {
                   setIsResetting(false);
                 }
               }} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reset-username">Gebruikersnaam</Label>
+                  <Label htmlFor="reset-username">{t('forgotPassword.usernameLabel')}</Label>
                   <Input
                     id="reset-username"
                     value={resetUsername}
                     onChange={(e) => setResetUsername(e.target.value)}
-                    placeholder="Uw gebruikersnaam"
+                    placeholder={t('forgotPassword.usernamePlaceholder')}
                     autoComplete="username"
                     className="h-11"
                   />
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
-                    Annuleren
+                    {t('forgotPassword.cancel')}
                   </Button>
                   <Button type="submit" disabled={!resetUsername.trim() || isResetting}>
                     {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Verstuur reset link
+                    {t('forgotPassword.sendLink')}
                   </Button>
                 </DialogFooter>
               </form>

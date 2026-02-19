@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -783,6 +784,7 @@ function SortableHospitalCard({ hospital, isSelected, onSelect, onToggleActive, 
 export default function HospitalManagementPage() {
   const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const [hospitalFilter, setHospitalFilter] = useState('');
   const [activeExpanded, setActiveExpanded] = useState(true);
@@ -1044,10 +1046,10 @@ export default function HospitalManagementPage() {
         setFormLogoUrl('');
         setLogoConfirmed(false);
       }
-      toast({ title: 'Ziekenhuis gevonden', description: `${data?.official_name || formName} — bevestig het logo` });
+      toast({ title: t('hospitalMgmt.lookupSuccess'), description: t('hospitalMgmt.lookupSuccessDesc', { name: data?.official_name || formName }) });
     } catch (e: any) {
       console.error('Lookup failed:', e);
-      toast({ title: 'Zoeken mislukt', description: e?.message || 'Probeer het opnieuw', variant: 'destructive' });
+      toast({ title: t('hospitalMgmt.lookupFailed'), description: e?.message || t('hospitalMgmt.lookupRetry'), variant: 'destructive' });
       setLogoConfirmed(false);
     } finally {
       setAiLookupLoading(false);

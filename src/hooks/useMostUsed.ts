@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import i18n from '@/i18n';
 
 const MAX_MOST_USED = 8;
 
@@ -50,7 +51,7 @@ export function useMostUsed() {
     } else {
       // Check max
       if (mostUsed.length >= MAX_MOST_USED) {
-        toast.error(`Maximum ${MAX_MOST_USED} meest gebruikte schema's bereikt`);
+        toast.error(i18n.t('mostUsed.maxReached', { max: MAX_MOST_USED }));
         return;
       }
       // Delete any existing row first to prevent DB-level duplicates

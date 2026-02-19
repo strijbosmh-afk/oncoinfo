@@ -198,7 +198,7 @@ const Index = () => {
                         toggleMostUsed(drug.id);
                       }}
                       className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-opacity"
-                      aria-label="Verwijderen uit meest gebruikt"
+                      aria-label={t('mostUsed.remove')}
                     >
                       <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </button>

@@ -89,7 +89,7 @@ export function UserManagement() {
       if (!groups.has(key)) {
         groups.set(key, {
           id: key,
-          name: u.hospital_name || 'Geen ziekenhuis',
+          name: u.hospital_name || t('hospitalMgmt.noHospital'),
           color: u.hospital_color || undefined,
           users: [],
         });

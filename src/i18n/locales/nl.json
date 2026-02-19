@@ -608,7 +608,54 @@
     "error": "Kon wachtwoord niet wijzigen.",
     "ruleLength": "Minimaal 8 tekens",
     "ruleUppercase": "Minimaal 1 hoofdletter",
-    "ruleSpecial": "Minimaal 1 cijfer of speciaal teken"
+    "ruleSpecial": "Minimaal 1 cijfer of speciaal teken",
+    "expiredTitle": "Wachtwoord verlopen",
+    "expiredDesc": "Uw account is meer dan 3 dagen oud en het wachtwoord is nog nooit gewijzigd. Stel hieronder een nieuw wachtwoord in om verder te gaan."
+  },
+  "forgotPassword": {
+    "link": "Wachtwoord vergeten?",
+    "title": "Wachtwoord vergeten",
+    "description": "Voer uw gebruikersnaam in. Als uw account een e-mailadres heeft, ontvangt u een link om uw wachtwoord te herstellen.",
+    "sent": "Als er een account met deze gebruikersnaam bestaat, is er een e-mail verzonden met instructies om uw wachtwoord te herstellen. Controleer ook uw spam-map.",
+    "errorTitle": "Fout",
+    "errorDesc": "Er is iets misgegaan. Probeer het opnieuw.",
+    "usernameLabel": "Gebruikersnaam",
+    "usernamePlaceholder": "Uw gebruikersnaam",
+    "cancel": "Annuleren",
+    "sendLink": "Verstuur reset link"
+  },
+  "resetPassword": {
+    "title": "Nieuw wachtwoord instellen",
+    "description": "Kies een sterk wachtwoord dat u nog niet eerder heeft gebruikt.",
+    "invalidLink": "Ongeldige of verlopen link. Vraag een nieuwe wachtwoord-reset aan via de inlogpagina.",
+    "backToLogin": "Terug naar inlogpagina",
+    "changed": "Wachtwoord gewijzigd",
+    "changedDesc": "Uw wachtwoord is succesvol gewijzigd.",
+    "redirecting": "U wordt doorgestuurd naar de inlogpagina...",
+    "changeError": "Kon het wachtwoord niet wijzigen."
+  },
+  "mostUsed": {
+    "maxReached": "Maximum {{max}} meest gebruikte schema's bereikt",
+    "remove": "Verwijder uit meest gebruikt",
+    "add": "Toevoegen aan meest gebruikt",
+    "toggle": "Toggle meest gebruikt",
+    "label": "Meest gebruikt"
+  },
+  "usageDashboard": {
+    "actionLogin": "Login",
+    "actionUpdate": "Wijziging",
+    "actionCreate": "Aanmaak",
+    "actionDelete": "Verwijdering",
+    "actionEmailSent": "E-mail verzonden",
+    "actionAutoUpdateScan": "Auto-update scan",
+    "actionPrintFolder": "Folder afgedrukt"
+  },
+  "hospitalMgmt": {
+    "lookupSuccess": "Ziekenhuis gevonden",
+    "lookupSuccessDesc": "{{name}} — bevestig het logo",
+    "lookupFailed": "Zoeken mislukt",
+    "lookupRetry": "Probeer het opnieuw",
+    "noHospital": "Geen ziekenhuis"
   },
   "medicalTerms": {
     "Borstkanker": "Borstkanker",

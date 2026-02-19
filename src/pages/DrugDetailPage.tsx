@@ -700,8 +700,8 @@ export default function DrugDetailPage() {
                 size="icon"
                 onClick={() => toggleMostUsed(drug.id)}
                 className="h-9 w-9 sm:h-10 sm:w-10"
-                aria-label={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Toevoegen aan meest gebruikt'}
-                title={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Meest gebruikt'}
+                aria-label={isMostUsed(drug.id) ? t('mostUsed.remove') : t('mostUsed.add')}
+                title={isMostUsed(drug.id) ? t('mostUsed.remove') : t('mostUsed.label')}
               >
                 <Zap
                   className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${

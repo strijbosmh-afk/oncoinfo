@@ -79,7 +79,7 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
           <button
             onClick={onToggleMostUsed}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
-            aria-label="Toggle meest gebruikt"
+            aria-label={t('mostUsed.toggle')}
           >
             <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
           </button>
