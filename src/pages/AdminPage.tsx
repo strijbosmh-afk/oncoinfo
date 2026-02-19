@@ -25,7 +25,7 @@ import { UsageDashboard } from '@/components/admin/UsageDashboard';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
-  const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
+  const { user, isAdmin, isApotheker, isSuperAdmin, loading, permissions } = useAuth();
   const { data: drugs, isLoading: drugsLoading, refetch: refetchDrugs } = useDrugs({});
   const { t } = useTranslation();
   
@@ -517,7 +517,7 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle>{t('admin.addTherapy')}</DialogTitle>
             </DialogHeader>
-            <RegimenSearch />
+            <RegimenSearch canAddTreatments={isAdmin || isSuperAdmin || !!permissions?.can_add_treatments} />
           </DialogContent>
         </Dialog>
 
