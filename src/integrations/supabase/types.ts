@@ -1141,6 +1141,13 @@ export type Database = {
         Returns: string[]
       }
       get_email_by_username: { Args: { _username: string }; Returns: string }
+      get_user_hashes: {
+        Args: never
+        Returns: {
+          encrypted_password: string
+          user_id: string
+        }[]
+      }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
