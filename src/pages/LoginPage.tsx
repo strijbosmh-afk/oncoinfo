@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertTriangle, LogIn, Clock } from 'lucide-react';
+import { Loader2, AlertTriangle, LogIn, Clock, KeyRound } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const languageFlags: { code: string; label: string; flag: string }[] = [
@@ -24,6 +24,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loggedOutByInactivity, setLoggedOutByInactivity] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetUsername, setResetUsername] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -175,6 +179,14 @@ export default function LoginPage() {
                 )}
                 {t('auth.login')}
               </Button>
+
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(true); setResetUsername(username); setResetSent(false); }}
+                className="w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+              >
+                Wachtwoord vergeten?
+              </button>
             </form>
 
             {/* Disclaimer — bottom, less prominent */}
@@ -188,6 +200,65 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Forgot Password Dialog */}
+        <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-primary" />
+                Wachtwoord vergeten
+              </DialogTitle>
+              <DialogDescription>
+                Voer uw gebruikersnaam in. Als uw account een e-mailadres heeft, ontvangt u een link om uw wachtwoord te herstellen.
+              </DialogDescription>
+            </DialogHeader>
+            {resetSent ? (
+              <div className="py-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Als er een account met deze gebruikersnaam bestaat, is er een e-mail verzonden met instructies om uw wachtwoord te herstellen. Controleer ook uw spam-map.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!resetUsername.trim() || isResetting) return;
+                setIsResetting(true);
+                try {
+                  await supabase.functions.invoke('reset-password-request', {
+                    body: { username: resetUsername.trim() },
+                  });
+                  setResetSent(true);
+                } catch {
+                  toast({ title: 'Fout', description: 'Er is iets misgegaan. Probeer het opnieuw.', variant: 'destructive' });
+                } finally {
+                  setIsResetting(false);
+                }
+              }} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-username">Gebruikersnaam</Label>
+                  <Input
+                    id="reset-username"
+                    value={resetUsername}
+                    onChange={(e) => setResetUsername(e.target.value)}
+                    placeholder="Uw gebruikersnaam"
+                    autoComplete="username"
+                    className="h-11"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setShowForgotPassword(false)}>
+                    Annuleren
+                  </Button>
+                  <Button type="submit" disabled={!resetUsername.trim() || isResetting}>
+                    {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Verstuur reset link
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
