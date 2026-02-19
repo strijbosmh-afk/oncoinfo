@@ -53,6 +53,7 @@ interface HospitalDoctor {
   staff_type: string;
   specialization: string | null;
   phone_number?: string | null;
+  discipline?: string | null;
 }
 
 
@@ -121,7 +122,7 @@ export default function DrugDetailPage() {
       // Also fetch physicians from profiles (function = 'arts') as fallback/supplement
       const { data: profileDoctors } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, function, phone_number')
+        .select('user_id, first_name, last_name, function, phone_number, discipline')
         .eq('hospital_id', hospital.id);
 
       if (profileDoctors) {
@@ -137,6 +138,7 @@ export default function DrugDetailPage() {
                 staff_type: 'arts',
                 specialization: null,
                 phone_number: p.phone_number,
+                discipline: p.discipline,
               });
               existingNames.add(fullName.toLowerCase());
             }
@@ -1137,13 +1139,23 @@ export default function DrugDetailPage() {
                     <div className="space-y-2 sm:space-y-3">
                       <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
                       {(() => {
-                        // Group doctors by specialization
+                        // Put the pre-selected (dedicated) physician first, then group rest by discipline
+                        const dedicatedDoc = selectedPhysician
+                          ? hospitalDoctors.find(d => d.name === selectedPhysician)
+                          : null;
+                        const otherDocs = hospitalDoctors.filter(d => d.name !== selectedPhysician);
+
+                        // Group others by discipline
                         const groups = new Map<string, HospitalDoctor[]>();
-                        hospitalDoctors.forEach(doc => {
-                          const key = doc.specialization || t('patientFolder.general');
+                        otherDocs.forEach(doc => {
+                          const key = doc.discipline || doc.specialization || t('patientFolder.general');
                           if (!groups.has(key)) groups.set(key, []);
                           groups.get(key)!.push(doc);
                         });
+
+                        // Sort groups alphabetically
+                        const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+
                         return (
                           <Select value={selectedPhysician} onValueChange={(val) => {
                             setSelectedPhysician(val);
@@ -1152,9 +1164,15 @@ export default function DrugDetailPage() {
                               <SelectValue placeholder={t('patientFolder.select')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {Array.from(groups.entries()).map(([spec, docs]) => (
-                                <SelectGroup key={spec}>
-                                  <SelectLabel className="text-[11px]">{spec}</SelectLabel>
+                              {dedicatedDoc && (
+                                <SelectGroup>
+                                  <SelectLabel className="text-[11px]">⭐ Vaste arts</SelectLabel>
+                                  <SelectItem value={dedicatedDoc.name}>{dedicatedDoc.name}</SelectItem>
+                                </SelectGroup>
+                              )}
+                              {sortedGroups.map(([discipline, docs]) => (
+                                <SelectGroup key={discipline}>
+                                  <SelectLabel className="text-[11px]">{discipline}</SelectLabel>
                                   {docs.map(doc => (
                                     <SelectItem key={doc.id} value={doc.name}>{doc.name}</SelectItem>
                                   ))}
