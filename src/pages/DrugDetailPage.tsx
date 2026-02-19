@@ -1245,7 +1245,7 @@ export default function DrugDetailPage() {
                         />
                       )}
                       <div className="space-y-1.5 mt-2">
-                        <Label className="text-xs sm:text-sm font-medium">Telefoonnummer op folder</Label>
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.phoneOnFolder')}</Label>
                         <div className="flex gap-1.5 sm:gap-2">
                           <Button
                             type="button"
@@ -1254,7 +1254,7 @@ export default function DrugDetailPage() {
                             className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
                             size="sm"
                           >
-                            Verpleging {nursePhone ? `(${nursePhone})` : ''}
+                            {t('patientFolder.phoneNursing')} {nursePhone ? `(${nursePhone})` : ''}
                           </Button>
                           <Button
                             type="button"
@@ -1263,12 +1263,12 @@ export default function DrugDetailPage() {
                             className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
                             size="sm"
                           >
-                            Ander
+                            {t('patientFolder.phoneOther')}
                           </Button>
                         </div>
                         {phoneMode === 'nurse' && (
                           <Input
-                            placeholder="Telefoonnummer verpleegkundige"
+                            placeholder={t('patientFolder.phoneNursePlaceholder')}
                             value={nursePhone}
                             onChange={(e) => { setNursePhone(e.target.value); }}
                             className="h-8 sm:h-9 text-xs sm:text-sm"
@@ -1276,7 +1276,7 @@ export default function DrugDetailPage() {
                         )}
                         {phoneMode === 'custom' && (
                           <Input
-                            placeholder="Telefoonnummer"
+                            placeholder={t('patientFolder.phoneCustomPlaceholder')}
                             value={customPhone}
                             onChange={(e) => setCustomPhone(e.target.value)}
                             className="h-8 sm:h-9 text-xs sm:text-sm"
@@ -1317,7 +1317,7 @@ export default function DrugDetailPage() {
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs sm:text-sm font-medium">Ondersteunende medicatie</Label>
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.supportiveMedication')}</Label>
                         <Switch
                           checked={includePremedicatie}
                           onCheckedChange={setIncludePremedicatie}
@@ -1460,20 +1460,20 @@ export default function DrugDetailPage() {
       <Dialog open={showAddPremedicatie} onOpenChange={setShowAddPremedicatie}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Ondersteunende medicatie toevoegen</DialogTitle>
+            <DialogTitle>{t('patientFolder.addSupportiveMed')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label className="text-sm">Naam *</Label>
+              <Label className="text-sm">{t('patientFolder.medName')} *</Label>
               <Input
                 value={newPremName}
                 onChange={(e) => setNewPremName(e.target.value)}
-                placeholder="bv. Dexamethason 10mg"
+                placeholder={t('patientFolder.medNamePlaceholder')}
                 className="h-8 text-sm"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm">Toedieningsweg *</Label>
+              <Label className="text-sm">{t('patientFolder.medRoute')} *</Label>
               <RadioGroup value={newPremRoute} onValueChange={(v) => setNewPremRoute(v as 'PO' | 'SC')} className="flex gap-4">
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="PO" id="prem-po" />
@@ -1486,18 +1486,18 @@ export default function DrugDetailPage() {
               </RadioGroup>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm">Wanneer *</Label>
+              <Label className="text-sm">{t('patientFolder.medTiming')} *</Label>
               <Input
                 value={newPremTiming}
                 onChange={(e) => setNewPremTiming(e.target.value)}
-                placeholder="bv. 12u voor therapie"
+                placeholder={t('patientFolder.medTimingPlaceholder')}
                 className="h-8 text-sm"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>Annuleren</Button>
-            <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>Toevoegen</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>{t('patientFolder.cancel')}</Button>
+            <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>{t('patientFolder.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1507,19 +1507,18 @@ export default function DrugDetailPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="h-5 w-5" />
-              Telefoonnummer ontbreekt
+              {t('patientFolder.phoneMissingTitle')}
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Er is geen telefoonnummer ingevuld voor de arts of verpleegkundige. 
-            Het is sterk aanbevolen om contactgegevens op te nemen in de patiëntenfolder zodat patiënten bij vragen of problemen snel contact kunnen opnemen.
+            {t('patientFolder.phoneMissingDesc')}
           </p>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" size="sm" onClick={() => setShowPhoneWarning(false)}>
-              Terug om in te vullen
+              {t('patientFolder.phoneGoBack')}
             </Button>
             <Button variant="secondary" size="sm" onClick={handleConfirmStaffForce}>
-              Toch doorgaan zonder nummer
+              {t('patientFolder.phoneContinue')}
             </Button>
           </DialogFooter>
         </DialogContent>
