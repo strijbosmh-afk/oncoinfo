@@ -108,9 +108,10 @@ export function UserManagement() {
     });
   };
 
-  // Auto-open all groups on first load or when filters change
+  // Default: only RZ Tienen is expanded
   useEffect(() => {
-    setOpenHospitals(new Set(groupedByHospital.map(g => g.id)));
+    const tienenGroup = groupedByHospital.find(g => g.name.toLowerCase().includes('tienen'));
+    setOpenHospitals(new Set(tienenGroup ? [tienenGroup.id] : []));
   }, [groupedByHospital.length]);
 
   const handleCreate = (preselectedHospitalId?: string) => {
