@@ -638,16 +638,18 @@ export default function DrugDetailPage() {
                 {drug.administration_route && (
                   <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
                 )}
-                {drug.is_on_zvz ? (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    ✓ RIZIV
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
-                    ✗ Niet RIZIV
-                  </Badge>
+                {!isDemoClinic && (
+                  drug.is_on_zvz ? (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                      ✓ RIZIV
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
+                      ✗ Niet RIZIV
+                    </Badge>
+                  )
                 )}
-                {isSuperAdmin && (
+                {!isDemoClinic && isSuperAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -800,7 +802,7 @@ export default function DrugDetailPage() {
                   ) : (
                     <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  Patiënten Info
+                  {t('patientFolder.patientInfo')}
                 </Button>
               </div>
             </div>

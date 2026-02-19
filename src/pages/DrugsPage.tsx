@@ -98,6 +98,7 @@ interface DrugCardProps {
 function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm }: DrugCardProps) {
   const { t } = useTranslation();
   const tMedLocal = useMedicalTranslation();
+  const { isDemoClinic } = useHospital();
   const tMed = translateTerm || tMedLocal;
   const isCombo = drug.drug_class === 'Combinatietherapie';
   
@@ -142,7 +143,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
             <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
               {t('drugs.combinationRegimen')}
             </Badge>
-            {drug.is_on_zvz ? (
+            {!isDemoClinic && (drug.is_on_zvz ? (
               <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
                 ✓ RIZIV
               </Badge>
@@ -150,7 +151,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
               <Badge className="w-fit bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700">
                 ✗ Niet RIZIV
               </Badge>
-            )}
+            ))}
           </CardHeader>
           <CardContent>
             {drug.approved_indications && drug.approved_indications.length > 0 && (
@@ -226,7 +227,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
                   {tMed(drug.drug_class)}
                 </Badge>
               )}
-              {drug.is_on_zvz ? (
+              {!isDemoClinic && (drug.is_on_zvz ? (
                 <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
                   ✓ RIZIV
                 </Badge>
@@ -234,7 +235,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
                 <Badge className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700 text-xs">
                   ✗ Niet RIZIV
                 </Badge>
-              )}
+              ))}
             </div>
           </div>
         </CardHeader>
