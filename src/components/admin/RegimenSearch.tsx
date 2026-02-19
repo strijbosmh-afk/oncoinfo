@@ -75,7 +75,11 @@ const DRUG_TYPES = [
   { value: 'combination', label: 'Combinatietherapie' },
 ];
 
-export function RegimenSearch() {
+interface RegimenSearchProps {
+  canAddTreatments?: boolean;
+}
+
+export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) {
   const { toast } = useToast();
   const [discipline, setDiscipline] = useState('');
   const [drugType, setDrugType] = useState('');
@@ -283,19 +287,15 @@ export function RegimenSearch() {
     },
     onSuccess: (data) => {
       const drug = data.drug;
-      setEditingDrug({
+      setEditingDrug(prev => ({
+        ...prev,
         generic_name: drug.generic_name || quickDrugName,
-        drug_class: drug.drug_class || '',
-        disease_areas: drug.disease_areas || [],
-        mechanism_of_action: drug.mechanism_of_action || '',
-        brand_names: drug.brand_names || '',
-        administration_route: drug.administration_route || '',
-        study_name: '',
-        is_combination: false,
-        is_on_zvz: false,
-        components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
-      });
-      setAddDialogOpen(true);
+        drug_class: drug.drug_class || prev.drug_class,
+        disease_areas: drug.disease_areas || prev.disease_areas,
+        mechanism_of_action: drug.mechanism_of_action || prev.mechanism_of_action,
+        brand_names: drug.brand_names || prev.brand_names,
+        administration_route: drug.administration_route || prev.administration_route,
+      }));
       setQuickDrugName('');
       toast({ title: 'AI-verrijking voltooid', description: `Informatie voor "${drug.generic_name}" is ingevuld. Controleer en pas aan indien nodig.` });
     },
@@ -371,45 +371,7 @@ export function RegimenSearch() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Quick add by drug name with AI enrichment */}
-        <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
-          <div className="flex items-center gap-2 mb-3">
-            <Wand2 className="h-4 w-4 text-primary" />
-            <Label className="text-sm font-semibold">Snel toevoegen op basis van naam</Label>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">AI</Badge>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={quickDrugName}
-              onChange={(e) => setQuickDrugName(e.target.value)}
-              placeholder="Typ een medicijnnaam, bijv. Pembrolizumab, Olaparib..."
-              className="flex-1"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && quickDrugName.trim().length >= 2) {
-                  e.preventDefault();
-                  enrichMutation.mutate(quickDrugName.trim());
-                }
-              }}
-            />
-            <Button
-              onClick={() => enrichMutation.mutate(quickDrugName.trim())}
-              disabled={quickDrugName.trim().length < 2 || enrichMutation.isPending}
-              className="gap-2"
-            >
-              {enrichMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4" />
-              )}
-              {enrichMutation.isPending ? 'AI zoekt...' : 'Verrijken & toevoegen'}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            AI zoekt automatisch medicijnklasse, werkingsmechanisme, indicaties en meer op.
-          </p>
-        </div>
-
-        <Separator />
+        {/* Separator before search */}
 
         {/* Search form */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -524,14 +486,16 @@ export function RegimenSearch() {
               Zoeken
             </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={() => openAddDialog()}
-            className="gap-2"
-          >
-            <PenLine className="h-4 w-4" />
-            Handmatig toevoegen
-          </Button>
+          {canAddTreatments && (
+            <Button
+              variant="outline"
+              onClick={() => openAddDialog()}
+              className="gap-2"
+            >
+              <PenLine className="h-4 w-4" />
+              Handmatig toevoegen
+            </Button>
+          )}
         </div>
 
         {/* AI Loading State */}
@@ -623,14 +587,16 @@ export function RegimenSearch() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={(e) => { e.stopPropagation(); openAddFromRegimen(regimen); }}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={(e) => { e.stopPropagation(); openAddFromRegimen(regimen); }}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       {expandedRegimen === idx ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </div>
                   </div>
@@ -725,14 +691,16 @@ export function RegimenSearch() {
                       >
                         {expandedPmid === r.pmid ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => openAddDialog({ title: '', disease: discipline })}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => openAddDialog({ title: '', disease: discipline })}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       {r.doi && (
                         <a href={`https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
@@ -774,14 +742,16 @@ export function RegimenSearch() {
                       )}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => openAddDialog({ title: '', disease: discipline })}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => openAddDialog({ title: '', disease: discipline })}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       <a href={`https://clinicaltrials.gov/study/${r.nctId}`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
                       </a>
@@ -800,6 +770,46 @@ export function RegimenSearch() {
               <DialogTitle>Nieuw Medicijn / Combinatie Toevoegen</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* AI enrichment inside dialog */}
+              <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Wand2 className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-semibold">Automatisch invullen op basis van naam</Label>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">AI</Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={quickDrugName}
+                    onChange={(e) => setQuickDrugName(e.target.value)}
+                    placeholder="Typ een medicijnnaam, bijv. Pembrolizumab..."
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && quickDrugName.trim().length >= 2) {
+                        e.preventDefault();
+                        enrichMutation.mutate(quickDrugName.trim());
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => enrichMutation.mutate(quickDrugName.trim())}
+                    disabled={quickDrugName.trim().length < 2 || enrichMutation.isPending}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    {enrichMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {enrichMutation.isPending ? 'Zoeken...' : 'Verrijken'}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI zoekt automatisch medicijnklasse, werkingsmechanisme, indicaties en meer op.
+                </p>
+              </div>
+
+              <Separator />
               {/* Combination toggle */}
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
