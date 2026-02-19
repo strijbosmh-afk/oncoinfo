@@ -260,6 +260,9 @@ export default function LoginPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <p className="text-center text-xs text-muted-foreground pb-6">
+        © {new Date().getFullYear()} Michiel Strijbos
+      </p>
     </Layout>
   );
 }
