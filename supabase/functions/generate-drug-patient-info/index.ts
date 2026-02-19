@@ -681,7 +681,7 @@ function generatePatientInfoHtml(
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${footerSize}px; color: #666; text-align: center; }
-    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''} }
+    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; }
     .page-bottom { margin-top: 8px; }
     .page-break { page-break-before: always; break-before: page; padding: 12mm; }
     /* Timeline styles */
