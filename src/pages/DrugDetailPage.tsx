@@ -1221,12 +1221,46 @@ export default function DrugDetailPage() {
                           autoFocus
                         />
                       )}
-                      <Input
-                        placeholder="Telefoonnummer verpleegkundige"
-                        value={nursePhone}
-                        onChange={(e) => { setNursePhone(e.target.value); }}
-                        className="h-7 sm:h-8 text-xs sm:text-sm"
-                      />
+                      <div className="space-y-1.5 mt-2">
+                        <Label className="text-xs sm:text-sm font-medium">Telefoonnummer op folder</Label>
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'nurse' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('nurse')}
+                            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+                            size="sm"
+                          >
+                            Verpleging {nursePhone ? `(${nursePhone})` : ''}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'custom' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('custom')}
+                            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+                            size="sm"
+                          >
+                            Ander
+                          </Button>
+                        </div>
+                        {phoneMode === 'nurse' && (
+                          <Input
+                            placeholder="Telefoonnummer verpleegkundige"
+                            value={nursePhone}
+                            onChange={(e) => { setNursePhone(e.target.value); }}
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
+                          />
+                        )}
+                        {phoneMode === 'custom' && (
+                          <Input
+                            placeholder="Telefoonnummer"
+                            value={customPhone}
+                            onChange={(e) => setCustomPhone(e.target.value)}
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
+                            autoFocus
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -1299,7 +1333,7 @@ export default function DrugDetailPage() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
+                    <div className="border-t pt-3 sm:pt-4">
                     <div className="space-y-1.5 sm:space-y-3">
                         <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
                         <div className="flex gap-1.5 sm:gap-2">
@@ -1309,39 +1343,6 @@ export default function DrugDetailPage() {
                             <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
                           )}
                         </div>
-                      </div>
-
-                      <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">Telefoonnummer op folder</Label>
-                        <div className="flex gap-1.5 sm:gap-2">
-                          <Button
-                            type="button"
-                            variant={phoneMode === 'nurse' ? 'default' : 'outline'}
-                            onClick={() => setPhoneMode('nurse')}
-                            className="flex-1 h-7 sm:h-8 text-xs"
-                            size="sm"
-                          >
-                            Verpleging {nursePhone ? `(${nursePhone})` : ''}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant={phoneMode === 'custom' ? 'default' : 'outline'}
-                            onClick={() => setPhoneMode('custom')}
-                            className="flex-1 h-7 sm:h-8 text-xs"
-                            size="sm"
-                          >
-                            Ander
-                          </Button>
-                        </div>
-                        {phoneMode === 'custom' && (
-                          <Input
-                            placeholder="Telefoonnummer"
-                            value={customPhone}
-                            onChange={(e) => setCustomPhone(e.target.value)}
-                            className="h-7 sm:h-9 text-xs sm:text-sm"
-                            autoFocus
-                          />
-                        )}
                       </div>
                     </div>
 
