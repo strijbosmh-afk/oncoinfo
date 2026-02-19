@@ -56,7 +56,7 @@ export interface DrugFilters {
 export const DRUG_CLASSES = [
   'Immunotherapie (IO/ICI)',
   'PARPi',
-  'ARPI',
+  'ARTA',
   'Chemotherapie',
   'TKI',
   'ADC',
@@ -79,8 +79,8 @@ export const COMBINATION_SUBTYPES = [
   'IO + Chemotherapie',
   'IO + TKI', 
   'IO + IO',
-  'ARPI + Chemotherapie',
-  'ARPI + IO'
+  'ARTA + Chemotherapie',
+  'ARTA + IO'
 ] as const;
 
 export const ADMINISTRATION_ROUTES = [
@@ -144,7 +144,7 @@ export const DRUG_CATEGORIES = {
       { key: 'testis', label: 'Testiskanker', description: 'Seminoom, non-seminoom' },
       { key: 'penile', label: 'Peniskanker', description: 'Plaveiselcelcarcinoom' }
     ],
-    drugClasses: ['ARPI', 'Anti-hormonale therapie', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Antiresorptiva']
+    drugClasses: ['ARTA', 'Anti-hormonale therapie', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Antiresorptiva']
   },
   gynecology: {
     name: 'Gynaecologie',

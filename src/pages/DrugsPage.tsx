@@ -37,7 +37,7 @@ const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
 const DRUG_CLASS_FULL_NAMES: Record<string, string> = {
   'IO/ICI': 'Immune Checkpoint Inhibitor',
   'PARPi': 'Poly (ADP-ribose) Polymerase Inhibitor',
-  'ARPI': 'Androgen Receptor Pathway Inhibitor',
+  'ARTA': 'Androgen Receptor Targeted Agent',
   'TKI': 'Tyrosine Kinase Inhibitor',
   'ADC': 'Antibody-Drug Conjugate',
   'CDK4/6i': 'Cycline-Dependent Kinase 4/6 Inhibitor',
@@ -61,7 +61,7 @@ const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
     'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
     'PARPi': 'bg-pink-100 text-pink-800 border-pink-200',
-    'ARPI': 'bg-blue-100 text-blue-800 border-blue-200',
+    'ARTA': 'bg-blue-100 text-blue-800 border-blue-200',
     'Chemotherapie': 'bg-red-100 text-red-800 border-red-200',
     'TKI': 'bg-orange-100 text-orange-800 border-orange-200',
     'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
@@ -303,7 +303,7 @@ export default function DrugsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arpi' | 'lhrh' | 'individual'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital } = useHospital();
@@ -576,22 +576,22 @@ export default function DrugsPage() {
   }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
 
   // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
-  const { combinationDrugs, hormonalDrugs, cdk46Drugs, arpiDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
+  const { combinationDrugs, hormonalDrugs, cdk46Drugs, artaDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
     const isBreast = category === 'breast';
     const isUrology = category === 'urology';
     const hormonal = isBreast ? orderedDrugs.filter(drug => ['Hormoontherapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
     const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
-    const arpi = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARPI') : [];
+    const arta = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARTA') : [];
     const lhrh = isUrology ? orderedDrugs.filter(drug => ['LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
     const excludedClasses = isBreast 
       ? ['Combinatietherapie', 'Hormoontherapie', 'Anti-hormonale therapie', 'CDK4/6i']
       : isUrology
-        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie']
+        ? ['Combinatietherapie', 'ARTA', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie']
         : ['Combinatietherapie'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
-    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, arpiDrugs: arpi, lhrhDrugs: lhrh, individualDrugs: individuals };
+    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, artaDrugs: arta, lhrhDrugs: lhrh, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder, category]);
 
   // Get display drug classes based on category
@@ -1060,16 +1060,16 @@ export default function DrugsPage() {
                   </Badge>
                 </Button>
               )}
-              {category === 'urology' && arpiDrugs.length > 0 && (
+              {category === 'urology' && artaDrugs.length > 0 && (
                 <Button
-                  variant={viewMode === 'arpi' ? 'default' : 'outline'}
+                  variant={viewMode === 'arta' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setViewMode('arpi')}
+                  onClick={() => setViewMode('arta')}
                   className="gap-2"
                 >
-                  ARPI
-                  <Badge variant={viewMode === 'arpi' ? 'secondary' : 'outline'} className="ml-1">
-                    {arpiDrugs.length}
+                  ARTA
+                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-1">
+                    {artaDrugs.length}
                   </Badge>
                 </Button>
               )}
@@ -1282,7 +1282,7 @@ export default function DrugsPage() {
                   combinationDrugs={combinationDrugs}
                   hormonalDrugs={hormonalDrugs}
                   cdk46Drugs={cdk46Drugs}
-                  arpiDrugs={arpiDrugs}
+                  artaDrugs={artaDrugs}
                   lhrhDrugs={lhrhDrugs}
                   individualDrugs={individualDrugs}
                   viewMode={viewMode}

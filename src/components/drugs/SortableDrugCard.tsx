@@ -11,7 +11,7 @@ const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
     'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
     'PARPi': 'bg-pink-100 text-pink-800 border-pink-200',
-    'ARPI': 'bg-blue-100 text-blue-800 border-blue-200',
+    'ARTA': 'bg-blue-100 text-blue-800 border-blue-200',
     'Chemotherapie': 'bg-red-100 text-red-800 border-red-200',
     'TKI': 'bg-orange-100 text-orange-800 border-orange-200',
     'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
