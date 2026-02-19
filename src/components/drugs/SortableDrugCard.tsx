@@ -181,30 +181,23 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
       </div>
         <Link to={`/drugs/${drug.id}`} className={isEditMode ? 'pointer-events-none' : ''}>
           <CardHeader className="pb-2 pr-16">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
-                {drug.brand_names.length > 0 && (
-                  <CardDescription>
-                    {drug.brand_names.join(', ')}
-                  </CardDescription>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1">
-              <Badge className={getDrugClassColor(drug.drug_class)}>
-                  {tMed(drug.drug_class)}
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
+              {drug.is_on_zvz ? (
+                <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-[10px] px-1.5 py-0">
+                  ✓ RIZIV
                 </Badge>
-                {drug.is_on_zvz ? (
-                  <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
-                    ✓ RIZIV
-                  </Badge>
-                ) : (
-                  <Badge className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700 text-xs">
-                    ✗ Niet RIZIV
-                  </Badge>
-                )}
-              </div>
+              ) : (
+                <Badge className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700 text-[10px] px-1.5 py-0">
+                  ✗ Niet RIZIV
+                </Badge>
+              )}
             </div>
+            {drug.brand_names.length > 0 && (
+              <CardDescription>
+                {drug.brand_names.join(', ')}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             {drug.administration_route && (
@@ -212,20 +205,25 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
                {tMed(drug.administration_route)}
               </p>
             )}
-            {drug.disease_areas.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {drug.disease_areas.slice(0, 3).map((area) => (
-                  <Badge key={area} variant="outline" className="text-xs">
-                    {tMed(area)}
-                  </Badge>
-                ))}
-                {drug.disease_areas.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{drug.disease_areas.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
+            <div className="flex items-end justify-between gap-2">
+              {drug.disease_areas.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {drug.disease_areas.slice(0, 3).map((area) => (
+                    <Badge key={area} variant="outline" className="text-xs">
+                      {tMed(area)}
+                    </Badge>
+                  ))}
+                  {drug.disease_areas.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{drug.disease_areas.length - 3}
+                    </Badge>
+                  )}
+                </div>
+              ) : <div />}
+              <Badge className={`${getDrugClassColor(drug.drug_class)} text-[10px] px-1.5 py-0 whitespace-nowrap`}>
+                {tMed(drug.drug_class)}
+              </Badge>
+            </div>
           </CardContent>
         </Link>
       </Card>
