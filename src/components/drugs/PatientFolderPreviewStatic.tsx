@@ -445,17 +445,9 @@ export function generateStaticPreviewHtml(
      <div class="contact-section full-width">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
-        <div>
-          <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
-          ${physicianPhone ? `<p style="font-size: ${contactFontSize - 1}px; color: #555;">📞 ${physicianPhone}</p>` : ''}
-        </div>
-        <div>
-          <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-          ${nursePhone ? `<p style="font-size: ${contactFontSize - 1}px; color: #555;">📞 ${nursePhone}</p>` : ''}
-        </div>
-        <div>
-          <p><strong>${labels.phone}:</strong> ${phoneNumber || ''}</p>
-        </div>
+        <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+        <p><strong>${labels.phone}:</strong> ${phoneNumber || nursePhone || ''}</p>
       </div>
     </div>
 
