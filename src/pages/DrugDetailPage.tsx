@@ -291,6 +291,7 @@ export default function DrugDetailPage() {
             const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === nurseName.toLowerCase());
             if (matchingNurse) {
               setNurseSelection(matchingNurse.name);
+              setNursePhone(matchingNurse.phone_number || '');
             } else {
               setIsNurseCustom(true);
               setCustomNurse(nurseName);
