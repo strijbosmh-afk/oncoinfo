@@ -133,7 +133,8 @@
         }
       ],
       "icon": "build-resources/icon.png",
-      "artifactName": "OncoInfo-Setup-${version}.${ext}"
+      "artifactName": "OncoInfo-Setup-${version}.${ext}",
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
