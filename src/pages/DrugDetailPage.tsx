@@ -1148,7 +1148,8 @@ export default function DrugDetailPage() {
                         // Group others by discipline
                         const groups = new Map<string, HospitalDoctor[]>();
                         otherDocs.forEach(doc => {
-                          const key = doc.discipline || doc.specialization || t('patientFolder.general');
+                          const rawKey = doc.discipline || doc.specialization || t('patientFolder.general');
+                          const key = rawKey.charAt(0).toUpperCase() + rawKey.slice(1);
                           if (!groups.has(key)) groups.set(key, []);
                           groups.get(key)!.push(doc);
                         });
@@ -1172,7 +1173,7 @@ export default function DrugDetailPage() {
                               )}
                               {sortedGroups.map(([discipline, docs]) => (
                                 <SelectGroup key={discipline}>
-                                  <SelectLabel className="text-[11px]">{discipline}</SelectLabel>
+                                  <SelectLabel className="text-[11px] font-bold">{discipline}</SelectLabel>
                                   {docs.map(doc => (
                                     <SelectItem key={doc.id} value={doc.name}>{doc.name}</SelectItem>
                                   ))}
