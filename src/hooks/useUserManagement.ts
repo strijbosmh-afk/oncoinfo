@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 export interface ManagedUser {
   id: string;
@@ -32,7 +33,6 @@ async function callManageUsers(action: string, params: Record<string, unknown> =
   });
 
   if (error) {
-    // Try to extract a meaningful error message
     const message = typeof error === 'object' && 'message' in error
       ? error.message
       : String(error);
@@ -48,6 +48,7 @@ async function callManageUsers(action: string, params: Record<string, unknown> =
 
 export function useUserManagement() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const usersQuery = useQuery({
@@ -68,16 +69,16 @@ export function useUserManagement() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
       toast({
-        title: 'Gebruiker aangemaakt',
+        title: t('userMgmt.userCreated'),
         description: data?.email_sent
-          ? 'Inloggegevens zijn per e-mail verstuurd.'
+          ? t('userMgmt.userCreatedEmailSent')
           : data?.email_error
-            ? `Account aangemaakt, maar e-mail versturen is mislukt: ${data.email_error}`
-            : 'Gebruiker is succesvol aangemaakt.',
+            ? t('userMgmt.userCreatedEmailFailed', { error: data.email_error })
+            : t('userMgmt.userCreatedSuccess'),
       });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij aanmaken', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.createError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -91,10 +92,10 @@ export function useUserManagement() {
     }) => callManageUsers('update', params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
-      toast({ title: 'Gebruiker bijgewerkt', description: 'De wijzigingen zijn opgeslagen.' });
+      toast({ title: t('userMgmt.userUpdated'), description: t('userMgmt.userUpdatedDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij bijwerken', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.updateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -102,10 +103,10 @@ export function useUserManagement() {
     mutationFn: (userId: string) => callManageUsers('delete', { user_id: userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
-      toast({ title: 'Gebruiker verwijderd', description: 'Het account is verwijderd.' });
+      toast({ title: t('userMgmt.userDeleted'), description: t('userMgmt.userDeletedDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij verwijderen', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.deleteError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -113,10 +114,10 @@ export function useUserManagement() {
     mutationFn: (params: { user_id: string; email: string; username?: string; password: string; login_url: string }) =>
       callManageUsers('send-credentials', params),
     onSuccess: () => {
-      toast({ title: 'E-mail verstuurd', description: 'De inloggegevens zijn per e-mail verstuurd.' });
+      toast({ title: t('userMgmt.emailSent'), description: t('userMgmt.emailSentDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij versturen', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.sendError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -124,10 +125,10 @@ export function useUserManagement() {
     mutationFn: (userId: string) => callManageUsers('reset-password', { user_id: userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
-      toast({ title: 'Wachtwoord gereset', description: 'Een nieuw wachtwoord is per e-mail verstuurd. De gebruiker moet dit wijzigen bij de volgende login.' });
+      toast({ title: t('userMgmt.passwordReset'), description: t('userMgmt.passwordResetDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij wachtwoord reset', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.passwordResetError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -136,10 +137,10 @@ export function useUserManagement() {
       callManageUsers('update-hospitals', params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
-      toast({ title: 'Ziekenhuizen bijgewerkt', description: 'De ziekenhuiskoppelingen zijn opgeslagen.' });
+      toast({ title: t('userMgmt.hospitalsUpdated'), description: t('userMgmt.hospitalsUpdatedDesc') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Fout bij bijwerken', description: error.message, variant: 'destructive' });
+      toast({ title: t('userMgmt.hospitalsUpdateError'), description: error.message, variant: 'destructive' });
     },
   });
 

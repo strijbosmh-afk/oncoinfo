@@ -335,7 +335,7 @@ export default function DrugsPage() {
     const enabledAreas = new Set(disciplines.filter(d => d.is_enabled).map(d => d.disease_area));
     const hasAnyEnabled = areas.some(area => enabledAreas.has(area));
     if (!hasAnyEnabled) {
-      toast.info('Deze functie werd uitgeschakeld voor uw instelling.');
+      toast.info(t('drugs.disciplineDisabled'));
       navigate('/home');
     }
   }, [category, disciplines, navigate]);
@@ -1043,7 +1043,7 @@ export default function DrugsPage() {
                   onClick={() => setViewMode('hormonal')}
                   className="gap-1.5"
                 >
-                  Antihormonaal
+                  {t('drugs.tabAntiHormonal')}
                   <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-0.5">
                     {hormonalDrugs.length}
                   </Badge>
