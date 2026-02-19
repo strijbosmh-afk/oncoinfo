@@ -283,6 +283,23 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
+            <Select value={hospitalId} onValueChange={setHospitalId}>
+              <SelectTrigger className={attempted && !hospitalId ? 'border-destructive' : ''}>
+                <SelectValue placeholder={t('userDialog.hospitalPlaceholder')} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {hospitals.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {attempted && !hospitalId && (
+              <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="user-function">{t('userDialog.function')} *</Label>
             <Select value={userFunction} onValueChange={setUserFunction}>
               <SelectTrigger className={attempted && !userFunction ? 'border-destructive' : ''}>
@@ -353,22 +370,6 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
-            <Select value={hospitalId} onValueChange={setHospitalId}>
-              <SelectTrigger className={attempted && !hospitalId ? 'border-destructive' : ''}>
-                <SelectValue placeholder={t('userDialog.hospitalPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                {hospitals.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {attempted && !hospitalId && (
-              <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
-            )}
-          </div>
 
           {/* Multi-hospital links - super admin only, edit mode */}
           {callerIsSuperAdmin && mode === 'edit' && (
