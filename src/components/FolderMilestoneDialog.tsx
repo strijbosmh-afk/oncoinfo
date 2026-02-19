@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import confetti from "canvas-confetti";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -7,10 +9,37 @@ interface FolderMilestoneDialogProps {
   count: number;
 }
 
+function fireConfetti() {
+  const end = Date.now() + 2500;
+  const colors = ["#f59e0b", "#8b5cf6", "#ec4899", "#10b981", "#3b82f6"];
+
+  (function frame() {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.7 },
+      colors,
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.7 },
+      colors,
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
+
 export function FolderMilestoneDialog({ open, onOpenChange, count }: FolderMilestoneDialogProps) {
+  useEffect(() => {
+    if (open) fireConfetti();
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md text-center">
+      <DialogContent className="sm:max-w-md text-center animate-scale-in">
         <DialogHeader>
           <DialogTitle className="text-3xl text-center">🎉🏆🎊</DialogTitle>
           <DialogDescription className="text-center text-lg font-semibold text-foreground pt-2">
