@@ -956,10 +956,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'hormonal' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('hormonal')}
-                  className="gap-2"
+                  className={`gap-2 ${viewMode === 'hormonal' ? 'bg-[#c2185b] hover:bg-[#ad1457] text-white' : 'text-[#c2185b] border-[#c2185b]/30 hover:bg-[#c2185b]/10'}`}
                 >
                   Hormonen
-                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className={`ml-1 ${viewMode === 'hormonal' ? 'bg-white/20 text-white' : 'text-[#c2185b] border-[#c2185b]/30'}`}>
                     {hormonalDrugs.length}
                   </Badge>
                 </Button>
@@ -969,10 +969,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'cdk46' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('cdk46')}
-                  className="gap-2"
+                  className={`gap-2 ${viewMode === 'cdk46' ? 'bg-[#6b2d5b] hover:bg-[#5a2650] text-white' : 'text-[#6b2d5b] border-[#6b2d5b]/30 hover:bg-[#6b2d5b]/10'}`}
                 >
                   CDK4/6
-                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className={`ml-1 ${viewMode === 'cdk46' ? 'bg-white/20 text-white' : 'text-[#6b2d5b] border-[#6b2d5b]/30'}`}>
                     {cdk46Drugs.length}
                   </Badge>
                 </Button>

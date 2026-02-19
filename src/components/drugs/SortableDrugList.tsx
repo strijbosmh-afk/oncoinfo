@@ -286,9 +286,9 @@ export function SortableDrugList({
       {hormonalDrugs.length > 0 && showHormonal && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-pink-600" />
-            <h2 className="text-xl font-semibold">Hormonen</h2>
-            <Badge className="bg-pink-100 text-pink-800 border-pink-200">
+            <Pill className="h-5 w-5 text-[#c2185b]" />
+            <h2 className="text-xl font-semibold text-[#c2185b]">Hormonen</h2>
+            <Badge className="bg-[#c2185b]/10 text-[#c2185b] border-[#c2185b]/20">
               {hormonalDrugs.length}
             </Badge>
           </div>
@@ -321,9 +321,9 @@ export function SortableDrugList({
       {cdk46Drugs.length > 0 && showCdk46 && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-purple-600" />
-            <h2 className="text-xl font-semibold">CDK4/6</h2>
-            <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+            <Pill className="h-5 w-5 text-[#6b2d5b]" />
+            <h2 className="text-xl font-semibold text-[#6b2d5b]">CDK4/6</h2>
+            <Badge className="bg-[#6b2d5b]/10 text-[#6b2d5b] border-[#6b2d5b]/20">
               {cdk46Drugs.length}
             </Badge>
           </div>
