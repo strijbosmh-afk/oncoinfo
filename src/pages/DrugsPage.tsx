@@ -997,15 +997,15 @@ export default function DrugsPage() {
             </div>
 
             {/* View Mode Toggle - under subtypes */}
-            <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
+            <div className="flex flex-nowrap gap-1 mt-6 pt-4 border-t overflow-x-auto">
               <Button
                 variant={viewMode === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('all')}
-                className="gap-2"
+                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
               >
                 {t('common.all')}
-                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                   {filteredDrugs.length}
                 </Badge>
               </Button>
@@ -1013,11 +1013,11 @@ export default function DrugsPage() {
                 variant={viewMode === 'combinations' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('combinations')}
-                className="gap-2"
+                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
               >
-                <Layers className="h-4 w-4" />
+                <Layers className="h-3 w-3" />
                 {t('drugs.combinations')}
-                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                   {combinationDrugs.length}
                 </Badge>
               </Button>
@@ -1026,10 +1026,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'hormonal' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('hormonal')}
-                  className="gap-2"
+                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
                 >
                   Antihormonaal
-                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                     {hormonalDrugs.length}
                   </Badge>
                 </Button>
@@ -1039,10 +1039,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'cdk46' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('cdk46')}
-                  className="gap-2"
+                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
                 >
                   CDK4/6
-                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                     {cdk46Drugs.length}
                   </Badge>
                 </Button>
@@ -1052,10 +1052,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'lhrh' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('lhrh')}
-                  className="gap-2"
+                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
                 >
                   LHRH
-                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                     {lhrhDrugs.length}
                   </Badge>
                 </Button>
@@ -1065,10 +1065,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'arta' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('arta')}
-                  className="gap-2"
+                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
                 >
                   ARTA
-                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-1">
+                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                     {artaDrugs.length}
                   </Badge>
                 </Button>
@@ -1077,11 +1077,11 @@ export default function DrugsPage() {
                 variant={viewMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('individual')}
-                className="gap-2"
+                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
               >
-                <Pill className="h-4 w-4" />
+                <Pill className="h-3 w-3" />
                 {t('drugs.individualDrugs')}
-                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
                   {individualDrugs.length}
                 </Badge>
               </Button>
