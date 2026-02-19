@@ -30,10 +30,10 @@ interface SortableDrugListProps {
   combinationDrugs: Drug[];
   hormonalDrugs?: Drug[];
   cdk46Drugs?: Drug[];
-  arpiDrugs?: Drug[];
+  artaDrugs?: Drug[];
   lhrhDrugs?: Drug[];
   individualDrugs: Drug[];
-  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arpi' | 'lhrh' | 'individual';
+  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual';
   isFavorite: (id: string) => boolean;
   isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
@@ -47,7 +47,7 @@ export function SortableDrugList({
   combinationDrugs,
   hormonalDrugs = [],
   cdk46Drugs = [],
-  arpiDrugs = [],
+  artaDrugs = [],
   lhrhDrugs = [],
   individualDrugs,
   viewMode,
@@ -67,7 +67,7 @@ export function SortableDrugList({
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
 
   // Collect all translatable strings from drug cards
-  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...arpiDrugs, ...lhrhDrugs, ...individualDrugs];
+  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...artaDrugs, ...lhrhDrugs, ...individualDrugs];
   const allTerms = allDrugs.flatMap(drug => [
     ...(drug.approved_indications || []),
     ...(drug.disease_areas || []),
@@ -187,7 +187,7 @@ export function SortableDrugList({
   const showCombinations = viewMode === 'all' || viewMode === 'combinations';
   const showHormonal = viewMode === 'all' || viewMode === 'hormonal';
   const showCdk46 = viewMode === 'all' || viewMode === 'cdk46';
-  const showArpi = viewMode === 'all' || viewMode === 'arpi';
+  const showArta = viewMode === 'all' || viewMode === 'arta';
   const showLhrh = viewMode === 'all' || viewMode === 'lhrh';
   const showIndividuals = viewMode === 'all' || viewMode === 'individual';
 
@@ -358,18 +358,18 @@ export function SortableDrugList({
         </div>
       )}
 
-      {/* ARPI Drugs Section */}
-      {arpiDrugs.length > 0 && showArpi && (
+      {/* ARTA Drugs Section */}
+      {artaDrugs.length > 0 && showArta && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">ARPI</h2>
+            <h2 className="text-xl font-semibold">ARTA</h2>
             <Badge variant="secondary">
-              {arpiDrugs.length}
+              {artaDrugs.length}
             </Badge>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {arpiDrugs.map((drug) => (
+            {artaDrugs.map((drug) => (
               <SortableDrugCard
                 key={drug.id}
                 drug={drug}
