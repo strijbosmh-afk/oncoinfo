@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
@@ -98,6 +99,8 @@ export default function DrugDetailPage() {
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneCount, setMilestoneCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Hospital staff from database
@@ -553,6 +556,17 @@ export default function DrugDetailPage() {
           entity_name: drug.generic_name,
           hospital_id: profile?.hospital_id || null,
         });
+
+        // Check milestone
+        const { count: folderCount } = await supabase
+          .from('audit_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id)
+          .eq('action', 'print_folder');
+        if (folderCount && folderCount % 100 === 0) {
+          setMilestoneCount(folderCount);
+          setShowMilestone(true);
+        }
       }
 
       toast.success(t('patientFolder.downloaded'));
@@ -1508,6 +1522,7 @@ export default function DrugDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
     </Layout>
   );
 }
