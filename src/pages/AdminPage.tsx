@@ -267,7 +267,7 @@ export default function AdminPage() {
             )}
           </div>
 
-          <div className="hidden sm:block w-px h-8 bg-border self-center" />
+          
 
           <div className="flex flex-wrap gap-2">
             <Button 
