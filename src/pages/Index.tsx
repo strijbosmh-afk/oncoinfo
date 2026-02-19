@@ -161,7 +161,7 @@ const Index = () => {
   const handleDisabledCategoryClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toast.info('Deze functie werd uitgeschakeld voor uw instelling.', { duration: 3000 });
+    toast.info(t('drugs.disciplineDisabled'), { duration: 3000 });
   };
 
   return (

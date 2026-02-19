@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 
 interface Profile {
   id: string;
@@ -221,7 +222,7 @@ export function useAuth() {
       .eq('user_id', user.id);
 
     if (error) {
-      toast({ title: 'Fout', description: 'Kon niet van ziekenhuis wisselen.', variant: 'destructive' });
+      toast({ title: i18n.t('common.error'), description: i18n.t('userMgmt.hospitalSwitchError'), variant: 'destructive' });
       return;
     }
 
