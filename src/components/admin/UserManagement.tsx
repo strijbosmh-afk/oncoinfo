@@ -336,6 +336,19 @@ export function UserManagement() {
                                     {t('userMgmt.you')}
                                   </Badge>
                                 )}
+                                {(user.linked_hospital_ids?.length ?? 0) > 1 && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 flex-shrink-0 gap-0.5">
+                                        <Building2 className="h-2.5 w-2.5" />
+                                        {user.linked_hospital_ids!.length}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Gekoppeld aan {user.linked_hospital_ids!.length} ziekenhuizen
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
                               </div>
                               <p className="text-xs text-muted-foreground truncate">
                                 {user.username && <span className="font-medium">{user.username}</span>}
