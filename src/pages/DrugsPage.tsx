@@ -301,7 +301,7 @@ export default function DrugsPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'individual'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital } = useHospital();
@@ -365,21 +365,6 @@ export default function DrugsPage() {
     if (category === 'breast') {
       result = result.filter(drug => drug.disease_areas.includes('Borstkanker'));
       
-      // Filter by drug class subcategory
-      if (selectedSubcategory) {
-        const breastSubcategoryFilters: Record<string, { classes: string[] }> = {
-          'hormonal': { classes: ['Hormoontherapie'] },
-          'cdk46': { classes: ['CDK4/6i'] },
-          'her2': { classes: ['HER2-remmers', 'ADC'] },
-          'immunotherapy': { classes: ['IO/ICI'] },
-          'chemotherapy': { classes: ['Chemotherapie'] },
-          'parpi': { classes: ['PARPi'] },
-        };
-        const filter = breastSubcategoryFilters[selectedSubcategory];
-        if (filter) {
-          result = result.filter(drug => filter.classes.includes(drug.drug_class));
-        }
-      }
     }
    
    if (category === 'urology') {
@@ -588,12 +573,15 @@ export default function DrugsPage() {
     return result;
   }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
 
-  // Separate combination regimens from individual drugs
-  const { combinationDrugs, individualDrugs } = useMemo(() => {
+  // Separate combination regimens from individual drugs, plus hormonal and CDK4/6
+  const { combinationDrugs, hormonalDrugs, cdk46Drugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
-    const individuals = orderedDrugs.filter(drug => drug.drug_class !== 'Combinatietherapie');
-    return { combinationDrugs: combinations, individualDrugs: individuals };
+    const hormonal = orderedDrugs.filter(drug => drug.drug_class === 'Hormonale Therapie');
+    const cdk46 = orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i');
+    const excludedClasses = ['Combinatietherapie', 'Hormonale Therapie', 'CDK4/6i'];
+    const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
+    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder]);
 
   // Get display drug classes based on category
@@ -854,30 +842,6 @@ export default function DrugsPage() {
                       </CardContent>
                     </Card>
                   ))}
-                  <div className="col-span-full mt-2">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Behandeltype</h3>
-                  </div>
-                  {[
-                    { key: 'hormonal', label: 'Hormoontherapie', description: 'Endocriene therapie' },
-                    { key: 'cdk46', label: 'CDK4/6-remmers', description: 'Cycline-afhankelijke kinase remmers' },
-                    { key: 'her2', label: 'HER2-gericht / ADC', description: 'Anti-HER2 & antibody-drug conjugates' },
-                    { key: 'immunotherapy', label: 'Immunotherapie', description: 'Checkpoint inhibitoren' },
-                    { key: 'chemotherapy', label: 'Chemotherapie', description: 'Cytotoxische therapie' },
-                    { key: 'parpi', label: 'PARP-remmers', description: 'DNA-damage repair remmers' },
-                  ].map((subcat) => (
-                    <Card 
-                      key={subcat.key}
-                      onClick={() => handleSubcategoryClick(subcat.key)}
-                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
-                        selectedSubcategory === subcat.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{subcat.label}</h4>
-                        <p className="text-xs text-muted-foreground">{subcat.description}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </>
               )}
 
@@ -987,6 +951,32 @@ export default function DrugsPage() {
                   {combinationDrugs.length}
                 </Badge>
               </Button>
+              {category === 'breast' && hormonalDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'hormonal' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('hormonal')}
+                  className="gap-2"
+                >
+                  Hormonen
+                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-1">
+                    {hormonalDrugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'breast' && cdk46Drugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'cdk46' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('cdk46')}
+                  className="gap-2"
+                >
+                  CDK4/6
+                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-1">
+                    {cdk46Drugs.length}
+                  </Badge>
+                </Button>
+              )}
               <Button
                 variant={viewMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
@@ -1194,6 +1184,8 @@ export default function DrugsPage() {
               <div className="space-y-4">
                 <SortableDrugList
                   combinationDrugs={combinationDrugs}
+                  hormonalDrugs={hormonalDrugs}
+                  cdk46Drugs={cdk46Drugs}
                   individualDrugs={individualDrugs}
                   viewMode={viewMode}
                   isFavorite={isFavorite}

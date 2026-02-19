@@ -28,8 +28,10 @@ import { useTranslatedStrings } from '@/hooks/useTranslatedStrings';
 
 interface SortableDrugListProps {
   combinationDrugs: Drug[];
+  hormonalDrugs?: Drug[];
+  cdk46Drugs?: Drug[];
   individualDrugs: Drug[];
-  viewMode: 'all' | 'combinations' | 'individual';
+  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'individual';
   isFavorite: (id: string) => boolean;
   isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
@@ -41,6 +43,8 @@ interface SortableDrugListProps {
 
 export function SortableDrugList({
   combinationDrugs,
+  hormonalDrugs = [],
+  cdk46Drugs = [],
   individualDrugs,
   viewMode,
   isFavorite,
@@ -59,7 +63,7 @@ export function SortableDrugList({
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
 
   // Collect all translatable strings from drug cards
-  const allDrugs = [...combinationDrugs, ...individualDrugs];
+  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...individualDrugs];
   const allTerms = allDrugs.flatMap(drug => [
     ...(drug.approved_indications || []),
     ...(drug.disease_areas || []),
@@ -177,6 +181,8 @@ export function SortableDrugList({
   };
 
   const showCombinations = viewMode === 'all' || viewMode === 'combinations';
+  const showHormonal = viewMode === 'all' || viewMode === 'hormonal';
+  const showCdk46 = viewMode === 'all' || viewMode === 'cdk46';
   const showIndividuals = viewMode === 'all' || viewMode === 'individual';
 
   return (
@@ -273,6 +279,76 @@ export function SortableDrugList({
               </div>
             </SortableContext>
           </DndContext>
+        </div>
+      )}
+
+      {/* Hormonal Drugs Section */}
+      {hormonalDrugs.length > 0 && showHormonal && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-pink-600" />
+            <h2 className="text-xl font-semibold">Hormonen</h2>
+            <Badge className="bg-pink-100 text-pink-800 border-pink-200">
+              {hormonalDrugs.length}
+            </Badge>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {hormonalDrugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CDK4/6 Drugs Section */}
+      {cdk46Drugs.length > 0 && showCdk46 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-purple-600" />
+            <h2 className="text-xl font-semibold">CDK4/6</h2>
+            <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+              {cdk46Drugs.length}
+            </Badge>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cdk46Drugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+              />
+            ))}
+          </div>
         </div>
       )}
 
