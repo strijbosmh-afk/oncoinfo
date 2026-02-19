@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 
 interface HospitalDoctor {
@@ -181,6 +182,7 @@ export default function DrugDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
+  const [folderFontSize, setFolderFontSize] = useState(14);
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
   const [hasUnsavedEditorChanges, setHasUnsavedEditorChanges] = useState(false);
   const [selectedPremedicatie, setSelectedPremedicatie] = useState<PremedicatieItem[]>([]);
@@ -331,7 +333,8 @@ export default function DrugDetailPage() {
       return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/${rawUrl}`;
     })(),
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
-    includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
+    includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : [],
+    folderFontSize,
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -694,6 +697,24 @@ export default function DrugDetailPage() {
                       />
                       {t('patientFolder.includeSideEffects')}
                     </label>
+                    <div className="pt-2 border-t space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Tekstgrootte</span>
+                        <span className="text-xs text-muted-foreground font-mono">{folderFontSize}px</span>
+                      </div>
+                      <Slider
+                        value={[folderFontSize]}
+                        onValueChange={([v]) => setFolderFontSize(v)}
+                        min={11}
+                        max={20}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>Klein</span>
+                        <span>Groot</span>
+                      </div>
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
