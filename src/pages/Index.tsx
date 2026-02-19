@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap } from 'lucide-react';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -53,7 +53,7 @@ const Index = () => {
   const { hospital } = useHospital();
   const { user, profile } = useAuth();
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
-  const { mostUsed } = useMostUsed();
+  const { mostUsed, toggleMostUsed } = useMostUsed();
   const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
   const { order: specialtyOrder, saveOrder, loaded: orderLoaded } = useSpecialtyOrder();
 
@@ -176,16 +176,29 @@ const Index = () => {
               </div>
               <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
                 {mostUsedDrugs.map((drug) => (
-                  <Link key={drug.id} to={`/drugs/${drug.id}`}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 gap-1.5 text-xs font-medium border-orange-200 !text-foreground hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                  <div key={drug.id} className="relative group flex items-center">
+                    <Link to={`/drugs/${drug.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 pr-7 text-xs font-medium border-orange-200 !text-foreground hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                      >
+                        <Zap className="h-3 w-3 text-orange-400 fill-orange-400 shrink-0" />
+                        {drug.generic_name}
+                      </Button>
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleMostUsed(drug.id);
+                      }}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-opacity"
+                      aria-label="Verwijderen uit meest gebruikt"
                     >
-                      <Zap className="h-3 w-3 text-orange-400 fill-orange-400 shrink-0" />
-                      {drug.generic_name}
-                    </Button>
-                  </Link>
+                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
