@@ -324,6 +324,17 @@ export function SortableDrugList({
             <Badge variant="secondary">
               {hormonalDrugs.length}
             </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {hormonalDrugs.map((drug) => (
@@ -359,6 +370,17 @@ export function SortableDrugList({
             <Badge variant="secondary">
               {cdk46Drugs.length}
             </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {cdk46Drugs.map((drug) => (
@@ -451,6 +473,17 @@ export function SortableDrugList({
             <Badge variant="secondary">
               {lhrhDrugs.length}
             </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {lhrhDrugs.map((drug) => (
@@ -484,6 +517,17 @@ export function SortableDrugList({
             <Pill className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">{t('drugs.individualDrugs')}</h2>
             <Badge variant="secondary">{localIndividuals.length}</Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <DndContext
             sensors={sensors}
