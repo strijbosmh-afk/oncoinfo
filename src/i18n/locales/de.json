@@ -866,5 +866,10 @@
     "message": "Sie haben gerade Ihre <strong>{{count}}.</strong> Patientenmappe gedruckt!",
     "joke": "Wenn dies ein Videospiel wäre, hätten Sie gerade einen Erfolg freigeschaltet. 🏅",
     "dismiss": "Danke, ich rette weiter die Welt 💪"
+  },
+  "demo": {
+    "title": "Demo-Umgebung",
+    "description": "Dies ist eine Demo-Umgebung. Drucken, PDF-Erstellung und Exportfunktionen sind deaktiviert. Kontaktieren Sie uns für eine Volllizenz.",
+    "dismiss": "Verstanden"
   }
 }

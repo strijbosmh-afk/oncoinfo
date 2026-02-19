@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
+import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
@@ -93,7 +94,8 @@ export default function DrugDetailPage() {
   const { isMostUsed, toggleMostUsed } = useMostUsed();
   const { user, profile, isSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const { hospital } = useHospital();
+  const { hospital, isDemoClinic } = useHospital();
+  const [showDemoPopup, setShowDemoPopup] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
@@ -386,7 +388,7 @@ export default function DrugDetailPage() {
 
   const handlePrint = () => {
     if (!previewHtml) return;
-    
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
     // Create a temporary full-size iframe for printing the complete document
     const printIframe = document.createElement('iframe');
     printIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: 297mm; border: none;';
@@ -414,7 +416,7 @@ export default function DrugDetailPage() {
 
   const handleDownloadPdf = async () => {
     if (!previewHtml || !drug) return;
-    
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
     setIsDownloading(true);
     try {
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
@@ -1523,6 +1525,7 @@ export default function DrugDetailPage() {
         </DialogContent>
       </Dialog>
       <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
+      <DemoRestrictionDialog open={showDemoPopup} onOpenChange={setShowDemoPopup} />
     </Layout>
   );
 }
