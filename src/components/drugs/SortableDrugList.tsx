@@ -394,6 +394,17 @@ export function SortableDrugList({
             <Badge variant="secondary">
               {localArta.length}
             </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <DndContext
             sensors={sensors}
