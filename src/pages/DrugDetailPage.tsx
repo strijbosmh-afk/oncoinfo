@@ -751,7 +751,7 @@ export default function DrugDetailPage() {
                     </label>
                     <div className="pt-2 border-t space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Tekstgrootte</span>
+                        <span className="text-sm">{t('patientFolder.fontSize', 'Tekstgrootte')}</span>
                         <span className="text-xs text-muted-foreground font-mono">{folderFontSize}px</span>
                       </div>
                       <Slider
@@ -769,8 +769,8 @@ export default function DrugDetailPage() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span>Klein</span>
-                        <span>Groot</span>
+                        <span>{t('patientFolder.fontSmall', 'Klein')}</span>
+                        <span>{t('patientFolder.fontLarge', 'Groot')}</span>
                       </div>
                       {showFontSizeSavePrompt && (
                         <Button
@@ -781,10 +781,10 @@ export default function DrugDetailPage() {
                           onClick={() => {
                             localStorage.setItem('folder-font-size-default', String(folderFontSize));
                             setShowFontSizeSavePrompt(false);
-                            toast.success('Tekstgrootte opgeslagen als standaard');
+                            toast.success(t('patientFolder.fontSizeSaved', 'Tekstgrootte opgeslagen als standaard'));
                           }}
                         >
-                          Opslaan als standaard ({folderFontSize}px)
+                          {t('patientFolder.saveAsDefault', 'Opslaan als standaard')} ({folderFontSize}px)
                         </Button>
                       )}
                     </div>
@@ -1364,6 +1364,7 @@ export default function DrugDetailPage() {
                         <div className="flex gap-1.5 sm:gap-2">
                           <Button type="button" variant={selectedLanguage === 'nl' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('nl')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">NL</Button>
                           <Button type="button" variant={selectedLanguage === 'fr' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('fr')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">FR</Button>
+                          <Button type="button" variant={selectedLanguage === 'en' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('en')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">EN</Button>
                           {isDACH && (
                             <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
                           )}
