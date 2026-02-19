@@ -295,9 +295,9 @@ const Index = () => {
 
       <div className="max-w-4xl mx-auto px-4 pb-6">
         <div className="border border-destructive/30 rounded-md bg-destructive/5 p-3 text-center">
-          <p className="text-[11px] text-destructive font-semibold mb-0.5">⚠ {t('disclaimer.title', 'Belangrijke mededeling')}</p>
+          <p className="text-[11px] text-destructive font-semibold mb-0.5">⚠ {t('footer.disclaimerTitle')}</p>
           <p className="text-[10px] text-muted-foreground leading-snug">
-            {t('disclaimer.text', 'Dit platform is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.')}
+            {t('footer.disclaimerFull')}
           </p>
         </div>
         <p className="text-xs text-muted-foreground/60 text-center mt-3">© Michiel Strijbos</p>
