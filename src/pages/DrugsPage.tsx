@@ -577,9 +577,9 @@ export default function DrugsPage() {
   const { combinationDrugs, hormonalDrugs, cdk46Drugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
-    const hormonal = orderedDrugs.filter(drug => drug.drug_class === 'Hormonale Therapie');
+    const hormonal = orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie');
     const cdk46 = orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i');
-    const excludedClasses = ['Combinatietherapie', 'Hormonale Therapie', 'CDK4/6i'];
+    const excludedClasses = ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder]);
@@ -958,7 +958,7 @@ export default function DrugsPage() {
                   onClick={() => setViewMode('hormonal')}
                   className={`gap-2 ${viewMode === 'hormonal' ? 'bg-[#c2185b] hover:bg-[#ad1457] text-white' : 'text-[#c2185b] border-[#c2185b]/30 hover:bg-[#c2185b]/10'}`}
                 >
-                  Hormonen
+                  SERM/AI
                   <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className={`ml-1 ${viewMode === 'hormonal' ? 'bg-white/20 text-white' : 'text-[#c2185b] border-[#c2185b]/30'}`}>
                     {hormonalDrugs.length}
                   </Badge>

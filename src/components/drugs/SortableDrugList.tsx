@@ -287,7 +287,7 @@ export function SortableDrugList({
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Pill className="h-5 w-5 text-[#c2185b]" />
-            <h2 className="text-xl font-semibold text-[#c2185b]">Hormonen</h2>
+            <h2 className="text-xl font-semibold text-[#c2185b]">SERM/AI</h2>
             <Badge className="bg-[#c2185b]/10 text-[#c2185b] border-[#c2185b]/20">
               {hormonalDrugs.length}
             </Badge>
