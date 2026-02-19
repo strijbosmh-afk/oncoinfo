@@ -681,8 +681,9 @@ function generatePatientInfoHtml(
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${footerSize}px; color: #666; text-align: center; }
-    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; }
-    .page-bottom { margin-top: 8px; }
+    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; display: flex; flex-direction: column; min-height: calc(297mm - ${isCompact ? '20mm' : '24mm'}); }
+    .content { flex: 1; }
+    .page-bottom { margin-top: auto; padding-top: 8px; }
     .page-break { page-break-before: always; break-before: page; padding: 12mm; }
     /* Timeline styles */
     .timeline { position: relative; margin: 20px 0; padding-left: 0; }
@@ -792,7 +793,7 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${!isCompact && monitoringText ? `
+    ${monitoringText ? `
     <div class="section">
       <h2>${labels.monitoring}</h2>
       ${formatAsList(monitoringText)}
@@ -800,16 +801,15 @@ function generatePatientInfoHtml(
     ` : ''}
   </div> <!-- end content grid -->
 
-  <div class="contact-section full-width">
-    <h2>${labels.contact}</h2>
-    <div class="contact-grid">
-      <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
-      <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
-    </div>
-  </div>
-
   <div class="page-bottom">
+    <div class="contact-section">
+      <h2>${labels.contact}</h2>
+      <div class="contact-grid">
+        <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+        <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
+      </div>
+    </div>
     <div style="margin-top: 8px; padding: 6px 10px; border: 1.5px solid #cc0000; border-radius: 5px; background: #fff5f5;">
       <p style="font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
       <p style="font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
