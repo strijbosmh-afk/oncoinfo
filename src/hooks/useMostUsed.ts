@@ -36,7 +36,10 @@ export function useMostUsed() {
   const toggleMostUsed = useCallback(async (drugId: string) => {
     if (!user?.id) return;
 
-    if (isMostUsed(drugId)) {
+    // Re-check from current state to avoid duplicates
+    const alreadyExists = mostUsed.some(m => m.drug_id === drugId);
+
+    if (alreadyExists) {
       // Remove
       await supabase
         .from('user_most_used' as any)
@@ -50,15 +53,25 @@ export function useMostUsed() {
         toast.error(`Maximum ${MAX_MOST_USED} meest gebruikte schema's bereikt`);
         return;
       }
+      // Delete any existing row first to prevent DB-level duplicates
+      await supabase
+        .from('user_most_used' as any)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('drug_id', drugId);
       const nextOrder = mostUsed.length > 0 ? Math.max(...mostUsed.map(m => m.display_order)) + 1 : 0;
       const { error } = await supabase
         .from('user_most_used' as any)
         .insert({ user_id: user.id, drug_id: drugId, display_order: nextOrder } as any);
       if (!error) {
-        setMostUsed(prev => [...prev, { drug_id: drugId, display_order: nextOrder }]);
+        setMostUsed(prev => {
+          // Ensure no client-side duplicates
+          const filtered = prev.filter(m => m.drug_id !== drugId);
+          return [...filtered, { drug_id: drugId, display_order: nextOrder }];
+        });
       }
     }
-  }, [user?.id, mostUsed, isMostUsed]);
+  }, [user?.id, mostUsed]);
 
   return {
     mostUsed,
