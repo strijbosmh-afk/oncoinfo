@@ -15,6 +15,7 @@ interface Profile {
   password_changed: boolean;
   hospital_id: string | null;
   dedicated_nurse_id: string | null;
+  phone_number: string | null;
 }
 
 export interface UserPermissions {

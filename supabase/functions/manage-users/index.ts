@@ -252,6 +252,7 @@ Deno.serve(async (req) => {
               is_super_admin: isSA,
               dedicated_nurse_id: nurseId,
               dedicated_nurse_name: nurseProfile ? `${nurseProfile.first_name || ''} ${nurseProfile.last_name || ''}`.trim() : null,
+              phone_number: profile?.phone_number || null,
             };
           })
           // Hide super_admin from non-super-admin callers
@@ -266,7 +267,7 @@ Deno.serve(async (req) => {
         const { email, username, password, role, send_email, login_url,
           first_name, last_name, function: userFunction, discipline, hospital_id,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
-          dedicated_nurse_id } = params;
+          dedicated_nurse_id, phone_number } = params;
 
         if (!email || !username || !password || !role) {
           return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
@@ -302,6 +303,7 @@ Deno.serve(async (req) => {
         }
         profileData.hospital_id = targetHospitalId;
         if (dedicated_nurse_id) profileData.dedicated_nurse_id = dedicated_nurse_id;
+        if (phone_number !== undefined) profileData.phone_number = phone_number;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
         const assignedRole = role === 'super_admin' || role === 'admin' || role === 'apotheker' ? role : 'viewer';
@@ -375,7 +377,7 @@ Deno.serve(async (req) => {
         const { user_id, email, username, password, role, hospital_id,
           first_name, last_name, function: userFunction, discipline,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
-          dedicated_nurse_id } = params;
+          dedicated_nurse_id, phone_number } = params;
 
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
@@ -423,6 +425,7 @@ Deno.serve(async (req) => {
           profileUpdate.hospital_id = hospital_id;
         }
         if (dedicated_nurse_id !== undefined) profileUpdate.dedicated_nurse_id = dedicated_nurse_id || null;
+        if (phone_number !== undefined) profileUpdate.phone_number = phone_number || null;
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);

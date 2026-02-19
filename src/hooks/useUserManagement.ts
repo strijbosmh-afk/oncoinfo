@@ -22,6 +22,7 @@ export interface ManagedUser {
   can_modify_treatments: boolean;
   dedicated_nurse_id: string | null;
   dedicated_nurse_name: string | null;
+  phone_number: string | null;
 }
 
 async function callManageUsers(action: string, params: Record<string, unknown> = {}) {

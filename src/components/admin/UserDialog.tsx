@@ -34,6 +34,7 @@ interface UserDialogProps {
     can_delete_treatments?: boolean;
     can_modify_treatments?: boolean;
     dedicated_nurse_id?: string | null;
+    phone_number?: string | null;
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   isLoading: boolean;
@@ -88,6 +89,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [attempted, setAttempted] = useState(false);
   const [dedicatedNurseId, setDedicatedNurseId] = useState('');
   const [discipline, setDiscipline] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
   const { toast } = useToast();
 
@@ -131,6 +133,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanDelete(user.can_delete_treatments ?? false);
         setCanModify(user.can_modify_treatments ?? false);
         setDedicatedNurseId(user.dedicated_nurse_id || '');
+        setPhoneNumber(user.phone_number || '');
       } else {
         setEmail('');
         setUsername('');
@@ -147,6 +150,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanDelete(false);
         setCanModify(false);
         setDedicatedNurseId('');
+        setPhoneNumber('');
       }
       setAttempted(false);
     }
@@ -193,6 +197,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,
         dedicated_nurse_id: userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null,
+        phone_number: (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null,
       });
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
@@ -209,6 +214,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.can_modify_treatments = canModify;
       changes.hospital_id = hospitalId;
       changes.dedicated_nurse_id = userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null;
+      changes.phone_number = (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null;
 
       onSubmit(changes);
     }
@@ -311,6 +317,20 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
               {availableNurses.length === 0 && hospitalId && (
                 <p className="text-xs text-muted-foreground">{t('userDialog.noNursesAvailable', 'Geen verpleegkundigen gevonden in dit ziekenhuis')}</p>
               )}
+            </div>
+           )}
+
+          {(userFunction === 'verpleegkundige' || userFunction === 'apotheek') && (
+            <div className="space-y-2">
+              <Label htmlFor="user-phone">{t('userDialog.phoneNumber', 'Vast telefoonnummer')}</Label>
+              <Input
+                id="user-phone"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder={t('userDialog.phoneNumberPlaceholder', 'bv. 016 80 90 11')}
+              />
+              <p className="text-xs text-muted-foreground">{t('userDialog.phoneNumberHelp', 'Dit nummer wordt automatisch ingevuld op de patiëntenfolder')}</p>
             </div>
           )}
 
