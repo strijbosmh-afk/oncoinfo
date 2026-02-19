@@ -454,7 +454,7 @@ export function generateStaticPreviewHtml(
           ${nursePhone ? `<p style="font-size: ${contactFontSize - 1}px; color: #555;">📞 ${nursePhone}</p>` : ''}
         </div>
         <div>
-          <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+          <p><strong>${labels.phone}:</strong> ${phoneNumber || ''}</p>
         </div>
       </div>
     </div>
