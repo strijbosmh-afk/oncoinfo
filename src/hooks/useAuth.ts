@@ -82,16 +82,18 @@ export function useAuth() {
     };
   }, []);
 
-  // Auto-logoff after 30 minutes of inactivity
+  // Auto-logoff after 15 minutes of inactivity
   useEffect(() => {
     if (!user) return;
 
-    const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+    const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const resetTimer = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
+        // Set flag so login page can show the notice
+        sessionStorage.setItem('logged_out_inactivity', 'true');
         signOut();
       }, INACTIVITY_TIMEOUT);
     };

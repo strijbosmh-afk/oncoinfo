@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertTriangle, LogIn } from 'lucide-react';
+import { Loader2, AlertTriangle, LogIn, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const languageFlags: { code: string; label: string; flag: string }[] = [
@@ -23,9 +23,18 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loggedOutByInactivity, setLoggedOutByInactivity] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    const flag = sessionStorage.getItem('logged_out_inactivity');
+    if (flag) {
+      setLoggedOutByInactivity(true);
+      sessionStorage.removeItem('logged_out_inactivity');
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -113,6 +122,16 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {loggedOutByInactivity && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
+                <div className="flex items-start gap-2">
+                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    U bent automatisch uitgelogd wegens inactiviteit. Log opnieuw in om verder te gaan.
+                  </p>
+                </div>
+              </div>
+            )}
             <form onSubmit={handleSignIn} className="space-y-4">
               <div className="space-y-3">
                 <div className="space-y-2">
