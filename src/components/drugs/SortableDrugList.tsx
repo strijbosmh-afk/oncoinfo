@@ -30,8 +30,10 @@ interface SortableDrugListProps {
   combinationDrugs: Drug[];
   hormonalDrugs?: Drug[];
   cdk46Drugs?: Drug[];
+  arpiDrugs?: Drug[];
+  lhrhDrugs?: Drug[];
   individualDrugs: Drug[];
-  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'individual';
+  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arpi' | 'lhrh' | 'individual';
   isFavorite: (id: string) => boolean;
   isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
@@ -45,6 +47,8 @@ export function SortableDrugList({
   combinationDrugs,
   hormonalDrugs = [],
   cdk46Drugs = [],
+  arpiDrugs = [],
+  lhrhDrugs = [],
   individualDrugs,
   viewMode,
   isFavorite,
@@ -63,7 +67,7 @@ export function SortableDrugList({
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
 
   // Collect all translatable strings from drug cards
-  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...individualDrugs];
+  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...arpiDrugs, ...lhrhDrugs, ...individualDrugs];
   const allTerms = allDrugs.flatMap(drug => [
     ...(drug.approved_indications || []),
     ...(drug.disease_areas || []),
@@ -183,6 +187,8 @@ export function SortableDrugList({
   const showCombinations = viewMode === 'all' || viewMode === 'combinations';
   const showHormonal = viewMode === 'all' || viewMode === 'hormonal';
   const showCdk46 = viewMode === 'all' || viewMode === 'cdk46';
+  const showArpi = viewMode === 'all' || viewMode === 'arpi';
+  const showLhrh = viewMode === 'all' || viewMode === 'lhrh';
   const showIndividuals = viewMode === 'all' || viewMode === 'individual';
 
   return (
@@ -329,6 +335,76 @@ export function SortableDrugList({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {cdk46Drugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ARPI Drugs Section */}
+      {arpiDrugs.length > 0 && showArpi && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">ARPI</h2>
+            <Badge variant="secondary">
+              {arpiDrugs.length}
+            </Badge>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {arpiDrugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LHRH Drugs Section */}
+      {lhrhDrugs.length > 0 && showLhrh && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">LHRH</h2>
+            <Badge variant="secondary">
+              {lhrhDrugs.length}
+            </Badge>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {lhrhDrugs.map((drug) => (
               <SortableDrugCard
                 key={drug.id}
                 drug={drug}
