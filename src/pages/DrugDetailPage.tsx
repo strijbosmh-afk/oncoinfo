@@ -189,8 +189,8 @@ export default function DrugDetailPage() {
     return saved ? parseInt(saved, 10) : 14;
   });
   const [showFontSizeSavePrompt, setShowFontSizeSavePrompt] = useState(false);
-  const [physicianPhone, setPhysicianPhone] = useState('');
   const [nursePhone, setNursePhone] = useState('');
+  const [phoneMode, setPhoneMode] = useState<'nurse' | 'custom'>('nurse');
   const [showPhoneWarning, setShowPhoneWarning] = useState(false);
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
   const [hasUnsavedEditorChanges, setHasUnsavedEditorChanges] = useState(false);
@@ -274,7 +274,7 @@ export default function DrugDetailPage() {
       if (!selectedPhysician) {
         setSelectedPhysician(fullName);
         // Set doctor's phone from profile
-        if (profile.phone_number) setPhysicianPhone(profile.phone_number);
+        
       }
       // If doctor has a dedicated nurse, pre-select that nurse
       if (!nurseSelection && !isNurseCustom && profile.dedicated_nurse_id) {
@@ -332,8 +332,10 @@ export default function DrugDetailPage() {
 
   const effectiveIncludeDosing = folderMode === 'uitgebreid' ? true : includeDosing;
 
+  const effectivePhone = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
+
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
-    drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
+    drug, selectedPhysician, currentNurseName, selectedLanguage, effectivePhone,
     effectiveIncludeDosing, includeSideEffects, folderMode,
     hospital?.name || 'OncoInfo',
     (() => {
@@ -346,7 +348,7 @@ export default function DrugDetailPage() {
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
     includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : [],
     folderFontSize,
-    physicianPhone,
+    '',
     nursePhone,
   ) : '';
 
@@ -360,7 +362,8 @@ export default function DrugDetailPage() {
     const phone = customPhone.trim();
     
     // Check if phone number is missing
-    if (!phone && !physicianPhone && !nursePhone) {
+    const effectivePhoneCheck = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
+    if (!effectivePhoneCheck) {
       setShowPhoneWarning(true);
       return;
     }
@@ -1144,8 +1147,6 @@ export default function DrugDetailPage() {
                         return (
                           <Select value={selectedPhysician} onValueChange={(val) => {
                             setSelectedPhysician(val);
-                            const doc = hospitalDoctors.find(d => d.name === val);
-                            setPhysicianPhone(doc?.phone_number || '');
                           }}>
                             <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                               <SelectValue placeholder={t('patientFolder.select')} />
@@ -1205,7 +1206,7 @@ export default function DrugDetailPage() {
                       <Input
                         placeholder="Telefoonnummer verpleegkundige"
                         value={nursePhone}
-                        onChange={(e) => setNursePhone(e.target.value)}
+                        onChange={(e) => { setNursePhone(e.target.value); }}
                         className="h-7 sm:h-8 text-xs sm:text-sm"
                       />
                     </div>
@@ -1293,13 +1294,36 @@ export default function DrugDetailPage() {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">Algemeen tel.</Label>
-                        <Input
-                          placeholder="Algemeen telefoonnummer"
-                          value={customPhone}
-                          onChange={(e) => setCustomPhone(e.target.value)}
-                          className="h-7 sm:h-9 text-xs sm:text-sm"
-                        />
+                        <Label className="text-xs sm:text-sm font-medium">Telefoonnummer op folder</Label>
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'nurse' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('nurse')}
+                            className="flex-1 h-7 sm:h-8 text-xs"
+                            size="sm"
+                          >
+                            Verpleging {nursePhone ? `(${nursePhone})` : ''}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'custom' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('custom')}
+                            className="flex-1 h-7 sm:h-8 text-xs"
+                            size="sm"
+                          >
+                            Ander
+                          </Button>
+                        </div>
+                        {phoneMode === 'custom' && (
+                          <Input
+                            placeholder="Telefoonnummer"
+                            value={customPhone}
+                            onChange={(e) => setCustomPhone(e.target.value)}
+                            className="h-7 sm:h-9 text-xs sm:text-sm"
+                            autoFocus
+                          />
+                        )}
                       </div>
                     </div>
 
