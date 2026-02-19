@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import confetti from "canvas-confetti";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ function fireConfetti() {
 }
 
 export function FolderMilestoneDialog({ open, onOpenChange, count }: FolderMilestoneDialogProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (open) fireConfetti();
   }, [open]);
@@ -43,22 +46,23 @@ export function FolderMilestoneDialog({ open, onOpenChange, count }: FolderMiles
         <DialogHeader>
           <DialogTitle className="text-3xl text-center">🎉🏆🎊</DialogTitle>
           <DialogDescription className="text-center text-lg font-semibold text-foreground pt-2">
-            Folder #{count}!
+            {t('milestone.title', { count })}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
           <p className="text-2xl font-bold text-primary">
-            Gefeliciteerd! 🥳
+            {t('milestone.congrats')}
           </p>
-          <p className="text-muted-foreground">
-            Je hebt zojuist je <span className="font-bold text-foreground">{count}e</span> patiëntenfolder afgedrukt!
-          </p>
+          <p
+            className="text-muted-foreground"
+            dangerouslySetInnerHTML={{ __html: t('milestone.message', { count }) }}
+          />
           <p className="text-sm text-muted-foreground italic">
-            Als dit een videogame was, had je nu een achievement ontgrendeld. 🏅
+            {t('milestone.joke')}
           </p>
         </div>
         <Button onClick={() => onOpenChange(false)} className="w-full">
-          Bedankt, ik ga door met redden van de wereld 💪
+          {t('milestone.dismiss')}
         </Button>
       </DialogContent>
     </Dialog>

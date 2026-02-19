@@ -859,5 +859,12 @@
     "descriptionOne": "1 nouveau traitement a été ajouté depuis votre dernière visite.",
     "descriptionMultiple": "{{count}} nouveaux traitements ont été ajoutés depuis votre dernière visite.",
     "understood": "Compris"
+  },
+  "milestone": {
+    "title": "Dossier #{{count}} !",
+    "congrats": "Félicitations ! 🥳",
+    "message": "Vous venez d'imprimer votre <strong>{{count}}e</strong> dossier patient !",
+    "joke": "Si c'était un jeu vidéo, vous auriez débloqué un succès. 🏅",
+    "dismiss": "Merci, je retourne sauver le monde 💪"
   }
 }
