@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     // Look up user by username, optionally filtering by hospital
     let query = supabaseAdmin
       .from('profiles')
-      .select('email, hospital_id')
+      .select('email, hospital_id, user_id')
       .eq('username', username.trim());
 
     if (hospital_id) {
@@ -95,6 +95,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch all hospitals this user is linked to
+    const { data: userHospitals } = await supabaseAdmin
+      .from('user_hospitals')
+      .select('hospital_id, hospitals:hospital_id(id, name, slug, logo_url, is_active)')
+      .eq('user_id', signInData.user.id);
+
+    const hospitals = (userHospitals || [])
+      .map((uh: any) => uh.hospitals)
+      .filter((h: any) => h && h.is_active)
+      .map((h: any) => ({ id: h.id, name: h.name, slug: h.slug, logo_url: h.logo_url }));
+
     // Log login to audit_log with hospital_id
     try {
       await supabaseAdmin.from('audit_log').insert({
@@ -110,7 +121,7 @@ Deno.serve(async (req) => {
       console.error('Audit log error:', logErr);
     }
 
-    // Return session tokens to the client
+    // Return session tokens and hospitals to the client
     return new Response(
       JSON.stringify({
         session: {
@@ -119,6 +130,7 @@ Deno.serve(async (req) => {
           expires_in: signInData.session.expires_in,
           token_type: signInData.session.token_type,
         },
+        hospitals,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

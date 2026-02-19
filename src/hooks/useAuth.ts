@@ -26,6 +26,13 @@ export interface UserPermissions {
   can_modify_treatments: boolean;
 }
 
+export interface UserHospital {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -34,6 +41,7 @@ export function useAuth() {
   const [isApotheker, setIsApotheker] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [userHospitals, setUserHospitals] = useState<UserHospital[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -73,7 +81,7 @@ export function useAuth() {
 
     if (error) {
       console.error('Error checking roles:', error);
-      return { admin: false, apotheker: false };
+      return { admin: false, apotheker: false, superAdmin: false };
     }
     const roles = (data || []).map((r: any) => r.role);
     return {
@@ -81,6 +89,31 @@ export function useAuth() {
       apotheker: roles.includes('apotheker'),
       superAdmin: roles.includes('super_admin'),
     };
+  }, []);
+
+  const fetchUserHospitals = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('user_hospitals')
+      .select('hospital_id')
+      .eq('user_id', userId);
+
+    if (error || !data) {
+      console.error('Error fetching user hospitals:', error);
+      return [];
+    }
+
+    // Fetch hospital details for each linked hospital
+    const hospitalIds = data.map((uh: any) => uh.hospital_id);
+    if (hospitalIds.length === 0) return [];
+
+    const { data: hospitals } = await supabase
+      .from('hospitals_public')
+      .select('id, name, slug, logo_url, is_active')
+      .in('id', hospitalIds);
+
+    return (hospitals || [])
+      .filter((h: any) => h.is_active)
+      .map((h: any) => ({ id: h.id!, name: h.name!, slug: h.slug!, logo_url: h.logo_url }));
   }, []);
 
   // Auto-logoff after 15 minutes of inactivity
@@ -130,12 +163,14 @@ export function useAuth() {
               setIsSuperAdmin(r.superAdmin);
             }
           });
+          fetchUserHospitals(session.user.id).then(h => { if (isMounted) setUserHospitals(h); });
         } else {
           setProfile(null);
           setPermissions(null);
           setIsAdmin(false);
           setIsApotheker(false);
           setIsSuperAdmin(false);
+          setUserHospitals([]);
         }
       }
     );
@@ -150,10 +185,11 @@ export function useAuth() {
         setUser(session?.user ?? null);
 
         if (session?.user) {
-          const [p, r, perm] = await Promise.all([
+          const [p, r, perm, hospitals] = await Promise.all([
             fetchProfile(session.user.id),
             checkRoles(session.user.id),
             fetchPermissions(session.user.id),
+            fetchUserHospitals(session.user.id),
           ]);
           if (isMounted) {
             setProfile(p);
@@ -161,6 +197,7 @@ export function useAuth() {
             setIsApotheker(r.apotheker);
             setIsSuperAdmin(r.superAdmin);
             setPermissions(perm);
+            setUserHospitals(hospitals);
           }
         }
       } finally {
@@ -174,7 +211,23 @@ export function useAuth() {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchProfile, checkRoles, fetchPermissions]);
+  }, [fetchProfile, checkRoles, fetchPermissions, fetchUserHospitals]);
+
+  const switchHospital = useCallback(async (hospitalId: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ hospital_id: hospitalId })
+      .eq('user_id', user.id);
+
+    if (error) {
+      toast({ title: 'Fout', description: 'Kon niet van ziekenhuis wisselen.', variant: 'destructive' });
+      return;
+    }
+
+    // Reload to refresh all hospital-dependent data
+    window.location.reload();
+  }, [user, toast]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -247,6 +300,8 @@ export function useAuth() {
     isAdmin,
     isApotheker,
     isSuperAdmin,
+    userHospitals,
+    switchHospital,
     signIn,
     signUp,
     signOut

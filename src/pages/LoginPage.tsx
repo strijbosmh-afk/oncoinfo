@@ -9,8 +9,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
-import { Loader2, AlertTriangle, LogIn, Clock, KeyRound } from 'lucide-react';
+import { Loader2, AlertTriangle, LogIn, Clock, KeyRound, Building2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+interface HospitalOption {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+}
 
 const languageFlags: { code: string; label: string; flag: string }[] = [
   { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
@@ -28,6 +35,10 @@ export default function LoginPage() {
   const [resetUsername, setResetUsername] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  // Multi-hospital selection state
+  const [pendingSession, setPendingSession] = useState<{ access_token: string; refresh_token: string } | null>(null);
+  const [hospitalOptions, setHospitalOptions] = useState<HospitalOption[]>([]);
+  const [selectingHospital, setSelectingHospital] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -67,7 +78,17 @@ export default function LoginPage() {
         return;
       }
 
-      const { session } = data;
+      const { session, hospitals } = data;
+
+      // If user has multiple hospitals, show selection screen before setting session
+      if (hospitals && hospitals.length > 1) {
+        setPendingSession({ access_token: session.access_token, refresh_token: session.refresh_token });
+        setHospitalOptions(hospitals);
+        setSelectingHospital(true);
+        return;
+      }
+
+      // Single hospital or no hospitals — proceed normally
       if (session?.access_token && session?.refresh_token) {
         await supabase.auth.setSession({
           access_token: session.access_token,
@@ -87,7 +108,91 @@ export default function LoginPage() {
     }
   };
 
+  const handleSelectHospital = async (hospitalId: string) => {
+    if (!pendingSession) return;
+    setIsLoading(true);
+    try {
+      // Set the session first
+      await supabase.auth.setSession({
+        access_token: pendingSession.access_token,
+        refresh_token: pendingSession.refresh_token,
+      });
+
+      // Update profile's active hospital_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ hospital_id: hospitalId })
+          .eq('user_id', user.id);
+      }
+
+      setSelectingHospital(false);
+      setPendingSession(null);
+      setHospitalOptions([]);
+      navigate('/home');
+    } catch {
+      toast({
+        title: t('common.error'),
+        description: t('auth.unexpectedError'),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isFormComplete = username.trim() && password.trim();
+
+  // Hospital selection screen
+  if (selectingHospital && hospitalOptions.length > 1) {
+    return (
+      <Layout>
+        <div className="container flex items-center justify-center py-12 sm:py-16 min-h-[calc(100vh-200px)]">
+          <Card className="w-full max-w-md shadow-lg">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Kies uw ziekenhuis</CardTitle>
+              <CardDescription>
+                U bent gekoppeld aan meerdere ziekenhuizen. Kies waar u wilt werken.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {hospitalOptions.map((h) => (
+                <Button
+                  key={h.id}
+                  variant="outline"
+                  className="w-full h-14 justify-start gap-3 text-left"
+                  onClick={() => handleSelectHospital(h.id)}
+                  disabled={isLoading}
+                >
+                  {h.logo_url ? (
+                    <img src={h.logo_url} alt={h.name} className="h-8 w-8 object-contain rounded" />
+                  ) : (
+                    <Building2 className="h-5 w-5 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="font-medium truncate">{h.name}</span>
+                </Button>
+              ))}
+              <Button
+                variant="ghost"
+                className="w-full mt-2 text-muted-foreground"
+                onClick={() => {
+                  setSelectingHospital(false);
+                  setPendingSession(null);
+                  setHospitalOptions([]);
+                }}
+              >
+                Annuleren
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
