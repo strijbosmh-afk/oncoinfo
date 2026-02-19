@@ -62,6 +62,7 @@ export function SortableDrugList({
   const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [localCombinations, setLocalCombinations] = useState<Drug[]>(combinationDrugs);
+  const [localArta, setLocalArta] = useState<Drug[]>(artaDrugs);
   const [localIndividuals, setLocalIndividuals] = useState<Drug[]>(individualDrugs);
   const queryClient = useQueryClient();
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
@@ -77,8 +78,9 @@ export function SortableDrugList({
   const { translate: tCard } = useTranslatedStrings(allTerms);
 
   // Sync local state when props change (but not during edit mode)
-  if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs)) {
+  if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs || localArta !== artaDrugs)) {
     setLocalCombinations(combinationDrugs);
+    setLocalArta(artaDrugs);
     setLocalIndividuals(individualDrugs);
   }
 
@@ -93,12 +95,18 @@ export function SortableDrugList({
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent, type: 'combinations' | 'individuals') => {
+  const handleDragEnd = (event: DragEndEvent, type: 'combinations' | 'individuals' | 'arta') => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       if (type === 'combinations') {
         setLocalCombinations((items) => {
+          const oldIndex = items.findIndex((item) => item.id === active.id);
+          const newIndex = items.findIndex((item) => item.id === over.id);
+          return arrayMove(items, oldIndex, newIndex);
+        });
+      } else if (type === 'arta') {
+        setLocalArta((items) => {
           const oldIndex = items.findIndex((item) => item.id === active.id);
           const newIndex = items.findIndex((item) => item.id === over.id);
           return arrayMove(items, oldIndex, newIndex);
@@ -123,6 +131,10 @@ export function SortableDrugList({
         localCombinations.forEach((drug, index) => {
           updates.push({ id: drug.id, display_order: index });
         });
+
+        localArta.forEach((drug, index) => {
+          updates.push({ id: drug.id, display_order: 500 + index });
+        });
         
         localIndividuals.forEach((drug, index) => {
           updates.push({ id: drug.id, display_order: 1000 + index });
@@ -144,6 +156,10 @@ export function SortableDrugList({
         
         localCombinations.forEach((drug, index) => {
           orders.push({ drug_id: drug.id, display_order: index });
+        });
+
+        localArta.forEach((drug, index) => {
+          orders.push({ drug_id: drug.id, display_order: 500 + index });
         });
         
         localIndividuals.forEach((drug, index) => {
@@ -359,37 +375,48 @@ export function SortableDrugList({
       )}
 
       {/* ARTA Drugs Section */}
-      {artaDrugs.length > 0 && showArta && (
+      {localArta.length > 0 && showArta && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
             <Pill className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">ARTA</h2>
             <Badge variant="secondary">
-              {artaDrugs.length}
+              {localArta.length}
             </Badge>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {artaDrugs.map((drug) => (
-              <SortableDrugCard
-                key={drug.id}
-                drug={drug}
-                isFavorite={isFavorite(drug.id)}
-                isMostUsed={isMostUsed(drug.id)}
-                onToggleFavorite={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleFavorite(drug.id);
-                }}
-                onToggleMostUsed={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleMostUsed(drug.id);
-                }}
-                isEditMode={isEditMode}
-                translateTerm={tCard}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(e) => handleDragEnd(e, 'arta')}
+          >
+            <SortableContext
+              items={localArta.map((d) => d.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {localArta.map((drug) => (
+                  <SortableDrugCard
+                    key={drug.id}
+                    drug={drug}
+                    isFavorite={isFavorite(drug.id)}
+                    isMostUsed={isMostUsed(drug.id)}
+                    onToggleFavorite={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFavorite(drug.id);
+                    }}
+                    onToggleMostUsed={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMostUsed(drug.id);
+                    }}
+                    isEditMode={isEditMode}
+                    translateTerm={tCard}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 
