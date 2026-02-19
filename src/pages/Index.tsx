@@ -12,6 +12,8 @@ import { useHospital } from '@/contexts/HospitalContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSpecialtyOrder } from '@/hooks/useSpecialtyOrder';
+import { useNewDrugsNotification } from '@/hooks/useNewDrugsNotification';
+import { NewDrugsDialog } from '@/components/home/NewDrugsDialog';
 import { SortableSpecialtyCard } from '@/components/home/SortableSpecialtyCard';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
@@ -52,6 +54,7 @@ const Index = () => {
   const { t } = useTranslation();
   const { hospital } = useHospital();
   const { user, profile } = useAuth();
+  const { newDrugs, showPopup, dismissPopup } = useNewDrugsNotification(user?.id);
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   const { mostUsed, toggleMostUsed } = useMostUsed();
   const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
@@ -163,6 +166,7 @@ const Index = () => {
 
   return (
     <Layout>
+      <NewDrugsDialog open={showPopup} onClose={dismissPopup} drugs={newDrugs} />
       <section className="flex-1 flex items-center py-6 md:py-10">
         <div className="container">
           {/* Quick access: most used drugs — at the very top for power users */}

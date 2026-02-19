@@ -684,6 +684,7 @@ export type Database = {
           function: string | null
           hospital_id: string | null
           id: string
+          last_login_at: string | null
           last_name: string | null
           password_changed: boolean
           phone_number: string | null
@@ -701,6 +702,7 @@ export type Database = {
           function?: string | null
           hospital_id?: string | null
           id?: string
+          last_login_at?: string | null
           last_name?: string | null
           password_changed?: boolean
           phone_number?: string | null
@@ -718,6 +720,7 @@ export type Database = {
           function?: string | null
           hospital_id?: string | null
           id?: string
+          last_login_at?: string | null
           last_name?: string | null
           password_changed?: boolean
           phone_number?: string | null
