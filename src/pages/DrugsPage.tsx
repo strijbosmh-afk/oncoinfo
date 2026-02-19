@@ -364,6 +364,22 @@ export default function DrugsPage() {
     // Filter by category disease area
     if (category === 'breast') {
       result = result.filter(drug => drug.disease_areas.includes('Borstkanker'));
+      
+      // Filter by drug class subcategory
+      if (selectedSubcategory) {
+        const breastSubcategoryFilters: Record<string, { classes: string[] }> = {
+          'hormonal': { classes: ['Hormoontherapie'] },
+          'cdk46': { classes: ['CDK4/6i'] },
+          'her2': { classes: ['HER2-remmers', 'ADC'] },
+          'immunotherapy': { classes: ['IO/ICI'] },
+          'chemotherapy': { classes: ['Chemotherapie'] },
+          'parpi': { classes: ['PARPi'] },
+        };
+        const filter = breastSubcategoryFilters[selectedSubcategory];
+        if (filter) {
+          result = result.filter(drug => filter.classes.includes(drug.drug_class));
+        }
+      }
     }
    
    if (category === 'urology') {
@@ -835,6 +851,30 @@ export default function DrugsPage() {
                       <CardContent className="p-4">
                         <h4 className="font-medium">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
                         <p className="text-xs text-muted-foreground">{t(`medicalTerms.stage_${stage.key}_desc`, stage.description)}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <div className="col-span-full mt-2">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Behandeltype</h3>
+                  </div>
+                  {[
+                    { key: 'hormonal', label: 'Hormoontherapie', description: 'Endocriene therapie' },
+                    { key: 'cdk46', label: 'CDK4/6-remmers', description: 'Cycline-afhankelijke kinase remmers' },
+                    { key: 'her2', label: 'HER2-gericht / ADC', description: 'Anti-HER2 & antibody-drug conjugates' },
+                    { key: 'immunotherapy', label: 'Immunotherapie', description: 'Checkpoint inhibitoren' },
+                    { key: 'chemotherapy', label: 'Chemotherapie', description: 'Cytotoxische therapie' },
+                    { key: 'parpi', label: 'PARP-remmers', description: 'DNA-damage repair remmers' },
+                  ].map((subcat) => (
+                    <Card 
+                      key={subcat.key}
+                      onClick={() => handleSubcategoryClick(subcat.key)}
+                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
+                        selectedSubcategory === subcat.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{subcat.label}</h4>
+                        <p className="text-xs text-muted-foreground">{subcat.description}</p>
                       </CardContent>
                     </Card>
                   ))}
