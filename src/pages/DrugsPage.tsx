@@ -818,12 +818,12 @@ export default function DrugsPage() {
                     <Card 
                       key={subtype.key}
                       onClick={() => handleSubtypeClick(subtype.key)}
-                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
-                        selectedSubtype === subtype.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
+                        <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
                         <p className="text-xs text-muted-foreground">{t(`medicalTerms.sub_${subtype.key}_desc`, subtype.description)}</p>
                       </CardContent>
                     </Card>
@@ -835,8 +835,8 @@ export default function DrugsPage() {
                     <Card 
                       key={stage.key}
                       onClick={() => handleStageClick(stage.key)}
-                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
-                        selectedStage === stage.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -855,12 +855,12 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-blue-700 dark:text-blue-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -875,12 +875,12 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-purple-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-purple-700 dark:text-purple-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -895,12 +895,72 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-sky-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-sky-700 dark:text-sky-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Digestive disease areas */}
+              {category === 'digestive' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Skin disease areas */}
+              {category === 'skin' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Head & Neck disease areas */}
+              {category === 'head_neck' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -915,12 +975,12 @@ export default function DrugsPage() {
                     <Card 
                       key={subcat.key}
                       onClick={() => handleSubcategoryClick(subcat.key)}
-                      className={`cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all ${
-                        selectedSubcategory === subcat.key ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedSubcategory === subcat.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-emerald-700 dark:text-emerald-400">{t(`medicalTerms.sc_${subcat.key}`, subcat.label)}</h4>
+                        <h4 className="font-medium text-primary">{t(`medicalTerms.sc_${subcat.key}`, subcat.label)}</h4>
                         <p className="text-xs text-muted-foreground">{t(`medicalTerms.sc_${subcat.key}_desc`, subcat.description)}</p>
                       </CardContent>
                     </Card>
