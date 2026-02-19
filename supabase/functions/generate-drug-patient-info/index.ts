@@ -20,14 +20,15 @@ async function humanizeSideEffects(
   const lang = langMap[language] || 'Dutch';
 
   const prompt = `You are writing patient-friendly information about the medication "${drugName}" in ${lang}.
+IMPORTANT: Keep ALL text very concise to fit on a single A4 page alongside other content.
 
 Given these side effects, do THREE things:
 
-1. "common_friendly": Rewrite the common side effects as a short, reassuring paragraph in ${lang}. Don't just list them — describe what the patient might experience in everyday language. Example style: "U kunt zich moe voelen of last krijgen van misselijkheid. Sommige patiënten merken dat..." Keep it warm and human.
+1. "common_friendly": Rewrite the common side effects as ONE short paragraph (max 3 sentences, max 60 words) in ${lang}. Don't just list them — describe what the patient might experience in everyday language. Be warm but brief.
 
-2. "serious_friendly": Rewrite the serious side effects as a clear warning paragraph in ${lang}. Be direct but not alarming. Example: "In zeldzame gevallen kunnen ernstigere reacties optreden, zoals..."
+2. "serious_friendly": Rewrite the serious side effects as ONE short paragraph (max 2-3 sentences, max 50 words) in ${lang}. Be direct but not alarming.
 
-3. "self_care": Write 4-6 practical self-care tips in ${lang} that patients can do themselves to manage side effects. Format as bullet points starting with "•". Be specific and actionable. Examples: "• Drink minstens 1,5 liter water per dag om uitdroging te voorkomen", "• Eet kleine, frequente maaltijden als u last heeft van misselijkheid"
+3. "self_care": Write exactly 4 practical self-care tips in ${lang}. Format as bullet points starting with "•". Each tip max 15 words. Be specific and actionable.
 
 Common side effects:
 ${commonText || 'None provided'}
@@ -822,6 +823,21 @@ function generatePatientInfoHtml(
 
   ${premedicatiePageHtml}
 
+<script>
+(function() {
+  var page = document.querySelector('.page-container');
+  if (!page) return;
+  var maxH = 297 * 3.7795; // A4 height in px (~1122px)
+  var padding = ${isCompact ? 10 : 12} * 2 * 3.7795; // top+bottom padding in px
+  var available = maxH - padding;
+  var tries = 0;
+  while (page.scrollHeight > available && tries < 8) {
+    var current = parseFloat(window.getComputedStyle(document.body).fontSize);
+    document.body.style.fontSize = (current - 0.5) + 'px';
+    tries++;
+  }
+})();
+</script>
 </body>
 </html>
   `.trim();
