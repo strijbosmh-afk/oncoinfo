@@ -866,5 +866,10 @@
     "message": "Vous venez d'imprimer votre <strong>{{count}}e</strong> dossier patient !",
     "joke": "Si c'était un jeu vidéo, vous auriez débloqué un succès. 🏅",
     "dismiss": "Merci, je retourne sauver le monde 💪"
+  },
+  "demo": {
+    "title": "Environnement de démonstration",
+    "description": "Ceci est un environnement de démonstration. L'impression, la génération de PDF et les fonctions d'exportation sont désactivées. Contactez-nous pour une licence complète.",
+    "dismiss": "Compris"
   }
 }

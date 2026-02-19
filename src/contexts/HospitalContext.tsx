@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
+const DEMO_CLINIC_ID = '1578dc7a-f194-4336-a7e1-e4143dc3c7c4';
+
 interface Hospital {
   id: string;
   name: string;
@@ -20,11 +22,13 @@ interface Hospital {
 interface HospitalContextType {
   hospital: Hospital | null;
   loading: boolean;
+  isDemoClinic: boolean;
 }
 
 const HospitalContext = createContext<HospitalContextType>({
   hospital: null,
   loading: true,
+  isDemoClinic: false,
 });
 
 export function HospitalProvider({ children }: { children: ReactNode }) {
@@ -76,8 +80,10 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
     fetchHospital();
   }, [user, profile?.hospital_id, authLoading, i18n, isSuperAdmin]);
 
+  const isDemoClinic = hospital?.id === DEMO_CLINIC_ID;
+
   return (
-    <HospitalContext.Provider value={{ hospital, loading }}>
+    <HospitalContext.Provider value={{ hospital, loading, isDemoClinic }}>
       {children}
     </HospitalContext.Provider>
   );

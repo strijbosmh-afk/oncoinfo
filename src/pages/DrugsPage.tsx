@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
+import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
@@ -309,7 +310,8 @@ export default function DrugsPage() {
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
-  const { hospital } = useHospital();
+  const { hospital, isDemoClinic } = useHospital();
+  const [showDemoPopup, setShowDemoPopup] = useState(false);
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
 
   // Fetch hospital disciplines for access check
@@ -661,6 +663,7 @@ export default function DrugsPage() {
       toast.error(t('drugs.noFavoritesToExport'));
       return;
     }
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
 
     setIsExporting(true);
     try {
@@ -1309,6 +1312,7 @@ export default function DrugsPage() {
         </div>
       </div>
       <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
+      <DemoRestrictionDialog open={showDemoPopup} onOpenChange={setShowDemoPopup} />
     </Layout>
   );
 }

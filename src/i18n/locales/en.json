@@ -866,5 +866,10 @@
     "message": "You just printed your <strong>{{count}}th</strong> patient folder!",
     "joke": "If this were a video game, you'd have just unlocked an achievement. 🏅",
     "dismiss": "Thanks, back to saving the world 💪"
+  },
+  "demo": {
+    "title": "Demo Environment",
+    "description": "This is a demo environment. Printing, PDF generation and export functions are disabled. Contact us for a full licence.",
+    "dismiss": "Got it"
   }
 }
