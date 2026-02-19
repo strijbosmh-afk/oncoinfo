@@ -144,7 +144,7 @@ export const DRUG_CATEGORIES = {
       { key: 'testis', label: 'Testiskanker', description: 'Seminoom, non-seminoom' },
       { key: 'penile', label: 'Peniskanker', description: 'Plaveiselcelcarcinoom' }
     ],
-    drugClasses: ['ARPI', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Hormonale Therapie', 'Antiresorptiva']
+    drugClasses: ['ARPI', 'Anti-hormonale therapie', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Antiresorptiva']
   },
   gynecology: {
     name: 'Gynaecologie',

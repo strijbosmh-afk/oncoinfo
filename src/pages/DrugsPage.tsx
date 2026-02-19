@@ -67,6 +67,7 @@ const getDrugClassColor = (drugClass: string) => {
     'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
     'Radioligand Therapie': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'Hormonale Therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'Anti-hormonale therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
     'Combinatietherapie': 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-amber-300',
     'CDK4/6i': 'bg-rose-100 text-rose-800 border-rose-200',
     'HER2-remmers': 'bg-cyan-100 text-cyan-800 border-cyan-200',
@@ -75,6 +76,7 @@ const getDrugClassColor = (drugClass: string) => {
     'Aromataseremmers': 'bg-lime-100 text-lime-800 border-lime-200',
     'SERD': 'bg-emerald-100 text-emerald-800 border-emerald-200',
     'LHRH agonist': 'bg-sky-100 text-sky-800 border-sky-200',
+    'Hormoontherapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
     'ALK-remmer': 'bg-cyan-100 text-cyan-800 border-cyan-200',
     'EGFR-remmer': 'bg-lime-100 text-lime-800 border-lime-200',
     'Angiogeneseremmer': 'bg-emerald-100 text-emerald-800 border-emerald-200',
@@ -579,14 +581,14 @@ export default function DrugsPage() {
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
     const isBreast = category === 'breast';
     const isUrology = category === 'urology';
-    const hormonal = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie') : [];
+    const hormonal = isBreast ? orderedDrugs.filter(drug => ['Hormoontherapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
     const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
     const arpi = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARPI') : [];
-    const lhrh = isUrology ? orderedDrugs.filter(drug => ['LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie'].includes(drug.drug_class)) : [];
+    const lhrh = isUrology ? orderedDrugs.filter(drug => ['LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
     const excludedClasses = isBreast 
-      ? ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i']
+      ? ['Combinatietherapie', 'Hormoontherapie', 'Anti-hormonale therapie', 'CDK4/6i']
       : isUrology
-        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie']
+        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie']
         : ['Combinatietherapie'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, arpiDrugs: arpi, lhrhDrugs: lhrh, individualDrugs: individuals };
@@ -1045,19 +1047,6 @@ export default function DrugsPage() {
                   </Badge>
                 </Button>
               )}
-              {category === 'urology' && arpiDrugs.length > 0 && (
-                <Button
-                  variant={viewMode === 'arpi' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('arpi')}
-                  className="gap-2"
-                >
-                  ARPI
-                  <Badge variant={viewMode === 'arpi' ? 'secondary' : 'outline'} className="ml-1">
-                    {arpiDrugs.length}
-                  </Badge>
-                </Button>
-              )}
               {category === 'urology' && lhrhDrugs.length > 0 && (
                 <Button
                   variant={viewMode === 'lhrh' ? 'default' : 'outline'}
@@ -1068,6 +1057,19 @@ export default function DrugsPage() {
                   LHRH
                   <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-1">
                     {lhrhDrugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'urology' && arpiDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'arpi' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('arpi')}
+                  className="gap-2"
+                >
+                  ARPI
+                  <Badge variant={viewMode === 'arpi' ? 'secondary' : 'outline'} className="ml-1">
+                    {arpiDrugs.length}
                   </Badge>
                 </Button>
               )}
