@@ -1,0 +1,13 @@
+OncoInfo - Oncology Drug Information Library
+Copyright (c) 2024-2026 DRMSoftware. All rights reserved.
+
+This software is proprietary and confidential.
+Unauthorized copying, distribution, or modification is strictly prohibited.
+
+MEDICAL DISCLAIMER:
+OncoInfo is NOT a medical device and is not regulated under the MDR
+(Medical Device Regulation 2017/745 EU). The information provided is intended
+solely as an educational and informational reference for healthcare professionals.
+Content may contain errors, omissions, or outdated data. Never use this information
+as the sole basis for clinical decisions. Always consult the official product
+information (SmPC) and current clinical guidelines.

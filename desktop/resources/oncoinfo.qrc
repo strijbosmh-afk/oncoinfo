@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/translations">
+        <file alias="nl.json">translations/nl.json</file>
+        <file alias="fr.json">translations/fr.json</file>
+        <file alias="de.json">translations/de.json</file>
+        <file alias="en.json">translations/en.json</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="oncoinfo.ico">icons/oncoinfo.ico</file>
+    </qresource>
+</RCC>

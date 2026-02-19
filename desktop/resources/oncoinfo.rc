@@ -1,0 +1,26 @@
+// Windows Resource File for OncoInfo
+IDI_ICON1 ICON "icons/oncoinfo.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "DRMSoftware"
+            VALUE "FileDescription",  "OncoInfo - Oncology Drug Information Library"
+            VALUE "FileVersion",      "1.0.0"
+            VALUE "InternalName",     "OncoInfo"
+            VALUE "LegalCopyright",   "Copyright (c) 2024-2026 DRMSoftware"
+            VALUE "OriginalFilename", "OncoInfo.exe"
+            VALUE "ProductName",      "OncoInfo - Medicijnbibliotheek"
+            VALUE "ProductVersion",   "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1252
+    END
+END
