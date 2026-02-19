@@ -123,7 +123,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
           </button>
         </div>
         <Link to={`/drugs/${drug.id}`}>
-          <CardHeader className="pb-2 pr-16">
+          <CardHeader className="pb-2 pr-20">
             <div className="flex items-start gap-2 mb-1">
               <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -195,7 +195,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
         </button>
       </div>
       <Link to={`/drugs/${drug.id}`}>
-        <CardHeader className="pb-2 pr-16">
+        <CardHeader className="pb-2 pr-20">
           <div className="flex items-start justify-between gap-2">
             <div>
               <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
