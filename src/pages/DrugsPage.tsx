@@ -582,11 +582,11 @@ export default function DrugsPage() {
     const hormonal = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie') : [];
     const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
     const arpi = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARPI') : [];
-    const lhrh = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'LHRH agonist' || drug.drug_class === 'Hormoontherapie') : [];
+    const lhrh = isUrology ? orderedDrugs.filter(drug => ['LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie'].includes(drug.drug_class)) : [];
     const excludedClasses = isBreast 
       ? ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i']
       : isUrology
-        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie']
+        ? ['Combinatietherapie', 'ARPI', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie']
         : ['Combinatietherapie'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, arpiDrugs: arpi, lhrhDrugs: lhrh, individualDrugs: individuals };
