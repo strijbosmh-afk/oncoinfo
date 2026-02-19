@@ -818,34 +818,38 @@ export default function DrugsPage() {
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (
                 <>
-                  {categoryConfig.subtypes.map((subtype) => (
-                    <Card 
-                      key={subtype.key}
-                      onClick={() => handleSubtypeClick(subtype.key)}
-                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t('drugs.subtypes')}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {categoryConfig.stages.map((stage) => (
-                    <Card 
-                      key={stage.key}
-                      onClick={() => handleStageClick(stage.key)}
-                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium text-primary">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t('drugs.stages')}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <div className="col-span-full grid gap-3 sm:grid-cols-3">
+                    {categoryConfig.subtypes.map((subtype) => (
+                      <Card 
+                        key={subtype.key}
+                        onClick={() => handleSubtypeClick(subtype.key)}
+                        className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                          selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
+                          <p className="text-xs text-muted-foreground">{t('drugs.subtypes')}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {categoryConfig.stages.map((stage) => (
+                      <Card 
+                        key={stage.key}
+                        onClick={() => handleStageClick(stage.key)}
+                        className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                          selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <h4 className="font-medium text-primary">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
+                          <p className="text-xs text-muted-foreground">{t('drugs.stages')}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </>
               )}
 
