@@ -13,6 +13,7 @@ interface Profile {
   function: string | null;
   role: 'admin' | 'viewer';
   password_changed: boolean;
+  created_at: string;
   hospital_id: string | null;
   dedicated_nurse_id: string | null;
   phone_number: string | null;
