@@ -1168,19 +1168,7 @@ export default function DrugsPage() {
                 <CardContent className="space-y-6">
                   {/* Drug Class Filter */}
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium">{t('drugs.drugClass')}</h4>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsEditMode(true)}
-                        className="gap-1.5 h-7 text-xs"
-                        disabled={isEditMode}
-                      >
-                        <GripVertical className="h-3.5 w-3.5" />
-                        {t('drugs.adjustOrder')}
-                      </Button>
-                    </div>
+                    <h4 className="font-medium mb-3">{t('drugs.drugClass')}</h4>
                     <div className="space-y-2">
                       <TooltipProvider delayDuration={300}>
                         {displayDrugClasses.map((drugClass) => {
