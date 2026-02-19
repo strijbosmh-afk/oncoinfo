@@ -183,24 +183,6 @@ export function Header() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                {(isAdmin || isApotheker) && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
-                        <Shield className="h-4 w-4" />
-                        {t('nav.admin')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem asChild>
-                  <Link to="/handleiding" className="flex items-center gap-2 cursor-pointer">
-                    <BookOpen className="h-4 w-4" />
-                    {t('nav.manual')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 {isSuperAdmin && (
                   <>
                     <DropdownMenuSeparator />
