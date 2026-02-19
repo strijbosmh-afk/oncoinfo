@@ -240,9 +240,9 @@ export function SortableDrugList({
       {localCombinations.length > 0 && showCombinations && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Layers className="h-5 w-5 text-amber-600" />
+            <Layers className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">{t('drugs.combinations')}</h2>
-            <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+            <Badge variant="secondary">
               {localCombinations.length}
             </Badge>
           </div>
@@ -286,9 +286,9 @@ export function SortableDrugList({
       {hormonalDrugs.length > 0 && showHormonal && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-[#c2185b]" />
-            <h2 className="text-xl font-semibold text-[#c2185b]">SERM/AI</h2>
-            <Badge className="bg-[#c2185b]/10 text-[#c2185b] border-[#c2185b]/20">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">SERM/AI</h2>
+            <Badge variant="secondary">
               {hormonalDrugs.length}
             </Badge>
           </div>
@@ -321,9 +321,9 @@ export function SortableDrugList({
       {cdk46Drugs.length > 0 && showCdk46 && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-[#6b2d5b]" />
-            <h2 className="text-xl font-semibold text-[#6b2d5b]">CDK4/6</h2>
-            <Badge className="bg-[#6b2d5b]/10 text-[#6b2d5b] border-[#6b2d5b]/20">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">CDK4/6</h2>
+            <Badge variant="secondary">
               {cdk46Drugs.length}
             </Badge>
           </div>
