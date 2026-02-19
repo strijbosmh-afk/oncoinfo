@@ -634,9 +634,9 @@ export default function DrugDetailPage() {
                 </p>
               )}
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                <Badge variant="default" className="text-xs">{drug.drug_class}</Badge>
+                <Badge variant="default" className="text-xs">{t(`medicalTerms.${drug.drug_class}`, drug.drug_class)}</Badge>
                 {drug.administration_route && (
-                  <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
+                  <Badge variant="outline" className="text-xs">{t(`medicalTerms.${drug.administration_route}`, drug.administration_route)}</Badge>
                 )}
                 {!isDemoClinic && (
                   drug.is_on_zvz ? (
