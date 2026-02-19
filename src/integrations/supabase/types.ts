@@ -985,6 +985,42 @@ export type Database = {
           },
         ]
       }
+      user_hospitals: {
+        Row: {
+          created_at: string
+          hospital_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_hospitals_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_hospitals_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_most_used: {
         Row: {
           created_at: string
