@@ -16,6 +16,7 @@ import HospitalManagementPage from "./pages/HospitalManagementPage";
 import NotFound from "./pages/NotFound";
 import ColorPreview from "./pages/ColorPreview";
 import UserManualPage from "./pages/UserManualPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPage /></ProtectedRoute>} />
               <Route path="/admin/hospitals" element={<ProtectedRoute requireAdmin><HospitalManagementPage /></ProtectedRoute>} />
               <Route path="/color-preview" element={<ColorPreview />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/handleiding" element={<ProtectedRoute><UserManualPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -1,0 +1,71 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  try {
+    const { username } = await req.json();
+
+    if (!username || typeof username !== 'string' || username.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Gebruikersnaam is verplicht.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Look up email by username
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('email')
+      .eq('username', username.trim())
+      .maybeSingle();
+
+    // Always return success to avoid username enumeration
+    if (!profile?.email) {
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get the origin from the request headers for redirect URL
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/[^/]*$/, '') || supabaseUrl;
+
+    // Send password reset email
+    await supabaseAuth.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${origin}/reset-password`,
+    });
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Er is een onverwachte fout opgetreden.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
