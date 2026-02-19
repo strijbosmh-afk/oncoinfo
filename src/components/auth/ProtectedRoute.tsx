@@ -52,6 +52,9 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   const needsPasswordChange = profile && !profile.password_changed && !passwordChanged;
+  const isAccountExpired = needsPasswordChange && profile?.created_at
+    ? (Date.now() - new Date(profile.created_at).getTime()) > 3 * 24 * 60 * 60 * 1000
+    : false;
 
   return (
     <>
@@ -60,6 +63,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
           open={true}
           onSuccess={handlePasswordChanged}
           userId={user.id}
+          isExpired={isAccountExpired}
         />
       )}
       {children}
