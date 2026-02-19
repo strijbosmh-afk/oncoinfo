@@ -820,13 +820,12 @@ export default function DrugsPage() {
                 <div className="col-span-full space-y-3">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.subtypes')}</h3>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {categoryConfig.subtypes.map((subtype) => (
                         <Button
                           key={subtype.key}
                           variant={selectedSubtype === subtype.key ? 'default' : 'outline'}
                           size="sm"
-                          className="h-7 px-3 text-xs"
                           onClick={() => handleSubtypeClick(subtype.key)}
                         >
                           {t(`medicalTerms.sub_${subtype.key}`, subtype.label)}
@@ -836,13 +835,12 @@ export default function DrugsPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.stages')}</h3>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {categoryConfig.stages.map((stage) => (
                         <Button
                           key={stage.key}
                           variant={selectedStage === stage.key ? 'default' : 'outline'}
                           size="sm"
-                          className="h-7 px-3 text-xs"
                           onClick={() => handleStageClick(stage.key)}
                         >
                           {t(`medicalTerms.stage_${stage.key}`, stage.label)}
