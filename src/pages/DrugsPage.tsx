@@ -1083,16 +1083,8 @@ export default function DrugsPage() {
                   {individualDrugs.length}
                 </Badge>
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="gap-2 ml-auto"
-                disabled={isEditMode}
-              >
-                <GripVertical className="h-4 w-4" />
-                {t('drugs.adjustOrder')}
-              </Button>
+
+
             </div>
           </div>
         )}
@@ -1176,7 +1168,19 @@ export default function DrugsPage() {
                 <CardContent className="space-y-6">
                   {/* Drug Class Filter */}
                   <div>
-                    <h4 className="font-medium mb-3">{t('drugs.drugClass')}</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">{t('drugs.drugClass')}</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsEditMode(true)}
+                        className="gap-1.5 h-7 text-xs"
+                        disabled={isEditMode}
+                      >
+                        <GripVertical className="h-3.5 w-3.5" />
+                        {t('drugs.adjustOrder')}
+                      </Button>
+                    </div>
                     <div className="space-y-2">
                       <TooltipProvider delayDuration={300}>
                         {displayDrugClasses.map((drugClass) => {
