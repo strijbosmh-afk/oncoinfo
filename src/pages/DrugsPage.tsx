@@ -573,16 +573,19 @@ export default function DrugsPage() {
     return result;
   }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
 
-  // Separate combination regimens from individual drugs, plus hormonal and CDK4/6
+  // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
   const { combinationDrugs, hormonalDrugs, cdk46Drugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
-    const hormonal = orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie');
-    const cdk46 = orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i');
-    const excludedClasses = ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i'];
+    const isBreast = category === 'breast';
+    const hormonal = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'Hormoontherapie') : [];
+    const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
+    const excludedClasses = isBreast 
+      ? ['Combinatietherapie', 'Hormoontherapie', 'CDK4/6i']
+      : ['Combinatietherapie'];
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, individualDrugs: individuals };
-  }, [filteredDrugs, applyUserOrder]);
+  }, [filteredDrugs, applyUserOrder, category]);
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
