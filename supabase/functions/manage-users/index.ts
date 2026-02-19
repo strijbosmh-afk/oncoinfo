@@ -220,6 +220,9 @@ Deno.serve(async (req) => {
         const callerIsSuperAdmin = await isSuperAdmin(supabase, adminUser.id);
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
 
+        // Fetch user_hospitals links
+        const { data: userHospitalsData } = await supabase.from('user_hospitals').select('user_id, hospital_id');
+
         const enrichedUsers = users
           .map((u: any) => {
             const profile = profiles?.find((p: any) => p.user_id === u.id);
@@ -230,6 +233,10 @@ Deno.serve(async (req) => {
             // Resolve dedicated nurse name
             const nurseId = profile?.dedicated_nurse_id || null;
             const nurseProfile = nurseId ? profiles?.find((p: any) => p.id === nurseId) : null;
+            // Get linked hospitals
+            const linkedHospitalIds = (userHospitalsData || [])
+              .filter((uh: any) => uh.user_id === u.id)
+              .map((uh: any) => uh.hospital_id);
             return {
               id: u.id,
               email: u.email,
@@ -253,6 +260,7 @@ Deno.serve(async (req) => {
               dedicated_nurse_id: nurseId,
               dedicated_nurse_name: nurseProfile ? `${nurseProfile.first_name || ''} ${nurseProfile.last_name || ''}`.trim() : null,
               phone_number: profile?.phone_number || null,
+              linked_hospital_ids: linkedHospitalIds,
             };
           })
           // Hide super_admin from non-super-admin callers
@@ -327,6 +335,14 @@ Deno.serve(async (req) => {
           can_delete_treatments: can_delete_treatments ?? false,
           can_modify_treatments: can_modify_treatments ?? false,
         }, { onConflict: 'user_id' });
+
+        // Auto-add primary hospital to user_hospitals
+        if (targetHospitalId) {
+          await supabase.from('user_hospitals').upsert(
+            { user_id: newUser.user.id, hospital_id: targetHospitalId },
+            { onConflict: 'user_id,hospital_id' }
+          );
+        }
 
         // Send credentials email if requested
         let emailSent = false;
@@ -616,6 +632,37 @@ Deno.serve(async (req) => {
         ]);
 
         return jsonResponse({ success: true, email_sent: true });
+      }
+
+      case 'update-hospitals': {
+        const { user_id, hospital_ids } = params;
+        if (!user_id || !Array.isArray(hospital_ids)) {
+          return jsonResponse({ error: 'user_id en hospital_ids zijn verplicht' }, 400);
+        }
+
+        // Only super admins can manage hospital links
+        if (!(await isSuperAdmin(supabase, adminUser.id))) {
+          return jsonResponse({ error: 'Alleen platform admins kunnen ziekenhuiskoppelingen beheren' }, 403);
+        }
+
+        // Delete existing links and insert new ones
+        await supabase.from('user_hospitals').delete().eq('user_id', user_id);
+        if (hospital_ids.length > 0) {
+          await supabase.from('user_hospitals').insert(
+            hospital_ids.map((hid: string) => ({ user_id, hospital_id: hid }))
+          );
+        }
+
+        // Ensure primary hospital is in the list
+        const { data: prof } = await supabase.from('profiles').select('hospital_id').eq('user_id', user_id).maybeSingle();
+        if (prof?.hospital_id && !hospital_ids.includes(prof.hospital_id)) {
+          // If primary hospital removed, update to first linked hospital
+          if (hospital_ids.length > 0) {
+            await supabase.from('profiles').update({ hospital_id: hospital_ids[0] }).eq('user_id', user_id);
+          }
+        }
+
+        return jsonResponse({ success: true });
       }
 
       default:
