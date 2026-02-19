@@ -105,6 +105,9 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
     brand_names: '',
     administration_route: '',
     study_name: '',
+    standard_dose: '',
+    dosing_frequency: '',
+    cycle_length_days: '',
     is_combination: false,
     is_on_zvz: false,
     components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }] as {
@@ -240,6 +243,9 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
   const addDrugMutation = useMutation({
     mutationFn: async () => {
       const dosingInfo: any = {};
+      if (editingDrug.standard_dose) dosingInfo.standard_dose = editingDrug.standard_dose;
+      if (editingDrug.dosing_frequency) dosingInfo.frequency = editingDrug.dosing_frequency;
+
       if (editingDrug.is_combination && editingDrug.components.length > 0) {
         const componentDetails = editingDrug.components
           .filter(c => c.name)
@@ -251,7 +257,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
             if (c.cycle_length) parts.push(`cyclus: ${c.cycle_length} dagen`);
             return parts.join(' ');
           });
-        dosingInfo.standard_dose = componentDetails.join(' + ');
+        dosingInfo.components = componentDetails.join(' + ');
       }
 
       const { error } = await supabase.from('drugs').insert({
@@ -263,6 +269,7 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
         administration_route: editingDrug.administration_route || null,
         common_regimens: editingDrug.study_name ? [editingDrug.study_name.trim()] : [],
         is_on_zvz: editingDrug.is_on_zvz,
+        cycle_length_days: editingDrug.cycle_length_days ? parseInt(editingDrug.cycle_length_days) : null,
         dosing_info: Object.keys(dosingInfo).length > 0 ? dosingInfo : null,
       });
       if (error) throw error;
@@ -295,6 +302,9 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
         mechanism_of_action: drug.mechanism_of_action || prev.mechanism_of_action,
         brand_names: drug.brand_names || prev.brand_names,
         administration_route: drug.administration_route || prev.administration_route,
+        standard_dose: drug.standard_dose || prev.standard_dose,
+        dosing_frequency: drug.dosing_frequency || prev.dosing_frequency,
+        cycle_length_days: drug.cycle_length_days ? String(drug.cycle_length_days) : prev.cycle_length_days,
       }));
       setQuickDrugName('');
       toast({ title: 'AI-verrijking voltooid', description: `Informatie voor "${drug.generic_name}" is ingevuld. Controleer en pas aan indien nodig.` });
@@ -313,6 +323,9 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
       brand_names: '',
       administration_route: '',
       study_name: '',
+      standard_dose: '',
+      dosing_frequency: '',
+      cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
@@ -329,6 +342,9 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
       brand_names: regimen.brand_names || '',
       administration_route: regimen.administration_route || '',
       study_name: regimen.study_name || '',
+      standard_dose: '',
+      dosing_frequency: '',
+      cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
@@ -886,6 +902,37 @@ export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) 
                   </div>
                 )}
               </div>
+
+              {/* Dosering velden */}
+              {!editingDrug.is_combination && (
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Standaarddosering</Label>
+                    <Input
+                      value={editingDrug.standard_dose}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, standard_dose: e.target.value })}
+                      placeholder="Bijv. 200 mg, 75 mg/m²"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Frequentie</Label>
+                    <Input
+                      value={editingDrug.dosing_frequency}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, dosing_frequency: e.target.value })}
+                      placeholder="Bijv. q3w, dagelijks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cyclusduur (dagen)</Label>
+                    <Input
+                      type="number"
+                      value={editingDrug.cycle_length_days}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, cycle_length_days: e.target.value })}
+                      placeholder="Bijv. 21"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* RIZIV toggle */}
               <div className="flex items-center gap-3">
