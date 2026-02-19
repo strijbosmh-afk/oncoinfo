@@ -853,5 +853,11 @@
     "tip": "Conseil :",
     "firstLogin": "Première connexion :",
     "export": "Export :"
+  },
+  "newDrugs": {
+    "title": "Nouveaux traitements ajoutés",
+    "descriptionOne": "1 nouveau traitement a été ajouté depuis votre dernière visite.",
+    "descriptionMultiple": "{{count}} nouveaux traitements ont été ajoutés depuis votre dernière visite.",
+    "understood": "Compris"
   }
 }
