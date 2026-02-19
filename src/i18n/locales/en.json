@@ -608,7 +608,54 @@
     "error": "Could not change password.",
     "ruleLength": "At least 8 characters",
     "ruleUppercase": "At least 1 uppercase letter",
-    "ruleSpecial": "At least 1 number or special character"
+    "ruleSpecial": "At least 1 number or special character",
+    "expiredTitle": "Password expired",
+    "expiredDesc": "Your account is more than 3 days old and the password has never been changed. Please set a new password below to continue."
+  },
+  "forgotPassword": {
+    "link": "Forgot password?",
+    "title": "Forgot password",
+    "description": "Enter your username. If your account has an email address, you will receive a link to reset your password.",
+    "sent": "If an account with this username exists, an email has been sent with instructions to reset your password. Please also check your spam folder.",
+    "errorTitle": "Error",
+    "errorDesc": "Something went wrong. Please try again.",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Your username",
+    "cancel": "Cancel",
+    "sendLink": "Send reset link"
+  },
+  "resetPassword": {
+    "title": "Set new password",
+    "description": "Choose a strong password that you haven't used before.",
+    "invalidLink": "Invalid or expired link. Please request a new password reset from the login page.",
+    "backToLogin": "Back to login page",
+    "changed": "Password changed",
+    "changedDesc": "Your password has been changed successfully.",
+    "redirecting": "You will be redirected to the login page...",
+    "changeError": "Could not change the password."
+  },
+  "mostUsed": {
+    "maxReached": "Maximum {{max}} most used regimens reached",
+    "remove": "Remove from most used",
+    "add": "Add to most used",
+    "toggle": "Toggle most used",
+    "label": "Most used"
+  },
+  "usageDashboard": {
+    "actionLogin": "Login",
+    "actionUpdate": "Update",
+    "actionCreate": "Creation",
+    "actionDelete": "Deletion",
+    "actionEmailSent": "Email sent",
+    "actionAutoUpdateScan": "Auto-update scan",
+    "actionPrintFolder": "Folder printed"
+  },
+  "hospitalMgmt": {
+    "lookupSuccess": "Hospital found",
+    "lookupSuccessDesc": "{{name}} — confirm the logo",
+    "lookupFailed": "Search failed",
+    "lookupRetry": "Please try again",
+    "noHospital": "No hospital"
   },
   "medicalTerms": {
     "Borstkanker": "Breast cancer",

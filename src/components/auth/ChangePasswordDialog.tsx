@@ -67,10 +67,10 @@ export function ChangePasswordDialog({ open, onSuccess, userId, isExpired = fals
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>{isExpired ? 'Wachtwoord verlopen' : t('changePassword.title')}</DialogTitle>
+          <DialogTitle>{isExpired ? t('changePassword.expiredTitle') : t('changePassword.title')}</DialogTitle>
           <DialogDescription>
             {isExpired
-              ? 'Uw account is meer dan 3 dagen oud en het wachtwoord is nog nooit gewijzigd. Stel hieronder een nieuw wachtwoord in om verder te gaan.'
+              ? t('changePassword.expiredDesc')
               : t('changePassword.description')}
           </DialogDescription>
         </DialogHeader>

@@ -608,7 +608,54 @@
     "error": "Impossible de modifier le mot de passe.",
     "ruleLength": "Au moins 8 caractères",
     "ruleUppercase": "Au moins 1 lettre majuscule",
-    "ruleSpecial": "Au moins 1 chiffre ou caractère spécial"
+    "ruleSpecial": "Au moins 1 chiffre ou caractère spécial",
+    "expiredTitle": "Mot de passe expiré",
+    "expiredDesc": "Votre compte a plus de 3 jours et le mot de passe n'a jamais été modifié. Veuillez définir un nouveau mot de passe ci-dessous pour continuer."
+  },
+  "forgotPassword": {
+    "link": "Mot de passe oublié ?",
+    "title": "Mot de passe oublié",
+    "description": "Entrez votre nom d'utilisateur. Si votre compte dispose d'une adresse e-mail, vous recevrez un lien pour réinitialiser votre mot de passe.",
+    "sent": "Si un compte avec ce nom d'utilisateur existe, un e-mail a été envoyé avec les instructions pour réinitialiser votre mot de passe. Vérifiez également votre dossier spam.",
+    "errorTitle": "Erreur",
+    "errorDesc": "Une erreur s'est produite. Veuillez réessayer.",
+    "usernameLabel": "Nom d'utilisateur",
+    "usernamePlaceholder": "Votre nom d'utilisateur",
+    "cancel": "Annuler",
+    "sendLink": "Envoyer le lien de réinitialisation"
+  },
+  "resetPassword": {
+    "title": "Définir un nouveau mot de passe",
+    "description": "Choisissez un mot de passe fort que vous n'avez pas utilisé auparavant.",
+    "invalidLink": "Lien invalide ou expiré. Veuillez demander une nouvelle réinitialisation du mot de passe depuis la page de connexion.",
+    "backToLogin": "Retour à la page de connexion",
+    "changed": "Mot de passe modifié",
+    "changedDesc": "Votre mot de passe a été modifié avec succès.",
+    "redirecting": "Vous allez être redirigé vers la page de connexion...",
+    "changeError": "Impossible de modifier le mot de passe."
+  },
+  "mostUsed": {
+    "maxReached": "Maximum {{max}} schémas les plus utilisés atteint",
+    "remove": "Retirer des plus utilisés",
+    "add": "Ajouter aux plus utilisés",
+    "toggle": "Basculer les plus utilisés",
+    "label": "Les plus utilisés"
+  },
+  "usageDashboard": {
+    "actionLogin": "Connexion",
+    "actionUpdate": "Modification",
+    "actionCreate": "Création",
+    "actionDelete": "Suppression",
+    "actionEmailSent": "E-mail envoyé",
+    "actionAutoUpdateScan": "Scan de mise à jour auto",
+    "actionPrintFolder": "Dossier imprimé"
+  },
+  "hospitalMgmt": {
+    "lookupSuccess": "Hôpital trouvé",
+    "lookupSuccessDesc": "{{name}} — confirmez le logo",
+    "lookupFailed": "Recherche échouée",
+    "lookupRetry": "Veuillez réessayer",
+    "noHospital": "Aucun hôpital"
   },
   "medicalTerms": {
     "Borstkanker": "Cancer du sein",

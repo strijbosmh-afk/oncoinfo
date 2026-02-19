@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Listen for the PASSWORD_RECOVERY event
@@ -36,9 +38,9 @@ export default function ResetPasswordPage() {
   }, []);
 
   const PASSWORD_RULES = [
-    { label: 'Minimaal 8 tekens', test: (p: string) => p.length >= 8 },
-    { label: 'Minstens één hoofdletter', test: (p: string) => /[A-Z]/.test(p) },
-    { label: 'Minstens één cijfer of speciaal teken', test: (p: string) => /[0-9\W_]/.test(p) },
+    { label: t('changePassword.ruleLength'), test: (p: string) => p.length >= 8 },
+    { label: t('changePassword.ruleUppercase'), test: (p: string) => /[A-Z]/.test(p) },
+    { label: t('changePassword.ruleSpecial'), test: (p: string) => /[0-9\W_]/.test(p) },
   ];
 
   const allRulesPassed = PASSWORD_RULES.every((r) => r.test(password));
@@ -65,8 +67,8 @@ export default function ResetPasswordPage() {
 
       setDone(true);
       toast({
-        title: 'Wachtwoord gewijzigd',
-        description: 'Uw wachtwoord is succesvol gewijzigd.',
+        title: t('resetPassword.changed'),
+        description: t('resetPassword.changedDesc'),
       });
 
       // Sign out and redirect to login after 2s
@@ -76,8 +78,8 @@ export default function ResetPasswordPage() {
       }, 2000);
     } catch (err: any) {
       toast({
-        title: 'Fout',
-        description: err.message || 'Kon het wachtwoord niet wijzigen.',
+        title: t('common.error'),
+        description: err.message || t('resetPassword.changeError'),
         variant: 'destructive',
       });
     } finally {
@@ -92,10 +94,10 @@ export default function ResetPasswordPage() {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">
-                Ongeldige of verlopen link. Vraag een nieuwe wachtwoord-reset aan via de inlogpagina.
+                {t('resetPassword.invalidLink')}
               </p>
               <Button className="w-full mt-4" onClick={() => navigate('/', { replace: true })}>
-                Terug naar inlogpagina
+                {t('resetPassword.backToLogin')}
               </Button>
             </CardContent>
           </Card>
@@ -111,8 +113,8 @@ export default function ResetPasswordPage() {
           <Card className="w-full max-w-md">
             <CardContent className="pt-6 text-center">
               <Check className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Wachtwoord gewijzigd</h2>
-              <p className="text-muted-foreground">U wordt doorgestuurd naar de inlogpagina...</p>
+              <h2 className="text-xl font-semibold mb-2">{t('resetPassword.changed')}</h2>
+              <p className="text-muted-foreground">{t('resetPassword.redirecting')}</p>
             </CardContent>
           </Card>
         </div>
@@ -128,15 +130,15 @@ export default function ResetPasswordPage() {
             <div className="mx-auto mb-2 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <KeyRound className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Nieuw wachtwoord instellen</CardTitle>
+            <CardTitle className="text-2xl">{t('resetPassword.title')}</CardTitle>
             <CardDescription>
-              Kies een sterk wachtwoord dat u nog niet eerder heeft gebruikt.
+              {t('resetPassword.description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="new-password">Nieuw wachtwoord</Label>
+                <Label htmlFor="new-password">{t('changePassword.newPassword')}</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -167,7 +169,7 @@ export default function ResetPasswordPage() {
               </ul>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Bevestig wachtwoord</Label>
+                <Label htmlFor="confirm-password">{t('changePassword.confirmPassword')}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -178,13 +180,13 @@ export default function ResetPasswordPage() {
                   className="h-11"
                 />
                 {confirmPassword.length > 0 && !passwordsMatch && (
-                  <p className="text-sm text-destructive">Wachtwoorden komen niet overeen.</p>
+                  <p className="text-sm text-destructive">{t('changePassword.mismatch')}</p>
                 )}
               </div>
 
               <Button type="submit" className="w-full h-11" disabled={!canSubmit}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Wachtwoord opslaan
+                {t('changePassword.submit')}
               </Button>
             </form>
           </CardContent>
