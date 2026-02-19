@@ -27,6 +27,8 @@ export function generateStaticPreviewHtml(
   hospitalColor: string = '#6b2d5b',
   premedicatieItems: string[] = [],
   fontSize: number = 14,
+  physicianPhone: string = '',
+  nursePhone: string = '',
 ): string {
   const isFr = language === 'fr';
   const brandNamesText = drug.brand_names?.length > 0 ? ` (${drug.brand_names.join(', ')})` : '';
@@ -440,12 +442,20 @@ export function generateStaticPreviewHtml(
   </div>
 
   <div class="page-footer-block">
-    <div class="contact-section full-width">
+     <div class="contact-section full-width">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
-        <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
-        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-        <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+        <div>
+          <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
+          ${physicianPhone ? `<p style="font-size: ${contactFontSize - 1}px; color: #555;">📞 ${physicianPhone}</p>` : ''}
+        </div>
+        <div>
+          <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+          ${nursePhone ? `<p style="font-size: ${contactFontSize - 1}px; color: #555;">📞 ${nursePhone}</p>` : ''}
+        </div>
+        <div>
+          <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+        </div>
       </div>
     </div>
 

@@ -55,6 +55,7 @@ interface HospitalDoctor {
   phone_number?: string | null;
 }
 
+
 interface PremedicatieItem {
   name: string;
   route: 'PO' | 'SC';
@@ -135,6 +136,7 @@ export default function DrugDetailPage() {
                 name: fullName,
                 staff_type: 'arts',
                 specialization: null,
+                phone_number: p.phone_number,
               });
               existingNames.add(fullName.toLowerCase());
             }
@@ -182,7 +184,14 @@ export default function DrugDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
-  const [folderFontSize, setFolderFontSize] = useState(14);
+  const [folderFontSize, setFolderFontSize] = useState(() => {
+    const saved = localStorage.getItem('folder-font-size-default');
+    return saved ? parseInt(saved, 10) : 14;
+  });
+  const [showFontSizeSavePrompt, setShowFontSizeSavePrompt] = useState(false);
+  const [physicianPhone, setPhysicianPhone] = useState('');
+  const [nursePhone, setNursePhone] = useState('');
+  const [showPhoneWarning, setShowPhoneWarning] = useState(false);
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
   const [hasUnsavedEditorChanges, setHasUnsavedEditorChanges] = useState(false);
   const [selectedPremedicatie, setSelectedPremedicatie] = useState<PremedicatieItem[]>([]);
@@ -232,14 +241,14 @@ export default function DrugDetailPage() {
     if (isLoggedInNurse) {
       // Nurse/pharmacist logged in: set them as nurse, leave physician for selection
       if (!nurseSelection && !isNurseCustom) {
-        // Check if the nurse is in the hospitalNurses list
         const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === fullName.toLowerCase());
         if (matchingNurse) {
           setNurseSelection(matchingNurse.name);
-          // Use the nurse's phone number from the list (which comes from profiles)
           if (matchingNurse.phone_number) {
-            setCustomPhone(matchingNurse.phone_number);
+            setNursePhone(matchingNurse.phone_number);
           }
+          // Also set profile phone as customPhone fallback
+          if (profile.phone_number) setCustomPhone(profile.phone_number);
         } else {
           setIsNurseCustom(true);
           setCustomNurse(fullName);
@@ -264,6 +273,8 @@ export default function DrugDetailPage() {
       // Doctor/other: set them as physician (existing behavior)
       if (!selectedPhysician) {
         setSelectedPhysician(fullName);
+        // Set doctor's phone from profile
+        if (profile.phone_number) setPhysicianPhone(profile.phone_number);
       }
       // If doctor has a dedicated nurse, pre-select that nurse
       if (!nurseSelection && !isNurseCustom && profile.dedicated_nurse_id) {
@@ -335,6 +346,8 @@ export default function DrugDetailPage() {
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
     includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : [],
     folderFontSize,
+    physicianPhone,
+    nursePhone,
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -343,6 +356,20 @@ export default function DrugDetailPage() {
   };
 
   const handleConfirmStaff = async () => {
+    const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
+    const phone = customPhone.trim();
+    
+    // Check if phone number is missing
+    if (!phone && !physicianPhone && !nursePhone) {
+      setShowPhoneWarning(true);
+      return;
+    }
+    
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, phone);
+  };
+  
+  const handleConfirmStaffForce = async () => {
+    setShowPhoneWarning(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
     await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, customPhone.trim());
   };
@@ -704,7 +731,13 @@ export default function DrugDetailPage() {
                       </div>
                       <Slider
                         value={[folderFontSize]}
-                        onValueChange={([v]) => setFolderFontSize(v)}
+                        onValueChange={([v]) => {
+                          setFolderFontSize(v);
+                          const savedDefault = localStorage.getItem('folder-font-size-default');
+                          if (!savedDefault || parseInt(savedDefault, 10) !== v) {
+                            setShowFontSizeSavePrompt(true);
+                          }
+                        }}
                         min={11}
                         max={20}
                         step={1}
@@ -714,6 +747,21 @@ export default function DrugDetailPage() {
                         <span>Klein</span>
                         <span>Groot</span>
                       </div>
+                      {showFontSizeSavePrompt && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-7 text-xs mt-1"
+                          onClick={() => {
+                            localStorage.setItem('folder-font-size-default', String(folderFontSize));
+                            setShowFontSizeSavePrompt(false);
+                            toast.success('Tekstgrootte opgeslagen als standaard');
+                          }}
+                        >
+                          Opslaan als standaard ({folderFontSize}px)
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </PopoverContent>
@@ -1094,7 +1142,11 @@ export default function DrugDetailPage() {
                           groups.get(key)!.push(doc);
                         });
                         return (
-                          <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                          <Select value={selectedPhysician} onValueChange={(val) => {
+                            setSelectedPhysician(val);
+                            const doc = hospitalDoctors.find(d => d.name === val);
+                            setPhysicianPhone(doc?.phone_number || '');
+                          }}>
                             <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                               <SelectValue placeholder={t('patientFolder.select')} />
                             </SelectTrigger>
@@ -1111,6 +1163,12 @@ export default function DrugDetailPage() {
                           </Select>
                         );
                       })()}
+                      <Input
+                        placeholder="Telefoonnummer arts"
+                        value={physicianPhone}
+                        onChange={(e) => setPhysicianPhone(e.target.value)}
+                        className="h-7 sm:h-8 text-xs sm:text-sm"
+                      />
                     </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -1125,9 +1183,7 @@ export default function DrugDetailPage() {
                             setNurseSelection(val);
                             // Auto-fill phone number from selected nurse
                             const selectedNurse = hospitalNurses.find(n => n.name === val);
-                            if (selectedNurse?.phone_number) {
-                              setCustomPhone(selectedNurse.phone_number);
-                            }
+                            setNursePhone(selectedNurse?.phone_number || '');
                           }
                         }}
                         className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
@@ -1152,6 +1208,12 @@ export default function DrugDetailPage() {
                           autoFocus
                         />
                       )}
+                      <Input
+                        placeholder="Telefoonnummer verpleegkundige"
+                        value={nursePhone}
+                        onChange={(e) => setNursePhone(e.target.value)}
+                        className="h-7 sm:h-8 text-xs sm:text-sm"
+                      />
                     </div>
 
                     <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -1237,9 +1299,9 @@ export default function DrugDetailPage() {
                       </div>
 
                       <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.phone')}</Label>
+                        <Label className="text-xs sm:text-sm font-medium">Algemeen tel.</Label>
                         <Input
-                          placeholder={t('patientFolder.phonePlaceholder')}
+                          placeholder="Algemeen telefoonnummer"
                           value={customPhone}
                           onChange={(e) => setCustomPhone(e.target.value)}
                           className="h-7 sm:h-9 text-xs sm:text-sm"
@@ -1376,6 +1438,29 @@ export default function DrugDetailPage() {
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>Annuleren</Button>
             <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>Toevoegen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Phone number warning dialog */}
+      <Dialog open={showPhoneWarning} onOpenChange={setShowPhoneWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Telefoonnummer ontbreekt
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Er is geen telefoonnummer ingevuld voor de arts of verpleegkundige. 
+            Het is sterk aanbevolen om contactgegevens op te nemen in de patiëntenfolder zodat patiënten bij vragen of problemen snel contact kunnen opnemen.
+          </p>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setShowPhoneWarning(false)}>
+              Terug om in te vullen
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleConfirmStaffForce}>
+              Toch doorgaan zonder nummer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
