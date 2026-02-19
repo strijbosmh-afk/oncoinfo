@@ -817,42 +817,40 @@ export default function DrugsPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (
-                <>
-                  <div className="col-span-full">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.subtypes')}</h3>
+                <div className="col-span-full space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.subtypes')}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categoryConfig.subtypes.map((subtype) => (
+                        <Button
+                          key={subtype.key}
+                          variant={selectedSubtype === subtype.key ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 px-3 text-xs"
+                          onClick={() => handleSubtypeClick(subtype.key)}
+                        >
+                          {t(`medicalTerms.sub_${subtype.key}`, subtype.label)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  {categoryConfig.subtypes.map((subtype) => (
-                    <Card 
-                      key={subtype.key}
-                      onClick={() => handleSubtypeClick(subtype.key)}
-                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.sub_${subtype.key}_desc`, subtype.description)}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <div className="col-span-full mt-2">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.stages')}</h3>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.stages')}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categoryConfig.stages.map((stage) => (
+                        <Button
+                          key={stage.key}
+                          variant={selectedStage === stage.key ? 'default' : 'outline'}
+                          size="sm"
+                          className="h-7 px-3 text-xs"
+                          onClick={() => handleStageClick(stage.key)}
+                        >
+                          {t(`medicalTerms.stage_${stage.key}`, stage.label)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  {categoryConfig.stages.map((stage) => (
-                    <Card 
-                      key={stage.key}
-                      onClick={() => handleStageClick(stage.key)}
-                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.stage_${stage.key}_desc`, stage.description)}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </>
+                </div>
               )}
 
               {/* Urology disease areas */}
@@ -997,15 +995,15 @@ export default function DrugsPage() {
             </div>
 
             {/* View Mode Toggle - under subtypes */}
-            <div className="flex flex-nowrap gap-1 mt-6 pt-4 border-t overflow-x-auto">
+            <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t">
               <Button
                 variant={viewMode === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('all')}
-                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                className="gap-1.5"
               >
                 {t('common.all')}
-                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-0.5">
                   {filteredDrugs.length}
                 </Badge>
               </Button>
@@ -1013,11 +1011,11 @@ export default function DrugsPage() {
                 variant={viewMode === 'combinations' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('combinations')}
-                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                className="gap-1.5"
               >
-                <Layers className="h-3 w-3" />
+                <Layers className="h-3.5 w-3.5" />
                 {t('drugs.combinations')}
-                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-0.5">
                   {combinationDrugs.length}
                 </Badge>
               </Button>
@@ -1026,10 +1024,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'hormonal' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('hormonal')}
-                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                  className="gap-1.5"
                 >
                   Antihormonaal
-                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-0.5">
                     {hormonalDrugs.length}
                   </Badge>
                 </Button>
@@ -1039,10 +1037,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'cdk46' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('cdk46')}
-                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                  className="gap-1.5"
                 >
                   CDK4/6
-                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-0.5">
                     {cdk46Drugs.length}
                   </Badge>
                 </Button>
@@ -1052,10 +1050,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'lhrh' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('lhrh')}
-                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                  className="gap-1.5"
                 >
                   LHRH
-                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-0.5">
                     {lhrhDrugs.length}
                   </Badge>
                 </Button>
@@ -1065,10 +1063,10 @@ export default function DrugsPage() {
                   variant={viewMode === 'arta' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('arta')}
-                  className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                  className="gap-1.5"
                 >
                   ARTA
-                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-0.5">
                     {artaDrugs.length}
                   </Badge>
                 </Button>
@@ -1077,11 +1075,11 @@ export default function DrugsPage() {
                 variant={viewMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('individual')}
-                className="gap-1 h-7 px-2 text-xs whitespace-nowrap"
+                className="gap-1.5"
               >
-                <Pill className="h-3 w-3" />
+                <Pill className="h-3.5 w-3.5" />
                 {t('drugs.individualDrugs')}
-                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-0.5 text-xs px-1.5 py-0">
+                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-0.5">
                   {individualDrugs.length}
                 </Badge>
               </Button>
