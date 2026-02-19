@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles } from 'lucide-react';
 import { NewDrugInfo } from '@/hooks/useNewDrugsNotification';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface NewDrugsDialogProps {
   open: boolean;
@@ -12,7 +13,13 @@ interface NewDrugsDialogProps {
 }
 
 export function NewDrugsDialog({ open, onClose, drugs }: NewDrugsDialogProps) {
+  const { t } = useTranslation();
+
   if (drugs.length === 0) return null;
+
+  const description = drugs.length === 1
+    ? t('newDrugs.descriptionOne')
+    : t('newDrugs.descriptionMultiple', { count: drugs.length });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -24,12 +31,10 @@ export function NewDrugsDialog({ open, onClose, drugs }: NewDrugsDialogProps) {
             </div>
             <div>
               <DialogTitle className="text-lg">
-                Nieuwe behandelingen toegevoegd
+                {t('newDrugs.title')}
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {drugs.length === 1
-                  ? 'Er is 1 nieuwe behandeling toegevoegd sinds uw laatste bezoek.'
-                  : `Er zijn ${drugs.length} nieuwe behandelingen toegevoegd sinds uw laatste bezoek.`}
+                {description}
               </DialogDescription>
             </div>
           </div>
@@ -72,7 +77,7 @@ export function NewDrugsDialog({ open, onClose, drugs }: NewDrugsDialogProps) {
 
         <div className="pt-3 border-t">
           <Button onClick={onClose} className="w-full" size="sm">
-            Begrepen
+            {t('newDrugs.understood')}
           </Button>
         </div>
       </DialogContent>

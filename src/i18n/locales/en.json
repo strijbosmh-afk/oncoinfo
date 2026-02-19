@@ -853,5 +853,11 @@
     "tip": "Tip:",
     "firstLogin": "First login:",
     "export": "Export:"
+  },
+  "newDrugs": {
+    "title": "New treatments added",
+    "descriptionOne": "1 new treatment has been added since your last visit.",
+    "descriptionMultiple": "{{count}} new treatments have been added since your last visit.",
+    "understood": "Got it"
   }
 }
