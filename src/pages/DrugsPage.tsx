@@ -817,38 +817,36 @@ export default function DrugsPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (
-                <div className="col-span-full space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.subtypes')}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {categoryConfig.subtypes.map((subtype) => (
-                        <Button
-                          key={subtype.key}
-                          variant={selectedSubtype === subtype.key ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleSubtypeClick(subtype.key)}
-                        >
-                          {t(`medicalTerms.sub_${subtype.key}`, subtype.label)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-1.5">{t('drugs.stages')}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {categoryConfig.stages.map((stage) => (
-                        <Button
-                          key={stage.key}
-                          variant={selectedStage === stage.key ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleStageClick(stage.key)}
-                        >
-                          {t(`medicalTerms.stage_${stage.key}`, stage.label)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <>
+                  {categoryConfig.subtypes.map((subtype) => (
+                    <Card 
+                      key={subtype.key}
+                      onClick={() => handleSubtypeClick(subtype.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
+                        <p className="text-xs text-muted-foreground">{t('drugs.subtypes')}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {categoryConfig.stages.map((stage) => (
+                    <Card 
+                      key={stage.key}
+                      onClick={() => handleStageClick(stage.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
+                        <p className="text-xs text-muted-foreground">{t('drugs.stages')}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
               )}
 
               {/* Urology disease areas */}
