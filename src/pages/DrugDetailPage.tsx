@@ -902,16 +902,20 @@ export default function DrugDetailPage() {
                         <p className="text-muted-foreground">{td.dosing_info.max_dose}</p>
                       </div>
                     )}
-                    {td.dosing_info.dose_adjustments && td.dosing_info.dose_adjustments.length > 0 && (
+                    {td.dosing_info.dose_adjustments && (
                       <div>
                         <h4 className="font-medium mb-2">{t('drugDetail.doseAdjustments')}</h4>
                         <div className="space-y-2">
-                          {td.dosing_info.dose_adjustments.map((adj, i) => (
-                            <div key={i} className="text-sm">
-                              <span className="font-medium">{adj.condition}:</span>{' '}
-                              <span className="text-muted-foreground">{adj.adjustment}</span>
-                            </div>
-                          ))}
+                          {Array.isArray(td.dosing_info.dose_adjustments) ? (
+                            td.dosing_info.dose_adjustments.map((adj, i) => (
+                              <div key={i} className="text-sm">
+                                <span className="font-medium">{adj.condition}:</span>{' '}
+                                <span className="text-muted-foreground">{adj.adjustment}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{String(td.dosing_info.dose_adjustments)}</p>
+                          )}
                         </div>
                       </div>
                     )}
