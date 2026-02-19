@@ -26,7 +26,7 @@ import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, Ke
 export function UserManagement() {
   const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
-  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword } = useUserManagement();
+  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword, updateHospitals } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [preselectedHospital, setPreselectedHospital] = useState<string | null>(null);
@@ -422,6 +422,7 @@ export function UserManagement() {
         mode={dialogMode}
         user={selectedUser}
         onSubmit={handleDialogSubmit}
+        onUpdateHospitals={(userId, hospitalIds) => updateHospitals.mutate({ user_id: userId, hospital_ids: hospitalIds })}
         isLoading={createUser.isPending || updateUser.isPending}
         callerIsSuperAdmin={isSuperAdmin}
         hospitals={allHospitals}

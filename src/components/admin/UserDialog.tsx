@@ -35,8 +35,10 @@ interface UserDialogProps {
     can_modify_treatments?: boolean;
     dedicated_nurse_id?: string | null;
     phone_number?: string | null;
+    linked_hospital_ids?: string[];
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
+  onUpdateHospitals?: (userId: string, hospitalIds: string[]) => void;
   isLoading: boolean;
   callerIsSuperAdmin?: boolean;
   hospitals?: HospitalOption[];
@@ -71,7 +73,7 @@ function generatePassword(length = 12): string {
   return pw.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateHospitals, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -91,6 +93,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [discipline, setDiscipline] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
+  const [linkedHospitals, setLinkedHospitals] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Fetch nurses from the same hospital when function is 'arts' and hospitalId changes
@@ -134,6 +137,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanModify(user.can_modify_treatments ?? false);
         setDedicatedNurseId(user.dedicated_nurse_id || '');
         setPhoneNumber(user.phone_number || '');
+        setLinkedHospitals(user.linked_hospital_ids || []);
       } else {
         setEmail('');
         setUsername('');
@@ -151,6 +155,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanModify(false);
         setDedicatedNurseId('');
         setPhoneNumber('');
+        setLinkedHospitals([]);
       }
       setAttempted(false);
     }
@@ -217,6 +222,20 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.phone_number = (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null;
 
       onSubmit(changes);
+
+      // Save linked hospitals if changed (super admin only)
+      if (callerIsSuperAdmin && onUpdateHospitals) {
+        const original = user?.linked_hospital_ids || [];
+        const sorted1 = [...original].sort();
+        const sorted2 = [...linkedHospitals].sort();
+        if (JSON.stringify(sorted1) !== JSON.stringify(sorted2)) {
+          // Ensure primary hospital is always included
+          const finalHospitals = linkedHospitals.includes(hospitalId)
+            ? linkedHospitals
+            : [hospitalId, ...linkedHospitals];
+          onUpdateHospitals(user!.id, finalHospitals);
+        }
+      }
     }
   };
 
@@ -350,6 +369,37 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
               <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
             )}
           </div>
+
+          {/* Multi-hospital links - super admin only, edit mode */}
+          {callerIsSuperAdmin && mode === 'edit' && (
+            <div className="space-y-2">
+              <Label>{t('userDialog.linkedHospitals', 'Gekoppelde ziekenhuizen')}</Label>
+              <p className="text-xs text-muted-foreground">{t('userDialog.linkedHospitalsHelp', 'Gebruiker kan wisselen tussen deze ziekenhuizen')}</p>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto border rounded-md p-2">
+                {hospitals.map((h) => (
+                  <div key={h.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`hosp-${h.id}`}
+                      checked={linkedHospitals.includes(h.id)}
+                      onCheckedChange={(checked) => {
+                        setLinkedHospitals(prev =>
+                          checked
+                            ? [...prev, h.id]
+                            : prev.filter(id => id !== h.id)
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`hosp-${h.id}`} className="text-sm font-normal cursor-pointer">
+                      {h.name}
+                      {h.id === hospitalId && (
+                        <span className="text-xs text-muted-foreground ml-1">(primair)</span>
+                      )}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="user-username">{t('userDialog.username')}</Label>

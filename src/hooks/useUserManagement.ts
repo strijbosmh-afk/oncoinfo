@@ -23,6 +23,7 @@ export interface ManagedUser {
   dedicated_nurse_id: string | null;
   dedicated_nurse_name: string | null;
   phone_number: string | null;
+  linked_hospital_ids: string[];
 }
 
 async function callManageUsers(action: string, params: Record<string, unknown> = {}) {
@@ -130,6 +131,18 @@ export function useUserManagement() {
     },
   });
 
+  const updateHospitals = useMutation({
+    mutationFn: (params: { user_id: string; hospital_ids: string[] }) =>
+      callManageUsers('update-hospitals', params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['managed-users'] });
+      toast({ title: 'Ziekenhuizen bijgewerkt', description: 'De ziekenhuiskoppelingen zijn opgeslagen.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Fout bij bijwerken', description: error.message, variant: 'destructive' });
+    },
+  });
+
   return {
     users: usersQuery.data,
     isLoading: usersQuery.isLoading,
@@ -139,6 +152,7 @@ export function useUserManagement() {
     deleteUser,
     sendCredentials,
     resetPassword,
+    updateHospitals,
     refetch: usersQuery.refetch,
   };
 }
