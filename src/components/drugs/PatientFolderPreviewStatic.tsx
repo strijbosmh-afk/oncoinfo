@@ -26,6 +26,7 @@ export function generateStaticPreviewHtml(
   hospitalLogoUrl: string | null = null,
   hospitalColor: string = '#6b2d5b',
   premedicatieItems: string[] = [],
+  fontSize: number = 14,
 ): string {
   const isFr = language === 'fr';
   const brandNamesText = drug.brand_names?.length > 0 ? ` (${drug.brand_names.join(', ')})` : '';
@@ -328,6 +329,14 @@ export function generateStaticPreviewHtml(
   const listHtml = (items: string[]) =>
     items.length > 0 ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '';
 
+  const sectionFontSize = fontSize;
+  const listFontSize = fontSize;
+  const h2FontSize = fontSize + 2;
+  const contactFontSize = fontSize - 1;
+  const footerFontSize = fontSize - 3;
+  const disclaimerTitleSize = fontSize - 4;
+  const disclaimerTextSize = fontSize - 5;
+
   return `<!DOCTYPE html>
 <html lang="${isFr ? 'fr' : 'nl'}">
 <head>
@@ -335,11 +344,15 @@ export function generateStaticPreviewHtml(
   <style>
     @page { size: A4; margin: 12mm; }
      * { margin: 0; padding: 0; box-sizing: border-box; }
+     html, body { height: 100%; }
      body {
        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-       font-size: 14px; line-height: 1.55; color: #1a1a1a;
+       font-size: ${fontSize}px; line-height: 1.55; color: #1a1a1a;
        padding: 10mm; background: white;
      }
+     .page-container { display: flex; flex-direction: column; min-height: calc(297mm - 24mm); }
+     .page-content { flex: 1 1 auto; }
+     .page-footer-block { flex-shrink: 0; margin-top: auto; }
      .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 12px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
      .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
      .logo-name { display: flex; align-items: center; gap: 10px; }
@@ -347,25 +360,25 @@ export function generateStaticPreviewHtml(
      .hospital-name { font-size: 18px; font-weight: 800; color: ${hospitalColor}; }
      .header-title { text-align: right; }
      .header-title h1 { color: ${hospitalColor}; font-size: 20px; margin-bottom: 2px; }
-     .header-title .subtitle { color: #666; font-size: 13px; }
+     .header-title .subtitle { color: #666; font-size: ${fontSize - 1}px; }
      .content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
      .section { margin-bottom: 8px; }
-     .section h2 { color: ${hospitalColor}; font-size: 15px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
-     .section p { margin-bottom: 4px; color: #333; font-size: 13px; }
+     .section h2 { color: ${hospitalColor}; font-size: ${h2FontSize}px; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+     .section p { margin-bottom: 4px; color: #333; font-size: ${sectionFontSize}px; }
      .section ul { margin-left: 14px; margin-bottom: 4px; }
-     .section li { margin-bottom: 2px; color: #333; font-size: 13px; }
+     .section li { margin-bottom: 2px; color: #333; font-size: ${listFontSize}px; }
      .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-     .warning-box h3 { color: #cc7a00; font-size: 13px; margin-bottom: 3px; }
+     .warning-box h3 { color: #cc7a00; font-size: ${sectionFontSize}px; margin-bottom: 3px; }
      .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-     .danger-box h3 { color: #cc0000; font-size: 13px; margin-bottom: 3px; }
+     .danger-box h3 { color: #cc0000; font-size: ${sectionFontSize}px; margin-bottom: 3px; }
      .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
-     .selfcare-box h3 { color: #2e7d32; font-size: 13px; margin-bottom: 3px; }
+     .selfcare-box h3 { color: #2e7d32; font-size: ${sectionFontSize}px; margin-bottom: 3px; }
      .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: 6px 8px; margin: 4px 0; border-radius: 0 3px 3px 0; }
      .full-width { grid-column: 1 / -1; }
-     .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; margin-top: 10px; font-size: 12px; }
-     .contact-section h2 { font-size: 14px; margin-bottom: 6px; color: ${hospitalColor}; }
+     .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; font-size: ${contactFontSize}px; }
+     .contact-section h2 { font-size: ${contactFontSize + 2}px; margin-bottom: 6px; color: ${hospitalColor}; }
      .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-     .footer { margin-top: 10px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #666; text-align: center; }
+     .footer { padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: ${footerFontSize}px; color: #666; text-align: center; }
      .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
      @media print {
        .preview-badge { display: none !important; }
@@ -377,13 +390,14 @@ export function generateStaticPreviewHtml(
      .timeline-item { position: relative; display: flex; align-items: flex-start; margin-bottom: 14px; padding-left: 50px; }
      .timeline-dot { position: absolute; left: 14px; top: 4px; width: 18px; height: 18px; border-radius: 50%; background: ${hospitalColor}; border: 2px solid white; box-shadow: 0 0 0 2px ${hospitalColor}; z-index: 1; }
      .timeline-content { background: #f8f5f7; border: 1px solid #e8dce5; border-radius: 8px; padding: 10px 14px; flex: 1; }
-     .timeline-content h3 { font-size: 14px; color: ${hospitalColor}; margin-bottom: 3px; font-weight: 700; }
-     .timeline-route { display: inline-block; background: ${hospitalColor}; color: white; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
-     .timeline-timing { font-size: 12px; color: #555; margin-top: 3px; }
+     .timeline-content h3 { font-size: ${fontSize}px; color: ${hospitalColor}; margin-bottom: 3px; font-weight: 700; }
+     .timeline-route { display: inline-block; background: ${hospitalColor}; color: white; padding: 1px 7px; border-radius: 10px; font-size: ${fontSize - 4}px; font-weight: 600; }
+     .timeline-timing { font-size: ${fontSize - 2}px; color: #555; margin-top: 3px; }
   </style>
 </head>
 <body>
   <div class="preview-badge">${labels.preview}</div>
+  <div class="page-container">
   <div class="logo-header">
     <div class="logo-name">
       ${hospitalLogoUrl ? `<img src="${hospitalLogoUrl}" alt="${hospitalName}" />` : `<img src="/images/logo-rzt.png" alt="Logo" />`}
@@ -395,11 +409,12 @@ export function generateStaticPreviewHtml(
     </div>
   </div>
 
+  <div class="page-content">
   <div class="content">
     ${introText ? `<div class="section"><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
     ${usageItems.length > 0 ? `<div class="section"><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
     ${includeDosing && dosingItems.length > 0 ? `<div class="section"><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
-    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><p style="font-size: 12px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p></div>` : ''}
+    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><p style="font-size: ${fontSize - 2}px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p></div>` : ''}
     ${contraItems.length > 0 ? `<div class="section"><h2>${labels.whenNot}</h2>${listHtml(contraItems)}</div>` : ''}
 
     ${includeSideEffects && (commonSE.length > 0 || seriousSE.length > 0) ? `
@@ -415,29 +430,33 @@ export function generateStaticPreviewHtml(
       <h2>${labels.selfCare}</h2>
       <div class="selfcare-box">
         <h3>${isFr ? 'Conseils pratiques' : 'Praktische tips'}</h3>
-        <p style="font-size: 11px; color: #555; font-style: italic;">${isFr ? 'Des conseils personnalisés seront générés automatiquement.' : 'Gepersonaliseerde tips worden automatisch gegenereerd.'}</p>
+        <p style="font-size: ${fontSize - 3}px; color: #555; font-style: italic;">${isFr ? 'Des conseils personnalisés seront générés automatiquement.' : 'Gepersonaliseerde tips worden automatisch gegenereerd.'}</p>
       </div>
     </div>
 
     ${tipItems.length > 0 ? `<div class="section"><h2>${labels.tips}</h2><div class="info-box">${listHtml(tipItems)}</div></div>` : ''}
     ${monitorItems.length > 0 ? `<div class="section"><h2>${labels.monitoring}</h2>${listHtml(monitorItems)}</div>` : ''}
   </div>
+  </div>
 
-  <div class="contact-section full-width">
-    <h2>${labels.contact}</h2>
-    <div class="contact-grid">
-      <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
-      <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+  <div class="page-footer-block">
+    <div class="contact-section full-width">
+      <h2>${labels.contact}</h2>
+      <div class="contact-grid">
+        <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+        <p><strong>${labels.phone}:</strong> ${phoneNumber || '016 80 90 11'}</p>
+      </div>
     </div>
-  </div>
 
-  <div class="disclaimer-box" style="margin-top: 10px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-    <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-    <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
-  </div>
+    <div class="disclaimer-box" style="margin-top: 8px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
+      <p style="font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+      <p style="font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+    </div>
 
-  <div class="footer"><p>${labels.footer}</p></div>
+    <div class="footer"><p>${labels.footer}</p></div>
+  </div>
+  </div>
 
   ${premedicatieItems.length > 0 ? `
   <div class="page-break">
