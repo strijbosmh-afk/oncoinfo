@@ -288,6 +288,9 @@ export function useAuth() {
       // Server signout may fail if session doesn't exist server-side
     }
 
+    // Clear language preference so hospital default applies on next login
+    localStorage.removeItem('user-chose-language');
+
     // Force reload to clear all component state and redirect to login
     window.location.href = '/';
   };
