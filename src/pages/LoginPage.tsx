@@ -207,7 +207,7 @@ export default function LoginPage() {
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        onClick={() => { i18n.changeLanguage(lang.code); localStorage.setItem('user-chose-language', 'true'); }}
+                        onClick={() => { i18n.changeLanguage(lang.code); }}
                         className={`text-xl px-1.5 py-1 rounded-md transition-all ${
                           i18n.language === lang.code
                             ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
