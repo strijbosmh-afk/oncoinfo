@@ -307,12 +307,14 @@ export function generateStaticPreviewHtml(
     return term;
   };
 
+  const rawCommon = drug.side_effects?.common || drug.side_effects?.veel_voorkomend || [];
+  const rawSerious = drug.side_effects?.serious || drug.side_effects?.ernstig || [];
   const commonSE = folderMode === 'uitgebreid'
-    ? (drug.side_effects?.common || []).map(humanize)
-    : (drug.side_effects?.common?.slice(0, 5) || []).map(humanize);
+    ? rawCommon.map(humanize)
+    : rawCommon.slice(0, 5).map(humanize);
   const seriousSE = folderMode === 'uitgebreid'
-    ? (drug.side_effects?.serious || []).map(humanize)
-    : (drug.side_effects?.serious?.slice(0, 3) || []).map(humanize);
+    ? rawSerious.map(humanize)
+    : rawSerious.slice(0, 3).map(humanize);
   const contraItems = folderMode === 'uitgebreid'
     ? (drug.contraindications || [])
     : (drug.contraindications?.slice(0, 4) || []);

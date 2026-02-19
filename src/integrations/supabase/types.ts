@@ -686,6 +686,7 @@ export type Database = {
           id: string
           last_name: string | null
           password_changed: boolean
+          phone_number: string | null
           role: string
           updated_at: string
           user_id: string
@@ -702,6 +703,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           password_changed?: boolean
+          phone_number?: string | null
           role?: string
           updated_at?: string
           user_id: string
@@ -718,6 +720,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           password_changed?: boolean
+          phone_number?: string | null
           role?: string
           updated_at?: string
           user_id?: string

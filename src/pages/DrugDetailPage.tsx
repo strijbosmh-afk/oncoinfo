@@ -237,6 +237,10 @@ export default function DrugDetailPage() {
           setCustomNurse(fullName);
         }
       }
+      // Pre-fill phone number from profile
+      if (!customPhone && profile.phone_number) {
+        setCustomPhone(profile.phone_number);
+      }
       // If nurse has a dedicated doctor, pre-select that doctor
       if (!selectedPhysician && profile.dedicated_nurse_id) {
         // Find the dedicated doctor's name from profiles data
