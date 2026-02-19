@@ -859,5 +859,12 @@
     "descriptionOne": "1 new treatment has been added since your last visit.",
     "descriptionMultiple": "{{count}} new treatments have been added since your last visit.",
     "understood": "Got it"
+  },
+  "milestone": {
+    "title": "Folder #{{count}}!",
+    "congrats": "Congratulations! 🥳",
+    "message": "You just printed your <strong>{{count}}th</strong> patient folder!",
+    "joke": "If this were a video game, you'd have just unlocked an achievement. 🏅",
+    "dismiss": "Thanks, back to saving the world 💪"
   }
 }

@@ -859,5 +859,12 @@
     "descriptionOne": "1 neue Behandlung wurde seit Ihrem letzten Besuch hinzugefügt.",
     "descriptionMultiple": "{{count}} neue Behandlungen wurden seit Ihrem letzten Besuch hinzugefügt.",
     "understood": "Verstanden"
+  },
+  "milestone": {
+    "title": "Mappe #{{count}}!",
+    "congrats": "Herzlichen Glückwunsch! 🥳",
+    "message": "Sie haben gerade Ihre <strong>{{count}}.</strong> Patientenmappe gedruckt!",
+    "joke": "Wenn dies ein Videospiel wäre, hätten Sie gerade einen Erfolg freigeschaltet. 🏅",
+    "dismiss": "Danke, ich rette weiter die Welt 💪"
   }
 }

@@ -859,5 +859,12 @@
     "descriptionOne": "Er is 1 nieuwe behandeling toegevoegd sinds uw laatste bezoek.",
     "descriptionMultiple": "Er zijn {{count}} nieuwe behandelingen toegevoegd sinds uw laatste bezoek.",
     "understood": "Begrepen"
+  },
+  "milestone": {
+    "title": "Folder #{{count}}!",
+    "congrats": "Gefeliciteerd! 🥳",
+    "message": "Je hebt zojuist je <strong>{{count}}e</strong> patiëntenfolder afgedrukt!",
+    "joke": "Als dit een videogame was, had je nu een achievement ontgrendeld. 🏅",
+    "dismiss": "Bedankt, ik ga door met redden van de wereld 💪"
   }
 }
