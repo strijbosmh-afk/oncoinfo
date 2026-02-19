@@ -1,0 +1,73 @@
+name: Build Windows Desktop App
+
+on:
+  push:
+    branches: [main, claude/standalone-windows-app-*]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Build Windows installer
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OncoInfo-Windows-Setup
+          path: |
+            release/OncoInfo-Setup-*.exe
+            release/OncoInfo-Portable-*.exe
+          if-no-files-found: warn
+
+      - name: Upload unpacked app
+        uses: actions/upload-artifact@v4
+        with:
+          name: OncoInfo-Windows-Unpacked
+          path: release/win-unpacked/
+          if-no-files-found: warn
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: OncoInfo-Windows-Setup
+          path: release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/OncoInfo-Setup-*.exe
+            release/OncoInfo-Portable-*.exe
+          draft: true
+          generate_release_notes: true
