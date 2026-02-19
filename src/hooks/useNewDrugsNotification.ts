@@ -20,18 +20,22 @@ export function useNewDrugsNotification(userId: string | undefined) {
     const checkNewDrugs = async () => {
       setLoading(true);
       try {
-        // Fetch user's last login time
-        const { data: profile } = await supabase
-          .from('profiles')
+        // Fetch user's last login time (cast needed: column added after types generation)
+        const { data: profile, error: profileError } = await (supabase
+          .from('profiles') as any)
           .select('last_login_at')
           .eq('user_id', userId)
           .single();
 
+        if (profileError) {
+          console.error('Error fetching last_login_at:', profileError);
+          return;
+        }
+
         const lastLogin = profile?.last_login_at;
 
         // Update last_login_at to now
-        await supabase
-          .from('profiles')
+        await (supabase.from('profiles') as any)
           .update({ last_login_at: new Date().toISOString() })
           .eq('user_id', userId);
 
