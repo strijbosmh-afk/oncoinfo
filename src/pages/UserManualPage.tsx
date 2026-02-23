@@ -223,6 +223,11 @@ export default function UserManualPage() {
                 🔑 <strong>{t('manual.firstLogin')}</strong> {t('manual.s1FirstLogin')}
               </p>
             </div>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                🔒 {t('manual.s1ForgotPassword')}
+              </p>
+            </div>
           </Section>
 
           {/* 2. HOME */}
