@@ -19,9 +19,10 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
-import { CalendarClock, Building2, BarChart3 } from 'lucide-react';
+import { CalendarClock, Building2, BarChart3, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UsageDashboard } from '@/components/admin/UsageDashboard';
+import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -32,7 +33,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | null>(null);
   const navigate = useNavigate();
 
   const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -265,6 +266,16 @@ export default function AdminPage() {
                 {t('dashboard.title', 'Gebruiksoverzicht')}
               </Button>
             )}
+            {isSuperAdmin && (
+              <Button
+                variant={activeSection === 'api-docs' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'api-docs' ? null : 'api-docs')}
+                className="gap-2"
+              >
+                <Globe className="h-4 w-4" />
+                API Documentatie
+              </Button>
+            )}
           </div>
 
           
@@ -345,6 +356,12 @@ export default function AdminPage() {
         {activeSection === 'dashboard' && isSuperAdmin && (
           <div className="mb-8">
             <UsageDashboard />
+          </div>
+        )}
+
+        {activeSection === 'api-docs' && isSuperAdmin && (
+          <div className="mb-8">
+            <ApiDocumentation />
           </div>
         )}
 
