@@ -153,7 +153,7 @@ export function UserManagement() {
         email: credentialsUser.email,
         username: credentialsUser.username || undefined,
         password: credentialsPassword.trim(),
-        login_url: `${window.location.origin}`,
+        login_url: 'https://www.oncoinfo.be',
       });
       setCredentialsDialogOpen(false);
     }

@@ -197,7 +197,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         password: password.trim(),
         role,
         send_email: sendEmail,
-        login_url: `${window.location.origin}`,
+        login_url: 'https://www.oncoinfo.be',
         can_add_treatments: canAdd,
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,

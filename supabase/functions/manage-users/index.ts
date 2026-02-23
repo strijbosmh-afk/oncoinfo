@@ -603,7 +603,7 @@ Deno.serve(async (req) => {
         }
 
         // Send reset email
-        const loginUrl = req.headers.get('origin') || 'https://oncoinfo.lovable.app';
+        const loginUrl = 'https://www.oncoinfo.be';
         await sendResetEmail(profile.email, profile.username || '', newPassword, loginUrl, hName, hColor);
 
         // Audit log for password reset + email sent
