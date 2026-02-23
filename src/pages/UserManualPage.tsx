@@ -7,11 +7,12 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown, Globe, Lock, Copy, Check
+  ChevronDown, Globe, Lock, Copy, Check, Loader2
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 function Section({ icon: Icon, title, children, defaultOpen = false }: { 
   icon: React.ElementType; 
@@ -70,6 +71,57 @@ function Html({ html }: { html: string }) {
 
 export default function UserManualPage() {
   const { t } = useTranslation();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!contentRef.current || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      // Open all collapsible sections before capture
+      const triggers = contentRef.current.querySelectorAll('[data-state="closed"]');
+      triggers.forEach((el) => {
+        if (el instanceof HTMLElement) el.click();
+      });
+      // Wait for animations
+      await new Promise((r) => setTimeout(r, 500));
+
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
+
+      const canvas = await html2canvas(contentRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        windowWidth: 900,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const usableW = pdfW - margin * 2;
+      const imgH = (canvas.height * usableW) / canvas.width;
+      let yOffset = 0;
+
+      while (yOffset < imgH) {
+        if (yOffset > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', margin, -yOffset + margin, usableW, imgH);
+        yOffset += pdfH - margin * 2;
+      }
+
+      pdf.save('OncoInfo-Handleiding.pdf');
+      toast.success(t('manual.pdfSuccess', 'PDF gedownload'));
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      toast.error(t('manual.pdfError', 'PDF generatie mislukt'));
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading, t]);
 
   return (
     <Layout>
@@ -81,12 +133,28 @@ export default function UserManualPage() {
           </Button>
         </Link>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{t('manual.title')}</h1>
-          <p className="text-muted-foreground text-lg">{t('manual.subtitle')}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{t('manual.title')}</h1>
+            <p className="text-muted-foreground text-lg">{t('manual.subtitle')}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 shrink-0"
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {t('manual.downloadPdf', 'Download PDF')}
+          </Button>
         </div>
 
-        <div className="space-y-4">
+        <div ref={contentRef} className="space-y-4">
 
           {/* 1. LOGIN */}
           <Section icon={LogIn} title={t('manual.s1Title')} defaultOpen={true}>
