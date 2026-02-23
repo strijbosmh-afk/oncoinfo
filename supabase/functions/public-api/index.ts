@@ -6,6 +6,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
+// In-memory rate limiter: max 60 requests per minute per API key
+const RATE_LIMIT = 60;
+const WINDOW_MS = 60_000;
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now();
+  let bucket = rateBuckets.get(key);
+  if (!bucket || now >= bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + WINDOW_MS };
+    rateBuckets.set(key, bucket);
+  }
+  bucket.count++;
+  return {
+    allowed: bucket.count <= RATE_LIMIT,
+    remaining: Math.max(0, RATE_LIMIT - bucket.count),
+    resetAt: bucket.resetAt,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -16,6 +36,20 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Unauthorized. Provide a valid X-API-Key header." }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Rate limiting
+  const rl = checkRateLimit(apiKey);
+  const rlHeaders = {
+    "X-RateLimit-Limit": String(RATE_LIMIT),
+    "X-RateLimit-Remaining": String(rl.remaining),
+    "X-RateLimit-Reset": String(Math.ceil(rl.resetAt / 1000)),
+  };
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded. Try again later." }), {
+      status: 429,
+      headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json", "Retry-After": String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
     });
   }
 
@@ -65,7 +99,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ total: count, offset, limit, drugs: data }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -86,7 +120,7 @@ serve(async (req) => {
         });
       }
       return new Response(JSON.stringify({ drug: data }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -109,7 +143,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ drug: drugRes.data, leaflet: leafletRes.data ?? null }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -136,7 +170,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ query: q, results: data }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -154,8 +188,9 @@ serve(async (req) => {
             { method: "GET", path: "/public-api/search?q=...", description: "Search drugs by name or class" },
           ],
           authentication: "Pass your API key in the X-API-Key header",
+          rate_limit: `${RATE_LIMIT} requests per minute`,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, ...rlHeaders, "Content-Type": "application/json" } }
       );
     }
 
