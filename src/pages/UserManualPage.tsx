@@ -83,34 +83,84 @@ export default function UserManualPage() {
       triggers.forEach((el) => {
         if (el instanceof HTMLElement) el.click();
       });
-      // Wait for animations
-      await new Promise((r) => setTimeout(r, 500));
+      // Wait for animations to complete
+      await new Promise((r) => setTimeout(r, 600));
 
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
         import('jspdf'),
         import('html2canvas'),
       ]);
 
-      const canvas = await html2canvas(contentRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        windowWidth: 900,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
-      const margin = 8;
+      const margin = 10;
       const usableW = pdfW - margin * 2;
-      const imgH = (canvas.height * usableW) / canvas.width;
-      let yOffset = 0;
+      const usableH = pdfH - margin * 2;
 
-      while (yOffset < imgH) {
-        if (yOffset > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, -yOffset + margin, usableW, imgH);
-        yOffset += pdfH - margin * 2;
+      // Capture each section (Card) separately for clean page breaks
+      const sections = contentRef.current.querySelectorAll(':scope > *');
+      let isFirstPage = true;
+      let currentY = margin;
+
+      for (const section of Array.from(sections)) {
+        const el = section as HTMLElement;
+        if (el.offsetHeight === 0) continue;
+
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 900,
+        });
+
+        const imgW = usableW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        const imgData = canvas.toDataURL('image/png');
+
+        // If this section fits on the current page, add it there
+        if (!isFirstPage && currentY + imgH > pdfH - margin) {
+          // Section doesn't fit — start a new page
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        if (isFirstPage) {
+          isFirstPage = false;
+        }
+
+        // If section is taller than one page, split it across pages
+        if (imgH > usableH) {
+          let srcY = 0;
+          const totalSrcH = canvas.height;
+          const pxPerMm = canvas.height / imgH;
+
+          while (srcY < totalSrcH) {
+            if (currentY !== margin) {
+              pdf.addPage();
+              currentY = margin;
+            }
+
+            const remainingPageMm = usableH;
+            const sliceHPx = Math.min(remainingPageMm * pxPerMm, totalSrcH - srcY);
+            const sliceHMm = sliceHPx / pxPerMm;
+
+            // Create a sliced canvas
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = sliceHPx;
+            const ctx = sliceCanvas.getContext('2d')!;
+            ctx.drawImage(canvas, 0, srcY, canvas.width, sliceHPx, 0, 0, canvas.width, sliceHPx);
+
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            pdf.addImage(sliceData, 'PNG', margin, currentY, imgW, sliceHMm);
+            currentY += sliceHMm;
+            srcY += sliceHPx;
+          }
+        } else {
+          pdf.addImage(imgData, 'PNG', margin, currentY, imgW, imgH);
+          currentY += imgH + 3; // small gap between sections
+        }
       }
 
       pdf.save('OncoInfo-Handleiding.pdf');
