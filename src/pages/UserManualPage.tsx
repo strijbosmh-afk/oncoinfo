@@ -7,7 +7,7 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown
+  ChevronDown, Globe, Lock, Copy, Check
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
@@ -390,6 +390,64 @@ export default function UserManualPage() {
                 <h4 className="font-semibold mb-1">{t('manual.s10Q5')}</h4>
                 <p className="text-sm text-muted-foreground">{t('manual.s10A5')}</p>
               </div>
+            </div>
+          </Section>
+
+          {/* 11. API DOCUMENTATION */}
+          <Section icon={Globe} title={t('manual.s11Title')}>
+            <p>{t('manual.s11Intro')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              {t('manual.s11AuthTitle')}
+            </h4>
+            <p className="text-sm">{t('manual.s11AuthDesc')}</p>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2 font-mono text-xs">
+              X-API-Key: YOUR_API_KEY
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11EndpointsTitle')}</h4>
+            <div className="space-y-3 mt-2">
+              {[
+                { method: 'GET', path: '/public-api/drugs', desc: t('manual.s11Ep1') },
+                { method: 'GET', path: '/public-api/drugs/:id', desc: t('manual.s11Ep2') },
+                { method: 'GET', path: '/public-api/drugs/:id/leaflet', desc: t('manual.s11Ep3') },
+                { method: 'GET', path: '/public-api/search?q=...', desc: t('manual.s11Ep4') },
+              ].map((ep) => (
+                <div key={ep.path} className="border rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="font-mono text-xs bg-primary/10 text-primary border-primary/20">
+                      {ep.method}
+                    </Badge>
+                    <code className="text-xs font-mono">{ep.path}</code>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{ep.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11ParamsTitle')}</h4>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li><Html html={t('manual.s11Param1')} /></li>
+              <li><Html html={t('manual.s11Param2')} /></li>
+              <li><Html html={t('manual.s11Param3')} /></li>
+              <li><Html html={t('manual.s11Param4')} /></li>
+              <li><Html html={t('manual.s11Param5')} /></li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11ExampleTitle')}</h4>
+            <div className="bg-muted/50 rounded-lg p-3 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">
+{`curl -H "X-API-Key: YOUR_API_KEY" \\
+  "https://ynuggqeumqzwwuffrnnv.supabase.co/functions/v1/public-api/drugs?q=pembrolizumab"`}
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11RateLimitTitle')}</h4>
+            <p className="text-sm">{t('manual.s11RateLimitDesc')}</p>
+
+            <div className="bg-muted/50 rounded-lg p-3 mt-3">
+              <p className="text-sm text-muted-foreground">
+                🤖 <strong>{t('manual.tip')}</strong> {t('manual.s11Tip')}
+              </p>
             </div>
           </Section>
 
