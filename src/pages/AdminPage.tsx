@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -203,7 +203,24 @@ export default function AdminPage() {
           {t('drugs.backToCategories', 'Terug naar specialiteiten')}
         </button>
         <h1 className="text-3xl font-bold mb-2">{t('admin.title')}</h1>
-        <p className="text-muted-foreground mb-8">{t('admin.description')}</p>
+        <p className="text-muted-foreground mb-4">{t('admin.description')}</p>
+
+        {/* Access level indicator for non-full-admin users */}
+        {!isAdmin && !isApotheker && hasAnyTreatmentPermission && (
+          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-lg border border-primary/20 bg-primary/5">
+            <Shield className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm font-medium text-foreground">{t('admin.yourPermissions', 'Uw toegangsrechten')}:</span>
+            {permissions?.can_add_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canAdd', 'Therapie toevoegen')}</Badge>
+            )}
+            {permissions?.can_modify_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canModify', 'Therapie wijzigen')}</Badge>
+            )}
+            {permissions?.can_delete_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canDelete', 'Therapie verwijderen')}</Badge>
+            )}
+          </div>
+        )}
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
