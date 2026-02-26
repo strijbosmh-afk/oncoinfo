@@ -22,7 +22,15 @@ interface SchemaAssistantProps {
   existingDrugs?: Drug[];
 }
 
+interface SchemaPhase {
+  phase_name: string;
+  drugs: string;
+  schedule: string;
+  duration: string;
+}
+
 interface ExtractedSchema {
+  schema_name?: string;
   generic_name: string;
   drug_class: string;
   disease_areas: string[];
@@ -37,6 +45,7 @@ interface ExtractedSchema {
   mechanism_of_action?: string;
   components_description?: string;
   drug_id?: string;
+  phases?: SchemaPhase[];
 }
 
 export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
@@ -318,16 +327,22 @@ Wat wil ik aanpassen?`;
     setPendingMessages([]);
   };
 
+  const hasPhases = previewSchema?.phases && previewSchema.phases.length > 0;
+
   const schemaRows: { label: string; value: string }[] = previewSchema ? [
+    { label: 'Schema naam', value: previewSchema.schema_name || previewSchema.generic_name },
     { label: 'Generieke naam', value: previewSchema.generic_name },
     { label: 'Medicijnklasse', value: previewSchema.drug_class },
     { label: 'Ziektegebied(en)', value: (previewSchema.disease_areas || []).join(', ') },
     { label: 'Indicatie(s)', value: (previewSchema.approved_indications || []).join(', ') || '—' },
     { label: 'Merknamen', value: (previewSchema.brand_names || []).join(', ') || '—' },
     { label: 'Toedieningsweg', value: previewSchema.administration_route || '—' },
-    { label: 'Standaarddosering', value: previewSchema.standard_dose || '—' },
-    { label: 'Frequentie', value: previewSchema.dosing_frequency || '—' },
-    { label: 'Cyclusduur', value: previewSchema.cycle_length_days ? `${previewSchema.cycle_length_days} dagen` : '—' },
+    ...(!hasPhases ? [
+      { label: 'Standaarddosering', value: previewSchema.standard_dose || '—' },
+      { label: 'Frequentie', value: previewSchema.dosing_frequency || '—' },
+      { label: 'Cyclusduur', value: previewSchema.cycle_length_days ? `${previewSchema.cycle_length_days} dagen` : '—' },
+    ] : []),
+    { label: 'Fasen', value: hasPhases ? `${previewSchema.phases!.length} fasen (zie hieronder)` : 'Geen (enkelvoudig schema)' },
     { label: 'ZVZ/RIZIV', value: previewSchema.is_on_zvz ? 'Ja' : 'Nee' },
     { label: 'Registratiestudie', value: previewSchema.registration_trial || '—' },
     { label: 'Werkingsmechanisme', value: previewSchema.mechanism_of_action || '—' },
@@ -483,7 +498,7 @@ Wat wil ik aanpassen?`;
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className="text-sm font-semibold">
-                  {previewSchema.generic_name}
+                  {previewSchema.schema_name || previewSchema.generic_name}
                 </Badge>
                 {previewSchema.drug_id && (
                   <Badge variant="secondary" className="text-xs">Bewerking</Badge>
@@ -502,6 +517,21 @@ Wat wil ik aanpassen?`;
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Phase details */}
+              {hasPhases && previewSchema.phases!.map((phase, idx) => (
+                <div key={idx} className="border rounded-lg p-3 bg-muted/30 space-y-1">
+                  <p className="font-semibold text-sm">{phase.phase_name || `Fase ${idx + 1}`}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <span className="text-muted-foreground">Middelen:</span>
+                    <span>{phase.drugs}</span>
+                    <span className="text-muted-foreground">Schema:</span>
+                    <span>{phase.schedule}</span>
+                    <span className="text-muted-foreground">Duur:</span>
+                    <span>{phase.duration}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
