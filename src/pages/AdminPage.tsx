@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,7 +35,21 @@ export default function AdminPage() {
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | null>(null);
+  const [editDrugParam, setEditDrugParam] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle editDrug URL param to auto-open schema assistant
+  useEffect(() => {
+    const editDrug = searchParams.get('editDrug');
+    if (editDrug) {
+      setActiveSection('schema-assistant');
+      setEditDrugParam(editDrug);
+      // Clean the URL param
+      searchParams.delete('editDrug');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
   const [drugToArchive, setDrugToArchive] = useState<{ id: string; name: string } | null>(null);
@@ -389,7 +403,7 @@ export default function AdminPage() {
 
         {activeSection === 'schema-assistant' && (
           <div className="mb-8">
-            <SchemaAssistant existingDrugs={drugs || []} />
+            <SchemaAssistant existingDrugs={drugs || []} initialEditDrugId={editDrugParam || undefined} />
           </div>
         )}
 
