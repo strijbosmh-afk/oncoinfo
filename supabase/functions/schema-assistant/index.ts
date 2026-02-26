@@ -15,6 +15,7 @@ const TOOL_DEF = {
       type: 'object',
       properties: {
         drug_id: { type: 'string', description: 'Existing drug ID if editing, empty if new' },
+        schema_name: { type: 'string', description: 'Display name for the schema chosen by the user (e.g. "EC-Paclitaxel dd", "FOLFOX", "Pembrolizumab mono")' },
         generic_name: { type: 'string', description: 'Generic/INN name or combination name' },
         brand_names: { type: 'array', items: { type: 'string' }, description: 'Brand names, Belgian market preferred' },
         drug_class: { type: 'string', description: 'Drug class from the predefined list' },
@@ -28,8 +29,21 @@ const TOOL_DEF = {
         registration_trial: { type: 'string', description: 'Pivotal registration trial name' },
         approved_indications: { type: 'array', items: { type: 'string' }, description: 'Approved indications with specifics (e.g. HR+/HER2- mBC)' },
         components_description: { type: 'string', description: 'For combinations: description of components with doses' },
+        phases: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              phase_name: { type: 'string', description: 'Name of this phase (e.g. "Fase 1: EC dose-dense", "Fase 2: Paclitaxel wekelijks")' },
+              drugs: { type: 'string', description: 'Drugs in this phase with doses' },
+              schedule: { type: 'string', description: 'Schedule description (e.g. "q2w x 4 cycli", "wekelijks x 12")' },
+              duration: { type: 'string', description: 'Duration of this phase' },
+            },
+          },
+          description: 'For multi-phase regimens: array of sequential phases. Empty array for single-phase.',
+        },
       },
-      required: ['generic_name', 'drug_class', 'disease_areas'],
+      required: ['generic_name', 'drug_class', 'disease_areas', 'schema_name'],
       additionalProperties: false,
     },
   },
@@ -69,7 +83,7 @@ serve(async (req) => {
     }
 
     if (action === 'save') {
-      return await handleSave(messages, authClient, corsHeaders, LOVABLE_API_KEY);
+      return await handleSave(messages, authClient, user.id, corsHeaders, LOVABLE_API_KEY);
     }
 
     if (action === 'extract') {
@@ -132,6 +146,7 @@ function buildSystemPrompt(): string {
 - Je bent DIRECT verbonden met de OncoInfo database. Wanneer de gebruiker "Opslaan" of "Bewaren" typt, wordt het schema DAADWERKELIJK opgeslagen in de database via een geautomatiseerd proces.
 - Zeg NOOIT dat je niet kunt opslaan, dat je simuleert, of dat je geen toegang hebt tot de database. Dat is ONWAAR.
 - Je KUNT en MOET schema's opslaan wanneer de gebruiker dat vraagt.
+- Schema's worden opgeslagen onder het ziekenhuis van de ingelogde gebruiker. Andere ziekenhuizen zien dit schema NIET.
 
 ## Jouw rol
 - Begeleid de gebruiker stapsgewijs door het proces
@@ -146,11 +161,30 @@ function buildSystemPrompt(): string {
 4. **INDICATIE-LOGICA**: Vraag de SPECIFIEKE indicatie op basis van het ziektegebied (zie hieronder)
 5. Vraag de medicijnklasse (IO/ICI, PARPi, Chemotherapie, TKI, ADC, Combinatietherapie, etc.)
 6. Vraag dosering en toedieningsweg
-7. Vraag cyclusduur
-8. Vraag of het middel op de ZVZ-lijst staat (RIZIV-terugbetaling)
-9. Vraag naar de registratiestudie (pivotale Phase III trial)
-10. Vraag naar merknamen (focus op Belgische markt)
-11. Geef een samenvatting en vraag bevestiging
+7. **MEERDERE FASEN**: Vraag of het schema uit meerdere opeenvolgende fasen bestaat (zie hieronder)
+8. Vraag cyclusduur (per fase indien meerdere fasen)
+9. Vraag of het middel op de ZVZ-lijst staat (RIZIV-terugbetaling)
+10. Vraag naar de registratiestudie (pivotale Phase III trial)
+11. Vraag naar merknamen (focus op Belgische markt)
+12. **SCHEMA NAAM**: Vraag onder welke naam het schema opgeslagen moet worden (bijv. "EC-Paclitaxel dd", "FOLFOX-4", "Pembrolizumab mono"). Stel een logische naam voor op basis van de verzamelde info.
+13. Geef een samenvatting en vraag bevestiging
+
+## MEERDERE FASEN (SEQUENTIËLE BEHANDELING)
+Veel oncologische schema's bestaan uit meerdere opeenvolgende fasen. Voorbeelden:
+- **EC dose-dense → Paclitaxel wekelijks**: Fase 1 = EC q2w x4, Fase 2 = Paclitaxel wekelijks x12
+- **AC → Docetaxel**: Fase 1 = AC q3w x4, Fase 2 = Docetaxel q3w x4
+- **FOLFOX inductie → capecitabine onderhoud**: Fase 1 = FOLFOX q2w x12, Fase 2 = Capecitabine
+- **Inductie → consolidatie → onderhoud**
+
+Vraag bij elk schema:
+1. "Bestaat dit schema uit meerdere opeenvolgende fasen/blokken?"
+2. Indien ja, vraag per fase:
+   - Naam van de fase (bijv. "Inductie", "Fase 1: EC", "Consolidatie")
+   - Welke middelen in deze fase
+   - Dosering per middel
+   - Schema/interval (bijv. q2w, q3w, wekelijks)
+   - Aantal cycli of duur van deze fase
+3. Maak duidelijk dat de fasen SEQUENTIEEL zijn (na elkaar, niet tegelijk)
 
 ## INDICATIE-LOGICA per ziektegebied
 Na het ziektegebied, stel de juiste vervolgvragen:
@@ -247,7 +281,7 @@ Vraag minimaal:
 - Begeleid de wijziging stap voor stap
 - Geef een samenvatting van de wijzigingen
 
-## Combinatieschema's
+## Combinatieschema's (binnen één fase)
 Bij combinaties, vraag per bestanddeel:
 - Naam van het middel
 - Dosering
@@ -256,7 +290,11 @@ Bij combinaties, vraag per bestanddeel:
 - Cyclusduur
 
 ## Wanneer alle informatie compleet is
-Geef een overzichtelijke samenvatting in een tabel-achtig formaat en vraag de gebruiker om te bevestigen met "Opslaan" of "Bewaren". Vermeld duidelijk dat de gebruiker "Opslaan" kan typen om het schema DAADWERKELIJK op te slaan in de database. Er verschijnt dan een popup met een definitief overzicht ter bevestiging.
+Geef een overzichtelijke samenvatting in een tabel-achtig formaat. Vermeld duidelijk:
+- De gekozen SCHEMA NAAM
+- Bij meerdere fasen: toon elke fase apart met middelen, doses, schema en duur
+- Vraag de gebruiker om te bevestigen met "Opslaan" of "Bewaren"
+- Vermeld dat er een popup verschijnt met een definitief overzicht ter bevestiging
 
 ## Beschikbare ziektegebieden
 Borstkanker, Prostaatkanker, Blaaskanker, Niercelcarcinoom, Testiskanker, Peniskanker, Ovariumcarcinoom, Endometriumcarcinoom, Cervixcarcinoom, Vulvacarcinoom, NSCLC, SCLC, Mesothelioom, Colorectaal carcinoom, Maagcarcinoom, Oesofaguscarcinoom, Pancreascarcinoom, Hepatocellulair carcinoom, Galwegcarcinoom, Melanoom, Merkelcelcarcinoom, Cutaan plaveiselcelcarcinoom, Hoofd-halscarcinoom, Nasofarynxcarcinoom, Speekselkliercarcinoom, Supportive Care
@@ -273,7 +311,8 @@ Oraal, Intraveneus, Subcutaan, Intramusculair, Intravesicaal
 - Wees beknopt maar volledig
 - Gebruik je oncologische kennis om suggesties te doen bij onvolledige informatie
 - Als de gebruiker informatie geeft die medisch incorrect lijkt, vraag dan bevestiging
-- De indicatie moet SPECIFIEK zijn (bijv. "HR+/HER2- gemetastaseerd borstcarcinoom, 1e lijn" in plaats van alleen "Borstkanker")`;
+- De indicatie moet SPECIFIEK zijn (bijv. "HR+/HER2- gemetastaseerd borstcarcinoom, 1e lijn" in plaats van alleen "Borstkanker")
+- Schema's zijn ziekenhuis-specifiek: elk ziekenhuis beheert zijn eigen schema's onafhankelijk`;
 }
 
 function buildExtractionPrompt(): string {
@@ -285,7 +324,10 @@ Belangrijk:
 - Genereer de standard_dose string door de componenten samen te voegen met " + "
 - Als er een bestaand drug_id wordt genoemd voor bewerking, neem dat mee
 - De approved_indications moeten SPECIFIEK zijn (bijv. "HR+/HER2- gemetastaseerd borstcarcinoom, 1e lijn")
-- Neem ALLE biomarker-informatie en setting-informatie mee in approved_indications`;
+- Neem ALLE biomarker-informatie en setting-informatie mee in approved_indications
+- schema_name is VERPLICHT: gebruik de naam die de gebruiker heeft gekozen
+- Als het schema uit meerdere fasen bestaat, vul het phases array in met alle details per fase
+- Als het schema uit één fase bestaat, laat phases leeg`;
 }
 
 async function callAIExtraction(messages: any[], apiKey: string) {
@@ -360,6 +402,7 @@ async function handleLoad(drugId: string, authClient: any, corsHeaders: Record<s
 async function handleSave(
   messages: any[],
   authClient: any,
+  userId: string,
   corsHeaders: Record<string, string>,
   apiKey: string,
 ) {
@@ -372,13 +415,23 @@ async function handleSave(
     });
   }
 
+  // Get the user's hospital_id for scoping
+  const { data: profile } = await authClient
+    .from('profiles')
+    .select('hospital_id')
+    .eq('user_id', userId)
+    .single();
+
+  const hospitalId = profile?.hospital_id || null;
+
   const dosingInfo: any = {};
   if (drugData.standard_dose) dosingInfo.standard_dose = drugData.standard_dose;
   if (drugData.dosing_frequency) dosingInfo.frequency = drugData.dosing_frequency;
   if (drugData.components_description) dosingInfo.components = drugData.components_description;
+  if (drugData.phases && drugData.phases.length > 0) dosingInfo.phases = drugData.phases;
 
   const dbRecord: any = {
-    generic_name: drugData.generic_name,
+    generic_name: drugData.schema_name || drugData.generic_name,
     drug_class: drugData.drug_class,
     disease_areas: drugData.disease_areas || [],
     mechanism_of_action: drugData.mechanism_of_action || null,
@@ -389,10 +442,13 @@ async function handleSave(
     approved_indications: drugData.approved_indications || null,
     cycle_length_days: drugData.cycle_length_days || null,
     dosing_info: Object.keys(dosingInfo).length > 0 ? dosingInfo : null,
+    hospital_id: hospitalId,
   };
 
   let result;
   if (drugData.drug_id) {
+    // Don't overwrite hospital_id on update
+    delete dbRecord.hospital_id;
     const { data: updated, error } = await authClient
       .from('drugs')
       .update(dbRecord)
