@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUserManagement, type ManagedUser } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, Ke
 export function UserManagement() {
   const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
+  const { toast } = useToast();
   const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword, updateHospitals } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -128,6 +130,11 @@ export function UserManagement() {
   };
 
   const handleDeleteClick = (user: ManagedUser) => {
+    // Protect the primary 'admin' account from deletion
+    if (user.username === 'admin') {
+      toast({ title: t('userMgmt.cannotDeleteAdmin', 'Kan niet verwijderen'), description: t('userMgmt.adminProtected', 'Het primaire admin-account kan niet worden verwijderd.'), variant: 'destructive' });
+      return;
+    }
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   };
@@ -407,8 +414,8 @@ export function UserManagement() {
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
                                 onClick={() => handleDeleteClick(user)}
-                                disabled={user.id === currentUser?.id}
-                                title={t('common.delete')}
+                                disabled={user.id === currentUser?.id || user.username === 'admin'}
+                                title={user.username === 'admin' ? 'Het primaire admin-account kan niet worden verwijderd' : t('common.delete')}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
