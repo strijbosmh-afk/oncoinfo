@@ -7,7 +7,7 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown, Globe, Lock, Copy, Check, Loader2
+  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useRef, useCallback } from 'react';
@@ -435,6 +435,18 @@ export default function UserManualPage() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t('manual.s6RoleVisible')}</p>
+
+            <h4 className="font-semibold mt-6 mb-2 flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              {t('manual.s6PermissionsTitle')}
+            </h4>
+            <p className="text-sm mb-3">{t('manual.s6PermissionsIntro')}</p>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li><Html html={t('manual.s6PermAdd')} /></li>
+              <li><Html html={t('manual.s6PermModify')} /></li>
+              <li><Html html={t('manual.s6PermDelete')} /></li>
+              <li><Html html={t('manual.s6PermPhysician')} /></li>
+            </ul>
           </Section>
 
           {/* 7. ADMIN */}
@@ -458,6 +470,48 @@ export default function UserManualPage() {
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s7AddTitle')}</h4>
             <p>{t('manual.s7AddDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AddPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              {t('manual.s7AITitle')}
+            </h4>
+            <p>{t('manual.s7AIDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AIPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t('manual.s7AIEnrichTitle')}
+            </h4>
+            <p>{t('manual.s7AIEnrichDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AIEnrichPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Tags className="h-4 w-4" />
+              {t('manual.s7FilterTagsTitle')}
+            </h4>
+            <p>{t('manual.s7FilterTagsDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7FilterTagsPermission')}
+              </p>
+            </div>
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s7AutoTitle')}</h4>
             <p>{t('manual.s7AutoDesc')}</p>
