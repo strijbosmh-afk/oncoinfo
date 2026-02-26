@@ -3,7 +3,7 @@ import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
 import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useTranslatedDrug } from '@/hooks/useTranslatedDrug';
@@ -42,7 +42,8 @@ import {
   Settings2,
   Printer,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  PenLine
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -92,7 +93,8 @@ export default function DrugDetailPage() {
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isMostUsed, toggleMostUsed } = useMostUsed();
-  const { user, profile, isSuperAdmin } = useAuth();
+  const { user, profile, isSuperAdmin, isAdmin } = useAuth();
+  const navigateAdmin = useNavigate();
   const queryClient = useQueryClient();
   const { hospital, isDemoClinic } = useHospital();
   const [showDemoPopup, setShowDemoPopup] = useState(false);
@@ -711,6 +713,18 @@ export default function DrugDetailPage() {
                   }`}
                 />
               </Button>
+              {(isAdmin || isSuperAdmin) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateAdmin(`/admin?editDrug=${drug.id}`)}
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  aria-label="Schema bewerken"
+                  title="Schema bewerken"
+                >
+                  <PenLine className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground hover:text-primary transition-colors" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -3,8 +3,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Drug } from '@/types/drug';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Layers, GripVertical, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Star, Layers, GripVertical, Zap, PenLine } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 const getDrugClassColor = (drugClass: string) => {
@@ -38,11 +38,13 @@ interface SortableDrugCardProps {
   onToggleMostUsed: (e: React.MouseEvent) => void;
   isEditMode: boolean;
   translateTerm?: (term: string) => string;
+  isAdmin?: boolean;
 }
 
-export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, isEditMode, translateTerm }: SortableDrugCardProps) {
+export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, isEditMode, translateTerm, isAdmin: isAdminProp }: SortableDrugCardProps) {
   const { t } = useTranslation();
   const tMed = translateTerm || ((s: string) => s);
+  const navigate = useNavigate();
   
   const {
     attributes,
@@ -76,6 +78,16 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
         )}
         <Card className={`h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
         <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+          {isAdminProp && !isEditMode && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+              className="p-1.5 rounded-full hover:bg-amber-100 transition-colors opacity-0 group-hover:opacity-100"
+              aria-label="Schema bewerken"
+              title="Schema bewerken"
+            >
+              <PenLine className="h-4 w-4 text-amber-600 hover:text-amber-800 transition-colors" />
+            </button>
+          )}
           <button
             onClick={onToggleMostUsed}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
@@ -158,6 +170,16 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
       )}
       <Card className={`h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
       <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        {isAdminProp && !isEditMode && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+            className="p-1.5 rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+            aria-label="Schema bewerken"
+            title="Schema bewerken"
+          >
+            <PenLine className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+          </button>
+        )}
         <button
           onClick={onToggleMostUsed}
           className="p-1.5 rounded-full hover:bg-muted transition-colors"

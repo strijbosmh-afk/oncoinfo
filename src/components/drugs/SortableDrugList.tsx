@@ -307,6 +307,7 @@ export function SortableDrugList({
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>
@@ -355,6 +356,7 @@ export function SortableDrugList({
                 }}
                 isEditMode={isEditMode}
                 translateTerm={tCard}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
@@ -401,6 +403,7 @@ export function SortableDrugList({
                 }}
                 isEditMode={isEditMode}
                 translateTerm={tCard}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
@@ -456,6 +459,7 @@ export function SortableDrugList({
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>
@@ -504,6 +508,7 @@ export function SortableDrugList({
                 }}
                 isEditMode={isEditMode}
                 translateTerm={tCard}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
@@ -557,6 +562,7 @@ export function SortableDrugList({
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>

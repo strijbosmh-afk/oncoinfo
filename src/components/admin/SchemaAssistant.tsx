@@ -20,6 +20,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/schema-assis
 
 interface SchemaAssistantProps {
   existingDrugs?: Drug[];
+  initialEditDrugId?: string;
 }
 
 interface SchemaPhase {
@@ -48,12 +49,12 @@ interface ExtractedSchema {
   phases?: SchemaPhase[];
 }
 
-export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
+export function SchemaAssistant({ existingDrugs = [], initialEditDrugId }: SchemaAssistantProps) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [editDrugId, setEditDrugId] = useState<string>('');
+  const [editDrugId, setEditDrugId] = useState<string>(initialEditDrugId || '');
   const [mode, setMode] = useState<'idle' | 'new' | 'edit'>('idle');
   const [previewSchema, setPreviewSchema] = useState<ExtractedSchema | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -61,6 +62,9 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const hasAutoStarted = useRef(false);
+
+  
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -316,6 +320,57 @@ Wat wil ik aanpassen?`;
       setIsLoading(false);
     }
   };
+
+  // Auto-start edit mode if initialEditDrugId is provided
+  useEffect(() => {
+    if (initialEditDrugId && !hasAutoStarted.current && mode === 'idle') {
+      hasAutoStarted.current = true;
+      setEditDrugId(initialEditDrugId);
+      // Use a microtask to call startEdit after editDrugId is set
+      const doStart = async () => {
+        setMode('edit');
+        setMessages([]);
+        setIsLoading(true);
+        try {
+          const token = await getToken();
+          const resp = await fetch(CHAT_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ action: 'load', drug_id: initialEditDrugId }),
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data.success) throw new Error(data.error || 'Laden mislukt');
+          const drug = data.drug;
+          const drugSummary = `Ik wil het volgende bestaande behandelschema bewerken (ID: ${drug.id}):
+- Naam: ${drug.generic_name}
+- Klasse: ${drug.drug_class}
+- Ziektegebied: ${(drug.disease_areas || []).join(', ')}
+- Merknamen: ${(drug.brand_names || []).join(', ')}
+- Toedieningsweg: ${drug.administration_route || 'Niet ingevuld'}
+- Dosering: ${drug.dosing_info?.standard_dose || 'Niet ingevuld'}
+- Frequentie: ${drug.dosing_info?.frequency || 'Niet ingevuld'}
+- Cyclusduur: ${drug.cycle_length_days ? drug.cycle_length_days + ' dagen' : 'Niet ingevuld'}
+- ZVZ: ${drug.is_on_zvz ? 'Ja' : 'Nee'}
+- Registratiestudie: ${drug.registration_trial || 'Niet ingevuld'}
+
+Wat wil ik aanpassen?`;
+          const editMessages: Msg[] = [{ role: 'user', content: drugSummary }];
+          setMessages(editMessages);
+          await streamChat(editMessages);
+        } catch (e: any) {
+          toast.error(e.message || 'Laden mislukt');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      doStart();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialEditDrugId]);
 
   const reset = () => {
     setMode('idle');

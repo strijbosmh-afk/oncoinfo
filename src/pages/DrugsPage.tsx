@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,11 +93,13 @@ interface DrugCardProps {
   onToggleFavorite: (e: React.MouseEvent) => void;
   onToggleMostUsed: (e: React.MouseEvent) => void;
   translateTerm?: (term: string) => string;
+  isAdmin?: boolean;
 }
 
-function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm }: DrugCardProps) {
+function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm, isAdmin: isAdminProp }: DrugCardProps) {
   const { t } = useTranslation();
   const tMedLocal = useMedicalTranslation();
+  const navigate = useNavigate();
   const { isDemoClinic } = useHospital();
   const tMed = translateTerm || tMedLocal;
   const isCombo = drug.drug_class === 'Combinatietherapie';
@@ -106,6 +108,16 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
     return (
       <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
         <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+          {isAdminProp && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+              className="p-1.5 rounded-full hover:bg-amber-100 transition-colors opacity-0 group-hover:opacity-100"
+              aria-label="Schema bewerken"
+              title="Schema bewerken"
+            >
+              <PenLine className="h-4 w-4 text-amber-600 hover:text-amber-800 transition-colors" />
+            </button>
+          )}
           <button
             onClick={onToggleMostUsed}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
@@ -178,6 +190,16 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
     <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        {isAdminProp && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+            className="p-1.5 rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+            aria-label="Schema bewerken"
+            title="Schema bewerken"
+          >
+            <PenLine className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+          </button>
+        )}
         <button
           onClick={onToggleMostUsed}
           className="p-1.5 rounded-full hover:bg-muted transition-colors"
@@ -1135,6 +1157,7 @@ export default function DrugsPage() {
                     toggleMostUsed(drug.id);
                   }}
                   translateTerm={tCardBatch}
+                  isAdmin={isAdmin}
                 />
               ))}
             </div>
