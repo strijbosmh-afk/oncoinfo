@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -23,6 +23,7 @@ import { CalendarClock, Building2, BarChart3, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UsageDashboard } from '@/components/admin/UsageDashboard';
 import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
+import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -33,7 +34,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | null>(null);
   const navigate = useNavigate();
 
   const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -290,6 +291,17 @@ export default function AdminPage() {
               {t('admin.addTherapy')}
             </Button>
             <Button
+              variant={activeSection === 'schema-assistant' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'schema-assistant' ? null : 'schema-assistant')}
+              className="gap-2"
+            >
+              <Bot className="h-4 w-4" />
+              Schema Assistent
+              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
+                AI
+              </Badge>
+            </Button>
+            <Button
               variant={activeSection === 'auto-update' ? 'default' : 'outline'}
               onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
               className="gap-2"
@@ -362,6 +374,12 @@ export default function AdminPage() {
         {activeSection === 'api-docs' && isSuperAdmin && (
           <div className="mb-8">
             <ApiDocumentation />
+          </div>
+        )}
+
+        {activeSection === 'schema-assistant' && (
+          <div className="mb-8">
+            <SchemaAssistant existingDrugs={drugs || []} />
           </div>
         )}
 
