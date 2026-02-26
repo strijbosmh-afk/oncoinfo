@@ -187,6 +187,105 @@ async function getCallerUsername(supabase: ReturnType<typeof createClient>, user
   return data?.username || null;
 }
 
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case 'super_admin': return 'Super Admin';
+    case 'admin': return 'Admin';
+    case 'apotheker': return 'Apotheker';
+    default: return 'Viewer';
+  }
+}
+
+function getRoleDescription(role: string): string {
+  switch (role) {
+    case 'super_admin': return 'Volledige toegang tot alle ziekenhuizen, gebruikers, behandelschema\'s en systeemconfiguraties.';
+    case 'admin': return 'Beheer van gebruikers en behandelschema\'s binnen uw ziekenhuis.';
+    case 'apotheker': return 'Toegang tot de apotheekfuncties en medicijninformatie.';
+    default: return 'Alleen-lezen toegang tot behandelschema\'s en medicijninformatie.';
+  }
+}
+
+async function sendRoleChangeEmail(
+  recipientEmail: string,
+  username: string,
+  oldRole: string,
+  newRole: string,
+  permissions: { can_add: boolean; can_modify: boolean; can_delete: boolean },
+  hospitalName = 'OncoInfo',
+  primaryColor = '#6b2d5b'
+) {
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) throw new Error('RESEND_API_KEY niet geconfigureerd');
+
+  const { Resend } = await import("npm:resend@2.0.0");
+  const resend = new Resend(resendApiKey);
+
+  const permRow = (label: string, enabled: boolean) =>
+    `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee;">${label}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:center;">${enabled ? '✅ Ja' : '❌ Nee'}</td></tr>`;
+
+  const htmlContent = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
+      </div>
+      <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+        <h2 style="color: #333; margin-top: 0;">Uw rechten zijn gewijzigd</h2>
+        <p style="color: #555; line-height: 1.6;">Beste ${username},</p>
+        <p style="color: #555; line-height: 1.6;">Een beheerder heeft uw rol en/of rechten aangepast in OncoInfo. Uw inloggegevens (gebruikersnaam en wachtwoord) blijven ongewijzigd.</p>
+
+        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin-top:0; color: #333; font-size: 16px;">Rolwijziging</h3>
+          <table style="width:100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding:8px 12px; background: #fee2e2; border-radius: 4px; color: #991b1b;">
+                <strong>Vorige rol:</strong> ${getRoleLabel(oldRole)}
+              </td>
+            </tr>
+            <tr><td style="padding:4px;"></td></tr>
+            <tr>
+              <td style="padding:8px 12px; background: #dcfce7; border-radius: 4px; color: #166534;">
+                <strong>Nieuwe rol:</strong> ${getRoleLabel(newRole)}
+              </td>
+            </tr>
+          </table>
+          <p style="color: #666; font-size: 13px; margin-bottom: 0;">${getRoleDescription(newRole)}</p>
+        </div>
+
+        <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin-top:0; color: #333; font-size: 16px;">Uw huidige bewerkrechten</h3>
+          <table style="width:100%; border-collapse: collapse;">
+            <thead><tr><th style="text-align:left; padding:6px 12px; border-bottom:2px solid #ddd;">Recht</th><th style="padding:6px 12px; border-bottom:2px solid #ddd;">Status</th></tr></thead>
+            <tbody>
+              ${permRow('Therapieën toevoegen', permissions.can_add)}
+              ${permRow('Therapieën bewerken', permissions.can_modify)}
+              ${permRow('Therapieën verwijderen', permissions.can_delete)}
+            </tbody>
+          </table>
+        </div>
+
+        <p style="color: #555; line-height: 1.6;">Bij vragen kunt u contact opnemen met uw beheerder.</p>
+      </div>
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
+        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
+      </p>
+    </div>
+  `;
+
+  const result = await resend.emails.send({
+    from: 'OncoInfo <admin@oncoinfo.be>',
+    to: [recipientEmail],
+    subject: 'OncoInfo - Uw rol en rechten zijn gewijzigd',
+    html: htmlContent,
+  });
+
+  if (result.error) {
+    console.error('Role change email error:', JSON.stringify(result.error));
+    throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
+  }
+  return result;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -403,6 +502,18 @@ Deno.serve(async (req) => {
         // Enforce hospital isolation
         await enforceHospitalIsolation(supabase, adminUser.id, user_id);
 
+        // Capture old role and permissions BEFORE making changes
+        const { data: oldRoleData } = await supabase.from('user_roles').select('role').eq('user_id', user_id);
+        const oldRoles = (oldRoleData || []).map((r: any) => r.role);
+        const oldRole = oldRoles.includes('super_admin') ? 'super_admin' : oldRoles.includes('admin') ? 'admin' : oldRoles.includes('apotheker') ? 'apotheker' : 'viewer';
+
+        const { data: oldPermData } = await supabase.from('user_permissions').select('*').eq('user_id', user_id).maybeSingle();
+        const oldPerms = {
+          can_add: oldPermData?.can_add_treatments ?? false,
+          can_modify: oldPermData?.can_modify_treatments ?? false,
+          can_delete: oldPermData?.can_delete_treatments ?? false,
+        };
+
         // Block modifications to super_admin accounts by non-super-admins
         const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
         const targetIsSuper = await isSuperAdmin(supabase, user_id);
@@ -473,7 +584,63 @@ Deno.serve(async (req) => {
           }, { onConflict: 'user_id' });
         }
 
-        return jsonResponse({ success: true });
+        // Determine new role and permissions after update
+        const newRole = role || oldRole;
+        const newPerms = {
+          can_add: can_add_treatments ?? oldPerms.can_add,
+          can_modify: can_modify_treatments ?? oldPerms.can_modify,
+          can_delete: can_delete_treatments ?? oldPerms.can_delete,
+        };
+
+        // Send role/permissions change email if anything changed
+        const roleChanged = newRole !== oldRole;
+        const permsChanged = newPerms.can_add !== oldPerms.can_add || newPerms.can_modify !== oldPerms.can_modify || newPerms.can_delete !== oldPerms.can_delete;
+
+        let roleEmailSent = false;
+        let roleEmailError = null;
+        if (roleChanged || permsChanged) {
+          try {
+            // Get target user's email and username
+            const { data: targetProfile } = await supabase.from('profiles').select('email, username, hospital_id').eq('user_id', user_id).maybeSingle();
+            if (targetProfile?.email) {
+              let hName = 'OncoInfo';
+              let hColor = '#6b2d5b';
+              if (targetProfile.hospital_id) {
+                const { data: h } = await supabase.from('hospitals').select('name, branding').eq('id', targetProfile.hospital_id).maybeSingle();
+                if (h) { hName = h.name; hColor = (h.branding as any)?.primary_color || '#6b2d5b'; }
+              }
+              await sendRoleChangeEmail(
+                targetProfile.email,
+                targetProfile.username || targetProfile.email,
+                oldRole,
+                newRole,
+                newPerms,
+                hName,
+                hColor
+              );
+              roleEmailSent = true;
+
+              // Audit log
+              const callerUn = await getCallerUsername(supabase, adminUser.id);
+              const callerHospId = await getAdminHospitalId(supabase, adminUser.id);
+              await supabase.from('audit_log').insert({
+                user_id: adminUser.id,
+                username: callerUn,
+                action: 'email_sent',
+                entity_type: 'user',
+                entity_id: user_id,
+                entity_name: targetProfile.username || targetProfile.email,
+                hospital_id: callerHospId,
+                details: { email_type: 'role_change', old_role: oldRole, new_role: newRole, permissions: newPerms },
+              });
+            }
+          } catch (err: any) {
+            console.error('Failed to send role change email:', err);
+            roleEmailError = err.message;
+          }
+        }
+
+        return jsonResponse({ success: true, role_email_sent: roleEmailSent, role_email_error: roleEmailError });
       }
 
       case 'delete': {
