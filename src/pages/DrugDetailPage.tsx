@@ -916,6 +916,15 @@ export default function DrugDetailPage() {
               <CardContent className="space-y-4">
                 {td?.dosing_info ? (
                   <>
+                    {/* Single-string "standard" format (used by many combination therapies) */}
+                    {td.dosing_info.standard && !td.dosing_info.standard_dose && (
+                      <div>
+                        <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
+                        <p className="text-muted-foreground whitespace-pre-line">{td.dosing_info.standard}</p>
+                      </div>
+                    )}
+
+                    {/* Standard fields */}
                     {td.dosing_info.standard_dose && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
@@ -940,6 +949,73 @@ export default function DrugDetailPage() {
                         <p className="text-muted-foreground">{td.dosing_info.max_dose}</p>
                       </div>
                     )}
+                    {td.dosing_info.cycles && (
+                      <div>
+                        <h4 className="font-medium mb-1">Cycli</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.cycles}</p>
+                      </div>
+                    )}
+
+                    {/* Multi-phase: induction / maintenance */}
+                    {td.dosing_info.induction && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Inductiefase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.induction}</p>
+                      </div>
+                    )}
+                    {td.dosing_info.maintenance && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Onderhoudsfase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.maintenance}</p>
+                      </div>
+                    )}
+
+                    {/* Multi-phase: neoadjuvant / adjuvant (e.g. KEYNOTE-522) */}
+                    {td.dosing_info.neoadjuvant_phase1 && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Neoadjuvant fase 1</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.neoadjuvant_phase1}</p>
+                        {td.dosing_info.neoadjuvant_phase1_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.neoadjuvant_phase1_duration}</p>
+                        )}
+                      </div>
+                    )}
+                    {td.dosing_info.neoadjuvant_phase2 && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Neoadjuvant fase 2</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.neoadjuvant_phase2}</p>
+                        {td.dosing_info.neoadjuvant_phase2_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.neoadjuvant_phase2_duration}</p>
+                        )}
+                      </div>
+                    )}
+                    {td.dosing_info.adjuvant && (
+                      <div className="border-l-2 border-accent/50 pl-3">
+                        <h4 className="font-medium mb-1">Adjuvant fase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.adjuvant}</p>
+                        {td.dosing_info.adjuvant_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.adjuvant_duration}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Alternative dosing */}
+                    {td.dosing_info.alternative && (
+                      <div>
+                        <h4 className="font-medium mb-1">Alternatief schema</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.alternative}</p>
+                      </div>
+                    )}
+
+                    {/* Classic variant (e.g. dd-MVAC) */}
+                    {td.dosing_info.classic_mvac && (
+                      <div>
+                        <h4 className="font-medium mb-1">Klassiek schema</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.classic_mvac}</p>
+                      </div>
+                    )}
+
+                    {/* Dose adjustments */}
                     {td.dosing_info.dose_adjustments && (
                       <div>
                         <h4 className="font-medium mb-2">{t('drugDetail.doseAdjustments')}</h4>
@@ -955,6 +1031,22 @@ export default function DrugDetailPage() {
                             <p className="text-sm text-muted-foreground">{String(td.dosing_info.dose_adjustments)}</p>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Adjustments (alternate key name) */}
+                    {td.dosing_info.adjustments && !td.dosing_info.dose_adjustments && (
+                      <div>
+                        <h4 className="font-medium mb-1">{t('drugDetail.doseAdjustments')}</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.adjustments}</p>
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {td.dosing_info.notes && (
+                      <div className="bg-muted/50 rounded-md p-3">
+                        <h4 className="font-medium mb-1 text-sm">Opmerking</h4>
+                        <p className="text-sm text-muted-foreground">{td.dosing_info.notes}</p>
                       </div>
                     )}
                   </>
