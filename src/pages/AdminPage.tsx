@@ -227,7 +227,7 @@ export default function AdminPage() {
         </div>
 
         {/* Navigation — grouped by function */}
-        <div className="space-y-3 mb-8">
+        <div className="space-y-4 mb-8">
           {/* Row 1: Administration */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Beheer</span>
@@ -274,6 +274,8 @@ export default function AdminPage() {
               </Button>
             )}
           </div>
+
+          <div className="border-t border-border/50" />
 
           {/* Row 2: Content & Schema's */}
           <div className="flex flex-wrap items-center gap-2">
@@ -332,7 +334,8 @@ export default function AdminPage() {
           </div>
 
           {/* Row 3: Super Admin tools */}
-          {isSuperAdmin && (
+          {isSuperAdmin && (<>
+            <div className="border-t border-border/50" />
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Systeem</span>
               <Button
@@ -345,7 +348,7 @@ export default function AdminPage() {
                 API Documentatie
               </Button>
             </div>
-          )}
+          </>)}
         </div>
 
         {/* Active Section */}
