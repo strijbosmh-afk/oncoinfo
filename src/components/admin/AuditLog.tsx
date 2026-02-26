@@ -60,7 +60,7 @@ export function AuditLog() {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 50;
+  const PAGE_SIZE = 25;
 
   const { data: logs, isLoading } = useQuery({
     queryKey: ['audit-log', filterAction, dateFrom?.toISOString(), dateTo?.toISOString()],
@@ -291,37 +291,9 @@ export function AuditLog() {
           </p>
         ) : (
           <>
-            <div className="space-y-1.5">
-              {paginatedLogs.map((entry) => (
-                <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {ACTION_ICONS[entry.action] || <Pencil className="h-4 w-4" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm">{entry.username || t('auditLog.unknown')}</span>
-                      <Badge variant="outline" className={`text-xs ${ACTION_COLORS[entry.action] || ''}`}>
-                        {ACTION_LABELS[entry.action] || entry.action}
-                      </Badge>
-                      {entry.entity_type && entry.entity_type !== 'session' && (
-                        <span className="text-xs text-muted-foreground">
-                          {entry.entity_type === 'drug' ? t('auditLog.drug') : entry.entity_type === 'patient_folder' ? t('auditLog.patientFolder') : entry.entity_type === 'trial' ? t('auditLog.trial') : entry.entity_type}
-                          {entry.entity_name && `: ${entry.entity_name}`}
-                        </span>
-                      )}
-                    </div>
-                    {renderDetails(entry)}
-                  </div>
-                  <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                    {formatDate(entry.created_at)}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination controls */}
+            {/* Pagination controls at top */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t mt-4">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b">
                 <p className="text-sm text-muted-foreground">
                   {totalItems} {t('auditLog.results')} · {t('auditLog.page')} {safePage} {t('auditLog.of')} {totalPages}
                 </p>
@@ -370,6 +342,34 @@ export function AuditLog() {
                 </div>
               </div>
             )}
+
+            <div className="space-y-1.5">
+              {paginatedLogs.map((entry) => (
+                <div key={entry.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                  <div className="flex-shrink-0 mt-0.5">
+                    {ACTION_ICONS[entry.action] || <Pencil className="h-4 w-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{entry.username || t('auditLog.unknown')}</span>
+                      <Badge variant="outline" className={`text-xs ${ACTION_COLORS[entry.action] || ''}`}>
+                        {ACTION_LABELS[entry.action] || entry.action}
+                      </Badge>
+                      {entry.entity_type && entry.entity_type !== 'session' && (
+                        <span className="text-xs text-muted-foreground">
+                          {entry.entity_type === 'drug' ? t('auditLog.drug') : entry.entity_type === 'patient_folder' ? t('auditLog.patientFolder') : entry.entity_type === 'trial' ? t('auditLog.trial') : entry.entity_type}
+                          {entry.entity_name && `: ${entry.entity_name}`}
+                        </span>
+                      )}
+                    </div>
+                    {renderDetails(entry)}
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-shrink-0 whitespace-nowrap">
+                    {formatDate(entry.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </CardContent>
