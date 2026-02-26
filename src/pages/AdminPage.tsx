@@ -171,7 +171,9 @@ export default function AdminPage() {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin && !isApotheker) {
+  const hasAnyTreatmentPermission = !!permissions?.can_add_treatments || !!permissions?.can_modify_treatments || !!permissions?.can_delete_treatments;
+
+  if (!isAdmin && !isApotheker && !hasAnyTreatmentPermission) {
     return (
       <Layout>
         <div className="container py-16 text-center">
@@ -181,6 +183,14 @@ export default function AdminPage() {
       </Layout>
     );
   }
+
+  // Determine what sections this user can see
+  const canManageUsers = isAdmin;
+  const canViewAuditLog = isAdmin || isApotheker;
+  const canManageContent = isAdmin || isApotheker || hasAnyTreatmentPermission;
+  const canAddTherapy = isAdmin || isSuperAdmin || !!permissions?.can_add_treatments;
+  const canDeleteTherapy = isAdmin || isSuperAdmin || !!permissions?.can_delete_treatments;
+  const canModifyTherapy = isAdmin || isSuperAdmin || !!permissions?.can_modify_treatments;
 
   return (
     <Layout>
@@ -244,9 +254,10 @@ export default function AdminPage() {
         <div className="border-t border-border/50" />
         <div className="space-y-4 py-5">
           {/* Row 1: Administration */}
+          {(canManageUsers || canViewAuditLog || isSuperAdmin) && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Beheer</span>
-            {isAdmin && (
+            {canManageUsers && (
               <Button 
                 variant={activeSection === 'users' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
@@ -268,6 +279,7 @@ export default function AdminPage() {
                 {t('admin.hospitals')}
               </Button>
             )}
+            {canViewAuditLog && (
             <Button 
               variant={activeSection === 'audit' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
@@ -277,6 +289,7 @@ export default function AdminPage() {
               <ClipboardList className="h-4 w-4" />
               {t('admin.activityLog')}
             </Button>
+            )}
             {isSuperAdmin && (
               <Button
                 variant={activeSection === 'dashboard' ? 'default' : 'outline'}
@@ -289,10 +302,13 @@ export default function AdminPage() {
               </Button>
             )}
           </div>
+          )}
 
           {/* Row 2: Content & Schema's */}
+          {canManageContent && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Content</span>
+            {canAddTherapy && (
             <Button 
               variant="outline"
               onClick={() => setRegimenDialogOpen(true)} 
@@ -302,6 +318,8 @@ export default function AdminPage() {
               <Plus className="h-4 w-4" />
               {t('admin.addTherapy')}
             </Button>
+            )}
+            {canModifyTherapy && (
             <Button
               variant={activeSection === 'schema-assistant' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'schema-assistant' ? null : 'schema-assistant')}
@@ -312,6 +330,9 @@ export default function AdminPage() {
               Schema Assistent
               <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">AI</Badge>
             </Button>
+            )}
+            {(isAdmin || isApotheker) && (
+            <>
             <Button
               variant={activeSection === 'auto-update' ? 'default' : 'outline'}
               onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
@@ -328,6 +349,8 @@ export default function AdminPage() {
                 <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">{t('admin.beta')}</Badge>
               )}
             </Button>
+            </>
+            )}
             {isSuperAdmin && (
               <Button
                 variant={activeSection === 'schedule' ? 'default' : 'outline'}
@@ -345,6 +368,7 @@ export default function AdminPage() {
               </Button>
             )}
           </div>
+          )}
 
           {/* Row 3: Super Admin tools */}
           {isSuperAdmin && (
@@ -365,13 +389,13 @@ export default function AdminPage() {
         <div className="border-t border-border/50 mb-8" />
 
         {/* Active Section */}
-        {activeSection === 'users' && isAdmin && (
+        {activeSection === 'users' && canManageUsers && (
           <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <UserManagement />
           </div>
         )}
 
-        {activeSection === 'audit' && (
+        {activeSection === 'audit' && canViewAuditLog && (
           <div className="mb-8">
             <AuditLog />
           </div>
@@ -407,6 +431,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {canManageContent && (
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
             <TabsTrigger value="overview">{t('admin.overview')}</TabsTrigger>
@@ -569,6 +594,7 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        )}
 
         {/* Add Therapy Dialog */}
         <Dialog open={regimenDialogOpen} onOpenChange={setRegimenDialogOpen}>

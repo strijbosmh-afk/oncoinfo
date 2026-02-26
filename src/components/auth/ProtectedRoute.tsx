@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isApotheker, isSuperAdmin, profile } = useAuth();
+  const { user, loading, isAdmin, isApotheker, isSuperAdmin, profile, permissions } = useAuth();
   const { hospital, loading: hospitalLoading } = useHospital();
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [showSuperAdminWarning, setShowSuperAdminWarning] = useState(false);
@@ -61,7 +61,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     }
   }
 
-  if (requireAdmin && !isAdmin && !isApotheker) {
+  if (requireAdmin && !isAdmin && !isApotheker && !permissions?.can_add_treatments && !permissions?.can_modify_treatments && !permissions?.can_delete_treatments) {
     return <Navigate to="/home" replace />;
   }
 
