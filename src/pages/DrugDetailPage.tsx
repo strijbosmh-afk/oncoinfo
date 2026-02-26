@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
 import { generateStaticPreviewHtml } from '@/components/drugs/PatientFolderPreviewStatic';
+import { DrugFilterTagsEditor } from '@/components/drugs/DrugFilterTagsEditor';
 import { 
   ArrowLeft, 
   Pill, 
@@ -93,7 +94,7 @@ export default function DrugDetailPage() {
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isMostUsed, toggleMostUsed } = useMostUsed();
-  const { user, profile, isSuperAdmin, isAdmin } = useAuth();
+  const { user, profile, isSuperAdmin, isAdmin, permissions } = useAuth();
   const navigateAdmin = useNavigate();
   const queryClient = useQueryClient();
   const { hospital, isDemoClinic } = useHospital();
@@ -879,6 +880,11 @@ export default function DrugDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Filter Tags Editor - visible for users with modify permissions */}
+              {(isAdmin || isSuperAdmin || permissions?.can_modify_treatments) && (
+                <DrugFilterTagsEditor drug={drug} />
               )}
 
               {/* Common Regimens */}
