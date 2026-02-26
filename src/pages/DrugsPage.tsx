@@ -315,10 +315,11 @@ export default function DrugsPage() {
   const tMed = useMedicalTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') as DrugCategoryKey | null;
-  const selectedSubtype = searchParams.get('subtype');
-  const selectedStage = searchParams.get('stage');
-  const selectedSubcategory = searchParams.get('subcategory');
-  const selectedDiseaseArea = searchParams.get('diseaseArea');
+  // Multi-select: comma-separated values in URL params
+  const selectedSubtypes = searchParams.get('subtype')?.split(',').filter(Boolean) || [];
+  const selectedStages = searchParams.get('stage')?.split(',').filter(Boolean) || [];
+  const selectedSubcategories = searchParams.get('subcategory')?.split(',').filter(Boolean) || [];
+  const selectedDiseaseAreas = searchParams.get('diseaseArea')?.split(',').filter(Boolean) || [];
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
   const urlSearchQuery = searchParams.get('search') || '';
@@ -404,21 +405,21 @@ export default function DrugsPage() {
      );
      
      // Filter by specific urology disease area
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'prostate': ['Prostaatkanker'],
-         'bladder': ['Blaaskanker'],
-         'kidney': ['Niercelcarcinoom'],
-         'testis': ['Testiskanker'],
-         'penile': ['Peniskanker']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'prostate': ['Prostaatkanker'],
+          'bladder': ['Blaaskanker'],
+          'kidney': ['Niercelcarcinoom'],
+          'testis': ['Testiskanker'],
+          'penile': ['Peniskanker']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'gynecology') {
@@ -428,20 +429,20 @@ export default function DrugsPage() {
      );
      
      // Filter by specific gynecology disease area
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'ovarian': ['Ovariumkanker'],
-         'endometrial': ['Endometriumkanker'],
-         'cervical': ['Cervixkanker'],
-         'vulvar': ['Vulvakanker']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'ovarian': ['Ovariumkanker'],
+          'endometrial': ['Endometriumkanker'],
+          'cervical': ['Cervixkanker'],
+          'vulvar': ['Vulvakanker']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'respiratory') {
@@ -450,19 +451,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => respiratoryAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'nsclc': ['NSCLC'],
-         'sclc': ['SCLC'],
-         'mesothelioma': ['Mesothelioom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'nsclc': ['NSCLC'],
+          'sclc': ['SCLC'],
+          'mesothelioma': ['Mesothelioom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'digestive') {
@@ -471,22 +472,22 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => digestiveAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'colorectal': ['Colorectaal carcinoom'],
-         'gastric': ['Maagcarcinoom'],
-         'esophageal': ['Oesofaguscarcinoom'],
-         'pancreatic': ['Pancreascarcinoom'],
-         'hepatocellular': ['Hepatocellulair carcinoom'],
-         'biliary': ['Galwegcarcinoom', 'Cholangiocarcinoom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'colorectal': ['Colorectaal carcinoom'],
+          'gastric': ['Maagcarcinoom'],
+          'esophageal': ['Oesofaguscarcinoom'],
+          'pancreatic': ['Pancreascarcinoom'],
+          'hepatocellular': ['Hepatocellulair carcinoom'],
+          'biliary': ['Galwegcarcinoom', 'Cholangiocarcinoom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'skin') {
@@ -495,19 +496,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => skinAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'melanoma': ['Melanoom'],
-         'merkel': ['Merkelcelcarcinoom'],
-         'cutaneous_scc': ['Cutaan plaveiselcelcarcinoom', 'Cutaan SCC']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'melanoma': ['Melanoom'],
+          'merkel': ['Merkelcelcarcinoom'],
+          'cutaneous_scc': ['Cutaan plaveiselcelcarcinoom', 'Cutaan SCC']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'head_neck') {
@@ -516,19 +517,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => headNeckAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'hnscc': ['Hoofd-halscarcinoom'],
-         'nasopharyngeal': ['Nasofarynxcarcinoom'],
-         'salivary': ['Speekselkliercarcinoom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'hnscc': ['Hoofd-halscarcinoom'],
+          'nasopharyngeal': ['Nasofarynxcarcinoom'],
+          'salivary': ['Speekselkliercarcinoom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'other') {
@@ -540,68 +541,79 @@ export default function DrugsPage() {
       );
       
        // Filter by subcategory
-       if (selectedSubcategory) {
-         const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
-         const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
-           'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
-           'antiemetic': { areas: ['Anti-emetica'], classes: [] },
-           'gcsf': { areas: ['Groeifactoren'], classes: [] },
-           'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
-           'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
-           'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
-         };
-         const filter = subcategoryFilters[selectedSubcategory];
-         if (filter) {
-           result = result.filter(drug => {
-             const matchesArea = drug.disease_areas.some(area => filter.areas.includes(area)) ||
-               filter.classes.includes(drug.drug_class);
-             // For 'supportive' catch-all, exclude drugs that belong to a specific subcategory
-             if (filter.exclude && matchesArea) {
-               const belongsToSpecific = drug.disease_areas.some(area => filter.exclude!.includes(area)) ||
-                 filter.exclude.includes(drug.drug_class);
-               return !belongsToSpecific;
-             }
-             return matchesArea;
-           });
-         }
-       }
+        if (selectedSubcategories.length > 0) {
+          const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
+          const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
+            'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
+            'antiemetic': { areas: ['Anti-emetica'], classes: [] },
+            'gcsf': { areas: ['Groeifactoren'], classes: [] },
+            'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
+            'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
+            'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
+          };
+          // Combine all selected subcategory filters (OR logic)
+          const allMatchAreas: string[] = [];
+          const allMatchClasses: string[] = [];
+          const allExclude: string[] = [];
+          let hasExclude = false;
+          for (const sc of selectedSubcategories) {
+            const filter = subcategoryFilters[sc];
+            if (filter) {
+              allMatchAreas.push(...filter.areas);
+              allMatchClasses.push(...filter.classes);
+              if (filter.exclude) { allExclude.push(...filter.exclude); hasExclude = true; }
+            }
+          }
+          if (allMatchAreas.length > 0 || allMatchClasses.length > 0) {
+            result = result.filter(drug => {
+              const matchesArea = drug.disease_areas.some(area => allMatchAreas.includes(area)) ||
+                allMatchClasses.includes(drug.drug_class);
+              if (hasExclude && matchesArea) {
+                const belongsToSpecific = drug.disease_areas.some(area => allExclude.includes(area)) ||
+                  allExclude.includes(drug.drug_class);
+                return !belongsToSpecific;
+              }
+              return matchesArea;
+            });
+          }
+        }
    }
     
-    // Filter by subtype (approved_indications)
-    if (selectedSubtype) {
+    // Filter by subtypes (multi-select, OR logic)
+    if (selectedSubtypes.length > 0) {
       const subtypeFilters: Record<string, string[]> = {
         'hr_positive': ['HR+', 'HR-positief', 'Hormoongevoelig', 'ER+', 'PR+'],
         'her2_positive': ['HER2+', 'HER2-positief', 'HER2 positief'],
         'triple_negative': ['TNBC', 'Triple negatief', 'triple negatief']
       };
-      const keywords = subtypeFilters[selectedSubtype] || [];
-      if (keywords.length > 0) {
+      const allKeywords = selectedSubtypes.flatMap(st => subtypeFilters[st] || []);
+      if (allKeywords.length > 0) {
         result = result.filter(drug => 
           drug.approved_indications?.some(ind => 
-            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
+            allKeywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
           )
         );
       }
     }
     
-    // Filter by stage
-    if (selectedStage) {
+    // Filter by stages (multi-select, OR logic)
+    if (selectedStages.length > 0) {
       const stageFilters: Record<string, string[]> = {
         'neoadjuvant_adjuvant': ['Neoadjuvant', 'Adjuvant', 'neoadjuvant', 'adjuvant'],
         'metastatic': ['Gemetastaseerd', 'gemetastaseerd', 'metastatic', 'Stadium IV']
       };
-      const keywords = stageFilters[selectedStage] || [];
-      if (keywords.length > 0) {
+      const allKeywords = selectedStages.flatMap(st => stageFilters[st] || []);
+      if (allKeywords.length > 0) {
         result = result.filter(drug => 
           drug.approved_indications?.some(ind => 
-            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
+            allKeywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
           )
         );
       }
     }
     
     return result;
-  }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
+  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas]);
 
   // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
   const { combinationDrugs, hormonalDrugs, cdk46Drugs, artaDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
@@ -630,46 +642,33 @@ export default function DrugsPage() {
     return DRUG_CLASSES;
   }, [categoryConfig]);
 
-  const handleSubtypeClick = (subtypeKey: string) => {
+  const toggleMultiParam = (paramName: string, key: string, currentValues: string[]) => {
     const newParams = new URLSearchParams(searchParams);
-    if (selectedSubtype === subtypeKey) {
-      newParams.delete('subtype');
+    const newValues = currentValues.includes(key)
+      ? currentValues.filter(v => v !== key)
+      : [...currentValues, key];
+    if (newValues.length === 0) {
+      newParams.delete(paramName);
     } else {
-      newParams.set('subtype', subtypeKey);
+      newParams.set(paramName, newValues.join(','));
     }
-    newParams.delete('stage'); // Clear stage when selecting subtype
     setSearchParams(newParams);
+  };
+
+  const handleSubtypeClick = (subtypeKey: string) => {
+    toggleMultiParam('subtype', subtypeKey, selectedSubtypes);
   };
 
   const handleStageClick = (stageKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedStage === stageKey) {
-      newParams.delete('stage');
-    } else {
-      newParams.set('stage', stageKey);
-    }
-    newParams.delete('subtype'); // Clear subtype when selecting stage
-    setSearchParams(newParams);
+    toggleMultiParam('stage', stageKey, selectedStages);
   };
 
   const handleSubcategoryClick = (subcategoryKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedSubcategory === subcategoryKey) {
-      newParams.delete('subcategory');
-    } else {
-      newParams.set('subcategory', subcategoryKey);
-    }
-    setSearchParams(newParams);
+    toggleMultiParam('subcategory', subcategoryKey, selectedSubcategories);
   };
 
   const handleDiseaseAreaClick = (areaKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedDiseaseArea === areaKey) {
-      newParams.delete('diseaseArea');
-    } else {
-      newParams.set('diseaseArea', areaKey);
-    }
-    setSearchParams(newParams);
+    toggleMultiParam('diseaseArea', areaKey, selectedDiseaseAreas);
   };
 
   const clearCategoryFilters = () => {
@@ -817,33 +816,33 @@ export default function DrugsPage() {
         </div>
 
         {/* Active filter indicator */}
-        {(selectedSubtype || selectedStage || selectedSubcategory || selectedDiseaseArea) && (
-          <div className="mb-4 flex items-center gap-2">
+        {(selectedSubtypes.length > 0 || selectedStages.length > 0 || selectedSubcategories.length > 0 || selectedDiseaseAreas.length > 0) && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">{t('drugs.activeFilter')}</span>
-            {selectedSubtype && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.sub_${selectedSubtype}`, selectedSubtype)}
-                <button onClick={() => handleSubtypeClick(selectedSubtype)} className="ml-1 hover:text-destructive">×</button>
+            {selectedSubtypes.map(st => (
+              <Badge key={st} variant="secondary" className="gap-1">
+                {t(`medicalTerms.sub_${st}`, st)}
+                <button onClick={() => handleSubtypeClick(st)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedStage && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.stage_${selectedStage}`, selectedStage)}
-                <button onClick={() => handleStageClick(selectedStage)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedStages.map(st => (
+              <Badge key={st} variant="secondary" className="gap-1">
+                {t(`medicalTerms.stage_${st}`, st)}
+                <button onClick={() => handleStageClick(st)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedSubcategory && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.sc_${selectedSubcategory}`, selectedSubcategory)}
-                <button onClick={() => handleSubcategoryClick(selectedSubcategory)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedSubcategories.map(sc => (
+              <Badge key={sc} variant="secondary" className="gap-1">
+                {t(`medicalTerms.sc_${sc}`, sc)}
+                <button onClick={() => handleSubcategoryClick(sc)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedDiseaseArea && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.da_${selectedDiseaseArea}`, selectedDiseaseArea)}
-                <button onClick={() => handleDiseaseAreaClick(selectedDiseaseArea)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedDiseaseAreas.map(da => (
+              <Badge key={da} variant="secondary" className="gap-1">
+                {t(`medicalTerms.da_${da}`, da)}
+                <button onClick={() => handleDiseaseAreaClick(da)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
+            ))}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
               {t('drugs.clearFilter')}
             </Button>
@@ -864,7 +863,7 @@ export default function DrugsPage() {
                         key={subtype.key}
                         onClick={() => handleSubtypeClick(subtype.key)}
                         className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                          selectedSubtype === subtype.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                          selectedSubtypes.includes(subtype.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                         }`}
                       >
                         <CardContent className="p-4">
@@ -880,7 +879,7 @@ export default function DrugsPage() {
                         key={stage.key}
                         onClick={() => handleStageClick(stage.key)}
                         className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                          selectedStage === stage.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                          selectedStages.includes(stage.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                         }`}
                       >
                         <CardContent className="p-4">
@@ -901,7 +900,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -921,7 +920,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -941,7 +940,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -961,7 +960,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -981,7 +980,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -1001,7 +1000,7 @@ export default function DrugsPage() {
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -1021,7 +1020,7 @@ export default function DrugsPage() {
                       key={subcat.key}
                       onClick={() => handleSubcategoryClick(subcat.key)}
                       className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
-                        selectedSubcategory === subcat.key ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        selectedSubcategories.includes(subcat.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
@@ -1298,7 +1297,7 @@ export default function DrugsPage() {
                   <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">{t('drugs.noDrugsFound')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    {(selectedSubtype || selectedStage) 
+                    {(selectedSubtypes.length > 0 || selectedStages.length > 0) 
                       ? t('drugs.noFilterResults')
                       : t('drugs.adjustFilters')}
                   </p>
