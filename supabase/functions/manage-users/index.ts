@@ -143,15 +143,16 @@ async function sendResetEmail(email: string, username: string, password: string,
         <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-        <h2 style="color: #333; margin-top: 0;">Wachtwoord Reset</h2>
+        <h2 style="color: #333; margin-top: 0;">Uw OncoInfo inloggegevens</h2>
         <p style="color: #555; line-height: 1.6;">Uw wachtwoord is gereset door een beheerder. Hieronder vindt u uw nieuwe inloggegevens:</p>
         
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
           <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
-          <p style="margin: 0 0 10px;"><strong>Nieuw wachtwoord:</strong> ${password}</p>
+          <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
           <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
         </div>
 
+        <p style="color: #555; line-height: 1.6;">Bewaar deze gegevens veilig en deel ze niet met anderen.</p>
         <p style="color: #d32f2f; font-weight: 500; line-height: 1.6;">⚠️ U wordt bij uw eerstvolgende login gevraagd om een nieuw wachtwoord in te stellen.</p>
         
         <div style="text-align: center; margin-top: 25px;">
