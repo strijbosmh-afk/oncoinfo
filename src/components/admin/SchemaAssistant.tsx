@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bot, Send, Loader2, Save, RotateCcw, PenLine, Sparkles } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Bot, Send, Loader2, Save, RotateCcw, PenLine, Sparkles, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
@@ -20,6 +22,23 @@ interface SchemaAssistantProps {
   existingDrugs?: Drug[];
 }
 
+interface ExtractedSchema {
+  generic_name: string;
+  drug_class: string;
+  disease_areas: string[];
+  brand_names?: string[];
+  administration_route?: string;
+  standard_dose?: string;
+  dosing_frequency?: string;
+  cycle_length_days?: number;
+  is_on_zvz?: boolean;
+  registration_trial?: string;
+  approved_indications?: string[];
+  mechanism_of_action?: string;
+  components_description?: string;
+  drug_id?: string;
+}
+
 export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
@@ -27,6 +46,9 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [editDrugId, setEditDrugId] = useState<string>('');
   const [mode, setMode] = useState<'idle' | 'new' | 'edit'>('idle');
+  const [previewSchema, setPreviewSchema] = useState<ExtractedSchema | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<Msg[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -37,13 +59,15 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
     }
   }, [messages]);
 
-  const streamChat = useCallback(async (allMessages: Msg[]) => {
+  const getToken = async () => {
     const session = await supabase.auth.getSession();
     const token = session.data.session?.access_token;
-    if (!token) {
-      toast.error('Je bent niet ingelogd');
-      return;
-    }
+    if (!token) throw new Error('Niet ingelogd');
+    return token;
+  };
+
+  const streamChat = useCallback(async (allMessages: Msg[]) => {
+    const token = await getToken();
 
     const resp = await fetch(CHAT_URL, {
       method: 'POST',
@@ -104,7 +128,6 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
       }
     }
 
-    // Final flush
     if (textBuffer.trim()) {
       for (let raw of textBuffer.split('\n')) {
         if (!raw) continue;
@@ -132,10 +155,9 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
     setInput('');
     setIsLoading(true);
 
-    // Check if user wants to save
     const lowerMsg = messageText.toLowerCase();
     if (lowerMsg === 'opslaan' || lowerMsg === 'bewaren' || lowerMsg === 'save') {
-      await handleSave(newMessages);
+      await handleExtractPreview(newMessages);
       setIsLoading(false);
       return;
     }
@@ -151,13 +173,10 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
     }
   };
 
-  const handleSave = async (allMessages: Msg[]) => {
+  const handleExtractPreview = async (allMessages: Msg[]) => {
     setIsSaving(true);
     try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      if (!token) throw new Error('Niet ingelogd');
-
+      const token = await getToken();
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
@@ -165,13 +184,50 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ messages: allMessages, action: 'save' }),
+        body: JSON.stringify({ messages: allMessages, action: 'extract' }),
       });
 
       const data = await resp.json();
-      if (!resp.ok || !data.success) {
-        throw new Error(data.error || 'Opslaan mislukt');
-      }
+      if (!resp.ok || !data.success) throw new Error(data.error || 'Extractie mislukt');
+
+      setPreviewSchema(data.extracted);
+      setPendingMessages(allMessages);
+      setShowPreview(true);
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '📋 Het schema is geëxtraheerd. Controleer de samenvatting in het popup-venster en bevestig om op te slaan.'
+      }]);
+    } catch (e: any) {
+      toast.error(e.message || 'Extractie mislukt');
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `❌ Kon schema niet extraheren: ${e.message}. Probeer het opnieuw.`
+      }]);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmSave = async () => {
+    if (!previewSchema) return;
+    setIsSaving(true);
+    setShowPreview(false);
+
+    try {
+      const token = await getToken();
+      const resp = await fetch(CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ messages: pendingMessages, action: 'save' }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || !data.success) throw new Error(data.error || 'Opslaan mislukt');
 
       const actionText = data.action === 'updated' ? 'bijgewerkt' : 'aangemaakt';
       const drugName = data.drug?.generic_name || 'Schema';
@@ -191,6 +247,8 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
       }]);
     } finally {
       setIsSaving(false);
+      setPreviewSchema(null);
+      setPendingMessages([]);
     }
   };
 
@@ -211,10 +269,7 @@ export function SchemaAssistant({ existingDrugs = [] }: SchemaAssistantProps) {
 
     setIsLoading(true);
     try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-      if (!token) throw new Error('Niet ingelogd');
-
+      const token = await getToken();
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
@@ -258,137 +313,210 @@ Wat wil ik aanpassen?`;
     setMessages([]);
     setInput('');
     setEditDrugId('');
+    setPreviewSchema(null);
+    setShowPreview(false);
+    setPendingMessages([]);
   };
 
+  const schemaRows: { label: string; value: string }[] = previewSchema ? [
+    { label: 'Generieke naam', value: previewSchema.generic_name },
+    { label: 'Medicijnklasse', value: previewSchema.drug_class },
+    { label: 'Ziektegebied(en)', value: (previewSchema.disease_areas || []).join(', ') },
+    { label: 'Indicatie(s)', value: (previewSchema.approved_indications || []).join(', ') || '—' },
+    { label: 'Merknamen', value: (previewSchema.brand_names || []).join(', ') || '—' },
+    { label: 'Toedieningsweg', value: previewSchema.administration_route || '—' },
+    { label: 'Standaarddosering', value: previewSchema.standard_dose || '—' },
+    { label: 'Frequentie', value: previewSchema.dosing_frequency || '—' },
+    { label: 'Cyclusduur', value: previewSchema.cycle_length_days ? `${previewSchema.cycle_length_days} dagen` : '—' },
+    { label: 'ZVZ/RIZIV', value: previewSchema.is_on_zvz ? 'Ja' : 'Nee' },
+    { label: 'Registratiestudie', value: previewSchema.registration_trial || '—' },
+    { label: 'Werkingsmechanisme', value: previewSchema.mechanism_of_action || '—' },
+    ...(previewSchema.components_description ? [{ label: 'Componenten', value: previewSchema.components_description }] : []),
+  ] : [];
+
   return (
-    <Card className="border-primary/20">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-              <Bot className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Schema Assistent</CardTitle>
-              <CardDescription className="text-xs">AI-gestuurde schema's aanmaken en bewerken</CardDescription>
-            </div>
-          </div>
-          {mode !== 'idle' && (
-            <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5">
-              <RotateCcw className="h-3.5 w-3.5" />
-              Opnieuw
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {mode === 'idle' && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button onClick={startNew} className="gap-2 h-auto py-4 flex-col" variant="outline">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <span className="font-medium">Nieuw schema</span>
-                <span className="text-xs text-muted-foreground">Maak een nieuw behandelschema aan</span>
-              </Button>
-              <div className="space-y-2">
-                <Select value={editDrugId} onValueChange={setEditDrugId}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Selecteer medicijn..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover max-h-64">
-                    {existingDrugs.map(d => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.generic_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={startEdit}
-                  disabled={!editDrugId}
-                  variant="outline"
-                  className="w-full gap-2"
-                >
-                  <PenLine className="h-4 w-4" />
-                  Schema bewerken
-                </Button>
+    <>
+      <Card className="border-primary/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Schema Assistent</CardTitle>
+                <CardDescription className="text-xs">AI-gestuurde schema's aanmaken en bewerken</CardDescription>
               </div>
             </div>
+            {mode !== 'idle' && (
+              <Button variant="ghost" size="sm" onClick={reset} className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" />
+                Opnieuw
+              </Button>
+            )}
           </div>
-        )}
-
-        {mode !== 'idle' && (
-          <>
-            <ScrollArea className="h-[400px] pr-3" ref={scrollRef}>
-              <div className="space-y-3">
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mode === 'idle' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button onClick={startNew} className="gap-2 h-auto py-4 flex-col" variant="outline">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Nieuw schema</span>
+                  <span className="text-xs text-muted-foreground">Maak een nieuw behandelschema aan</span>
+                </Button>
+                <div className="space-y-2">
+                  <Select value={editDrugId} onValueChange={setEditDrugId}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Selecteer medicijn..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover max-h-64">
+                      {existingDrugs.map(d => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.generic_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={startEdit}
+                    disabled={!editDrugId}
+                    variant="outline"
+                    className="w-full gap-2"
                   >
+                    <PenLine className="h-4 w-4" />
+                    Schema bewerken
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode !== 'idle' && (
+            <>
+              <ScrollArea className="h-[400px] pr-3" ref={scrollRef}>
+                <div className="space-y-3">
+                  {messages.map((msg, i) => (
                     <div
-                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                        msg.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
+                      key={i}
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {msg.role === 'assistant' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        </div>
-                      ) : (
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
-                      )}
+                      <div
+                        className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        {msg.role === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5">
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-                  <div className="flex justify-start">
-                    <div className="bg-muted rounded-lg px-3 py-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ))}
+                  {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+                    <div className="flex justify-start">
+                      <div className="bg-muted rounded-lg px-3 py-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
                     </div>
-                  </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+                  placeholder="Typ je antwoord..."
+                  disabled={isLoading || isSaving}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => send()}
+                  disabled={!input.trim() || isLoading || isSaving}
+                  size="icon"
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+
+              {messages.length > 4 && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => send('Opslaan')}
+                    disabled={isLoading || isSaving}
+                    className="gap-2"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    {isSaving ? 'Bezig met extraheren...' : 'Schema opslaan'}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Schema bevestigen
+            </DialogTitle>
+            <DialogDescription>
+              Controleer de gegevens hieronder en klik op "Definitief opslaan" om het schema op te slaan in de database.
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewSchema && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-sm font-semibold">
+                  {previewSchema.generic_name}
+                </Badge>
+                {previewSchema.drug_id && (
+                  <Badge variant="secondary" className="text-xs">Bewerking</Badge>
                 )}
               </div>
-            </ScrollArea>
 
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-                placeholder="Typ je antwoord..."
-                disabled={isLoading || isSaving}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => send()}
-                disabled={!input.trim() || isLoading || isSaving}
-                size="icon"
-              >
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+              <Table>
+                <TableBody>
+                  {schemaRows.map((row) => (
+                    <TableRow key={row.label}>
+                      <TableCell className="font-medium text-muted-foreground py-2 w-[40%]">
+                        {row.label}
+                      </TableCell>
+                      <TableCell className="py-2">{row.value}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
+          )}
 
-            {messages.length > 4 && (
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => send('Opslaan')}
-                  disabled={isLoading || isSaving}
-                  className="gap-2"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  {isSaving ? 'Bezig met opslaan...' : 'Schema opslaan'}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowPreview(false)} className="gap-1.5">
+              <X className="h-4 w-4" />
+              Annuleren
+            </Button>
+            <Button onClick={confirmSave} disabled={isSaving} className="gap-1.5">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Definitief opslaan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
