@@ -25,6 +25,7 @@ export interface ManagedUser {
   dedicated_nurse_name: string | null;
   phone_number: string | null;
   linked_hospital_ids: string[];
+  default_language: string | null;
 }
 
 async function callManageUsers(action: string, params: Record<string, unknown> = {}) {

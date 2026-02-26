@@ -74,14 +74,13 @@ async function enforceHospitalIsolation(
   }
 }
 
-async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'RZ Tienen', primaryColor = '#6b2d5b') {
+async function sendCredentialsEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'RZ Tienen', primaryColor = '#6b2d5b', lang = 'nl') {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY niet geconfigureerd');
-  }
+  if (!resendApiKey) throw new Error('RESEND_API_KEY niet geconfigureerd');
 
   const { Resend } = await import("npm:resend@2.0.0");
   const resend = new Resend(resendApiKey);
+  const t = getT(lang);
 
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -90,24 +89,19 @@ async function sendCredentialsEmail(email: string, username: string, password: s
         <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-        <h2 style="color: #333; margin-top: 0;">Welkom bij OncoInfo</h2>
-        <p style="color: #555; line-height: 1.6;">Er is een account voor u aangemaakt op OncoInfo. Hieronder vindt u uw inloggegevens:</p>
-        
+        <h2 style="color: #333; margin-top: 0;">${t.credentialsTitle}</h2>
+        <p style="color: #555; line-height: 1.6;">${t.credentialsBody}</p>
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
-          <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
-          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${username}</p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${password}</p>
+          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
         </div>
-
-        <p style="color: #555; line-height: 1.6;">Bewaar deze gegevens veilig en deel ze niet met anderen.</p>
-        
+        <p style="color: #555; line-height: 1.6;">${t.credentialsSafe}</p>
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
+          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
         </div>
       </div>
-      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
-        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
-      </p>
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">${t.autoMessage}</p>
     </div>
   `;
 
@@ -115,27 +109,24 @@ async function sendCredentialsEmail(email: string, username: string, password: s
   const result = await resend.emails.send({
     from: 'OncoInfo <admin@oncoinfo.be>',
     to: [email],
-    subject: 'Uw OncoInfo account - Inloggegevens',
+    subject: t.credentialsSubject,
     html: htmlContent,
   });
 
   console.log('Resend result:', JSON.stringify(result));
-
   if (result.error) {
     console.error('Resend error:', JSON.stringify(result.error));
     throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
   }
-
   return result;
 }
 
-async function sendResetEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'OncoInfo', primaryColor = '#6b2d5b') {
+async function sendResetEmail(email: string, username: string, password: string, loginUrl: string, hospitalName = 'OncoInfo', primaryColor = '#6b2d5b', lang = 'nl') {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) throw new Error('RESEND_API_KEY niet geconfigureerd');
-
   const { Resend } = await import("npm:resend@2.0.0");
   const resend = new Resend(resendApiKey);
-
+  const t = getT(lang);
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
@@ -143,42 +134,26 @@ async function sendResetEmail(email: string, username: string, password: string,
         <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-        <h2 style="color: #333; margin-top: 0;">Uw OncoInfo inloggegevens</h2>
-        <p style="color: #555; line-height: 1.6;">Uw wachtwoord is gereset door een beheerder. Hieronder vindt u uw nieuwe inloggegevens:</p>
-        
+        <h2 style="color: #333; margin-top: 0;">${t.resetTitle}</h2>
+        <p style="color: #555; line-height: 1.6;">${t.resetBody}</p>
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <p style="margin: 0 0 10px;"><strong>Gebruikersnaam:</strong> ${username}</p>
-          <p style="margin: 0 0 10px;"><strong>Wachtwoord:</strong> ${password}</p>
-          <p style="margin: 0;"><strong>Inloggen:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${username}</p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${password}</p>
+          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
         </div>
-
-        <p style="color: #555; line-height: 1.6;">Bewaar deze gegevens veilig en deel ze niet met anderen.</p>
-        <p style="color: #d32f2f; font-weight: 500; line-height: 1.6;">⚠️ U wordt bij uw eerstvolgende login gevraagd om een nieuw wachtwoord in te stellen.</p>
-        
+        <p style="color: #555; line-height: 1.6;">${t.credentialsSafe}</p>
+        <p style="color: #d32f2f; font-weight: 500; line-height: 1.6;">${t.resetWarning}</p>
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">Inloggen op OncoInfo</a>
+          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
         </div>
       </div>
-      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
-        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
-      </p>
+      <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">${t.autoMessage}</p>
     </div>
   `;
-
   console.log('Attempting to send reset email to:', email);
-  const result = await resend.emails.send({
-    from: 'OncoInfo <admin@oncoinfo.be>',
-    to: [email],
-    subject: 'OncoInfo - Uw wachtwoord is gereset',
-    html: htmlContent,
-  });
-
+  const result = await resend.emails.send({ from: 'OncoInfo <admin@oncoinfo.be>', to: [email], subject: t.resetSubject, html: htmlContent });
   console.log('Resend reset result:', JSON.stringify(result));
-
-  if (result.error) {
-    console.error('Resend error:', JSON.stringify(result.error));
-    throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
-  }
+  if (result.error) { console.error('Resend error:', JSON.stringify(result.error)); throw new Error(`E-mail versturen mislukt: ${result.error.message}`); }
   return result;
 }
 
@@ -187,21 +162,152 @@ async function getCallerUsername(supabase: ReturnType<typeof createClient>, user
   return data?.username || null;
 }
 
+async function getUserLanguage(supabase: ReturnType<typeof createClient>, userId: string): Promise<string> {
+  const { data: profile } = await supabase.from('profiles').select('default_language, hospital_id').eq('user_id', userId).maybeSingle();
+  if (profile?.default_language) return profile.default_language;
+  if (profile?.hospital_id) {
+    const { data: hospital } = await supabase.from('hospitals').select('default_language').eq('id', profile.hospital_id).maybeSingle();
+    if (hospital?.default_language) return hospital.default_language;
+  }
+  return 'nl';
+}
+
+const emailTranslations: Record<string, Record<string, string>> = {
+  nl: {
+    roleChangeSubject: 'OncoInfo - Uw rol en rechten zijn gewijzigd',
+    roleChangeTitle: 'Uw rechten zijn gewijzigd',
+    roleChangeGreeting: 'Beste',
+    roleChangeBody: 'Een beheerder heeft uw rol en/of rechten aangepast in OncoInfo. Uw inloggegevens (gebruikersnaam en wachtwoord) blijven ongewijzigd.',
+    roleChangeSection: 'Rolwijziging',
+    previousRole: 'Vorige rol',
+    newRole: 'Nieuwe rol',
+    permissionsTitle: 'Uw huidige bewerkrechten',
+    permRight: 'Recht',
+    permStatus: 'Status',
+    permAdd: 'Therapieën toevoegen',
+    permModify: 'Therapieën bewerken',
+    permDelete: 'Therapieën verwijderen',
+    yes: 'Ja',
+    no: 'Nee',
+    contactAdmin: 'Bij vragen kunt u contact opnemen met uw beheerder.',
+    autoMessage: 'Dit is een automatisch gegenereerd bericht vanuit OncoInfo.',
+    credentialsSubject: 'Uw OncoInfo account - Inloggegevens',
+    credentialsTitle: 'Welkom bij OncoInfo',
+    credentialsBody: 'Er is een account voor u aangemaakt op OncoInfo. Hieronder vindt u uw inloggegevens:',
+    credentialsUsername: 'Gebruikersnaam',
+    credentialsPassword: 'Wachtwoord',
+    credentialsLogin: 'Inloggen',
+    credentialsSafe: 'Bewaar deze gegevens veilig en deel ze niet met anderen.',
+    credentialsCta: 'Inloggen op OncoInfo',
+    resetSubject: 'OncoInfo - Uw wachtwoord is gereset',
+    resetTitle: 'Uw OncoInfo inloggegevens',
+    resetBody: 'Uw wachtwoord is gereset door een beheerder. Hieronder vindt u uw nieuwe inloggegevens:',
+    resetWarning: '⚠️ U wordt bij uw eerstvolgende login gevraagd om een nieuw wachtwoord in te stellen.',
+  },
+  fr: {
+    roleChangeSubject: 'OncoInfo - Votre rôle et vos droits ont été modifiés',
+    roleChangeTitle: 'Vos droits ont été modifiés',
+    roleChangeGreeting: 'Cher/Chère',
+    roleChangeBody: 'Un administrateur a modifié votre rôle et/ou vos droits dans OncoInfo. Vos identifiants de connexion (nom d\'utilisateur et mot de passe) restent inchangés.',
+    roleChangeSection: 'Changement de rôle',
+    previousRole: 'Rôle précédent',
+    newRole: 'Nouveau rôle',
+    permissionsTitle: 'Vos droits d\'édition actuels',
+    permRight: 'Droit',
+    permStatus: 'Statut',
+    permAdd: 'Ajouter des thérapies',
+    permModify: 'Modifier des thérapies',
+    permDelete: 'Supprimer des thérapies',
+    yes: 'Oui',
+    no: 'Non',
+    contactAdmin: 'Pour toute question, veuillez contacter votre administrateur.',
+    autoMessage: 'Ceci est un message généré automatiquement par OncoInfo.',
+    credentialsSubject: 'Votre compte OncoInfo - Identifiants',
+    credentialsTitle: 'Bienvenue sur OncoInfo',
+    credentialsBody: 'Un compte a été créé pour vous sur OncoInfo. Voici vos identifiants de connexion :',
+    credentialsUsername: 'Nom d\'utilisateur',
+    credentialsPassword: 'Mot de passe',
+    credentialsLogin: 'Se connecter',
+    credentialsSafe: 'Conservez ces informations en lieu sûr et ne les partagez pas.',
+    credentialsCta: 'Se connecter à OncoInfo',
+    resetSubject: 'OncoInfo - Votre mot de passe a été réinitialisé',
+    resetTitle: 'Vos identifiants OncoInfo',
+    resetBody: 'Votre mot de passe a été réinitialisé par un administrateur. Voici vos nouveaux identifiants :',
+    resetWarning: '⚠️ Lors de votre prochaine connexion, il vous sera demandé de définir un nouveau mot de passe.',
+  },
+  de: {
+    roleChangeSubject: 'OncoInfo - Ihre Rolle und Rechte wurden geändert',
+    roleChangeTitle: 'Ihre Rechte wurden geändert',
+    roleChangeGreeting: 'Sehr geehrte/r',
+    roleChangeBody: 'Ein Administrator hat Ihre Rolle und/oder Rechte in OncoInfo angepasst. Ihre Anmeldedaten (Benutzername und Passwort) bleiben unverändert.',
+    roleChangeSection: 'Rollenänderung',
+    previousRole: 'Vorherige Rolle',
+    newRole: 'Neue Rolle',
+    permissionsTitle: 'Ihre aktuellen Bearbeitungsrechte',
+    permRight: 'Recht',
+    permStatus: 'Status',
+    permAdd: 'Therapien hinzufügen',
+    permModify: 'Therapien bearbeiten',
+    permDelete: 'Therapien löschen',
+    yes: 'Ja',
+    no: 'Nein',
+    contactAdmin: 'Bei Fragen wenden Sie sich bitte an Ihren Administrator.',
+    autoMessage: 'Dies ist eine automatisch generierte Nachricht von OncoInfo.',
+    credentialsSubject: 'Ihr OncoInfo-Konto - Anmeldedaten',
+    credentialsTitle: 'Willkommen bei OncoInfo',
+    credentialsBody: 'Für Sie wurde ein Konto bei OncoInfo erstellt. Hier sind Ihre Anmeldedaten:',
+    credentialsUsername: 'Benutzername',
+    credentialsPassword: 'Passwort',
+    credentialsLogin: 'Anmelden',
+    credentialsSafe: 'Bewahren Sie diese Daten sicher auf und teilen Sie sie nicht mit anderen.',
+    credentialsCta: 'Bei OncoInfo anmelden',
+    resetSubject: 'OncoInfo - Ihr Passwort wurde zurückgesetzt',
+    resetTitle: 'Ihre OncoInfo-Anmeldedaten',
+    resetBody: 'Ihr Passwort wurde von einem Administrator zurückgesetzt. Hier sind Ihre neuen Anmeldedaten:',
+    resetWarning: '⚠️ Bei Ihrer nächsten Anmeldung werden Sie aufgefordert, ein neues Passwort festzulegen.',
+  },
+  en: {
+    roleChangeSubject: 'OncoInfo - Your role and permissions have been changed',
+    roleChangeTitle: 'Your permissions have been changed',
+    roleChangeGreeting: 'Dear',
+    roleChangeBody: 'An administrator has changed your role and/or permissions in OncoInfo. Your login credentials (username and password) remain unchanged.',
+    roleChangeSection: 'Role change',
+    previousRole: 'Previous role',
+    newRole: 'New role',
+    permissionsTitle: 'Your current editing permissions',
+    permRight: 'Permission',
+    permStatus: 'Status',
+    permAdd: 'Add therapies',
+    permModify: 'Edit therapies',
+    permDelete: 'Delete therapies',
+    yes: 'Yes',
+    no: 'No',
+    contactAdmin: 'If you have questions, please contact your administrator.',
+    autoMessage: 'This is an automatically generated message from OncoInfo.',
+    credentialsSubject: 'Your OncoInfo account - Login credentials',
+    credentialsTitle: 'Welcome to OncoInfo',
+    credentialsBody: 'An account has been created for you on OncoInfo. Here are your login credentials:',
+    credentialsUsername: 'Username',
+    credentialsPassword: 'Password',
+    credentialsLogin: 'Login',
+    credentialsSafe: 'Keep these credentials safe and do not share them.',
+    credentialsCta: 'Log in to OncoInfo',
+    resetSubject: 'OncoInfo - Your password has been reset',
+    resetTitle: 'Your OncoInfo credentials',
+    resetBody: 'Your password has been reset by an administrator. Here are your new credentials:',
+    resetWarning: '⚠️ You will be asked to set a new password upon your next login.',
+  },
+};
+
+function getT(lang: string): Record<string, string> {
+  return emailTranslations[lang] || emailTranslations['nl'];
+}
 function getRoleLabel(role: string): string {
   switch (role) {
     case 'super_admin': return 'Super Admin';
     case 'admin': return 'Admin';
     case 'apotheker': return 'Apotheker';
     default: return 'Viewer';
-  }
-}
-
-function getRoleDescription(role: string): string {
-  switch (role) {
-    case 'super_admin': return 'Volledige toegang tot alle ziekenhuizen, gebruikers, behandelschema\'s en systeemconfiguraties.';
-    case 'admin': return 'Beheer van gebruikers en behandelschema\'s binnen uw ziekenhuis.';
-    case 'apotheker': return 'Toegang tot de apotheekfuncties en medicijninformatie.';
-    default: return 'Alleen-lezen toegang tot behandelschema\'s en medicijninformatie.';
   }
 }
 
@@ -212,16 +318,18 @@ async function sendRoleChangeEmail(
   newRole: string,
   permissions: { can_add: boolean; can_modify: boolean; can_delete: boolean },
   hospitalName = 'OncoInfo',
-  primaryColor = '#6b2d5b'
+  primaryColor = '#6b2d5b',
+  lang = 'nl'
 ) {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   if (!resendApiKey) throw new Error('RESEND_API_KEY niet geconfigureerd');
 
   const { Resend } = await import("npm:resend@2.0.0");
   const resend = new Resend(resendApiKey);
+  const t = getT(lang);
 
   const permRow = (label: string, enabled: boolean) =>
-    `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee;">${label}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:center;">${enabled ? '✅ Ja' : '❌ Nee'}</td></tr>`;
+    `<tr><td style="padding:6px 12px;border-bottom:1px solid #eee;">${label}</td><td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:center;">${enabled ? '✅ ' + t.yes : '❌ ' + t.no}</td></tr>`;
 
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -230,44 +338,43 @@ async function sendRoleChangeEmail(
         <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
-        <h2 style="color: #333; margin-top: 0;">Uw rechten zijn gewijzigd</h2>
-        <p style="color: #555; line-height: 1.6;">Beste ${username},</p>
-        <p style="color: #555; line-height: 1.6;">Een beheerder heeft uw rol en/of rechten aangepast in OncoInfo. Uw inloggegevens (gebruikersnaam en wachtwoord) blijven ongewijzigd.</p>
+        <h2 style="color: #333; margin-top: 0;">${t.roleChangeTitle}</h2>
+        <p style="color: #555; line-height: 1.6;">${t.roleChangeGreeting} ${username},</p>
+        <p style="color: #555; line-height: 1.6;">${t.roleChangeBody}</p>
 
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <h3 style="margin-top:0; color: #333; font-size: 16px;">Rolwijziging</h3>
+          <h3 style="margin-top:0; color: #333; font-size: 16px;">${t.roleChangeSection}</h3>
           <table style="width:100%; border-collapse: collapse;">
             <tr>
               <td style="padding:8px 12px; background: #fee2e2; border-radius: 4px; color: #991b1b;">
-                <strong>Vorige rol:</strong> ${getRoleLabel(oldRole)}
+                <strong>${t.previousRole}:</strong> ${getRoleLabel(oldRole)}
               </td>
             </tr>
             <tr><td style="padding:4px;"></td></tr>
             <tr>
               <td style="padding:8px 12px; background: #dcfce7; border-radius: 4px; color: #166534;">
-                <strong>Nieuwe rol:</strong> ${getRoleLabel(newRole)}
+                <strong>${t.newRole}:</strong> ${getRoleLabel(newRole)}
               </td>
             </tr>
           </table>
-          <p style="color: #666; font-size: 13px; margin-bottom: 0;">${getRoleDescription(newRole)}</p>
         </div>
 
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <h3 style="margin-top:0; color: #333; font-size: 16px;">Uw huidige bewerkrechten</h3>
+          <h3 style="margin-top:0; color: #333; font-size: 16px;">${t.permissionsTitle}</h3>
           <table style="width:100%; border-collapse: collapse;">
-            <thead><tr><th style="text-align:left; padding:6px 12px; border-bottom:2px solid #ddd;">Recht</th><th style="padding:6px 12px; border-bottom:2px solid #ddd;">Status</th></tr></thead>
+            <thead><tr><th style="text-align:left; padding:6px 12px; border-bottom:2px solid #ddd;">${t.permRight}</th><th style="padding:6px 12px; border-bottom:2px solid #ddd;">${t.permStatus}</th></tr></thead>
             <tbody>
-              ${permRow('Therapieën toevoegen', permissions.can_add)}
-              ${permRow('Therapieën bewerken', permissions.can_modify)}
-              ${permRow('Therapieën verwijderen', permissions.can_delete)}
+              ${permRow(t.permAdd, permissions.can_add)}
+              ${permRow(t.permModify, permissions.can_modify)}
+              ${permRow(t.permDelete, permissions.can_delete)}
             </tbody>
           </table>
         </div>
 
-        <p style="color: #555; line-height: 1.6;">Bij vragen kunt u contact opnemen met uw beheerder.</p>
+        <p style="color: #555; line-height: 1.6;">${t.contactAdmin}</p>
       </div>
       <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">
-        Dit is een automatisch gegenereerd bericht vanuit OncoInfo.
+        ${t.autoMessage}
       </p>
     </div>
   `;
@@ -275,7 +382,7 @@ async function sendRoleChangeEmail(
   const result = await resend.emails.send({
     from: 'OncoInfo <admin@oncoinfo.be>',
     to: [recipientEmail],
-    subject: 'OncoInfo - Uw rol en rechten zijn gewijzigd',
+    subject: t.roleChangeSubject,
     html: htmlContent,
   });
 
@@ -361,6 +468,7 @@ Deno.serve(async (req) => {
               dedicated_nurse_name: nurseProfile ? `${nurseProfile.first_name || ''} ${nurseProfile.last_name || ''}`.trim() : null,
               phone_number: profile?.phone_number || null,
               linked_hospital_ids: linkedHospitalIds,
+              default_language: profile?.default_language || null,
             };
           })
           // Hide super_admin from non-super-admin callers
@@ -375,7 +483,7 @@ Deno.serve(async (req) => {
         const { email, username, password, role, send_email, login_url,
           first_name, last_name, function: userFunction, discipline, hospital_id,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
-          dedicated_nurse_id, phone_number } = params;
+          dedicated_nurse_id, phone_number, default_language } = params;
 
         if (!email || !username || !password || !role) {
           return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
@@ -412,6 +520,7 @@ Deno.serve(async (req) => {
         profileData.hospital_id = targetHospitalId;
         if (dedicated_nurse_id) profileData.dedicated_nurse_id = dedicated_nurse_id;
         if (phone_number !== undefined) profileData.phone_number = phone_number;
+        if (default_language !== undefined) profileData.default_language = default_language;
         await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
 
         const assignedRole = role === 'super_admin' || role === 'admin' || role === 'apotheker' ? role : 'viewer';
@@ -460,7 +569,8 @@ Deno.serve(async (req) => {
                 hColor = (h.branding as any)?.primary_color || '#6b2d5b';
               }
             }
-            await sendCredentialsEmail(email, username, password, login_url, hName, hColor);
+            const userLang = default_language || (newUserHospitalId ? (await supabase.from('hospitals').select('default_language').eq('id', newUserHospitalId).maybeSingle())?.data?.default_language : null) || 'nl';
+            await sendCredentialsEmail(email, username, password, login_url, hName, hColor, userLang);
             emailSent = true;
 
             // Audit log for email sent
@@ -493,7 +603,7 @@ Deno.serve(async (req) => {
         const { user_id, email, username, password, role, hospital_id,
           first_name, last_name, function: userFunction, discipline,
           is_physician, can_add_treatments, can_delete_treatments, can_modify_treatments,
-          dedicated_nurse_id, phone_number } = params;
+          dedicated_nurse_id, phone_number, default_language } = params;
 
         if (!user_id) {
           return jsonResponse({ error: 'user_id is verplicht' }, 400);
@@ -554,6 +664,7 @@ Deno.serve(async (req) => {
         }
         if (dedicated_nurse_id !== undefined) profileUpdate.dedicated_nurse_id = dedicated_nurse_id || null;
         if (phone_number !== undefined) profileUpdate.phone_number = phone_number || null;
+        if (default_language !== undefined) profileUpdate.default_language = default_language;
 
         if (Object.keys(profileUpdate).length > 0) {
           await supabase.from('profiles').update(profileUpdate).eq('user_id', user_id);
@@ -609,6 +720,7 @@ Deno.serve(async (req) => {
                 const { data: h } = await supabase.from('hospitals').select('name, branding').eq('id', targetProfile.hospital_id).maybeSingle();
                 if (h) { hName = h.name; hColor = (h.branding as any)?.primary_color || '#6b2d5b'; }
               }
+              const targetLang = await getUserLanguage(supabase, user_id);
               await sendRoleChangeEmail(
                 targetProfile.email,
                 targetProfile.username || targetProfile.email,
@@ -616,7 +728,8 @@ Deno.serve(async (req) => {
                 newRole,
                 newPerms,
                 hName,
-                hColor
+                hColor,
+                targetLang
               );
               roleEmailSent = true;
 
@@ -702,7 +815,8 @@ Deno.serve(async (req) => {
           }
         }
 
-        await sendCredentialsEmail(email, username || '', password, login_url, hName, hColor);
+        const sendLang = user_id ? await getUserLanguage(supabase, user_id) : 'nl';
+        await sendCredentialsEmail(email, username || '', password, login_url, hName, hColor, sendLang);
 
         // Audit log for email sent
         const callerUsername2 = await getCallerUsername(supabase, adminUser.id);
@@ -772,7 +886,8 @@ Deno.serve(async (req) => {
 
         // Send reset email
         const loginUrl = 'https://www.oncoinfo.be';
-        await sendResetEmail(profile.email, profile.username || '', newPassword, loginUrl, hName, hColor);
+        const resetLang = await getUserLanguage(supabase, user_id);
+        await sendResetEmail(profile.email, profile.username || '', newPassword, loginUrl, hName, hColor, resetLang);
 
         // Audit log for password reset + email sent
         const callerUsername = await getCallerUsername(supabase, adminUser.id);

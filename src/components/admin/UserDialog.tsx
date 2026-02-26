@@ -37,6 +37,7 @@ interface UserDialogProps {
     dedicated_nurse_id?: string | null;
     phone_number?: string | null;
     linked_hospital_ids?: string[];
+    default_language?: string | null;
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
   onUpdateHospitals?: (userId: string, hospitalIds: string[]) => void;
@@ -98,6 +99,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
   const [phoneNumber, setPhoneNumber] = useState('');
   const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
   const [linkedHospitals, setLinkedHospitals] = useState<string[]>([]);
+  const [defaultLanguage, setDefaultLanguage] = useState('');
   const { toast } = useToast();
 
   // Fetch nurses from the same hospital when function is 'arts' and hospitalId changes
@@ -142,6 +144,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         setDedicatedNurseId(user.dedicated_nurse_id || '');
         setPhoneNumber(user.phone_number || '');
         setLinkedHospitals(user.linked_hospital_ids || []);
+        setDefaultLanguage(user.default_language || '');
       } else {
         setEmail('');
         setUsername('');
@@ -160,6 +163,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         setDedicatedNurseId('');
         setPhoneNumber('');
         setLinkedHospitals([]);
+        setDefaultLanguage('');
       }
       setAttempted(false);
     }
@@ -206,6 +210,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         can_modify_treatments: canModify,
         dedicated_nurse_id: userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null,
         phone_number: (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null,
+        default_language: defaultLanguage || null,
       };
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
@@ -223,6 +228,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
       changes.hospital_id = hospitalId;
       changes.dedicated_nurse_id = userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null;
       changes.phone_number = (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null;
+      changes.default_language = defaultLanguage || null;
       return changes;
     }
   };
@@ -533,6 +539,23 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t('userDialog.defaultLanguage', 'Voorkeurstaal')}</Label>
+            <Select value={defaultLanguage || 'inherit'} onValueChange={(v) => setDefaultLanguage(v === 'inherit' ? '' : v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="inherit">{t('userDialog.languageInherit', '🏥 Ziekenhuisinstelling overnemen')}</SelectItem>
+                <SelectItem value="nl">🇳🇱 Nederlands</SelectItem>
+                <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                <SelectItem value="de">🇩🇪 Deutsch</SelectItem>
+                <SelectItem value="en">🇬🇧 English</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t('userDialog.languageHelp', 'De app en e-mails worden in deze taal weergegeven')}</p>
           </div>
 
           <div className="space-y-3 pt-2 border-t">

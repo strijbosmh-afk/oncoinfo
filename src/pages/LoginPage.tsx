@@ -78,7 +78,12 @@ export default function LoginPage() {
         return;
       }
 
-      const { session, hospitals } = data;
+      const { session, hospitals, user_language } = data;
+
+      // Apply user's preferred language
+      if (user_language && !localStorage.getItem('user-chose-language')) {
+        i18n.changeLanguage(user_language);
+      }
 
       // If user has multiple hospitals, show selection screen before setting session
       if (hospitals && hospitals.length > 1) {

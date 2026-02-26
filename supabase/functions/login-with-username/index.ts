@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     // Look up user by username, optionally filtering by hospital
     let query = supabaseAdmin
       .from('profiles')
-      .select('email, hospital_id, user_id')
+      .select('email, hospital_id, user_id, default_language')
       .eq('username', username.trim());
 
     if (hospital_id) {
@@ -121,7 +121,15 @@ Deno.serve(async (req) => {
       console.error('Audit log error:', logErr);
     }
 
-    // Return session tokens and hospitals to the client
+    // Resolve user language: profile > hospital > nl
+    let userLanguage = profileData.default_language || null;
+    if (!userLanguage && profileData.hospital_id) {
+      const { data: hospLang } = await supabaseAdmin.from('hospitals').select('default_language').eq('id', profileData.hospital_id).maybeSingle();
+      userLanguage = hospLang?.default_language || 'nl';
+    }
+    if (!userLanguage) userLanguage = 'nl';
+
+    // Return session tokens, hospitals, and user language to the client
     return new Response(
       JSON.stringify({
         session: {
@@ -131,6 +139,7 @@ Deno.serve(async (req) => {
           token_type: signInData.session.token_type,
         },
         hospitals,
+        user_language: userLanguage,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
