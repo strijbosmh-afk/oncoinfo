@@ -227,13 +227,16 @@ export default function AdminPage() {
         </div>
 
         {/* Navigation — grouped by function */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
-          <div className="flex flex-wrap gap-2 flex-1">
+        <div className="space-y-3 mb-8">
+          {/* Row 1: Administration */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Beheer</span>
             {isAdmin && (
               <Button 
                 variant={activeSection === 'users' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
                 className="gap-2"
+                size="sm"
               >
                 <Users className="h-4 w-4" />
                 {t('admin.userManagement')}
@@ -244,6 +247,7 @@ export default function AdminPage() {
                 variant="outline"
                 onClick={() => navigate('/admin/hospitals')}
                 className="gap-2"
+                size="sm"
               >
                 <Building2 className="h-4 w-4" />
                 {t('admin.hospitals')}
@@ -253,6 +257,7 @@ export default function AdminPage() {
               variant={activeSection === 'audit' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
               className="gap-2"
+              size="sm"
             >
               <ClipboardList className="h-4 w-4" />
               {t('admin.activityLog')}
@@ -262,30 +267,22 @@ export default function AdminPage() {
                 variant={activeSection === 'dashboard' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'dashboard' ? null : 'dashboard')}
                 className="gap-2"
+                size="sm"
               >
                 <BarChart3 className="h-4 w-4" />
                 {t('dashboard.title', 'Gebruiksoverzicht')}
               </Button>
             )}
-            {isSuperAdmin && (
-              <Button
-                variant={activeSection === 'api-docs' ? 'default' : 'outline'}
-                onClick={() => setActiveSection(activeSection === 'api-docs' ? null : 'api-docs')}
-                className="gap-2"
-              >
-                <Globe className="h-4 w-4" />
-                API Documentatie
-              </Button>
-            )}
           </div>
 
-          
-
-          <div className="flex flex-wrap gap-2">
+          {/* Row 2: Content & Schema's */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Content</span>
             <Button 
               variant="outline"
               onClick={() => setRegimenDialogOpen(true)} 
               className="gap-2"
+              size="sm"
             >
               <Plus className="h-4 w-4" />
               {t('admin.addTherapy')}
@@ -294,30 +291,26 @@ export default function AdminPage() {
               variant={activeSection === 'schema-assistant' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'schema-assistant' ? null : 'schema-assistant')}
               className="gap-2"
+              size="sm"
             >
               <Bot className="h-4 w-4" />
               Schema Assistent
-              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                AI
-              </Badge>
+              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">AI</Badge>
             </Button>
             <Button
               variant={activeSection === 'auto-update' ? 'default' : 'outline'}
               onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
               className="gap-2"
+              size="sm"
               disabled={!hasAutoUpdate}
               title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
             >
               <Sparkles className="h-4 w-4" />
               {t('admin.autoUpdate')}
               {!hasAutoUpdate ? (
-                <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                  {t('admin.notActive')}
-                </Badge>
+                <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-0.5">{t('admin.notActive')}</Badge>
               ) : (
-                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                  {t('admin.beta')}
-                </Badge>
+                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">{t('admin.beta')}</Badge>
               )}
             </Button>
             {isSuperAdmin && (
@@ -325,19 +318,34 @@ export default function AdminPage() {
                 variant={activeSection === 'schedule' ? 'default' : 'outline'}
                 onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
                 className="gap-2"
+                size="sm"
                 disabled={!hasScheduledUpdates}
                 title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
               >
                 <CalendarClock className="h-4 w-4" />
                 {t('admin.scheduledUpdates')}
                 {!hasScheduledUpdates && (
-                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                    {t('admin.notActive')}
-                  </Badge>
+                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-0.5">{t('admin.notActive')}</Badge>
                 )}
               </Button>
             )}
           </div>
+
+          {/* Row 3: Super Admin tools */}
+          {isSuperAdmin && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Systeem</span>
+              <Button
+                variant={activeSection === 'api-docs' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'api-docs' ? null : 'api-docs')}
+                className="gap-2"
+                size="sm"
+              >
+                <Globe className="h-4 w-4" />
+                API Documentatie
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Active Section */}
