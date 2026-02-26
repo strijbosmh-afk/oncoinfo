@@ -414,6 +414,55 @@ export type Database = {
           },
         ]
       }
+      hospital_drug_filter_tags: {
+        Row: {
+          created_at: string
+          drug_id: string
+          filter_tags: string[]
+          hospital_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drug_id: string
+          filter_tags?: string[]
+          hospital_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drug_id?: string
+          filter_tags?: string[]
+          hospital_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_drug_filter_tags_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_drug_filter_tags_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_drug_filter_tags_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospital_drug_visibility: {
         Row: {
           created_at: string
