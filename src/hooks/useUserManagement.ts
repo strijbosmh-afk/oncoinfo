@@ -90,9 +90,14 @@ export function useUserManagement() {
       password?: string;
       role?: 'admin' | 'viewer';
     }) => callManageUsers('update', params),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['managed-users'] });
-      toast({ title: t('userMgmt.userUpdated'), description: t('userMgmt.userUpdatedDesc') });
+      const desc = data?.role_email_sent
+        ? `${t('userMgmt.userUpdatedDesc')} Er is een e-mail verstuurd met de gewijzigde rol en rechten.`
+        : data?.role_email_error
+          ? `${t('userMgmt.userUpdatedDesc')} E-mail versturen mislukt: ${data.role_email_error}`
+          : t('userMgmt.userUpdatedDesc');
+      toast({ title: t('userMgmt.userUpdated'), description: desc });
     },
     onError: (error: Error) => {
       toast({ title: t('userMgmt.updateError'), description: error.message, variant: 'destructive' });
