@@ -27,13 +27,28 @@ export interface Drug {
 
 export interface DosingInfo {
   standard_dose?: string;
+  standard?: string;
   dose_adjustments?: {
     condition: string;
     adjustment: string;
-  }[];
+  }[] | string;
+  adjustments?: string;
   max_dose?: string;
   frequency?: string;
   duration?: string;
+  cycles?: string;
+  induction?: string;
+  maintenance?: string;
+  neoadjuvant_phase1?: string;
+  neoadjuvant_phase1_duration?: string;
+  neoadjuvant_phase2?: string;
+  neoadjuvant_phase2_duration?: string;
+  adjuvant?: string;
+  adjuvant_duration?: string;
+  alternative?: string;
+  classic_mvac?: string;
+  notes?: string;
+  [key: string]: string | { condition: string; adjustment: string }[] | undefined;
 }
 
 export interface SideEffects {
