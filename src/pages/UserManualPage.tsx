@@ -7,7 +7,7 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles
+  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles, Megaphone
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useRef, useCallback } from 'react';
@@ -515,6 +515,28 @@ export default function UserManualPage() {
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s7AutoTitle')}</h4>
             <p>{t('manual.s7AutoDesc')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Megaphone className="h-4 w-4" />
+              {t('manual.s7UpdatesTitle')}
+            </h4>
+            <p>{t('manual.s7UpdatesDesc')}</p>
+            <ul className="list-disc list-inside space-y-1 text-sm mt-1">
+              <li><Html html={t('manual.s7Updates1')} /></li>
+              <li><Html html={t('manual.s7Updates2')} /></li>
+              <li><Html html={t('manual.s7Updates3')} /></li>
+            </ul>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                ✍️ <strong>{t('manual.tip')}</strong> {t('manual.s7UpdatesTip')}
+              </p>
+            </div>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7UpdatesPermission')}
+              </p>
+            </div>
           </Section>
 
           {/* 8. LANGUAGE */}
