@@ -119,7 +119,9 @@ export function SendUpdate() {
               rows={4}
               maxLength={2000}
             />
-            <p className="text-xs text-muted-foreground mt-1">{content.length}/2000</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {content.length}/2000 — {t('platformUpdate.markdownHint', 'Markdown ondersteund: **vet**, - opsomming, [link](url)')}
+            </p>
           </div>
           <Button type="submit" disabled={!title.trim() || !content.trim() || createMutation.isPending} className="gap-2">
             {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
