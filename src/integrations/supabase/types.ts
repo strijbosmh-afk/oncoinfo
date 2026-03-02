@@ -726,6 +726,62 @@ export type Database = {
           },
         ]
       }
+      platform_update_reads: {
+        Row: {
+          id: string
+          read_at: string
+          update_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          read_at?: string
+          update_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          read_at?: string
+          update_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_update_reads_update_id_fkey"
+            columns: ["update_id"]
+            isOneToOne: false
+            referencedRelation: "platform_updates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_updates: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

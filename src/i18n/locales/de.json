@@ -1005,5 +1005,16 @@
     "title": "Demo-Umgebung",
     "description": "Dies ist eine Demo-Umgebung. Drucken, PDF-Erstellung und Exportfunktionen sind deaktiviert. Kontaktieren Sie uns für eine Volllizenz.",
     "dismiss": "Verstanden"
+  },
+  "platformUpdate": {
+    "title": "Update senden",
+    "description": "Senden Sie eine Update-Benachrichtigung an alle Benutzer. Die Benachrichtigung wird einmal beim Anmelden angezeigt.",
+    "titlePlaceholder": "Titel des Updates...",
+    "contentPlaceholder": "Beschreiben Sie die neuen Funktionen oder Änderungen...",
+    "send": "Senden",
+    "sent": "Update an alle Benutzer gesendet",
+    "previousUpdates": "Frühere Updates",
+    "deactivate": "Deaktivieren",
+    "activate": "Aktivieren"
   }
 }

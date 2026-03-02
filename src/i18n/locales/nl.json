@@ -1005,5 +1005,16 @@
     "title": "Demo-omgeving",
     "description": "Dit is een demo-omgeving. Printen, PDF-generatie en exportfuncties zijn uitgeschakeld. Neem contact op voor een volledige licentie.",
     "dismiss": "Begrepen"
+  },
+  "platformUpdate": {
+    "title": "Update Versturen",
+    "description": "Stuur een update-melding naar alle gebruikers. De melding wordt één keer getoond bij het inloggen.",
+    "titlePlaceholder": "Titel van de update...",
+    "contentPlaceholder": "Beschrijf de nieuwe features of wijzigingen...",
+    "send": "Versturen",
+    "sent": "Update verstuurd naar alle gebruikers",
+    "previousUpdates": "Eerdere updates",
+    "deactivate": "Deactiveren",
+    "activate": "Activeren"
   }
 }
