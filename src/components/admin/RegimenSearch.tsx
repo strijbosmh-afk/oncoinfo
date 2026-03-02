@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe, Trash2 } from 'lucide-react';
+import { Loader2, Search, Plus, ExternalLink, ChevronDown, ChevronUp, Upload, FileText, Sparkles, PenLine, Link, Globe, Trash2, Wand2 } from 'lucide-react';
 import { DRUG_CLASSES, DRUG_DISEASE_AREAS, ADMINISTRATION_ROUTES } from '@/types/drug';
 
 interface PubMedResult {
@@ -75,7 +75,11 @@ const DRUG_TYPES = [
   { value: 'combination', label: 'Combinatietherapie' },
 ];
 
-export function RegimenSearch() {
+interface RegimenSearchProps {
+  canAddTreatments?: boolean;
+}
+
+export function RegimenSearch({ canAddTreatments = false }: RegimenSearchProps) {
   const { toast } = useToast();
   const [discipline, setDiscipline] = useState('');
   const [drugType, setDrugType] = useState('');
@@ -92,6 +96,7 @@ export function RegimenSearch() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [articleUrl, setArticleUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [quickDrugName, setQuickDrugName] = useState('');
   const [editingDrug, setEditingDrug] = useState({
     generic_name: '',
     drug_class: '',
@@ -100,8 +105,12 @@ export function RegimenSearch() {
     brand_names: '',
     administration_route: '',
     study_name: '',
+    standard_dose: '',
+    dosing_frequency: '',
+    cycle_length_days: '',
     is_combination: false,
     is_on_zvz: false,
+    registration_trial: '',
     components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }] as {
       name: string; dose: string; route: string; interval: string; cycle_length: string;
     }[],
@@ -235,6 +244,9 @@ export function RegimenSearch() {
   const addDrugMutation = useMutation({
     mutationFn: async () => {
       const dosingInfo: any = {};
+      if (editingDrug.standard_dose) dosingInfo.standard_dose = editingDrug.standard_dose;
+      if (editingDrug.dosing_frequency) dosingInfo.frequency = editingDrug.dosing_frequency;
+
       if (editingDrug.is_combination && editingDrug.components.length > 0) {
         const componentDetails = editingDrug.components
           .filter(c => c.name)
@@ -246,7 +258,7 @@ export function RegimenSearch() {
             if (c.cycle_length) parts.push(`cyclus: ${c.cycle_length} dagen`);
             return parts.join(' ');
           });
-        dosingInfo.standard_dose = componentDetails.join(' + ');
+        dosingInfo.components = componentDetails.join(' + ');
       }
 
       const { error } = await supabase.from('drugs').insert({
@@ -258,6 +270,8 @@ export function RegimenSearch() {
         administration_route: editingDrug.administration_route || null,
         common_regimens: editingDrug.study_name ? [editingDrug.study_name.trim()] : [],
         is_on_zvz: editingDrug.is_on_zvz,
+        registration_trial: editingDrug.registration_trial || null,
+        cycle_length_days: editingDrug.cycle_length_days ? parseInt(editingDrug.cycle_length_days) : null,
         dosing_info: Object.keys(dosingInfo).length > 0 ? dosingInfo : null,
       });
       if (error) throw error;
@@ -271,6 +285,38 @@ export function RegimenSearch() {
     },
   });
 
+  const enrichMutation = useMutation({
+    mutationFn: async (drugName: string) => {
+      const { data, error } = await supabase.functions.invoke('enrich-drug-info', {
+        body: { drug_name: drugName },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      const drug = data.drug;
+      setEditingDrug(prev => ({
+        ...prev,
+        generic_name: drug.generic_name || quickDrugName,
+        drug_class: drug.drug_class || prev.drug_class,
+        disease_areas: drug.disease_areas || prev.disease_areas,
+        mechanism_of_action: drug.mechanism_of_action || prev.mechanism_of_action,
+        brand_names: drug.brand_names || prev.brand_names,
+        administration_route: drug.administration_route || prev.administration_route,
+        standard_dose: drug.standard_dose || prev.standard_dose,
+        dosing_frequency: drug.dosing_frequency || prev.dosing_frequency,
+        cycle_length_days: drug.cycle_length_days ? String(drug.cycle_length_days) : prev.cycle_length_days,
+        registration_trial: drug.registration_trial || prev.registration_trial,
+      }));
+      setQuickDrugName('');
+      toast({ title: 'AI-verrijking voltooid', description: `Informatie voor "${drug.generic_name}" is ingevuld. Controleer en pas aan indien nodig.` });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'AI-verrijking mislukt', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const openAddDialog = (prefill?: { title?: string; disease?: string }) => {
     setEditingDrug({
       generic_name: prefill?.title || '',
@@ -280,8 +326,12 @@ export function RegimenSearch() {
       brand_names: '',
       administration_route: '',
       study_name: '',
+      standard_dose: '',
+      dosing_frequency: '',
+      cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
+      registration_trial: '',
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
@@ -296,8 +346,12 @@ export function RegimenSearch() {
       brand_names: regimen.brand_names || '',
       administration_route: regimen.administration_route || '',
       study_name: regimen.study_name || '',
+      standard_dose: '',
+      dosing_frequency: '',
+      cycle_length_days: '',
       is_combination: false,
       is_on_zvz: false,
+      registration_trial: '',
       components: [{ name: '', dose: '', route: '', interval: '', cycle_length: '' }],
     });
     setAddDialogOpen(true);
@@ -338,6 +392,8 @@ export function RegimenSearch() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Separator before search */}
+
         {/* Search form */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -451,14 +507,16 @@ export function RegimenSearch() {
               Zoeken
             </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={() => openAddDialog()}
-            className="gap-2"
-          >
-            <PenLine className="h-4 w-4" />
-            Handmatig toevoegen
-          </Button>
+          {canAddTreatments && (
+            <Button
+              variant="outline"
+              onClick={() => openAddDialog()}
+              className="gap-2"
+            >
+              <PenLine className="h-4 w-4" />
+              Handmatig toevoegen
+            </Button>
+          )}
         </div>
 
         {/* AI Loading State */}
@@ -550,14 +608,16 @@ export function RegimenSearch() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={(e) => { e.stopPropagation(); openAddFromRegimen(regimen); }}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={(e) => { e.stopPropagation(); openAddFromRegimen(regimen); }}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       {expandedRegimen === idx ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </div>
                   </div>
@@ -652,14 +712,16 @@ export function RegimenSearch() {
                       >
                         {expandedPmid === r.pmid ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => openAddDialog({ title: '', disease: discipline })}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => openAddDialog({ title: '', disease: discipline })}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       {r.doi && (
                         <a href={`https://doi.org/${r.doi}`} target="_blank" rel="noopener noreferrer">
                           <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
@@ -701,14 +763,16 @@ export function RegimenSearch() {
                       )}
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => openAddDialog({ title: '', disease: discipline })}
-                      >
-                        <Plus className="h-3 w-3" /> Toevoegen
-                      </Button>
+                      {canAddTreatments && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => openAddDialog({ title: '', disease: discipline })}
+                        >
+                          <Plus className="h-3 w-3" /> Toevoegen
+                        </Button>
+                      )}
                       <a href={`https://clinicaltrials.gov/study/${r.nctId}`} target="_blank" rel="noopener noreferrer">
                         <Button variant="ghost" size="sm"><ExternalLink className="h-3 w-3" /></Button>
                       </a>
@@ -727,6 +791,46 @@ export function RegimenSearch() {
               <DialogTitle>Nieuw Medicijn / Combinatie Toevoegen</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* AI enrichment inside dialog */}
+              <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Wand2 className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-semibold">Automatisch invullen op basis van naam</Label>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/50 text-primary">AI</Badge>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={quickDrugName}
+                    onChange={(e) => setQuickDrugName(e.target.value)}
+                    placeholder="Typ een medicijnnaam, bijv. Pembrolizumab..."
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && quickDrugName.trim().length >= 2) {
+                        e.preventDefault();
+                        enrichMutation.mutate(quickDrugName.trim());
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => enrichMutation.mutate(quickDrugName.trim())}
+                    disabled={quickDrugName.trim().length < 2 || enrichMutation.isPending}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    {enrichMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {enrichMutation.isPending ? 'Zoeken...' : 'Verrijken'}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  AI zoekt automatisch medicijnklasse, werkingsmechanisme, indicaties en meer op.
+                </p>
+              </div>
+
+              <Separator />
               {/* Combination toggle */}
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
@@ -769,6 +873,14 @@ export function RegimenSearch() {
                     placeholder="Bijv. ARASENS, KEYNOTE-426"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Registratiestudie (Phase III)</Label>
+                  <Input
+                    value={editingDrug.registration_trial}
+                    onChange={(e) => setEditingDrug({ ...editingDrug, registration_trial: e.target.value })}
+                    placeholder="Bijv. KEYNOTE-048, CheckMate 214"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -803,6 +915,37 @@ export function RegimenSearch() {
                   </div>
                 )}
               </div>
+
+              {/* Dosering velden */}
+              {!editingDrug.is_combination && (
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Standaarddosering</Label>
+                    <Input
+                      value={editingDrug.standard_dose}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, standard_dose: e.target.value })}
+                      placeholder="Bijv. 200 mg, 75 mg/m²"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Frequentie</Label>
+                    <Input
+                      value={editingDrug.dosing_frequency}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, dosing_frequency: e.target.value })}
+                      placeholder="Bijv. q3w, dagelijks"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cyclusduur (dagen)</Label>
+                    <Input
+                      type="number"
+                      value={editingDrug.cycle_length_days}
+                      onChange={(e) => setEditingDrug({ ...editingDrug, cycle_length_days: e.target.value })}
+                      placeholder="Bijv. 21"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* RIZIV toggle */}
               <div className="flex items-center gap-3">

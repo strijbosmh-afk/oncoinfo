@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Eye, EyeOff, Copy, RefreshCw } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Copy, RefreshCw, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -34,8 +35,12 @@ interface UserDialogProps {
     can_delete_treatments?: boolean;
     can_modify_treatments?: boolean;
     dedicated_nurse_id?: string | null;
+    phone_number?: string | null;
+    linked_hospital_ids?: string[];
+    default_language?: string | null;
   } | null;
   onSubmit: (data: Record<string, unknown>) => void;
+  onUpdateHospitals?: (userId: string, hospitalIds: string[]) => void;
   isLoading: boolean;
   callerIsSuperAdmin?: boolean;
   hospitals?: HospitalOption[];
@@ -70,8 +75,11 @@ function generatePassword(length = 12): string {
   return pw.split('').sort(() => Math.random() - 0.5).join('');
 }
 
-export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
+export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateHospitals, isLoading, callerIsSuperAdmin, hospitals = [], preselectedHospitalId }: UserDialogProps) {
   const { t } = useTranslation();
+  const [superAdminWarningOpen, setSuperAdminWarningOpen] = useState(false);
+  const [permissionsReminderOpen, setPermissionsReminderOpen] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<Record<string, unknown> | null>(null);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -88,7 +96,10 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
   const [attempted, setAttempted] = useState(false);
   const [dedicatedNurseId, setDedicatedNurseId] = useState('');
   const [discipline, setDiscipline] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [availableNurses, setAvailableNurses] = useState<{ id: string; name: string }[]>([]);
+  const [linkedHospitals, setLinkedHospitals] = useState<string[]>([]);
+  const [defaultLanguage, setDefaultLanguage] = useState('');
   const { toast } = useToast();
 
   // Fetch nurses from the same hospital when function is 'arts' and hospitalId changes
@@ -131,6 +142,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanDelete(user.can_delete_treatments ?? false);
         setCanModify(user.can_modify_treatments ?? false);
         setDedicatedNurseId(user.dedicated_nurse_id || '');
+        setPhoneNumber(user.phone_number || '');
+        setLinkedHospitals(user.linked_hospital_ids || []);
+        setDefaultLanguage(user.default_language || '');
       } else {
         setEmail('');
         setUsername('');
@@ -147,6 +161,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         setCanDelete(false);
         setCanModify(false);
         setDedicatedNurseId('');
+        setPhoneNumber('');
+        setLinkedHospitals([]);
+        setDefaultLanguage('');
       }
       setAttempted(false);
     }
@@ -170,14 +187,13 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
     toast({ title: t('userDialog.copied'), description: t('userDialog.copiedDesc') });
   };
 
-  const handleSubmit = () => {
-    setAttempted(true);
-    if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId) return;
-    if (userFunction === 'arts' && !discipline) return;
+  const buildSubmitData = (): Record<string, unknown> | null => {
+    if (!email.trim() || !username.trim() || !firstName.trim() || !lastName.trim() || !userFunction || !hospitalId) return null;
+    if (userFunction === 'arts' && !discipline) return null;
 
     if (mode === 'create') {
-      if (!password.trim()) return;
-      onSubmit({
+      if (!password.trim()) return null;
+      return {
         email: email.trim(),
         username: username.trim(),
         first_name: firstName.trim(),
@@ -188,12 +204,14 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         password: password.trim(),
         role,
         send_email: sendEmail,
-        login_url: `${window.location.origin}`,
+        login_url: 'https://www.oncoinfo.be',
         can_add_treatments: canAdd,
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,
         dedicated_nurse_id: userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null,
-      });
+        phone_number: (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null,
+        default_language: defaultLanguage || null,
+      };
     } else {
       const changes: Record<string, unknown> = { user_id: user!.id };
       if (email.trim() !== user!.email) changes.email = email.trim();
@@ -209,12 +227,79 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
       changes.can_modify_treatments = canModify;
       changes.hospital_id = hospitalId;
       changes.dedicated_nurse_id = userFunction === 'arts' && dedicatedNurseId && dedicatedNurseId !== 'none' ? dedicatedNurseId : null;
+      changes.phone_number = (userFunction === 'verpleegkundige' || userFunction === 'apotheek') ? phoneNumber.trim() || null : null;
+      changes.default_language = defaultLanguage || null;
+      return changes;
+    }
+  };
 
-      onSubmit(changes);
+  const finalizeSubmit = (data: Record<string, unknown>) => {
+    onSubmit(data);
+    // Save linked hospitals if changed (super admin only, edit mode)
+    if (mode === 'edit' && callerIsSuperAdmin && onUpdateHospitals) {
+      const original = user?.linked_hospital_ids || [];
+      const sorted1 = [...original].sort();
+      const sorted2 = [...linkedHospitals].sort();
+      if (JSON.stringify(sorted1) !== JSON.stringify(sorted2)) {
+        const finalHospitals = linkedHospitals.includes(hospitalId)
+          ? linkedHospitals
+          : [hospitalId, ...linkedHospitals];
+        onUpdateHospitals(user!.id, finalHospitals);
+      }
+    }
+  };
+
+  const handleSubmit = () => {
+    setAttempted(true);
+    const data = buildSubmitData();
+    if (!data) return;
+
+    const targetRole = data.role as string;
+    const isNewSuperAdmin = targetRole === 'super_admin' && (mode === 'create' || user?.role !== 'super_admin');
+
+    // Step 1: If assigning super_admin, show warning first
+    if (isNewSuperAdmin) {
+      setPendingSubmitData(data);
+      setSuperAdminWarningOpen(true);
+      return;
+    }
+
+    // Step 2: If creating admin or super_admin, show permissions reminder
+    const isAdminRole = targetRole === 'admin' || targetRole === 'super_admin';
+    if (mode === 'create' && isAdminRole) {
+      setPendingSubmitData(data);
+      setPermissionsReminderOpen(true);
+      return;
+    }
+
+    finalizeSubmit(data);
+  };
+
+  const handleSuperAdminWarningConfirm = () => {
+    setSuperAdminWarningOpen(false);
+    if (!pendingSubmitData) return;
+
+    // After super_admin warning, check if we also need permissions reminder (create mode)
+    const targetRole = pendingSubmitData.role as string;
+    if (mode === 'create' && (targetRole === 'admin' || targetRole === 'super_admin')) {
+      setPermissionsReminderOpen(true);
+      return;
+    }
+
+    finalizeSubmit(pendingSubmitData);
+    setPendingSubmitData(null);
+  };
+
+  const handlePermissionsReminderConfirm = () => {
+    setPermissionsReminderOpen(false);
+    if (pendingSubmitData) {
+      finalizeSubmit(pendingSubmitData);
+      setPendingSubmitData(null);
     }
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
@@ -255,6 +340,23 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 <p className="text-xs text-destructive">{t('userDialog.lastNameRequired')}</p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
+            <Select value={hospitalId} onValueChange={setHospitalId}>
+              <SelectTrigger className={attempted && !hospitalId ? 'border-destructive' : ''}>
+                <SelectValue placeholder={t('userDialog.hospitalPlaceholder')} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                {hospitals.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {attempted && !hospitalId && (
+              <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -312,24 +414,53 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
                 <p className="text-xs text-muted-foreground">{t('userDialog.noNursesAvailable', 'Geen verpleegkundigen gevonden in dit ziekenhuis')}</p>
               )}
             </div>
+           )}
+
+          {(userFunction === 'verpleegkundige' || userFunction === 'apotheek') && (
+            <div className="space-y-2">
+              <Label htmlFor="user-phone">{t('userDialog.phoneNumber', 'Vast telefoonnummer')}</Label>
+              <Input
+                id="user-phone"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder={t('userDialog.phoneNumberPlaceholder', 'bv. 016 80 90 11')}
+              />
+              <p className="text-xs text-muted-foreground">{t('userDialog.phoneNumberHelp', 'Dit nummer wordt automatisch ingevuld op de patiëntenfolder')}</p>
+            </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="user-hospital">{t('userDialog.hospital')} *</Label>
-            <Select value={hospitalId} onValueChange={setHospitalId}>
-              <SelectTrigger className={attempted && !hospitalId ? 'border-destructive' : ''}>
-                <SelectValue placeholder={t('userDialog.hospitalPlaceholder')} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
+
+          {/* Multi-hospital links - super admin only, edit mode */}
+          {callerIsSuperAdmin && mode === 'edit' && (
+            <div className="space-y-2">
+              <Label>{t('userDialog.linkedHospitals', 'Gekoppelde ziekenhuizen')}</Label>
+              <p className="text-xs text-muted-foreground">{t('userDialog.linkedHospitalsHelp', 'Gebruiker kan wisselen tussen deze ziekenhuizen')}</p>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto border rounded-md p-2">
                 {hospitals.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
+                  <div key={h.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`hosp-${h.id}`}
+                      checked={linkedHospitals.includes(h.id)}
+                      onCheckedChange={(checked) => {
+                        setLinkedHospitals(prev =>
+                          checked
+                            ? [...prev, h.id]
+                            : prev.filter(id => id !== h.id)
+                        );
+                      }}
+                    />
+                    <Label htmlFor={`hosp-${h.id}`} className="text-sm font-normal cursor-pointer">
+                      {h.name}
+                      {h.id === hospitalId && (
+                        <span className="text-xs text-muted-foreground ml-1">(primair)</span>
+                      )}
+                    </Label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-            {attempted && !hospitalId && (
-              <p className="text-xs text-destructive">{t('userDialog.hospitalRequired')}</p>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="user-username">{t('userDialog.username')}</Label>
@@ -410,6 +541,23 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>{t('userDialog.defaultLanguage', 'Voorkeurstaal')}</Label>
+            <Select value={defaultLanguage || 'inherit'} onValueChange={(v) => setDefaultLanguage(v === 'inherit' ? '' : v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover">
+                <SelectItem value="inherit">{t('userDialog.languageInherit', '🏥 Ziekenhuisinstelling overnemen')}</SelectItem>
+                <SelectItem value="nl">🇳🇱 Nederlands</SelectItem>
+                <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                <SelectItem value="de">🇩🇪 Deutsch</SelectItem>
+                <SelectItem value="en">🇬🇧 English</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{t('userDialog.languageHelp', 'De app en e-mails worden in deze taal weergegeven')}</p>
+          </div>
+
           <div className="space-y-3 pt-2 border-t">
             <Label className="text-sm font-medium">{t('userDialog.permissions')}</Label>
             <div className="flex items-center space-x-2">
@@ -472,5 +620,91 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, isLoading
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Super Admin warning dialog */}
+    <AlertDialog open={superAdminWarningOpen} onOpenChange={setSuperAdminWarningOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" />
+            Super Admin aanmaken
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <p className="font-semibold text-foreground">
+              ⚠️ U staat op het punt een Super Admin aan te maken.
+            </p>
+            <p>
+              Een Super Admin heeft <strong>volledige toegang</strong> tot alle ziekenhuizen, 
+              alle gebruikers, alle behandelschema's en alle systeemconfiguraties.
+            </p>
+            <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+              <li>Kan alle ziekenhuisdata inzien en bewerken</li>
+              <li>Kan gebruikers aanmaken en verwijderen in alle ziekenhuizen</li>
+              <li>Kan systeembrede instellingen wijzigen</li>
+              <li>Kan andere Super Admins aanmaken</li>
+            </ul>
+            <p className="text-destructive font-medium mt-2">
+              Weet u zeker dat u deze gebruiker Super Admin rechten wilt geven?
+            </p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setPendingSubmitData(null)}>Annuleren</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleSuperAdminWarningConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Ja, Super Admin aanmaken
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Permissions reminder dialog for admin/super_admin */}
+    <AlertDialog open={permissionsReminderOpen} onOpenChange={setPermissionsReminderOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            Rechten controleren
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-2">
+            <p>
+              U maakt een gebruiker aan met de rol <strong>{role === 'super_admin' ? 'Super Admin' : 'Admin'}</strong>.
+            </p>
+            <p className="font-medium text-foreground">Controleer of de volgende bewerkrechten correct zijn ingesteld:</p>
+            <div className="bg-muted rounded-md p-3 space-y-2 mt-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className={canAdd ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
+                  {canAdd ? '✅' : '❌'} Therapieën toevoegen
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className={canModify ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
+                  {canModify ? '✅' : '❌'} Therapieën bewerken
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className={canDelete ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
+                  {canDelete ? '✅' : '❌'} Therapieën verwijderen
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              U kunt deze rechten later altijd wijzigen via het gebruikersbeheer.
+            </p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => { setPermissionsReminderOpen(false); setPendingSubmitData(null); }}>
+            Terug om aan te passen
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handlePermissionsReminderConfirm}>
+            Doorgaan met aanmaken
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

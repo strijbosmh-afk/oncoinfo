@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,21 +19,37 @@ import { AuditLog } from '@/components/admin/AuditLog';
 import { RegimenSearch } from '@/components/admin/RegimenSearch';
 import { AutoUpdateTherapies } from '@/components/admin/AutoUpdateTherapies';
 import { ScheduleAutoUpdate } from '@/components/admin/ScheduleAutoUpdate';
-import { CalendarClock, Building2, BarChart3 } from 'lucide-react';
+import { CalendarClock, Building2, BarChart3, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UsageDashboard } from '@/components/admin/UsageDashboard';
+import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
+import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
-  const { user, isAdmin, isApotheker, isSuperAdmin, loading } = useAuth();
+  const { user, isAdmin, isApotheker, isSuperAdmin, loading, permissions } = useAuth();
   const { data: drugs, isLoading: drugsLoading, refetch: refetchDrugs } = useDrugs({});
   const { t } = useTranslation();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | null>(null);
+  const [editDrugParam, setEditDrugParam] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle editDrug URL param to auto-open schema assistant
+  useEffect(() => {
+    const editDrug = searchParams.get('editDrug');
+    if (editDrug) {
+      setActiveSection('schema-assistant');
+      setEditDrugParam(editDrug);
+      // Clean the URL param
+      searchParams.delete('editDrug');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const [drugToDelete, setDrugToDelete] = useState<{ id: string; name: string } | null>(null);
   const [drugToArchive, setDrugToArchive] = useState<{ id: string; name: string } | null>(null);
@@ -155,7 +171,9 @@ export default function AdminPage() {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin && !isApotheker) {
+  const hasAnyTreatmentPermission = !!permissions?.can_add_treatments || !!permissions?.can_modify_treatments || !!permissions?.can_delete_treatments;
+
+  if (!isAdmin && !isApotheker && !hasAnyTreatmentPermission) {
     return (
       <Layout>
         <div className="container py-16 text-center">
@@ -165,6 +183,14 @@ export default function AdminPage() {
       </Layout>
     );
   }
+
+  // Determine what sections this user can see
+  const canManageUsers = isAdmin;
+  const canViewAuditLog = isAdmin || isApotheker;
+  const canManageContent = isAdmin || isApotheker || hasAnyTreatmentPermission;
+  const canAddTherapy = isAdmin || isSuperAdmin || !!permissions?.can_add_treatments;
+  const canDeleteTherapy = isAdmin || isSuperAdmin || !!permissions?.can_delete_treatments;
+  const canModifyTherapy = isAdmin || isSuperAdmin || !!permissions?.can_modify_treatments;
 
   return (
     <Layout>
@@ -177,7 +203,24 @@ export default function AdminPage() {
           {t('drugs.backToCategories', 'Terug naar specialiteiten')}
         </button>
         <h1 className="text-3xl font-bold mb-2">{t('admin.title')}</h1>
-        <p className="text-muted-foreground mb-8">{t('admin.description')}</p>
+        <p className="text-muted-foreground mb-4">{t('admin.description')}</p>
+
+        {/* Access level indicator for non-full-admin users */}
+        {!isAdmin && !isApotheker && hasAnyTreatmentPermission && (
+          <div className="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-lg border border-primary/20 bg-primary/5">
+            <Shield className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm font-medium text-foreground">{t('admin.yourPermissions', 'Uw toegangsrechten')}:</span>
+            {permissions?.can_add_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canAdd', 'Therapie toevoegen')}</Badge>
+            )}
+            {permissions?.can_modify_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canModify', 'Therapie wijzigen')}</Badge>
+            )}
+            {permissions?.can_delete_treatments && (
+              <Badge variant="outline" className="text-xs bg-background">{t('userDialog.canDelete', 'Therapie verwijderen')}</Badge>
+            )}
+          </div>
+        )}
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -225,13 +268,18 @@ export default function AdminPage() {
         </div>
 
         {/* Navigation — grouped by function */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
-          <div className="flex flex-wrap gap-2 flex-1">
-            {isAdmin && (
+        <div className="border-t border-border/50" />
+        <div className="space-y-4 py-5">
+          {/* Row 1: Administration */}
+          {(canManageUsers || canViewAuditLog || isSuperAdmin) && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Beheer</span>
+            {canManageUsers && (
               <Button 
                 variant={activeSection === 'users' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'users' ? null : 'users')}
                 className="gap-2"
+                size="sm"
               >
                 <Users className="h-4 w-4" />
                 {t('admin.userManagement')}
@@ -242,89 +290,129 @@ export default function AdminPage() {
                 variant="outline"
                 onClick={() => navigate('/admin/hospitals')}
                 className="gap-2"
+                size="sm"
               >
                 <Building2 className="h-4 w-4" />
                 {t('admin.hospitals')}
               </Button>
             )}
+            {canViewAuditLog && (
             <Button 
               variant={activeSection === 'audit' ? 'default' : 'outline'}
               onClick={() => setActiveSection(activeSection === 'audit' ? null : 'audit')}
               className="gap-2"
+              size="sm"
             >
               <ClipboardList className="h-4 w-4" />
               {t('admin.activityLog')}
             </Button>
+            )}
             {isSuperAdmin && (
               <Button
                 variant={activeSection === 'dashboard' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'dashboard' ? null : 'dashboard')}
                 className="gap-2"
+                size="sm"
               >
                 <BarChart3 className="h-4 w-4" />
                 {t('dashboard.title', 'Gebruiksoverzicht')}
               </Button>
             )}
           </div>
+          )}
 
-          <div className="hidden sm:block w-px h-8 bg-border self-center" />
-
-          <div className="flex flex-wrap gap-2">
+          {/* Row 2: Content & Schema's */}
+          {canManageContent && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Content</span>
+            {canAddTherapy && (
             <Button 
               variant="outline"
               onClick={() => setRegimenDialogOpen(true)} 
               className="gap-2"
+              size="sm"
             >
               <Plus className="h-4 w-4" />
               {t('admin.addTherapy')}
             </Button>
+            )}
+            {canModifyTherapy && (
+            <Button
+              variant={activeSection === 'schema-assistant' ? 'default' : 'outline'}
+              onClick={() => setActiveSection(activeSection === 'schema-assistant' ? null : 'schema-assistant')}
+              className="gap-2"
+              size="sm"
+            >
+              <Bot className="h-4 w-4" />
+              Schema Assistent
+              <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">AI</Badge>
+            </Button>
+            )}
+            {(isAdmin || isApotheker) && (
+            <>
             <Button
               variant={activeSection === 'auto-update' ? 'default' : 'outline'}
               onClick={() => hasAutoUpdate && setActiveSection(activeSection === 'auto-update' ? null : 'auto-update')}
               className="gap-2"
+              size="sm"
               disabled={!hasAutoUpdate}
               title={!hasAutoUpdate ? t('admin.featureNotActive') : undefined}
             >
               <Sparkles className="h-4 w-4" />
               {t('admin.autoUpdate')}
               {!hasAutoUpdate ? (
-                <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                  {t('admin.notActive')}
-                </Badge>
+                <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-0.5">{t('admin.notActive')}</Badge>
               ) : (
-                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-1">
-                  {t('admin.beta')}
-                </Badge>
+                <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50 text-[10px] px-1.5 py-0 ml-0.5">{t('admin.beta')}</Badge>
               )}
             </Button>
+            </>
+            )}
             {isSuperAdmin && (
               <Button
                 variant={activeSection === 'schedule' ? 'default' : 'outline'}
                 onClick={() => hasScheduledUpdates && setActiveSection(activeSection === 'schedule' ? null : 'schedule')}
                 className="gap-2"
+                size="sm"
                 disabled={!hasScheduledUpdates}
                 title={!hasScheduledUpdates ? t('admin.featureNotActive') : undefined}
               >
                 <CalendarClock className="h-4 w-4" />
                 {t('admin.scheduledUpdates')}
                 {!hasScheduledUpdates && (
-                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-1">
-                    {t('admin.notActive')}
-                  </Badge>
+                  <Badge variant="outline" className="text-muted-foreground border-muted text-[10px] px-1.5 py-0 ml-0.5">{t('admin.notActive')}</Badge>
                 )}
               </Button>
             )}
           </div>
+          )}
+
+          {/* Row 3: Super Admin tools */}
+          {isSuperAdmin && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Systeem</span>
+              <Button
+                variant={activeSection === 'api-docs' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'api-docs' ? null : 'api-docs')}
+                className="gap-2"
+                size="sm"
+              >
+                <Globe className="h-4 w-4" />
+                API Documentatie
+              </Button>
+            </div>
+          )}
         </div>
+        <div className="border-t border-border/50 mb-8" />
 
         {/* Active Section */}
-        {activeSection === 'users' && isAdmin && (
+        {activeSection === 'users' && canManageUsers && (
           <div className="mb-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <UserManagement />
           </div>
         )}
 
-        {activeSection === 'audit' && (
+        {activeSection === 'audit' && canViewAuditLog && (
           <div className="mb-8">
             <AuditLog />
           </div>
@@ -348,6 +436,19 @@ export default function AdminPage() {
           </div>
         )}
 
+        {activeSection === 'api-docs' && isSuperAdmin && (
+          <div className="mb-8">
+            <ApiDocumentation />
+          </div>
+        )}
+
+        {activeSection === 'schema-assistant' && (
+          <div className="mb-8">
+            <SchemaAssistant existingDrugs={drugs || []} initialEditDrugId={editDrugParam || undefined} />
+          </div>
+        )}
+
+        {canManageContent && (
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
             <TabsTrigger value="overview">{t('admin.overview')}</TabsTrigger>
@@ -510,6 +611,7 @@ export default function AdminPage() {
             </Card>
           </TabsContent>
         </Tabs>
+        )}
 
         {/* Add Therapy Dialog */}
         <Dialog open={regimenDialogOpen} onOpenChange={setRegimenDialogOpen}>
@@ -517,7 +619,7 @@ export default function AdminPage() {
             <DialogHeader>
               <DialogTitle>{t('admin.addTherapy')}</DialogTitle>
             </DialogHeader>
-            <RegimenSearch />
+            <RegimenSearch canAddTreatments={isAdmin || isSuperAdmin || !!permissions?.can_add_treatments} />
           </DialogContent>
         </Dialog>
 

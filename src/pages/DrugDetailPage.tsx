@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
+import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useDrug } from '@/hooks/useDrugs';
 import { useTranslatedDrug } from '@/hooks/useTranslatedDrug';
@@ -24,6 +26,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { supabase } from '@/integrations/supabase/client';
 import { PatientFolderEditor } from '@/components/drugs/PatientFolderEditor';
 import { generateStaticPreviewHtml } from '@/components/drugs/PatientFolderPreviewStatic';
+import { DrugFilterTagsEditor } from '@/components/drugs/DrugFilterTagsEditor';
 import { 
   ArrowLeft, 
   Pill, 
@@ -40,10 +43,12 @@ import {
   Settings2,
   Printer,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  PenLine
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 
 interface HospitalDoctor {
@@ -51,7 +56,10 @@ interface HospitalDoctor {
   name: string;
   staff_type: string;
   specialization: string | null;
+  phone_number?: string | null;
+  discipline?: string | null;
 }
+
 
 interface PremedicatieItem {
   name: string;
@@ -86,14 +94,18 @@ export default function DrugDetailPage() {
   const { translatedDrug: td, isTranslating } = useTranslatedDrug(drug);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isMostUsed, toggleMostUsed } = useMostUsed();
-  const { user, profile, isSuperAdmin } = useAuth();
+  const { user, profile, isSuperAdmin, isAdmin, permissions } = useAuth();
+  const navigateAdmin = useNavigate();
   const queryClient = useQueryClient();
-  const { hospital } = useHospital();
+  const { hospital, isDemoClinic } = useHospital();
+  const [showDemoPopup, setShowDemoPopup] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [includeDosing, setIncludeDosing] = useState(true);
   const [includeSideEffects, setIncludeSideEffects] = useState(true);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneCount, setMilestoneCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Hospital staff from database
@@ -118,7 +130,7 @@ export default function DrugDetailPage() {
       // Also fetch physicians from profiles (function = 'arts') as fallback/supplement
       const { data: profileDoctors } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, function')
+        .select('user_id, first_name, last_name, function, phone_number, discipline')
         .eq('hospital_id', hospital.id);
 
       if (profileDoctors) {
@@ -133,6 +145,8 @@ export default function DrugDetailPage() {
                 name: fullName,
                 staff_type: 'arts',
                 specialization: null,
+                phone_number: p.phone_number,
+                discipline: p.discipline,
               });
               existingNames.add(fullName.toLowerCase());
             }
@@ -150,6 +164,7 @@ export default function DrugDetailPage() {
                 name: fullName,
                 staff_type: p.function || 'verpleegkundige',
                 specialization: null,
+                phone_number: p.phone_number,
               });
               nurseExistingNames.add(fullName.toLowerCase());
             }
@@ -179,6 +194,14 @@ export default function DrugDetailPage() {
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
+  const [folderFontSize, setFolderFontSize] = useState(() => {
+    const saved = localStorage.getItem('folder-font-size-default');
+    return saved ? parseInt(saved, 10) : 14;
+  });
+  const [showFontSizeSavePrompt, setShowFontSizeSavePrompt] = useState(false);
+  const [nursePhone, setNursePhone] = useState('');
+  const [phoneMode, setPhoneMode] = useState<'nurse' | 'custom'>('nurse');
+  const [showPhoneWarning, setShowPhoneWarning] = useState(false);
   const [includePremedicatie, setIncludePremedicatie] = useState(false);
   const [hasUnsavedEditorChanges, setHasUnsavedEditorChanges] = useState(false);
   const [selectedPremedicatie, setSelectedPremedicatie] = useState<PremedicatieItem[]>([]);
@@ -228,10 +251,14 @@ export default function DrugDetailPage() {
     if (isLoggedInNurse) {
       // Nurse/pharmacist logged in: set them as nurse, leave physician for selection
       if (!nurseSelection && !isNurseCustom) {
-        // Check if the nurse is in the hospitalNurses list
         const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === fullName.toLowerCase());
         if (matchingNurse) {
           setNurseSelection(matchingNurse.name);
+          if (matchingNurse.phone_number) {
+            setNursePhone(matchingNurse.phone_number);
+          }
+          // Also set profile phone as customPhone fallback
+          if (profile.phone_number) setCustomPhone(profile.phone_number);
         } else {
           setIsNurseCustom(true);
           setCustomNurse(fullName);
@@ -256,6 +283,8 @@ export default function DrugDetailPage() {
       // Doctor/other: set them as physician (existing behavior)
       if (!selectedPhysician) {
         setSelectedPhysician(fullName);
+        // Set doctor's phone from profile
+        
       }
       // If doctor has a dedicated nurse, pre-select that nurse
       if (!nurseSelection && !isNurseCustom && profile.dedicated_nurse_id) {
@@ -270,6 +299,7 @@ export default function DrugDetailPage() {
             const matchingNurse = hospitalNurses.find(n => n.name.toLowerCase() === nurseName.toLowerCase());
             if (matchingNurse) {
               setNurseSelection(matchingNurse.name);
+              setNursePhone(matchingNurse.phone_number || '');
             } else {
               setIsNurseCustom(true);
               setCustomNurse(nurseName);
@@ -295,6 +325,7 @@ export default function DrugDetailPage() {
           language,
           phone_number: phoneNumber || '',
           folder_mode: folderMode,
+          font_size: folderFontSize,
           premedicatie: includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
         }
       });
@@ -307,14 +338,16 @@ export default function DrugDetailPage() {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [drug, includeDosing, includeSideEffects, folderMode, includePremedicatie, selectedPremedicatie]);
+  }, [drug, includeDosing, includeSideEffects, folderMode, folderFontSize, includePremedicatie, selectedPremedicatie]);
 
   const currentNurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
 
   const effectiveIncludeDosing = folderMode === 'uitgebreid' ? true : includeDosing;
 
+  const effectivePhone = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
+
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
-    drug, selectedPhysician, currentNurseName, selectedLanguage, customPhone.trim(),
+    drug, selectedPhysician, currentNurseName, selectedLanguage, effectivePhone,
     effectiveIncludeDosing, includeSideEffects, folderMode,
     hospital?.name || 'OncoInfo',
     (() => {
@@ -325,7 +358,10 @@ export default function DrugDetailPage() {
       return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/public-assets/${rawUrl}`;
     })(),
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
-    includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
+    includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : [],
+    folderFontSize,
+    '',
+    nursePhone,
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -335,12 +371,27 @@ export default function DrugDetailPage() {
 
   const handleConfirmStaff = async () => {
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
+    const phone = customPhone.trim();
+    
+    // Check if phone number is missing
+    const effectivePhoneCheck = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
+    if (!effectivePhoneCheck) {
+      setShowPhoneWarning(true);
+      return;
+    }
+    
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, phone);
+  };
+  
+  const handleConfirmStaffForce = async () => {
+    setShowPhoneWarning(false);
+    const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
     await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, customPhone.trim());
   };
 
   const handlePrint = () => {
     if (!previewHtml) return;
-    
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
     // Create a temporary full-size iframe for printing the complete document
     const printIframe = document.createElement('iframe');
     printIframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: 297mm; border: none;';
@@ -368,7 +419,7 @@ export default function DrugDetailPage() {
 
   const handleDownloadPdf = async () => {
     if (!previewHtml || !drug) return;
-    
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
     setIsDownloading(true);
     try {
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
@@ -510,6 +561,17 @@ export default function DrugDetailPage() {
           entity_name: drug.generic_name,
           hospital_id: profile?.hospital_id || null,
         });
+
+        // Check milestone
+        const { count: folderCount } = await supabase
+          .from('audit_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id)
+          .eq('action', 'print_folder');
+        if (folderCount && folderCount % 100 === 0) {
+          setMilestoneCount(folderCount);
+          setShowMilestone(true);
+        }
       }
 
       toast.success(t('patientFolder.downloaded'));
@@ -575,20 +637,22 @@ export default function DrugDetailPage() {
                 </p>
               )}
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                <Badge variant="default" className="text-xs">{drug.drug_class}</Badge>
+                <Badge variant="default" className="text-xs">{t(`medicalTerms.${drug.drug_class}`, drug.drug_class)}</Badge>
                 {drug.administration_route && (
-                  <Badge variant="outline" className="text-xs">{drug.administration_route}</Badge>
+                  <Badge variant="outline" className="text-xs">{t(`medicalTerms.${drug.administration_route}`, drug.administration_route)}</Badge>
                 )}
-                {drug.is_on_zvz ? (
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                    ✓ RIZIV
-                  </Badge>
-                ) : (
-                  <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
-                    ✗ Niet RIZIV
-                  </Badge>
+                {!isDemoClinic && (
+                  drug.is_on_zvz ? (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                      ✓ RIZIV
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs">
+                      ✗ Niet RIZIV
+                    </Badge>
+                  )
                 )}
-                {isSuperAdmin && (
+                {!isDemoClinic && isSuperAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -639,8 +703,8 @@ export default function DrugDetailPage() {
                 size="icon"
                 onClick={() => toggleMostUsed(drug.id)}
                 className="h-9 w-9 sm:h-10 sm:w-10"
-                aria-label={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Toevoegen aan meest gebruikt'}
-                title={isMostUsed(drug.id) ? 'Verwijder uit meest gebruikt' : 'Meest gebruikt'}
+                aria-label={isMostUsed(drug.id) ? t('mostUsed.remove') : t('mostUsed.add')}
+                title={isMostUsed(drug.id) ? t('mostUsed.remove') : t('mostUsed.label')}
               >
                 <Zap
                   className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
@@ -650,6 +714,18 @@ export default function DrugDetailPage() {
                   }`}
                 />
               </Button>
+              {(isAdmin || isSuperAdmin) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigateAdmin(`/admin?editDrug=${drug.id}`)}
+                  className="h-9 w-9 sm:h-10 sm:w-10"
+                  aria-label="Schema bewerken"
+                  title="Schema bewerken"
+                >
+                  <PenLine className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground hover:text-primary transition-colors" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -688,6 +764,45 @@ export default function DrugDetailPage() {
                       />
                       {t('patientFolder.includeSideEffects')}
                     </label>
+                    <div className="pt-2 border-t space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">{t('patientFolder.fontSize', 'Tekstgrootte')}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{folderFontSize}px</span>
+                      </div>
+                      <Slider
+                        value={[folderFontSize]}
+                        onValueChange={([v]) => {
+                          setFolderFontSize(v);
+                          const savedDefault = localStorage.getItem('folder-font-size-default');
+                          if (!savedDefault || parseInt(savedDefault, 10) !== v) {
+                            setShowFontSizeSavePrompt(true);
+                          }
+                        }}
+                        min={11}
+                        max={20}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>{t('patientFolder.fontSmall', 'Klein')}</span>
+                        <span>{t('patientFolder.fontLarge', 'Groot')}</span>
+                      </div>
+                      {showFontSizeSavePrompt && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-7 text-xs mt-1"
+                          onClick={() => {
+                            localStorage.setItem('folder-font-size-default', String(folderFontSize));
+                            setShowFontSizeSavePrompt(false);
+                            toast.success(t('patientFolder.fontSizeSaved', 'Tekstgrootte opgeslagen als standaard'));
+                          }}
+                        >
+                          {t('patientFolder.saveAsDefault', 'Opslaan als standaard')} ({folderFontSize}px)
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -702,7 +817,7 @@ export default function DrugDetailPage() {
                   ) : (
                     <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  Patiënten Info
+                  {t('patientFolder.patientInfo')}
                 </Button>
               </div>
             </div>
@@ -767,6 +882,11 @@ export default function DrugDetailPage() {
                 </Card>
               )}
 
+              {/* Filter Tags Editor - visible for users with modify permissions */}
+              {(isAdmin || isSuperAdmin || permissions?.can_modify_treatments) && (
+                <DrugFilterTagsEditor drug={drug} />
+              )}
+
               {/* Common Regimens */}
               {td?.common_regimens && td.common_regimens.length > 0 && (
                 <Card>
@@ -796,6 +916,15 @@ export default function DrugDetailPage() {
               <CardContent className="space-y-4">
                 {td?.dosing_info ? (
                   <>
+                    {/* Single-string "standard" format (used by many combination therapies) */}
+                    {td.dosing_info.standard && !td.dosing_info.standard_dose && (
+                      <div>
+                        <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
+                        <p className="text-muted-foreground whitespace-pre-line">{td.dosing_info.standard}</p>
+                      </div>
+                    )}
+
+                    {/* Standard fields */}
                     {td.dosing_info.standard_dose && (
                       <div>
                         <h4 className="font-medium mb-1">{t('drugDetail.standardDose')}</h4>
@@ -820,17 +949,104 @@ export default function DrugDetailPage() {
                         <p className="text-muted-foreground">{td.dosing_info.max_dose}</p>
                       </div>
                     )}
-                    {td.dosing_info.dose_adjustments && td.dosing_info.dose_adjustments.length > 0 && (
+                    {td.dosing_info.cycles && (
+                      <div>
+                        <h4 className="font-medium mb-1">Cycli</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.cycles}</p>
+                      </div>
+                    )}
+
+                    {/* Multi-phase: induction / maintenance */}
+                    {td.dosing_info.induction && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Inductiefase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.induction}</p>
+                      </div>
+                    )}
+                    {td.dosing_info.maintenance && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Onderhoudsfase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.maintenance}</p>
+                      </div>
+                    )}
+
+                    {/* Multi-phase: neoadjuvant / adjuvant (e.g. KEYNOTE-522) */}
+                    {td.dosing_info.neoadjuvant_phase1 && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Neoadjuvant fase 1</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.neoadjuvant_phase1}</p>
+                        {td.dosing_info.neoadjuvant_phase1_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.neoadjuvant_phase1_duration}</p>
+                        )}
+                      </div>
+                    )}
+                    {td.dosing_info.neoadjuvant_phase2 && (
+                      <div className="border-l-2 border-primary/30 pl-3">
+                        <h4 className="font-medium mb-1">Neoadjuvant fase 2</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.neoadjuvant_phase2}</p>
+                        {td.dosing_info.neoadjuvant_phase2_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.neoadjuvant_phase2_duration}</p>
+                        )}
+                      </div>
+                    )}
+                    {td.dosing_info.adjuvant && (
+                      <div className="border-l-2 border-accent/50 pl-3">
+                        <h4 className="font-medium mb-1">Adjuvant fase</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.adjuvant}</p>
+                        {td.dosing_info.adjuvant_duration && (
+                          <p className="text-xs text-muted-foreground mt-1">Duur: {td.dosing_info.adjuvant_duration}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Alternative dosing */}
+                    {td.dosing_info.alternative && (
+                      <div>
+                        <h4 className="font-medium mb-1">Alternatief schema</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.alternative}</p>
+                      </div>
+                    )}
+
+                    {/* Classic variant (e.g. dd-MVAC) */}
+                    {td.dosing_info.classic_mvac && (
+                      <div>
+                        <h4 className="font-medium mb-1">Klassiek schema</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.classic_mvac}</p>
+                      </div>
+                    )}
+
+                    {/* Dose adjustments */}
+                    {td.dosing_info.dose_adjustments && (
                       <div>
                         <h4 className="font-medium mb-2">{t('drugDetail.doseAdjustments')}</h4>
                         <div className="space-y-2">
-                          {td.dosing_info.dose_adjustments.map((adj, i) => (
-                            <div key={i} className="text-sm">
-                              <span className="font-medium">{adj.condition}:</span>{' '}
-                              <span className="text-muted-foreground">{adj.adjustment}</span>
-                            </div>
-                          ))}
+                          {Array.isArray(td.dosing_info.dose_adjustments) ? (
+                            td.dosing_info.dose_adjustments.map((adj, i) => (
+                              <div key={i} className="text-sm">
+                                <span className="font-medium">{adj.condition}:</span>{' '}
+                                <span className="text-muted-foreground">{adj.adjustment}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">{String(td.dosing_info.dose_adjustments)}</p>
+                          )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Adjustments (alternate key name) */}
+                    {td.dosing_info.adjustments && !td.dosing_info.dose_adjustments && (
+                      <div>
+                        <h4 className="font-medium mb-1">{t('drugDetail.doseAdjustments')}</h4>
+                        <p className="text-muted-foreground">{td.dosing_info.adjustments}</p>
+                      </div>
+                    )}
+
+                    {/* Notes */}
+                    {td.dosing_info.notes && (
+                      <div className="bg-muted/50 rounded-md p-3">
+                        <h4 className="font-medium mb-1 text-sm">Opmerking</h4>
+                        <p className="text-sm text-muted-foreground">{td.dosing_info.notes}</p>
                       </div>
                     )}
                   </>
@@ -1059,22 +1275,41 @@ export default function DrugDetailPage() {
                     <div className="space-y-2 sm:space-y-3">
                       <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.physician')}</Label>
                       {(() => {
-                        // Group doctors by specialization
+                        // Put the pre-selected (dedicated) physician first, then group rest by discipline
+                        const dedicatedDoc = selectedPhysician
+                          ? hospitalDoctors.find(d => d.name === selectedPhysician)
+                          : null;
+                        const otherDocs = hospitalDoctors.filter(d => d.name !== selectedPhysician);
+
+                        // Group others by discipline
                         const groups = new Map<string, HospitalDoctor[]>();
-                        hospitalDoctors.forEach(doc => {
-                          const key = doc.specialization || t('patientFolder.general');
+                        otherDocs.forEach(doc => {
+                          const rawKey = doc.discipline || doc.specialization || t('patientFolder.general');
+                          const key = rawKey.charAt(0).toUpperCase() + rawKey.slice(1);
                           if (!groups.has(key)) groups.set(key, []);
                           groups.get(key)!.push(doc);
                         });
+
+                        // Sort groups alphabetically
+                        const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+
                         return (
-                          <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                          <Select value={selectedPhysician} onValueChange={(val) => {
+                            setSelectedPhysician(val);
+                          }}>
                             <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                               <SelectValue placeholder={t('patientFolder.select')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {Array.from(groups.entries()).map(([spec, docs]) => (
-                                <SelectGroup key={spec}>
-                                  <SelectLabel className="text-[11px]">{spec}</SelectLabel>
+                              {dedicatedDoc && (
+                                <SelectGroup>
+                                  <SelectLabel className="text-[11px]">⭐ Vaste arts</SelectLabel>
+                                  <SelectItem value={dedicatedDoc.name}>{dedicatedDoc.name}</SelectItem>
+                                </SelectGroup>
+                              )}
+                              {sortedGroups.map(([discipline, docs]) => (
+                                <SelectGroup key={discipline}>
+                                  <SelectLabel className="text-[11px] font-bold">{discipline}</SelectLabel>
                                   {docs.map(doc => (
                                     <SelectItem key={doc.id} value={doc.name}>{doc.name}</SelectItem>
                                   ))}
@@ -1096,6 +1331,9 @@ export default function DrugDetailPage() {
                           } else {
                             setIsNurseCustom(false);
                             setNurseSelection(val);
+                            // Auto-fill phone number from selected nurse
+                            const selectedNurse = hospitalNurses.find(n => n.name === val);
+                            setNursePhone(selectedNurse?.phone_number || '');
                           }
                         }}
                         className="flex flex-wrap gap-x-4 gap-y-1 sm:flex-col sm:gap-2"
@@ -1120,6 +1358,46 @@ export default function DrugDetailPage() {
                           autoFocus
                         />
                       )}
+                      <div className="space-y-1.5 mt-2">
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.phoneOnFolder')}</Label>
+                        <div className="flex gap-1.5 sm:gap-2">
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'nurse' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('nurse')}
+                            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+                            size="sm"
+                          >
+                            {t('patientFolder.phoneNursing')} {nursePhone ? `(${nursePhone})` : ''}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={phoneMode === 'custom' ? 'default' : 'outline'}
+                            onClick={() => setPhoneMode('custom')}
+                            className="flex-1 h-8 sm:h-9 text-xs sm:text-sm"
+                            size="sm"
+                          >
+                            {t('patientFolder.phoneOther')}
+                          </Button>
+                        </div>
+                        {phoneMode === 'nurse' && (
+                          <Input
+                            placeholder={t('patientFolder.phoneNursePlaceholder')}
+                            value={nursePhone}
+                            onChange={(e) => { setNursePhone(e.target.value); }}
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
+                          />
+                        )}
+                        {phoneMode === 'custom' && (
+                          <Input
+                            placeholder={t('patientFolder.phoneCustomPlaceholder')}
+                            value={customPhone}
+                            onChange={(e) => setCustomPhone(e.target.value)}
+                            className="h-8 sm:h-9 text-xs sm:text-sm"
+                            autoFocus
+                          />
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -1153,7 +1431,7 @@ export default function DrugDetailPage() {
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs sm:text-sm font-medium">Ondersteunende medicatie</Label>
+                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.supportiveMedication')}</Label>
                         <Switch
                           checked={includePremedicatie}
                           onCheckedChange={setIncludePremedicatie}
@@ -1192,26 +1470,17 @@ export default function DrugDetailPage() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 border-t pt-3 sm:pt-4">
+                    <div className="border-t pt-3 sm:pt-4">
                     <div className="space-y-1.5 sm:space-y-3">
                         <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.language')}</Label>
                         <div className="flex gap-1.5 sm:gap-2">
                           <Button type="button" variant={selectedLanguage === 'nl' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('nl')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">NL</Button>
                           <Button type="button" variant={selectedLanguage === 'fr' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('fr')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">FR</Button>
+                          <Button type="button" variant={selectedLanguage === 'en' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('en')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">EN</Button>
                           {isDACH && (
                             <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
                           )}
                         </div>
-                      </div>
-
-                      <div className="space-y-1.5 sm:space-y-3">
-                        <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.phone')}</Label>
-                        <Input
-                          placeholder={t('patientFolder.phonePlaceholder')}
-                          value={customPhone}
-                          onChange={(e) => setCustomPhone(e.target.value)}
-                          className="h-7 sm:h-9 text-xs sm:text-sm"
-                        />
                       </div>
                     </div>
 
@@ -1306,20 +1575,20 @@ export default function DrugDetailPage() {
       <Dialog open={showAddPremedicatie} onOpenChange={setShowAddPremedicatie}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Ondersteunende medicatie toevoegen</DialogTitle>
+            <DialogTitle>{t('patientFolder.addSupportiveMed')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
-              <Label className="text-sm">Naam *</Label>
+              <Label className="text-sm">{t('patientFolder.medName')} *</Label>
               <Input
                 value={newPremName}
                 onChange={(e) => setNewPremName(e.target.value)}
-                placeholder="bv. Dexamethason 10mg"
+                placeholder={t('patientFolder.medNamePlaceholder')}
                 className="h-8 text-sm"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm">Toedieningsweg *</Label>
+              <Label className="text-sm">{t('patientFolder.medRoute')} *</Label>
               <RadioGroup value={newPremRoute} onValueChange={(v) => setNewPremRoute(v as 'PO' | 'SC')} className="flex gap-4">
                 <div className="flex items-center gap-1.5">
                   <RadioGroupItem value="PO" id="prem-po" />
@@ -1332,21 +1601,45 @@ export default function DrugDetailPage() {
               </RadioGroup>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm">Wanneer *</Label>
+              <Label className="text-sm">{t('patientFolder.medTiming')} *</Label>
               <Input
                 value={newPremTiming}
                 onChange={(e) => setNewPremTiming(e.target.value)}
-                placeholder="bv. 12u voor therapie"
+                placeholder={t('patientFolder.medTimingPlaceholder')}
                 className="h-8 text-sm"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>Annuleren</Button>
-            <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>Toevoegen</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowAddPremedicatie(false)}>{t('patientFolder.cancel')}</Button>
+            <Button size="sm" onClick={addCustomPremedicatie} disabled={!newPremName.trim() || !newPremTiming.trim()}>{t('patientFolder.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Phone number warning dialog */}
+      <Dialog open={showPhoneWarning} onOpenChange={setShowPhoneWarning}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              {t('patientFolder.phoneMissingTitle')}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t('patientFolder.phoneMissingDesc')}
+          </p>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setShowPhoneWarning(false)}>
+              {t('patientFolder.phoneGoBack')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={handleConfirmStaffForce}>
+              {t('patientFolder.phoneContinue')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
+      <DemoRestrictionDialog open={showDemoPopup} onOpenChange={setShowDemoPopup} />
     </Layout>
   );
 }

@@ -27,13 +27,28 @@ export interface Drug {
 
 export interface DosingInfo {
   standard_dose?: string;
+  standard?: string;
   dose_adjustments?: {
     condition: string;
     adjustment: string;
-  }[];
+  }[] | string;
+  adjustments?: string;
   max_dose?: string;
   frequency?: string;
   duration?: string;
+  cycles?: string;
+  induction?: string;
+  maintenance?: string;
+  neoadjuvant_phase1?: string;
+  neoadjuvant_phase1_duration?: string;
+  neoadjuvant_phase2?: string;
+  neoadjuvant_phase2_duration?: string;
+  adjuvant?: string;
+  adjuvant_duration?: string;
+  alternative?: string;
+  classic_mvac?: string;
+  notes?: string;
+  [key: string]: string | { condition: string; adjustment: string }[] | undefined;
 }
 
 export interface SideEffects {
@@ -56,7 +71,7 @@ export interface DrugFilters {
 export const DRUG_CLASSES = [
   'Immunotherapie (IO/ICI)',
   'PARPi',
-  'ARPI',
+  'ARTA',
   'Chemotherapie',
   'TKI',
   'ADC',
@@ -79,8 +94,8 @@ export const COMBINATION_SUBTYPES = [
   'IO + Chemotherapie',
   'IO + TKI', 
   'IO + IO',
-  'ARPI + Chemotherapie',
-  'ARPI + IO'
+  'ARTA + Chemotherapie',
+  'ARTA + IO'
 ] as const;
 
 export const ADMINISTRATION_ROUTES = [
@@ -144,7 +159,7 @@ export const DRUG_CATEGORIES = {
       { key: 'testis', label: 'Testiskanker', description: 'Seminoom, non-seminoom' },
       { key: 'penile', label: 'Peniskanker', description: 'Plaveiselcelcarcinoom' }
     ],
-    drugClasses: ['ARPI', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Hormonale Therapie', 'Antiresorptiva']
+    drugClasses: ['ARTA', 'Anti-hormonale therapie', 'Chemotherapie', 'IO/ICI', 'TKI', 'PARPi', 'Radioligand Therapie', 'Antiresorptiva']
   },
   gynecology: {
     name: 'Gynaecologie',

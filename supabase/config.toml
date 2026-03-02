@@ -41,3 +41,15 @@ verify_jwt = false
 
 [functions.analyze-pdf-drug]
 verify_jwt = false
+
+[functions.reset-password-request]
+verify_jwt = false
+
+[functions.enrich-drug-info]
+verify_jwt = false
+
+[functions.public-api]
+verify_jwt = false
+
+[functions.schema-assistant]
+verify_jwt = false

@@ -28,8 +28,12 @@ import { useTranslatedStrings } from '@/hooks/useTranslatedStrings';
 
 interface SortableDrugListProps {
   combinationDrugs: Drug[];
+  hormonalDrugs?: Drug[];
+  cdk46Drugs?: Drug[];
+  artaDrugs?: Drug[];
+  lhrhDrugs?: Drug[];
   individualDrugs: Drug[];
-  viewMode: 'all' | 'combinations' | 'individual';
+  viewMode: 'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual';
   isFavorite: (id: string) => boolean;
   isMostUsed: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
@@ -41,6 +45,10 @@ interface SortableDrugListProps {
 
 export function SortableDrugList({
   combinationDrugs,
+  hormonalDrugs = [],
+  cdk46Drugs = [],
+  artaDrugs = [],
+  lhrhDrugs = [],
   individualDrugs,
   viewMode,
   isFavorite,
@@ -54,12 +62,13 @@ export function SortableDrugList({
   const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [localCombinations, setLocalCombinations] = useState<Drug[]>(combinationDrugs);
+  const [localArta, setLocalArta] = useState<Drug[]>(artaDrugs);
   const [localIndividuals, setLocalIndividuals] = useState<Drug[]>(individualDrugs);
   const queryClient = useQueryClient();
   const { saveOrder, hasCustomOrder } = useUserDrugOrder();
 
   // Collect all translatable strings from drug cards
-  const allDrugs = [...combinationDrugs, ...individualDrugs];
+  const allDrugs = [...combinationDrugs, ...hormonalDrugs, ...cdk46Drugs, ...artaDrugs, ...lhrhDrugs, ...individualDrugs];
   const allTerms = allDrugs.flatMap(drug => [
     ...(drug.approved_indications || []),
     ...(drug.disease_areas || []),
@@ -69,8 +78,9 @@ export function SortableDrugList({
   const { translate: tCard } = useTranslatedStrings(allTerms);
 
   // Sync local state when props change (but not during edit mode)
-  if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs)) {
+  if (!isEditMode && (localCombinations !== combinationDrugs || localIndividuals !== individualDrugs || localArta !== artaDrugs)) {
     setLocalCombinations(combinationDrugs);
+    setLocalArta(artaDrugs);
     setLocalIndividuals(individualDrugs);
   }
 
@@ -85,12 +95,18 @@ export function SortableDrugList({
     })
   );
 
-  const handleDragEnd = (event: DragEndEvent, type: 'combinations' | 'individuals') => {
+  const handleDragEnd = (event: DragEndEvent, type: 'combinations' | 'individuals' | 'arta') => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
       if (type === 'combinations') {
         setLocalCombinations((items) => {
+          const oldIndex = items.findIndex((item) => item.id === active.id);
+          const newIndex = items.findIndex((item) => item.id === over.id);
+          return arrayMove(items, oldIndex, newIndex);
+        });
+      } else if (type === 'arta') {
+        setLocalArta((items) => {
           const oldIndex = items.findIndex((item) => item.id === active.id);
           const newIndex = items.findIndex((item) => item.id === over.id);
           return arrayMove(items, oldIndex, newIndex);
@@ -115,6 +131,10 @@ export function SortableDrugList({
         localCombinations.forEach((drug, index) => {
           updates.push({ id: drug.id, display_order: index });
         });
+
+        localArta.forEach((drug, index) => {
+          updates.push({ id: drug.id, display_order: 500 + index });
+        });
         
         localIndividuals.forEach((drug, index) => {
           updates.push({ id: drug.id, display_order: 1000 + index });
@@ -136,6 +156,10 @@ export function SortableDrugList({
         
         localCombinations.forEach((drug, index) => {
           orders.push({ drug_id: drug.id, display_order: index });
+        });
+
+        localArta.forEach((drug, index) => {
+          orders.push({ drug_id: drug.id, display_order: 500 + index });
         });
         
         localIndividuals.forEach((drug, index) => {
@@ -177,6 +201,10 @@ export function SortableDrugList({
   };
 
   const showCombinations = viewMode === 'all' || viewMode === 'combinations';
+  const showHormonal = viewMode === 'all' || viewMode === 'hormonal';
+  const showCdk46 = viewMode === 'all' || viewMode === 'cdk46';
+  const showArta = viewMode === 'all' || viewMode === 'arta';
+  const showLhrh = viewMode === 'all' || viewMode === 'lhrh';
   const showIndividuals = viewMode === 'all' || viewMode === 'individual';
 
   return (
@@ -234,11 +262,22 @@ export function SortableDrugList({
       {localCombinations.length > 0 && showCombinations && (
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Layers className="h-5 w-5 text-amber-600" />
+            <Layers className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">{t('drugs.combinations')}</h2>
-            <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+            <Badge variant="secondary">
               {localCombinations.length}
             </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <DndContext
             sensors={sensors}
@@ -268,11 +307,211 @@ export function SortableDrugList({
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>
             </SortableContext>
           </DndContext>
+        </div>
+      )}
+
+      {/* Hormonal Drugs Section */}
+      {hormonalDrugs.length > 0 && showHormonal && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Antihormonaal</h2>
+            <Badge variant="secondary">
+              {hormonalDrugs.length}
+            </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {hormonalDrugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CDK4/6 Drugs Section */}
+      {cdk46Drugs.length > 0 && showCdk46 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">CDK4/6</h2>
+            <Badge variant="secondary">
+              {cdk46Drugs.length}
+            </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cdk46Drugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ARTA Drugs Section */}
+      {localArta.length > 0 && showArta && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">ARTA</h2>
+            <Badge variant="secondary">
+              {localArta.length}
+            </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
+          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(e) => handleDragEnd(e, 'arta')}
+          >
+            <SortableContext
+              items={localArta.map((d) => d.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {localArta.map((drug) => (
+                  <SortableDrugCard
+                    key={drug.id}
+                    drug={drug}
+                    isFavorite={isFavorite(drug.id)}
+                    isMostUsed={isMostUsed(drug.id)}
+                    onToggleFavorite={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleFavorite(drug.id);
+                    }}
+                    onToggleMostUsed={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMostUsed(drug.id);
+                    }}
+                    isEditMode={isEditMode}
+                    translateTerm={tCard}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
+
+      {/* LHRH Drugs Section */}
+      {lhrhDrugs.length > 0 && showLhrh && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Pill className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">LHRH</h2>
+            <Badge variant="secondary">
+              {lhrhDrugs.length}
+            </Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {lhrhDrugs.map((drug) => (
+              <SortableDrugCard
+                key={drug.id}
+                drug={drug}
+                isFavorite={isFavorite(drug.id)}
+                isMostUsed={isMostUsed(drug.id)}
+                onToggleFavorite={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(drug.id);
+                }}
+                onToggleMostUsed={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleMostUsed(drug.id);
+                }}
+                isEditMode={isEditMode}
+                translateTerm={tCard}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -283,6 +522,17 @@ export function SortableDrugList({
             <Pill className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">{t('drugs.individualDrugs')}</h2>
             <Badge variant="secondary">{localIndividuals.length}</Badge>
+            {!isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditModeChange(true)}
+                className="gap-1.5 ml-auto"
+              >
+                <GripVertical className="h-4 w-4" />
+                {t('drugs.adjustOrder')}
+              </Button>
+            )}
           </div>
           <DndContext
             sensors={sensors}
@@ -312,6 +562,7 @@ export function SortableDrugList({
                     }}
                     isEditMode={isEditMode}
                     translateTerm={tCard}
+                    isAdmin={isAdmin}
                   />
                 ))}
               </div>

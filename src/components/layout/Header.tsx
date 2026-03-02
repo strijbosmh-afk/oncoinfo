@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages, BookOpen } from 'lucide-react';
+import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages, BookOpen, Building2, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useTranslation } from 'react-i18next';
@@ -58,7 +58,7 @@ function RightsTooltipContent({ displayName, roleBadge, isAdmin, isApotheker, us
 }
 
 export function Header() {
-  const { user, profile, permissions, isAdmin, isApotheker, isSuperAdmin, signOut, loading } = useAuth();
+  const { user, profile, permissions, isAdmin, isApotheker, isSuperAdmin, userHospitals, switchHospital, signOut, loading } = useAuth();
   const { hospital } = useHospital();
   const { t, i18n } = useTranslation();
 
@@ -86,10 +86,43 @@ export function Header() {
             )}
             <span className="text-base font-bold text-primary sm:text-2xl">
               OncoInfo
-              {hospital && <span className="hidden xs:inline"> – {hospital.name}</span>}
-              {!hospital && <span className="hidden xs:inline"> – RZ Tienen</span>}
             </span>
           </Link>
+          {/* Hospital switcher — show if user has multiple hospitals */}
+          {user && userHospitals.length > 1 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1 text-sm font-medium text-muted-foreground hover:text-foreground h-8 px-2">
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span className="hidden xs:inline truncate max-w-[120px]">{hospital?.name}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-popover">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Wissel ziekenhuis</div>
+                <DropdownMenuSeparator />
+                {userHospitals.map((h) => (
+                  <DropdownMenuItem
+                    key={h.id}
+                    onClick={() => { if (h.id !== profile?.hospital_id) switchHospital(h.id); }}
+                    className={`flex items-center gap-2 cursor-pointer ${h.id === profile?.hospital_id ? 'bg-accent' : ''}`}
+                  >
+                    {h.logo_url ? (
+                      <img src={h.logo_url} alt={h.name} className="h-5 w-5 object-contain rounded" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="truncate">{h.name}</span>
+                    {h.id === profile?.hospital_id && (
+                      <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0">actief</Badge>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : hospital ? (
+            <span className="hidden xs:inline text-sm text-muted-foreground">– {hospital.name}</span>
+          ) : null}
         </div>
 
         {/* Center: user name + role — absolute for true center */}
@@ -140,7 +173,7 @@ export function Header() {
                   {t('nav.manual')}
                 </Link>
               </Button>
-              {(isAdmin || isApotheker) && (
+              {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
                 <Button variant="outline" size="sm" asChild className="hidden md:inline-flex gap-1.5">
                   <Link to="/admin">
                     <Shield className="h-4 w-4" />
@@ -158,7 +191,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9">
                   <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {(isAdmin || isApotheker) && (
+                  {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
                     <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-primary" />
                   )}
                 </Button>
@@ -182,24 +215,17 @@ export function Header() {
                     />
                   </div>
                 </div>
-                <DropdownMenuSeparator />
-                {(isAdmin || isApotheker) && (
+                {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
                   <>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer">
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className="flex items-center gap-2 cursor-pointer md:hidden">
+                      <Link to="/admin">
                         <Shield className="h-4 w-4" />
                         {t('nav.admin')}
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem asChild>
-                  <Link to="/handleiding" className="flex items-center gap-2 cursor-pointer">
-                    <BookOpen className="h-4 w-4" />
-                    {t('nav.manual')}
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {isSuperAdmin && (
                   <>

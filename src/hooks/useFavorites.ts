@@ -1,70 +1,85 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+async function fetchFavoritesFromDB(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('user_favorites' as any)
+    .select('drug_id')
+    .eq('user_id', userId);
+  return (data as any[] || []).map((d: any) => d.drug_id);
+}
+
 export function useFavorites() {
   const { user } = useAuth();
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const queryClient = useQueryClient();
 
-  const fetchFavorites = useCallback(async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from('user_favorites' as any)
-      .select('drug_id')
-      .eq('user_id', user.id);
-    setFavorites((data as any[] || []).map((d: any) => d.drug_id));
-  }, [user?.id]);
+  const { data: favorites = [] } = useQuery({
+    queryKey: ['favorites', user?.id],
+    queryFn: () => fetchFavoritesFromDB(user!.id),
+    enabled: !!user?.id,
+  });
 
-  useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
+  const addFavorite = useMutation({
+    mutationFn: async (drugId: string) => {
+      await supabase
+        .from('user_favorites' as any)
+        .upsert({ user_id: user!.id, drug_id: drugId } as any, { onConflict: 'user_id,drug_id' });
+    },
+    onMutate: async (drugId) => {
+      await queryClient.cancelQueries({ queryKey: ['favorites', user?.id] });
+      const previous = queryClient.getQueryData<string[]>(['favorites', user?.id]) ?? [];
+      queryClient.setQueryData(['favorites', user?.id], (old: string[] = []) =>
+        old.includes(drugId) ? old : [...old, drugId]
+      );
+      return { previous };
+    },
+    onError: (_err, _drugId, context) => {
+      queryClient.setQueryData(['favorites', user?.id], context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
+    },
+  });
 
-  const addFavorite = useCallback(async (drugId: string) => {
-    if (!user?.id) return;
-    // Optimistic update
-    setFavorites(prev => prev.includes(drugId) ? prev : [...prev, drugId]);
-    await supabase
-      .from('user_favorites' as any)
-      .upsert({ user_id: user.id, drug_id: drugId } as any, { onConflict: 'user_id,drug_id' });
-    // Re-sync from DB
-    await fetchFavorites();
-  }, [user?.id, fetchFavorites]);
+  const removeFavorite = useMutation({
+    mutationFn: async (drugId: string) => {
+      await supabase
+        .from('user_favorites' as any)
+        .delete()
+        .eq('user_id', user!.id)
+        .eq('drug_id', drugId);
+    },
+    onMutate: async (drugId) => {
+      await queryClient.cancelQueries({ queryKey: ['favorites', user?.id] });
+      const previous = queryClient.getQueryData<string[]>(['favorites', user?.id]) ?? [];
+      queryClient.setQueryData(['favorites', user?.id], (old: string[] = []) =>
+        old.filter(id => id !== drugId)
+      );
+      return { previous };
+    },
+    onError: (_err, _drugId, context) => {
+      queryClient.setQueryData(['favorites', user?.id], context?.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] });
+    },
+  });
 
-  const removeFavorite = useCallback(async (drugId: string) => {
-    if (!user?.id) return;
-    setFavorites(prev => prev.filter(id => id !== drugId));
-    await supabase
-      .from('user_favorites' as any)
-      .delete()
-      .eq('user_id', user.id)
-      .eq('drug_id', drugId);
-    await fetchFavorites();
-  }, [user?.id, fetchFavorites]);
-
-  const toggleFavorite = useCallback(async (drugId: string) => {
-    // Always check current DB state to avoid stale toggling across devices
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from('user_favorites' as any)
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('drug_id', drugId);
-    
-    if ((data as any[] || []).length > 0) {
-      await removeFavorite(drugId);
+  const toggleFavorite = (drugId: string) => {
+    if (favorites.includes(drugId)) {
+      removeFavorite.mutate(drugId);
     } else {
-      await addFavorite(drugId);
+      addFavorite.mutate(drugId);
     }
-  }, [user?.id, addFavorite, removeFavorite]);
+  };
 
-  const isFavorite = useCallback((drugId: string) => {
-    return favorites.includes(drugId);
-  }, [favorites]);
+  const isFavorite = (drugId: string) => favorites.includes(drugId);
 
   return {
     favorites,
-    addFavorite,
-    removeFavorite,
+    addFavorite: (drugId: string) => addFavorite.mutate(drugId),
+    removeFavorite: (drugId: string) => removeFavorite.mutate(drugId),
     toggleFavorite,
     isFavorite,
   };

@@ -7,11 +7,12 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown
+  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 
 function Section({ icon: Icon, title, children, defaultOpen = false }: { 
   icon: React.ElementType; 
@@ -70,6 +71,107 @@ function Html({ html }: { html: string }) {
 
 export default function UserManualPage() {
   const { t } = useTranslation();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!contentRef.current || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      // Open all collapsible sections before capture
+      const triggers = contentRef.current.querySelectorAll('[data-state="closed"]');
+      triggers.forEach((el) => {
+        if (el instanceof HTMLElement) el.click();
+      });
+      // Wait for animations to complete
+      await new Promise((r) => setTimeout(r, 600));
+
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const usableW = pdfW - margin * 2;
+      const usableH = pdfH - margin * 2;
+
+      // Capture each section (Card) separately for clean page breaks
+      const sections = contentRef.current.querySelectorAll(':scope > *');
+      let isFirstPage = true;
+      let currentY = margin;
+
+      for (const section of Array.from(sections)) {
+        const el = section as HTMLElement;
+        if (el.offsetHeight === 0) continue;
+
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 900,
+        });
+
+        const imgW = usableW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        const imgData = canvas.toDataURL('image/png');
+
+        // If this section fits on the current page, add it there
+        if (!isFirstPage && currentY + imgH > pdfH - margin) {
+          // Section doesn't fit — start a new page
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        if (isFirstPage) {
+          isFirstPage = false;
+        }
+
+        // If section is taller than one page, split it across pages
+        if (imgH > usableH) {
+          let srcY = 0;
+          const totalSrcH = canvas.height;
+          const pxPerMm = canvas.height / imgH;
+
+          while (srcY < totalSrcH) {
+            if (currentY !== margin) {
+              pdf.addPage();
+              currentY = margin;
+            }
+
+            const remainingPageMm = usableH;
+            const sliceHPx = Math.min(remainingPageMm * pxPerMm, totalSrcH - srcY);
+            const sliceHMm = sliceHPx / pxPerMm;
+
+            // Create a sliced canvas
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = sliceHPx;
+            const ctx = sliceCanvas.getContext('2d')!;
+            ctx.drawImage(canvas, 0, srcY, canvas.width, sliceHPx, 0, 0, canvas.width, sliceHPx);
+
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            pdf.addImage(sliceData, 'PNG', margin, currentY, imgW, sliceHMm);
+            currentY += sliceHMm;
+            srcY += sliceHPx;
+          }
+        } else {
+          pdf.addImage(imgData, 'PNG', margin, currentY, imgW, imgH);
+          currentY += imgH + 3; // small gap between sections
+        }
+      }
+
+      pdf.save('OncoInfo-Handleiding.pdf');
+      toast.success(t('manual.pdfSuccess', 'PDF gedownload'));
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      toast.error(t('manual.pdfError', 'PDF generatie mislukt'));
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [isDownloading, t]);
 
   return (
     <Layout>
@@ -81,12 +183,28 @@ export default function UserManualPage() {
           </Button>
         </Link>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{t('manual.title')}</h1>
-          <p className="text-muted-foreground text-lg">{t('manual.subtitle')}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{t('manual.title')}</h1>
+            <p className="text-muted-foreground text-lg">{t('manual.subtitle')}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 shrink-0"
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {t('manual.downloadPdf', 'Download PDF')}
+          </Button>
         </div>
 
-        <div className="space-y-4">
+        <div ref={contentRef} className="space-y-4">
 
           {/* 1. LOGIN */}
           <Section icon={LogIn} title={t('manual.s1Title')} defaultOpen={true}>
@@ -103,6 +221,11 @@ export default function UserManualPage() {
             <div className="bg-muted/50 rounded-lg p-3 mt-2">
               <p className="text-sm text-muted-foreground">
                 🔑 <strong>{t('manual.firstLogin')}</strong> {t('manual.s1FirstLogin')}
+              </p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                🔒 {t('manual.s1ForgotPassword')}
               </p>
             </div>
           </Section>
@@ -312,6 +435,18 @@ export default function UserManualPage() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">{t('manual.s6RoleVisible')}</p>
+
+            <h4 className="font-semibold mt-6 mb-2 flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              {t('manual.s6PermissionsTitle')}
+            </h4>
+            <p className="text-sm mb-3">{t('manual.s6PermissionsIntro')}</p>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li><Html html={t('manual.s6PermAdd')} /></li>
+              <li><Html html={t('manual.s6PermModify')} /></li>
+              <li><Html html={t('manual.s6PermDelete')} /></li>
+              <li><Html html={t('manual.s6PermPhysician')} /></li>
+            </ul>
           </Section>
 
           {/* 7. ADMIN */}
@@ -335,6 +470,48 @@ export default function UserManualPage() {
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s7AddTitle')}</h4>
             <p>{t('manual.s7AddDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AddPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              {t('manual.s7AITitle')}
+            </h4>
+            <p>{t('manual.s7AIDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AIPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t('manual.s7AIEnrichTitle')}
+            </h4>
+            <p>{t('manual.s7AIEnrichDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7AIEnrichPermission')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Tags className="h-4 w-4" />
+              {t('manual.s7FilterTagsTitle')}
+            </h4>
+            <p>{t('manual.s7FilterTagsDesc')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7FilterTagsPermission')}
+              </p>
+            </div>
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s7AutoTitle')}</h4>
             <p>{t('manual.s7AutoDesc')}</p>
@@ -390,6 +567,64 @@ export default function UserManualPage() {
                 <h4 className="font-semibold mb-1">{t('manual.s10Q5')}</h4>
                 <p className="text-sm text-muted-foreground">{t('manual.s10A5')}</p>
               </div>
+            </div>
+          </Section>
+
+          {/* 11. API DOCUMENTATION */}
+          <Section icon={Globe} title={t('manual.s11Title')}>
+            <p>{t('manual.s11Intro')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              {t('manual.s11AuthTitle')}
+            </h4>
+            <p className="text-sm">{t('manual.s11AuthDesc')}</p>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2 font-mono text-xs">
+              X-API-Key: YOUR_API_KEY
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11EndpointsTitle')}</h4>
+            <div className="space-y-3 mt-2">
+              {[
+                { method: 'GET', path: '/public-api/drugs', desc: t('manual.s11Ep1') },
+                { method: 'GET', path: '/public-api/drugs/:id', desc: t('manual.s11Ep2') },
+                { method: 'GET', path: '/public-api/drugs/:id/leaflet', desc: t('manual.s11Ep3') },
+                { method: 'GET', path: '/public-api/search?q=...', desc: t('manual.s11Ep4') },
+              ].map((ep) => (
+                <div key={ep.path} className="border rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="font-mono text-xs bg-primary/10 text-primary border-primary/20">
+                      {ep.method}
+                    </Badge>
+                    <code className="text-xs font-mono">{ep.path}</code>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{ep.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11ParamsTitle')}</h4>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li><Html html={t('manual.s11Param1')} /></li>
+              <li><Html html={t('manual.s11Param2')} /></li>
+              <li><Html html={t('manual.s11Param3')} /></li>
+              <li><Html html={t('manual.s11Param4')} /></li>
+              <li><Html html={t('manual.s11Param5')} /></li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11ExampleTitle')}</h4>
+            <div className="bg-muted/50 rounded-lg p-3 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">
+{`curl -H "X-API-Key: YOUR_API_KEY" \\
+  "https://ynuggqeumqzwwuffrnnv.supabase.co/functions/v1/public-api/drugs?q=pembrolizumab"`}
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s11RateLimitTitle')}</h4>
+            <p className="text-sm">{t('manual.s11RateLimitDesc')}</p>
+
+            <div className="bg-muted/50 rounded-lg p-3 mt-3">
+              <p className="text-sm text-muted-foreground">
+                🤖 <strong>{t('manual.tip')}</strong> {t('manual.s11Tip')}
+              </p>
             </div>
           </Section>
 

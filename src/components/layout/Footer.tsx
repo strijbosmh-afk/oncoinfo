@@ -29,7 +29,7 @@ export function Footer() {
               OI
             </div>
             <span className="text-sm text-muted-foreground">
-              OncoInfo © {new Date().getFullYear()}
+              © {new Date().getFullYear()} Michiel Strijbos
             </span>
           </div>
           

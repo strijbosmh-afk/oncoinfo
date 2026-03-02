@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://www.oncoinfo.be',
    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
@@ -20,14 +20,15 @@ async function humanizeSideEffects(
   const lang = langMap[language] || 'Dutch';
 
   const prompt = `You are writing patient-friendly information about the medication "${drugName}" in ${lang}.
+IMPORTANT: Keep ALL text very concise to fit on a single A4 page alongside other content.
 
 Given these side effects, do THREE things:
 
-1. "common_friendly": Rewrite the common side effects as a short, reassuring paragraph in ${lang}. Don't just list them — describe what the patient might experience in everyday language. Example style: "U kunt zich moe voelen of last krijgen van misselijkheid. Sommige patiënten merken dat..." Keep it warm and human.
+1. "common_friendly": Rewrite the common side effects as ONE short paragraph (max 3 sentences, max 60 words) in ${lang}. Don't just list them — describe what the patient might experience in everyday language. Be warm but brief.
 
-2. "serious_friendly": Rewrite the serious side effects as a clear warning paragraph in ${lang}. Be direct but not alarming. Example: "In zeldzame gevallen kunnen ernstigere reacties optreden, zoals..."
+2. "serious_friendly": Rewrite the serious side effects as ONE short paragraph (max 2-3 sentences, max 50 words) in ${lang}. Be direct but not alarming.
 
-3. "self_care": Write 4-6 practical self-care tips in ${lang} that patients can do themselves to manage side effects. Format as bullet points starting with "•". Be specific and actionable. Examples: "• Drink minstens 1,5 liter water per dag om uitdroging te voorkomen", "• Eet kleine, frequente maaltijden als u last heeft van misselijkheid"
+3. "self_care": Write exactly 4 practical self-care tips in ${lang}. Format as bullet points starting with "•". Each tip max 15 words. Be specific and actionable.
 
 Common side effects:
 ${commonText || 'None provided'}
@@ -247,7 +248,7 @@ Deno.serve(async (req) => {
       }
     }
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact', premedicatie = [] } = await req.json();
+    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact', font_size = 0, premedicatie = [] } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -444,7 +445,7 @@ Deno.serve(async (req) => {
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
       tipsText, monitoringText, phone_number, selfCareTips,
-      hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie
+      hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie, font_size
     );
 
     return new Response(
@@ -486,8 +487,18 @@ function generatePatientInfoHtml(
   doctorsList: string[] = [],
   folderMode: string = 'compact',
   premedicatieItems: string[] = [],
+  customFontSize: number = 0,
 ): string {
   const isCompact = folderMode === 'compact';
+  // Use custom font size if provided, otherwise fall back to compact/uitgebreid defaults
+  const fontSize = customFontSize > 0 ? customFontSize : (isCompact ? 11 : 14);
+  const h2Size = fontSize + 2;
+  const smallSize = fontSize - 1;
+  const tinySize = fontSize - 3;
+  const contactSize = fontSize - 1;
+  const footerSize = fontSize - 3;
+  const disclaimerTitleSize = fontSize - 4;
+  const disclaimerTextSize = fontSize - 5;
   const allLabels: Record<string, any> = {
     nl: {
       title: 'Informatie voor patiënten',
@@ -619,13 +630,13 @@ function generatePatientInfoHtml(
       '<div class="header-title"><h1>' + labels.premedicatie + '</h1>' +
       '<p class="subtitle">' + drug.generic_name + brandNamesText + '</p></div></div>' +
       '<div style="margin-top: 24px;">' +
-      '<h2 style="color: ' + hospitalColor + '; font-size: 18px; margin-bottom: 20px; padding-bottom: 6px; border-bottom: 2px solid ' + hospitalColor + ';">' + schemaTitle + '</h2>' +
+      '<h2 style="color: ' + hospitalColor + '; font-size: ' + (fontSize + 4) + 'px; margin-bottom: 20px; padding-bottom: 6px; border-bottom: 2px solid ' + hospitalColor + ';">' + schemaTitle + '</h2>' +
       '<div class="timeline"><div class="timeline-line"></div>' +
       timelineItemsHtml +
       '</div></div>' +
       '<div style="margin-top: 20px; padding: 6px 10px; border: 1.5px solid #cc0000; border-radius: 5px; background: #fff5f5;">' +
-      '<p style="font-weight: 700; color: #cc0000; font-size: 8px; margin-bottom: 2px;">⚠ ' + disclaimerTitle + '</p>' +
-      '<p style="font-size: 7px; color: #444; line-height: 1.4;">' + disclaimerText + '</p></div>' +
+      '<p style="font-weight: 700; color: #cc0000; font-size: ' + disclaimerTitleSize + 'px; margin-bottom: 2px;">⚠ ' + disclaimerTitle + '</p>' +
+      '<p style="font-size: ' + disclaimerTextSize + 'px; color: #444; line-height: 1.4;">' + disclaimerText + '</p></div>' +
       '<div class="footer" style="margin-top: 10px;"><p>' + labels.footer + '</p></div></div>';
   }
 
@@ -641,7 +652,7 @@ function generatePatientInfoHtml(
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: ${isCompact ? '11px' : '14px'}; line-height: ${isCompact ? '1.35' : '1.5'}; color: #1a1a1a;
+      font-size: ${fontSize}px; line-height: ${isCompact ? '1.35' : '1.5'}; color: #1a1a1a;
       width: 210mm; margin: 0 auto; padding: 0;
       background: white;
     }
@@ -651,28 +662,29 @@ function generatePatientInfoHtml(
     .hospital-name { font-size: ${isCompact ? '16px' : '20px'}; font-weight: 800; color: ${hospitalColor}; }
     .header-title { text-align: right; }
     .header-title h1 { color: ${hospitalColor}; font-size: ${isCompact ? '17px' : '22px'}; margin-bottom: 2px; }
-    .header-title .subtitle { color: #666; font-size: ${isCompact ? '11px' : '13px'}; }
+    .header-title .subtitle { color: #666; font-size: ${smallSize}px; }
     .content { display: grid; grid-template-columns: 1fr 1fr; gap: ${isCompact ? '8px' : '14px'}; margin-top: ${isCompact ? '8px' : '14px'}; }
     .section { margin-bottom: ${isCompact ? '4px' : '10px'}; }
-    .section h2 { color: ${hospitalColor}; font-size: ${isCompact ? '12px' : '15px'}; margin-bottom: ${isCompact ? '3px' : '6px'}; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
-    .section p { margin-bottom: ${isCompact ? '2px' : '4px'}; color: #333; font-size: ${isCompact ? '10px' : '13px'}; }
+    .section h2 { color: ${hospitalColor}; font-size: ${h2Size}px; margin-bottom: ${isCompact ? '3px' : '6px'}; padding-bottom: 2px; border-bottom: 1px solid #e0e0e0; }
+    .section p { margin-bottom: ${isCompact ? '2px' : '4px'}; color: #333; font-size: ${fontSize}px; }
     .section ul { margin-left: 14px; margin-bottom: ${isCompact ? '3px' : '6px'}; }
-    .section li { margin-bottom: ${isCompact ? '1px' : '3px'}; color: #333; font-size: ${isCompact ? '10px' : '13px'}; }
+    .section li { margin-bottom: ${isCompact ? '1px' : '3px'}; color: #333; font-size: ${fontSize}px; }
     .warning-box { background: #fff8e6; border-left: 3px solid #e87722; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
-    .warning-box h3 { color: #cc7a00; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
+    .warning-box h3 { color: #cc7a00; font-size: ${fontSize}px; margin-bottom: ${isCompact ? '2px' : '4px'}; }
     .danger-box { background: #ffe6e6; border-left: 3px solid #cc0000; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
-    .danger-box h3 { color: #cc0000; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
+    .danger-box h3 { color: #cc0000; font-size: ${fontSize}px; margin-bottom: ${isCompact ? '2px' : '4px'}; }
     .info-box { background: #f5e6f0; border-left: 3px solid ${hospitalColor}; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
     .selfcare-box { background: #e8f5e9; border-left: 3px solid #388e3c; padding: ${isCompact ? '4px 6px' : '8px 10px'}; margin: ${isCompact ? '3px 0' : '6px 0'}; border-radius: 0 3px 3px 0; }
-    .selfcare-box h3 { color: #2e7d32; font-size: ${isCompact ? '10px' : '13px'}; margin-bottom: ${isCompact ? '2px' : '4px'}; }
+    .selfcare-box h3 { color: #2e7d32; font-size: ${fontSize}px; margin-bottom: ${isCompact ? '2px' : '4px'}; }
     .full-width { grid-column: 1 / -1; }
-    .contact-section { background: #f5f5f5; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border-radius: 4px; margin-top: ${isCompact ? '6px' : '12px'}; font-size: ${isCompact ? '10px' : '12px'}; }
-    .contact-section h2 { font-size: ${isCompact ? '11px' : '14px'}; margin-bottom: ${isCompact ? '4px' : '8px'}; color: ${hospitalColor}; }
+    .contact-section { background: #f5f5f5; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border-radius: 4px; margin-top: ${isCompact ? '6px' : '12px'}; font-size: ${contactSize}px; }
+    .contact-section h2 { font-size: ${contactSize + 2}px; margin-bottom: ${isCompact ? '4px' : '8px'}; color: ${hospitalColor}; }
     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
     .contact-grid p { margin: 0; white-space: nowrap; }
-    .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${isCompact ? '8px' : '11px'}; color: #666; text-align: center; }
-    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; ${isCompact ? 'max-height: 277mm; overflow: hidden;' : ''} }
-    .page-bottom { margin-top: 8px; }
+    .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${footerSize}px; color: #666; text-align: center; }
+    .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; display: flex; flex-direction: column; min-height: calc(297mm - ${isCompact ? '20mm' : '24mm'}); }
+    .content { flex: 1; }
+    .page-bottom { margin-top: auto; padding-top: 8px; }
     .page-break { page-break-before: always; break-before: page; padding: 12mm; }
     /* Timeline styles */
     .timeline { position: relative; margin: 20px 0; padding-left: 0; }
@@ -680,9 +692,9 @@ function generatePatientInfoHtml(
     .timeline-item { position: relative; display: flex; align-items: flex-start; margin-bottom: 18px; padding-left: 60px; }
     .timeline-dot { position: absolute; left: 20px; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: ${hospitalColor}; border: 3px solid white; box-shadow: 0 0 0 2px ${hospitalColor}; z-index: 1; }
     .timeline-content { background: #f8f5f7; border: 1px solid #e8dce5; border-radius: 8px; padding: 12px 16px; flex: 1; }
-    .timeline-content h3 { font-size: 15px; color: ${hospitalColor}; margin-bottom: 4px; font-weight: 700; }
-    .timeline-route { display: inline-block; background: ${hospitalColor}; color: white; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-right: 8px; }
-    .timeline-timing { font-size: 13px; color: #555; margin-top: 4px; }
+    .timeline-content h3 { font-size: ${fontSize}px; color: ${hospitalColor}; margin-bottom: 4px; font-weight: 700; }
+    .timeline-route { display: inline-block; background: ${hospitalColor}; color: white; padding: 1px 8px; border-radius: 10px; font-size: ${tinySize}px; font-weight: 600; margin-right: 8px; }
+    .timeline-timing { font-size: ${smallSize}px; color: #555; margin-top: 4px; }
     .timeline-timing strong { color: #333; }
     @media print {
       body { width: auto; min-height: auto; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -733,7 +745,7 @@ function generatePatientInfoHtml(
     ${premedicatieItems && premedicatieItems.length > 0 ? `
     <div class="section">
       <h2>${labels.premedicatie}</h2>
-      <p style="font-size: ${isCompact ? '9px' : '12px'}; color: #666; font-style: italic;">${language === 'fr' ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p>
+      <p style="font-size: ${fontSize - 2}px; color: #666; font-style: italic;">${language === 'fr' ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p>
     </div>
     ` : ''}
 
@@ -782,7 +794,7 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${!isCompact && monitoringText ? `
+    ${monitoringText ? `
     <div class="section">
       <h2>${labels.monitoring}</h2>
       ${formatAsList(monitoringText)}
@@ -790,19 +802,18 @@ function generatePatientInfoHtml(
     ` : ''}
   </div> <!-- end content grid -->
 
-  <div class="contact-section full-width">
-    <h2>${labels.contact}</h2>
-    <div class="contact-grid">
-      <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
-      <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-      <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
-    </div>
-  </div>
-
   <div class="page-bottom">
+    <div class="contact-section">
+      <h2>${labels.contact}</h2>
+      <div class="contact-grid">
+        <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
+        <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
+      </div>
+    </div>
     <div style="margin-top: 8px; padding: 6px 10px; border: 1.5px solid #cc0000; border-radius: 5px; background: #fff5f5;">
-      <p style="font-weight: 700; color: #cc0000; font-size: 8px; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-      <p style="font-size: 7px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
+      <p style="font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
+      <p style="font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
     </div>
     <div class="footer">
       <p>${labels.footer}</p>
@@ -812,6 +823,21 @@ function generatePatientInfoHtml(
 
   ${premedicatiePageHtml}
 
+<script>
+(function() {
+  var page = document.querySelector('.page-container');
+  if (!page) return;
+  var maxH = 297 * 3.7795; // A4 height in px (~1122px)
+  var padding = ${isCompact ? 10 : 12} * 2 * 3.7795; // top+bottom padding in px
+  var available = maxH - padding;
+  var tries = 0;
+  while (page.scrollHeight > available && tries < 8) {
+    var current = parseFloat(window.getComputedStyle(document.body).fontSize);
+    document.body.style.fontSize = (current - 0.5) + 'px';
+    tries++;
+  }
+})();
+</script>
 </body>
 </html>
   `.trim();

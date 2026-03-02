@@ -12,9 +12,10 @@ interface ChangePasswordDialogProps {
   open: boolean;
   onSuccess: () => void;
   userId: string;
+  isExpired?: boolean;
 }
 
-export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({ open, onSuccess, userId, isExpired = false }: ChangePasswordDialogProps) {
   const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -66,9 +67,11 @@ export function ChangePasswordDialog({ open, onSuccess, userId }: ChangePassword
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>{t('changePassword.title')}</DialogTitle>
+          <DialogTitle>{isExpired ? t('changePassword.expiredTitle') : t('changePassword.title')}</DialogTitle>
           <DialogDescription>
-            {t('changePassword.description')}
+            {isExpired
+              ? t('changePassword.expiredDesc')
+              : t('changePassword.description')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

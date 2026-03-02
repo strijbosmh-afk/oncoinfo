@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://www.oncoinfo.be',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     // Look up user by username, optionally filtering by hospital
     let query = supabaseAdmin
       .from('profiles')
-      .select('email, hospital_id')
+      .select('email, hospital_id, user_id, default_language')
       .eq('username', username.trim());
 
     if (hospital_id) {
@@ -95,6 +95,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Fetch all hospitals this user is linked to
+    const { data: userHospitals } = await supabaseAdmin
+      .from('user_hospitals')
+      .select('hospital_id, hospitals:hospital_id(id, name, slug, logo_url, is_active)')
+      .eq('user_id', signInData.user.id);
+
+    const hospitals = (userHospitals || [])
+      .map((uh: any) => uh.hospitals)
+      .filter((h: any) => h && h.is_active)
+      .map((h: any) => ({ id: h.id, name: h.name, slug: h.slug, logo_url: h.logo_url }));
+
     // Log login to audit_log with hospital_id
     try {
       await supabaseAdmin.from('audit_log').insert({
@@ -110,7 +121,15 @@ Deno.serve(async (req) => {
       console.error('Audit log error:', logErr);
     }
 
-    // Return session tokens to the client
+    // Resolve user language: profile > hospital > nl
+    let userLanguage = profileData.default_language || null;
+    if (!userLanguage && profileData.hospital_id) {
+      const { data: hospLang } = await supabaseAdmin.from('hospitals').select('default_language').eq('id', profileData.hospital_id).maybeSingle();
+      userLanguage = hospLang?.default_language || 'nl';
+    }
+    if (!userLanguage) userLanguage = 'nl';
+
+    // Return session tokens, hospitals, and user language to the client
     return new Response(
       JSON.stringify({
         session: {
@@ -119,6 +138,8 @@ Deno.serve(async (req) => {
           expires_in: signInData.session.expires_in,
           token_type: signInData.session.token_type,
         },
+        hospitals,
+        user_language: userLanguage,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

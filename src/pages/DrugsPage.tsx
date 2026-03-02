@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
+import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
+import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '@/components/layout/Layout';
@@ -15,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +39,7 @@ const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
 const DRUG_CLASS_FULL_NAMES: Record<string, string> = {
   'IO/ICI': 'Immune Checkpoint Inhibitor',
   'PARPi': 'Poly (ADP-ribose) Polymerase Inhibitor',
-  'ARPI': 'Androgen Receptor Pathway Inhibitor',
+  'ARTA': 'Androgen Receptor Targeted Agent',
   'TKI': 'Tyrosine Kinase Inhibitor',
   'ADC': 'Antibody-Drug Conjugate',
   'CDK4/6i': 'Cycline-Dependent Kinase 4/6 Inhibitor',
@@ -61,12 +63,13 @@ const getDrugClassColor = (drugClass: string) => {
   const colors: Record<string, string> = {
     'IO/ICI': 'bg-purple-100 text-purple-800 border-purple-200',
     'PARPi': 'bg-pink-100 text-pink-800 border-pink-200',
-    'ARPI': 'bg-blue-100 text-blue-800 border-blue-200',
+    'ARTA': 'bg-blue-100 text-blue-800 border-blue-200',
     'Chemotherapie': 'bg-red-100 text-red-800 border-red-200',
     'TKI': 'bg-orange-100 text-orange-800 border-orange-200',
     'ADC': 'bg-teal-100 text-teal-800 border-teal-200',
     'Radioligand Therapie': 'bg-yellow-100 text-yellow-800 border-yellow-200',
     'Hormonale Therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'Anti-hormonale therapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
     'Combinatietherapie': 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-amber-300',
     'CDK4/6i': 'bg-rose-100 text-rose-800 border-rose-200',
     'HER2-remmers': 'bg-cyan-100 text-cyan-800 border-cyan-200',
@@ -75,6 +78,7 @@ const getDrugClassColor = (drugClass: string) => {
     'Aromataseremmers': 'bg-lime-100 text-lime-800 border-lime-200',
     'SERD': 'bg-emerald-100 text-emerald-800 border-emerald-200',
     'LHRH agonist': 'bg-sky-100 text-sky-800 border-sky-200',
+    'Hormoontherapie': 'bg-indigo-100 text-indigo-800 border-indigo-200',
     'ALK-remmer': 'bg-cyan-100 text-cyan-800 border-cyan-200',
     'EGFR-remmer': 'bg-lime-100 text-lime-800 border-lime-200',
     'Angiogeneseremmer': 'bg-emerald-100 text-emerald-800 border-emerald-200',
@@ -89,11 +93,14 @@ interface DrugCardProps {
   onToggleFavorite: (e: React.MouseEvent) => void;
   onToggleMostUsed: (e: React.MouseEvent) => void;
   translateTerm?: (term: string) => string;
+  isAdmin?: boolean;
 }
 
-function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm }: DrugCardProps) {
+function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMostUsed, translateTerm, isAdmin: isAdminProp }: DrugCardProps) {
   const { t } = useTranslation();
   const tMedLocal = useMedicalTranslation();
+  const navigate = useNavigate();
+  const { isDemoClinic } = useHospital();
   const tMed = translateTerm || tMedLocal;
   const isCombo = drug.drug_class === 'Combinatietherapie';
   
@@ -101,10 +108,20 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
     return (
       <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
         <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+          {isAdminProp && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+              className="p-1.5 rounded-full hover:bg-amber-100 transition-colors opacity-0 group-hover:opacity-100"
+              aria-label="Schema bewerken"
+              title="Schema bewerken"
+            >
+              <PenLine className="h-4 w-4 text-amber-600 hover:text-amber-800 transition-colors" />
+            </button>
+          )}
           <button
             onClick={onToggleMostUsed}
             className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
-            aria-label="Toggle meest gebruikt"
+            aria-label={t('mostUsed.toggle')}
           >
             <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
           </button>
@@ -123,7 +140,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
           </button>
         </div>
         <Link to={`/drugs/${drug.id}`}>
-          <CardHeader className="pb-2 pr-16">
+          <CardHeader className="pb-2 pr-20">
             <div className="flex items-start gap-2 mb-1">
               <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
@@ -138,7 +155,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
             <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
               {t('drugs.combinationRegimen')}
             </Badge>
-            {drug.is_on_zvz ? (
+            {!isDemoClinic && (drug.is_on_zvz ? (
               <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
                 ✓ RIZIV
               </Badge>
@@ -146,7 +163,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
               <Badge className="w-fit bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700">
                 ✗ Niet RIZIV
               </Badge>
-            )}
+            ))}
           </CardHeader>
           <CardContent>
             {drug.approved_indications && drug.approved_indications.length > 0 && (
@@ -173,10 +190,20 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
     <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
       <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        {isAdminProp && (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
+            className="p-1.5 rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+            aria-label="Schema bewerken"
+            title="Schema bewerken"
+          >
+            <PenLine className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+          </button>
+        )}
         <button
           onClick={onToggleMostUsed}
           className="p-1.5 rounded-full hover:bg-muted transition-colors"
-          aria-label="Toggle meest gebruikt"
+          aria-label={t('mostUsed.toggle')}
         >
           <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
         </button>
@@ -195,7 +222,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
         </button>
       </div>
       <Link to={`/drugs/${drug.id}`}>
-        <CardHeader className="pb-2 pr-16">
+        <CardHeader className="pb-2 pr-20">
           <div className="flex items-start justify-between gap-2">
             <div>
               <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
@@ -222,7 +249,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
                   {tMed(drug.drug_class)}
                 </Badge>
               )}
-              {drug.is_on_zvz ? (
+              {!isDemoClinic && (drug.is_on_zvz ? (
                 <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-xs">
                   ✓ RIZIV
                 </Badge>
@@ -230,7 +257,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
                 <Badge className="bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700 text-xs">
                   ✗ Niet RIZIV
                 </Badge>
-              )}
+              ))}
             </div>
           </div>
         </CardHeader>
@@ -288,10 +315,11 @@ export default function DrugsPage() {
   const tMed = useMedicalTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') as DrugCategoryKey | null;
-  const selectedSubtype = searchParams.get('subtype');
-  const selectedStage = searchParams.get('stage');
-  const selectedSubcategory = searchParams.get('subcategory');
-  const selectedDiseaseArea = searchParams.get('diseaseArea');
+  // Multi-select: comma-separated values in URL params
+  const selectedSubtypes = searchParams.get('subtype')?.split(',').filter(Boolean) || [];
+  const selectedStages = searchParams.get('stage')?.split(',').filter(Boolean) || [];
+  const selectedSubcategories = searchParams.get('subcategory')?.split(',').filter(Boolean) || [];
+  const selectedDiseaseAreas = searchParams.get('diseaseArea')?.split(',').filter(Boolean) || [];
   const categoryConfig = category ? DRUG_CATEGORIES[category] : null;
 
   const urlSearchQuery = searchParams.get('search') || '';
@@ -299,15 +327,20 @@ export default function DrugsPage() {
   const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneCount, setMilestoneCount] = useState(0);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'individual'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
-  const { hospital } = useHospital();
+  const { hospital, isDemoClinic } = useHospital();
+  const [showDemoPopup, setShowDemoPopup] = useState(false);
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
+  // Hospital-specific filter tags: map drug_id -> Set of canonical tag strings
+  const [hospitalFilterTags, setHospitalFilterTags] = useState<Record<string, string[]>>({});
 
-  // Fetch hospital disciplines for access check
+  // Fetch hospital disciplines and filter tags
   useEffect(() => {
     if (!hospital?.id) return;
     const fetchDisciplines = async () => {
@@ -317,7 +350,21 @@ export default function DrugsPage() {
         .eq('hospital_id', hospital.id);
       setDisciplines(data || []);
     };
+    const fetchFilterTags = async () => {
+      const { data } = await supabase
+        .from('hospital_drug_filter_tags')
+        .select('drug_id, filter_tags')
+        .eq('hospital_id', hospital.id);
+      if (data) {
+        const map: Record<string, string[]> = {};
+        for (const row of data) {
+          map[row.drug_id] = row.filter_tags || [];
+        }
+        setHospitalFilterTags(map);
+      }
+    };
     fetchDisciplines();
+    fetchFilterTags();
   }, [hospital?.id]);
 
   // Redirect if category's disciplines are all disabled
@@ -328,7 +375,7 @@ export default function DrugsPage() {
     const enabledAreas = new Set(disciplines.filter(d => d.is_enabled).map(d => d.disease_area));
     const hasAnyEnabled = areas.some(area => enabledAreas.has(area));
     if (!hasAnyEnabled) {
-      toast.info('Deze functie werd uitgeschakeld voor uw instelling.');
+      toast.info(t('drugs.disciplineDisabled'));
       navigate('/home');
     }
   }, [category, disciplines, navigate]);
@@ -364,6 +411,7 @@ export default function DrugsPage() {
     // Filter by category disease area
     if (category === 'breast') {
       result = result.filter(drug => drug.disease_areas.includes('Borstkanker'));
+      
     }
    
    if (category === 'urology') {
@@ -373,21 +421,21 @@ export default function DrugsPage() {
      );
      
      // Filter by specific urology disease area
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'prostate': ['Prostaatkanker'],
-         'bladder': ['Blaaskanker'],
-         'kidney': ['Niercelcarcinoom'],
-         'testis': ['Testiskanker'],
-         'penile': ['Peniskanker']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'prostate': ['Prostaatkanker'],
+          'bladder': ['Blaaskanker'],
+          'kidney': ['Niercelcarcinoom'],
+          'testis': ['Testiskanker'],
+          'penile': ['Peniskanker']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'gynecology') {
@@ -397,20 +445,20 @@ export default function DrugsPage() {
      );
      
      // Filter by specific gynecology disease area
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'ovarian': ['Ovariumkanker'],
-         'endometrial': ['Endometriumkanker'],
-         'cervical': ['Cervixkanker'],
-         'vulvar': ['Vulvakanker']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'ovarian': ['Ovariumkanker'],
+          'endometrial': ['Endometriumkanker'],
+          'cervical': ['Cervixkanker'],
+          'vulvar': ['Vulvakanker']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'respiratory') {
@@ -419,19 +467,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => respiratoryAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'nsclc': ['NSCLC'],
-         'sclc': ['SCLC'],
-         'mesothelioma': ['Mesothelioom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'nsclc': ['NSCLC'],
+          'sclc': ['SCLC'],
+          'mesothelioma': ['Mesothelioom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
    
    if (category === 'digestive') {
@@ -440,22 +488,22 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => digestiveAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'colorectal': ['Colorectaal carcinoom'],
-         'gastric': ['Maagcarcinoom'],
-         'esophageal': ['Oesofaguscarcinoom'],
-         'pancreatic': ['Pancreascarcinoom'],
-         'hepatocellular': ['Hepatocellulair carcinoom'],
-         'biliary': ['Galwegcarcinoom', 'Cholangiocarcinoom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'colorectal': ['Colorectaal carcinoom'],
+          'gastric': ['Maagcarcinoom'],
+          'esophageal': ['Oesofaguscarcinoom'],
+          'pancreatic': ['Pancreascarcinoom'],
+          'hepatocellular': ['Hepatocellulair carcinoom'],
+          'biliary': ['Galwegcarcinoom', 'Cholangiocarcinoom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'skin') {
@@ -464,19 +512,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => skinAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'melanoma': ['Melanoom'],
-         'merkel': ['Merkelcelcarcinoom'],
-         'cutaneous_scc': ['Cutaan plaveiselcelcarcinoom', 'Cutaan SCC']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'melanoma': ['Melanoom'],
+          'merkel': ['Merkelcelcarcinoom'],
+          'cutaneous_scc': ['Cutaan plaveiselcelcarcinoom', 'Cutaan SCC']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'head_neck') {
@@ -485,19 +533,19 @@ export default function DrugsPage() {
        drug.disease_areas.some(area => headNeckAreas.includes(area))
      );
      
-     if (selectedDiseaseArea) {
-       const diseaseAreaMap: Record<string, string[]> = {
-         'hnscc': ['Hoofd-halscarcinoom'],
-         'nasopharyngeal': ['Nasofarynxcarcinoom'],
-         'salivary': ['Speekselkliercarcinoom']
-       };
-       const areas = diseaseAreaMap[selectedDiseaseArea];
-       if (areas) {
-         result = result.filter(drug => 
-           drug.disease_areas.some(area => areas.includes(area))
-         );
-       }
-     }
+      if (selectedDiseaseAreas.length > 0) {
+        const diseaseAreaMap: Record<string, string[]> = {
+          'hnscc': ['Hoofd-halscarcinoom'],
+          'nasopharyngeal': ['Nasofarynxcarcinoom'],
+          'salivary': ['Speekselkliercarcinoom']
+        };
+        const matchAreas = selectedDiseaseAreas.flatMap(k => diseaseAreaMap[k] || []);
+        if (matchAreas.length > 0) {
+          result = result.filter(drug => 
+            drug.disease_areas.some(area => matchAreas.includes(area))
+          );
+        }
+      }
    }
 
    if (category === 'other') {
@@ -509,76 +557,96 @@ export default function DrugsPage() {
       );
       
        // Filter by subcategory
-       if (selectedSubcategory) {
-         const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
-         const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
-           'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
-           'antiemetic': { areas: ['Anti-emetica'], classes: [] },
-           'gcsf': { areas: ['Groeifactoren'], classes: [] },
-           'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
-           'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
-           'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
-         };
-         const filter = subcategoryFilters[selectedSubcategory];
-         if (filter) {
-           result = result.filter(drug => {
-             const matchesArea = drug.disease_areas.some(area => filter.areas.includes(area)) ||
-               filter.classes.includes(drug.drug_class);
-             // For 'supportive' catch-all, exclude drugs that belong to a specific subcategory
-             if (filter.exclude && matchesArea) {
-               const belongsToSpecific = drug.disease_areas.some(area => filter.exclude!.includes(area)) ||
-                 filter.exclude.includes(drug.drug_class);
-               return !belongsToSpecific;
-             }
-             return matchesArea;
-           });
-         }
-       }
+        if (selectedSubcategories.length > 0) {
+          const specificAreas = ['Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'];
+          const subcategoryFilters: Record<string, { areas: string[], classes: string[], exclude?: string[] }> = {
+            'antiresorptive': { areas: ['Antiresorptiva'], classes: ['Antiresorptiva'] },
+            'antiemetic': { areas: ['Anti-emetica'], classes: [] },
+            'gcsf': { areas: ['Groeifactoren'], classes: [] },
+            'erythropoietin': { areas: ['Erytropoietines'], classes: [] },
+            'thrombopoietin': { areas: ['Trombopoietine-agonisten'], classes: [] },
+            'supportive': { areas: ['Supportive Care', 'Overige supportive care'], classes: ['Supportive Care'], exclude: specificAreas }
+          };
+          // Combine all selected subcategory filters (OR logic)
+          const allMatchAreas: string[] = [];
+          const allMatchClasses: string[] = [];
+          const allExclude: string[] = [];
+          let hasExclude = false;
+          for (const sc of selectedSubcategories) {
+            const filter = subcategoryFilters[sc];
+            if (filter) {
+              allMatchAreas.push(...filter.areas);
+              allMatchClasses.push(...filter.classes);
+              if (filter.exclude) { allExclude.push(...filter.exclude); hasExclude = true; }
+            }
+          }
+          if (allMatchAreas.length > 0 || allMatchClasses.length > 0) {
+            result = result.filter(drug => {
+              const matchesArea = drug.disease_areas.some(area => allMatchAreas.includes(area)) ||
+                allMatchClasses.includes(drug.drug_class);
+              if (hasExclude && matchesArea) {
+                const belongsToSpecific = drug.disease_areas.some(area => allExclude.includes(area)) ||
+                  allExclude.includes(drug.drug_class);
+                return !belongsToSpecific;
+              }
+              return matchesArea;
+            });
+          }
+        }
    }
     
-    // Filter by subtype (approved_indications)
-    if (selectedSubtype) {
-      const subtypeFilters: Record<string, string[]> = {
-        'hr_positive': ['HR+', 'HR-positief', 'Hormoongevoelig', 'ER+', 'PR+'],
-        'her2_positive': ['HER2+', 'HER2-positief', 'HER2 positief'],
-        'triple_negative': ['TNBC', 'Triple negatief', 'triple negatief']
+    // Filter by subtypes using hospital-specific filter tags (multi-select, OR logic)
+    if (selectedSubtypes.length > 0) {
+      const subtypeCanonicals: Record<string, string> = {
+        'hr_positive': 'HR-positief',
+        'her2_positive': 'HER2-positief',
+        'triple_negative': 'Triple negatief',
       };
-      const keywords = subtypeFilters[selectedSubtype] || [];
-      if (keywords.length > 0) {
-        result = result.filter(drug => 
-          drug.approved_indications?.some(ind => 
-            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
-          )
-        );
+      const matchCanonicals = selectedSubtypes.map(st => subtypeCanonicals[st]).filter(Boolean);
+      if (matchCanonicals.length > 0) {
+        result = result.filter(drug => {
+          const tags = hospitalFilterTags[drug.id] || [];
+          return matchCanonicals.some(c => tags.includes(c));
+        });
       }
     }
     
-    // Filter by stage
-    if (selectedStage) {
-      const stageFilters: Record<string, string[]> = {
-        'neoadjuvant_adjuvant': ['Neoadjuvant', 'Adjuvant', 'neoadjuvant', 'adjuvant'],
-        'metastatic': ['Gemetastaseerd', 'gemetastaseerd', 'metastatic', 'Stadium IV']
+    // Filter by stages using hospital-specific filter tags (multi-select, OR logic)
+    if (selectedStages.length > 0) {
+      const stageCanonicals: Record<string, string> = {
+        'neoadjuvant_adjuvant': 'Neoadjuvant',
+        'metastatic': 'Gemetastaseerd',
       };
-      const keywords = stageFilters[selectedStage] || [];
-      if (keywords.length > 0) {
-        result = result.filter(drug => 
-          drug.approved_indications?.some(ind => 
-            keywords.some(kw => ind.toLowerCase().includes(kw.toLowerCase()))
-          )
-        );
+      const matchCanonicals = selectedStages.map(st => stageCanonicals[st]).filter(Boolean);
+      if (matchCanonicals.length > 0) {
+        result = result.filter(drug => {
+          const tags = hospitalFilterTags[drug.id] || [];
+          return matchCanonicals.some(c => tags.includes(c));
+        });
       }
     }
     
     return result;
-  }, [drugs, category, selectedSubtype, selectedStage, selectedSubcategory, selectedDiseaseArea]);
+  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas, hospitalFilterTags]);
 
-  // Separate combination regimens from individual drugs
-  const { combinationDrugs, individualDrugs } = useMemo(() => {
+  // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
+  const { combinationDrugs, hormonalDrugs, cdk46Drugs, artaDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
     const orderedDrugs = applyUserOrder(filteredDrugs);
     const combinations = orderedDrugs.filter(drug => drug.drug_class === 'Combinatietherapie');
-    const individuals = orderedDrugs.filter(drug => drug.drug_class !== 'Combinatietherapie');
-    return { combinationDrugs: combinations, individualDrugs: individuals };
-  }, [filteredDrugs, applyUserOrder]);
+    const isBreast = category === 'breast';
+    const isUrology = category === 'urology';
+    const hormonal = isBreast ? orderedDrugs.filter(drug => ['Hormoontherapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
+    const cdk46 = isBreast ? orderedDrugs.filter(drug => drug.drug_class === 'CDK4/6i') : [];
+    const arta = isUrology ? orderedDrugs.filter(drug => drug.drug_class === 'ARTA') : [];
+    const lhrh = isUrology ? orderedDrugs.filter(drug => ['LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie'].includes(drug.drug_class)) : [];
+    const excludedClasses = isBreast 
+      ? ['Combinatietherapie', 'Hormoontherapie', 'Anti-hormonale therapie', 'CDK4/6i']
+      : isUrology
+        ? ['Combinatietherapie', 'ARTA', 'LHRH agonist', 'Hormoontherapie', 'Hormonale Therapie', 'Anti-hormonale therapie']
+        : ['Combinatietherapie'];
+    const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
+    return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, artaDrugs: arta, lhrhDrugs: lhrh, individualDrugs: individuals };
+  }, [filteredDrugs, applyUserOrder, category]);
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
@@ -588,46 +656,33 @@ export default function DrugsPage() {
     return DRUG_CLASSES;
   }, [categoryConfig]);
 
-  const handleSubtypeClick = (subtypeKey: string) => {
+  const toggleMultiParam = (paramName: string, key: string, currentValues: string[]) => {
     const newParams = new URLSearchParams(searchParams);
-    if (selectedSubtype === subtypeKey) {
-      newParams.delete('subtype');
+    const newValues = currentValues.includes(key)
+      ? currentValues.filter(v => v !== key)
+      : [...currentValues, key];
+    if (newValues.length === 0) {
+      newParams.delete(paramName);
     } else {
-      newParams.set('subtype', subtypeKey);
+      newParams.set(paramName, newValues.join(','));
     }
-    newParams.delete('stage'); // Clear stage when selecting subtype
     setSearchParams(newParams);
+  };
+
+  const handleSubtypeClick = (subtypeKey: string) => {
+    toggleMultiParam('subtype', subtypeKey, selectedSubtypes);
   };
 
   const handleStageClick = (stageKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedStage === stageKey) {
-      newParams.delete('stage');
-    } else {
-      newParams.set('stage', stageKey);
-    }
-    newParams.delete('subtype'); // Clear subtype when selecting stage
-    setSearchParams(newParams);
+    toggleMultiParam('stage', stageKey, selectedStages);
   };
 
   const handleSubcategoryClick = (subcategoryKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedSubcategory === subcategoryKey) {
-      newParams.delete('subcategory');
-    } else {
-      newParams.set('subcategory', subcategoryKey);
-    }
-    setSearchParams(newParams);
+    toggleMultiParam('subcategory', subcategoryKey, selectedSubcategories);
   };
 
   const handleDiseaseAreaClick = (areaKey: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (selectedDiseaseArea === areaKey) {
-      newParams.delete('diseaseArea');
-    } else {
-      newParams.set('diseaseArea', areaKey);
-    }
-    setSearchParams(newParams);
+    toggleMultiParam('diseaseArea', areaKey, selectedDiseaseAreas);
   };
 
   const clearCategoryFilters = () => {
@@ -644,6 +699,7 @@ export default function DrugsPage() {
       toast.error(t('drugs.noFavoritesToExport'));
       return;
     }
+    if (isDemoClinic) { setShowDemoPopup(true); return; }
 
     setIsExporting(true);
     try {
@@ -678,6 +734,17 @@ export default function DrugsPage() {
           entity_name: `Favorieten (${favorites.length})`,
           hospital_id: profile?.hospital_id || null,
         });
+
+        // Check milestone
+        const { count: folderCount } = await supabase
+          .from('audit_log')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id)
+          .eq('action', 'print_folder');
+        if (folderCount && folderCount % 100 === 0) {
+          setMilestoneCount(folderCount);
+          setShowMilestone(true);
+        }
       }
     } catch (err) {
       console.error('Error exporting favorites:', err);
@@ -763,33 +830,33 @@ export default function DrugsPage() {
         </div>
 
         {/* Active filter indicator */}
-        {(selectedSubtype || selectedStage || selectedSubcategory || selectedDiseaseArea) && (
-          <div className="mb-4 flex items-center gap-2">
+        {(selectedSubtypes.length > 0 || selectedStages.length > 0 || selectedSubcategories.length > 0 || selectedDiseaseAreas.length > 0) && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">{t('drugs.activeFilter')}</span>
-            {selectedSubtype && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.sub_${selectedSubtype}`, selectedSubtype)}
-                <button onClick={() => handleSubtypeClick(selectedSubtype)} className="ml-1 hover:text-destructive">×</button>
+            {selectedSubtypes.map(st => (
+              <Badge key={st} variant="secondary" className="gap-1">
+                {t(`medicalTerms.sub_${st}`, st)}
+                <button onClick={() => handleSubtypeClick(st)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedStage && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.stage_${selectedStage}`, selectedStage)}
-                <button onClick={() => handleStageClick(selectedStage)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedStages.map(st => (
+              <Badge key={st} variant="secondary" className="gap-1">
+                {t(`medicalTerms.stage_${st}`, st)}
+                <button onClick={() => handleStageClick(st)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedSubcategory && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.sc_${selectedSubcategory}`, selectedSubcategory)}
-                <button onClick={() => handleSubcategoryClick(selectedSubcategory)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedSubcategories.map(sc => (
+              <Badge key={sc} variant="secondary" className="gap-1">
+                {t(`medicalTerms.sc_${sc}`, sc)}
+                <button onClick={() => handleSubcategoryClick(sc)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
-            {selectedDiseaseArea && (
-              <Badge variant="secondary" className="gap-1">
-                {t(`medicalTerms.da_${selectedDiseaseArea}`, selectedDiseaseArea)}
-                <button onClick={() => handleDiseaseAreaClick(selectedDiseaseArea)} className="ml-1 hover:text-destructive">×</button>
+            ))}
+            {selectedDiseaseAreas.map(da => (
+              <Badge key={da} variant="secondary" className="gap-1">
+                {t(`medicalTerms.da_${da}`, da)}
+                <button onClick={() => handleDiseaseAreaClick(da)} className="ml-1 hover:text-destructive">×</button>
               </Badge>
-            )}
+            ))}
             <Button variant="ghost" size="sm" onClick={clearCategoryFilters} className="text-xs">
               {t('drugs.clearFilter')}
             </Button>
@@ -804,40 +871,38 @@ export default function DrugsPage() {
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (
                 <>
-                  <div className="col-span-full">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.subtypes')}</h3>
+                  <div className="col-span-full grid gap-3 sm:grid-cols-3">
+                    {categoryConfig.subtypes.map((subtype) => (
+                      <Card 
+                        key={subtype.key}
+                        onClick={() => handleSubtypeClick(subtype.key)}
+                        className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                          selectedSubtypes.includes(subtype.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <h4 className="font-medium text-primary">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
+                          <p className="text-xs text-muted-foreground">{t('drugs.subtypes')}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  {categoryConfig.subtypes.map((subtype) => (
-                    <Card 
-                      key={subtype.key}
-                      onClick={() => handleSubtypeClick(subtype.key)}
-                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
-                        selectedSubtype === subtype.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium text-pink-700 dark:text-pink-400">{t(`medicalTerms.sub_${subtype.key}`, subtype.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.sub_${subtype.key}_desc`, subtype.description)}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  <div className="col-span-full mt-2">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">{t('drugs.stages')}</h3>
+                  <div className="col-span-full grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {categoryConfig.stages.map((stage) => (
+                      <Card 
+                        key={stage.key}
+                        onClick={() => handleStageClick(stage.key)}
+                        className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                          selectedStages.includes(stage.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                        }`}
+                      >
+                        <CardContent className="p-4">
+                          <h4 className="font-medium text-primary">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
+                          <p className="text-xs text-muted-foreground">{t('drugs.stages')}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  {categoryConfig.stages.map((stage) => (
-                    <Card 
-                      key={stage.key}
-                      onClick={() => handleStageClick(stage.key)}
-                      className={`cursor-pointer hover:border-pink-300 hover:shadow-sm transition-all ${
-                        selectedStage === stage.key ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/30' : ''
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        <h4 className="font-medium">{t(`medicalTerms.stage_${stage.key}`, stage.label)}</h4>
-                        <p className="text-xs text-muted-foreground">{t(`medicalTerms.stage_${stage.key}_desc`, stage.description)}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
                 </>
               )}
 
@@ -848,12 +913,12 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-blue-700 dark:text-blue-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -868,12 +933,12 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-purple-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-purple-700 dark:text-purple-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -888,12 +953,72 @@ export default function DrugsPage() {
                     <Card 
                       key={area.key}
                       onClick={() => handleDiseaseAreaClick(area.key)}
-                      className={`cursor-pointer hover:border-sky-300 hover:shadow-sm transition-all ${
-                        selectedDiseaseArea === area.key ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-sky-700 dark:text-sky-400">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Digestive disease areas */}
+              {category === 'digestive' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Skin disease areas */}
+              {category === 'skin' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
+                        <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </>
+              )}
+
+              {/* Head & Neck disease areas */}
+              {category === 'head_neck' && 'diseaseAreas' in categoryConfig && (
+                <>
+                  {categoryConfig.diseaseAreas.map((area) => (
+                    <Card 
+                      key={area.key}
+                      onClick={() => handleDiseaseAreaClick(area.key)}
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedDiseaseAreas.includes(area.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
+                      }`}
+                    >
+                      <CardContent className="p-4">
+                        <h4 className="font-medium text-primary">{String(t(`medicalTerms.da_${area.key}`, { defaultValue: area.label }))}</h4>
                         <p className="text-xs text-muted-foreground">{String(t(`medicalTerms.da_${area.key}_desc`, { defaultValue: area.description }))}</p>
                       </CardContent>
                     </Card>
@@ -908,12 +1033,12 @@ export default function DrugsPage() {
                     <Card 
                       key={subcat.key}
                       onClick={() => handleSubcategoryClick(subcat.key)}
-                      className={`cursor-pointer hover:border-emerald-300 hover:shadow-sm transition-all ${
-                        selectedSubcategory === subcat.key ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : ''
+                      className={`cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all ${
+                        selectedSubcategories.includes(subcat.key) ? 'border-primary bg-primary/5 dark:bg-primary/10' : ''
                       }`}
                     >
                       <CardContent className="p-4">
-                        <h4 className="font-medium text-emerald-700 dark:text-emerald-400">{t(`medicalTerms.sc_${subcat.key}`, subcat.label)}</h4>
+                        <h4 className="font-medium text-primary">{t(`medicalTerms.sc_${subcat.key}`, subcat.label)}</h4>
                         <p className="text-xs text-muted-foreground">{t(`medicalTerms.sc_${subcat.key}_desc`, subcat.description)}</p>
                       </CardContent>
                     </Card>
@@ -928,10 +1053,10 @@ export default function DrugsPage() {
                 variant={viewMode === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('all')}
-                className="gap-2"
+                className="gap-1.5"
               >
                 {t('common.all')}
-                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'all' ? 'secondary' : 'outline'} className="ml-0.5">
                   {filteredDrugs.length}
                 </Badge>
               </Button>
@@ -939,36 +1064,80 @@ export default function DrugsPage() {
                 variant={viewMode === 'combinations' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('combinations')}
-                className="gap-2"
+                className="gap-1.5"
               >
-                <Layers className="h-4 w-4" />
+                <Layers className="h-3.5 w-3.5" />
                 {t('drugs.combinations')}
-                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'combinations' ? 'secondary' : 'outline'} className="ml-0.5">
                   {combinationDrugs.length}
                 </Badge>
               </Button>
+              {category === 'breast' && hormonalDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'hormonal' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('hormonal')}
+                  className="gap-1.5"
+                >
+                  {t('drugs.tabAntiHormonal')}
+                  <Badge variant={viewMode === 'hormonal' ? 'secondary' : 'outline'} className="ml-0.5">
+                    {hormonalDrugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'breast' && cdk46Drugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'cdk46' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('cdk46')}
+                  className="gap-1.5"
+                >
+                  CDK4/6
+                  <Badge variant={viewMode === 'cdk46' ? 'secondary' : 'outline'} className="ml-0.5">
+                    {cdk46Drugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'urology' && lhrhDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'lhrh' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('lhrh')}
+                  className="gap-1.5"
+                >
+                  LHRH
+                  <Badge variant={viewMode === 'lhrh' ? 'secondary' : 'outline'} className="ml-0.5">
+                    {lhrhDrugs.length}
+                  </Badge>
+                </Button>
+              )}
+              {category === 'urology' && artaDrugs.length > 0 && (
+                <Button
+                  variant={viewMode === 'arta' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('arta')}
+                  className="gap-1.5"
+                >
+                  ARTA
+                  <Badge variant={viewMode === 'arta' ? 'secondary' : 'outline'} className="ml-0.5">
+                    {artaDrugs.length}
+                  </Badge>
+                </Button>
+              )}
               <Button
                 variant={viewMode === 'individual' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setViewMode('individual')}
-                className="gap-2"
+                className="gap-1.5"
               >
-                <Pill className="h-4 w-4" />
+                <Pill className="h-3.5 w-3.5" />
                 {t('drugs.individualDrugs')}
-                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-1">
+                <Badge variant={viewMode === 'individual' ? 'secondary' : 'outline'} className="ml-0.5">
                   {individualDrugs.length}
                 </Badge>
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditMode(true)}
-                className="gap-2 ml-auto"
-                disabled={isEditMode}
-              >
-                <GripVertical className="h-4 w-4" />
-                {t('drugs.adjustOrder')}
-              </Button>
+
+
             </div>
           </div>
         )}
@@ -1001,6 +1170,7 @@ export default function DrugsPage() {
                     toggleMostUsed(drug.id);
                   }}
                   translateTerm={tCardBatch}
+                  isAdmin={isAdmin}
                 />
               ))}
             </div>
@@ -1141,7 +1311,7 @@ export default function DrugsPage() {
                   <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">{t('drugs.noDrugsFound')}</h3>
                   <p className="text-muted-foreground mb-4">
-                    {(selectedSubtype || selectedStage) 
+                    {(selectedSubtypes.length > 0 || selectedStages.length > 0) 
                       ? t('drugs.noFilterResults')
                       : t('drugs.adjustFilters')}
                   </p>
@@ -1154,6 +1324,10 @@ export default function DrugsPage() {
               <div className="space-y-4">
                 <SortableDrugList
                   combinationDrugs={combinationDrugs}
+                  hormonalDrugs={hormonalDrugs}
+                  cdk46Drugs={cdk46Drugs}
+                  artaDrugs={artaDrugs}
+                  lhrhDrugs={lhrhDrugs}
                   individualDrugs={individualDrugs}
                   viewMode={viewMode}
                   isFavorite={isFavorite}
@@ -1168,12 +1342,14 @@ export default function DrugsPage() {
                 <p className="text-sm text-muted-foreground pt-2">
                   {t('drugs.totalFound', { count: filteredDrugs?.length })}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">© DRMSoftware</p>
+                <p className="text-xs text-muted-foreground mt-1">© Michiel Strijbos</p>
               </div>
             )}
           </div>
         </div>
       </div>
+      <FolderMilestoneDialog open={showMilestone} onOpenChange={setShowMilestone} count={milestoneCount} />
+      <DemoRestrictionDialog open={showDemoPopup} onOpenChange={setShowDemoPopup} />
     </Layout>
   );
 }

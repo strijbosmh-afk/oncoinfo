@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUserManagement, type ManagedUser } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { UserDialog, type HospitalOption } from './UserDialog';
 import {
   AlertDialog,
@@ -20,12 +22,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus, ChevronDown, ChevronRight } from 'lucide-react';
 
 export function UserManagement() {
   const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
-  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword } = useUserManagement();
+  const { toast } = useToast();
+  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword, updateHospitals } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [preselectedHospital, setPreselectedHospital] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export function UserManagement() {
   const [hospitalFilter, setHospitalFilter] = useState<string>('all');
   const [functionFilter, setFunctionFilter] = useState<string>('all');
   const [allHospitals, setAllHospitals] = useState<HospitalOption[]>([]);
+  const [openHospitals, setOpenHospitals] = useState<Set<string>>(new Set());
 
   // Fetch all active hospitals for the dialog dropdown
   useEffect(() => {
@@ -79,6 +83,39 @@ export function UserManagement() {
     });
   }, [users, searchQuery, hospitalFilter, functionFilter]);
 
+  // Group filtered users by hospital, sorted alphabetically
+  const groupedByHospital = useMemo(() => {
+    const groups = new Map<string, { id: string; name: string; color?: string; users: ManagedUser[] }>();
+    filteredUsers.forEach((u) => {
+      const key = u.hospital_id || '__none__';
+      if (!groups.has(key)) {
+        groups.set(key, {
+          id: key,
+          name: u.hospital_name || t('hospitalMgmt.noHospital'),
+          color: u.hospital_color || undefined,
+          users: [],
+        });
+      }
+      groups.get(key)!.users.push(u);
+    });
+    // Sort groups alphabetically by hospital name
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [filteredUsers]);
+
+  const toggleHospital = (id: string) => {
+    setOpenHospitals((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Default: only RZ Tienen is expanded
+  useEffect(() => {
+    const tienenGroup = groupedByHospital.find(g => g.name.toLowerCase().includes('tienen'));
+    setOpenHospitals(new Set(tienenGroup ? [tienenGroup.id] : []));
+  }, [groupedByHospital.length]);
+
   const handleCreate = (preselectedHospitalId?: string) => {
     setDialogMode('create');
     setSelectedUser(null);
@@ -93,6 +130,11 @@ export function UserManagement() {
   };
 
   const handleDeleteClick = (user: ManagedUser) => {
+    // Protect the primary 'admin' account from deletion
+    if (user.username === 'admin') {
+      toast({ title: t('userMgmt.cannotDeleteAdmin', 'Kan niet verwijderen'), description: t('userMgmt.adminProtected', 'Het primaire admin-account kan niet worden verwijderd.'), variant: 'destructive' });
+      return;
+    }
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   };
@@ -118,7 +160,7 @@ export function UserManagement() {
         email: credentialsUser.email,
         username: credentialsUser.username || undefined,
         password: credentialsPassword.trim(),
-        login_url: `${window.location.origin}`,
+        login_url: 'https://www.oncoinfo.be',
       });
       setCredentialsDialogOpen(false);
     }
@@ -238,147 +280,153 @@ export function UserManagement() {
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <div className="space-y-2">
-              {/* Column headers */}
-              <div className="hidden lg:flex items-center px-3 py-1.5 text-xs font-medium text-muted-foreground gap-3">
-                <div className="h-8 w-8 flex-shrink-0" />
-                <div className="flex-1 min-w-0">{t('userDialog.lastName')}</div>
-                {isSuperAdmin && <div className="w-[160px] text-right">{t('userDialog.hospital')}</div>}
-                <div className="w-[180px] text-right">{t('userDialog.function')}</div>
-                <div className="w-[148px] flex-shrink-0" />
-              </div>
-
-              {filteredUsers.map((user) => {
-                const isAdminRole = user.role === 'admin' || user.role === 'super_admin';
-                return (
-                <div
-                  key={user.id}
-                  className="flex items-center p-3 border rounded-lg gap-3"
+            <div className="space-y-3">
+              {groupedByHospital.map((group) => (
+                <Collapsible
+                  key={group.id}
+                  open={openHospitals.has(group.id)}
+                  onOpenChange={() => toggleHospital(group.id)}
                 >
-                  {/* Avatar */}
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {isAdminRole ? (
-                      <Shield className="h-4 w-4 text-primary" />
+                  <CollapsibleTrigger className="flex items-center gap-2 w-full p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                    {openHospitals.has(group.id) ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     )}
-                  </div>
+                    <Building2 className="h-4 w-4 flex-shrink-0" style={{ color: group.color || 'hsl(var(--muted-foreground))' }} />
+                    <span className="font-semibold text-sm">{group.name}</span>
+                    <Badge variant="outline" className="text-[10px] ml-1">
+                      {group.users.length}
+                    </Badge>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-1.5 ml-6 mt-1">
+                      {group.users.map((user) => {
+                        const isAdminRole = user.role === 'admin' || user.role === 'super_admin';
+                        return (
+                          <div
+                            key={user.id}
+                            className="flex items-center p-2.5 border rounded-lg gap-3"
+                          >
+                            {/* Avatar */}
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              {isAdminRole ? (
+                                <Shield className="h-4 w-4 text-primary" />
+                              ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
 
-                  {/* Name + admin badge inline */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="font-medium truncate">
-                        {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
-                      </p>
-                      {user.role === 'super_admin' && (
-                        <Badge className="text-[10px] py-0 px-1.5 bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0">
-                          Super Admin
-                        </Badge>
-                      )}
-                      {user.role === 'admin' && (
-                        <Badge className="text-[10px] py-0 px-1.5 flex-shrink-0">
-                          Admin
-                        </Badge>
-                      )}
-                      {user.role === 'apotheker' && (
-                        <Badge className="text-[10px] py-0 px-1.5 bg-emerald-600 hover:bg-emerald-700 text-white flex-shrink-0">
-                          Apotheker
-                        </Badge>
-                      )}
-                      {user.id === currentUser?.id && (
-                        <Badge variant="outline" className="text-[10px] py-0 flex-shrink-0">
-                          {t('userMgmt.you')}
-                        </Badge>
-                      )}
+                            {/* Name + badges */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-medium truncate">
+                                  {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
+                                </p>
+                                {user.role === 'super_admin' && (
+                                  <Badge className="text-[10px] py-0 px-1.5 bg-purple-600 hover:bg-purple-700 text-white flex-shrink-0">
+                                    Super Admin
+                                  </Badge>
+                                )}
+                                {user.role === 'admin' && (
+                                  <Badge className="text-[10px] py-0 px-1.5 flex-shrink-0">
+                                    Admin
+                                  </Badge>
+                                )}
+                                {user.role === 'apotheker' && (
+                                  <Badge className="text-[10px] py-0 px-1.5 bg-emerald-600 hover:bg-emerald-700 text-white flex-shrink-0">
+                                    Apotheker
+                                  </Badge>
+                                )}
+                                {user.id === currentUser?.id && (
+                                  <Badge variant="outline" className="text-[10px] py-0 flex-shrink-0">
+                                    {t('userMgmt.you')}
+                                  </Badge>
+                                )}
+                                {(user.linked_hospital_ids?.length ?? 0) > 1 && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="outline" className="text-[10px] py-0 px-1.5 flex-shrink-0 gap-0.5">
+                                        <Building2 className="h-2.5 w-2.5" />
+                                        {user.linked_hospital_ids!.length}
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Gekoppeld aan {user.linked_hospital_ids!.length} ziekenhuizen
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {user.username && <span className="font-medium">{user.username}</span>}
+                                {user.username && ' · '}{user.email}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground/70 truncate">
+                                Laatste login: {formatDate(user.last_sign_in_at)}
+                              </p>
+                            </div>
+
+                            {/* Function + discipline */}
+                            <div className="hidden lg:flex w-[180px] justify-end flex-shrink-0">
+                              {user.function ? (
+                                <div className="flex flex-col items-end gap-0.5">
+                                  <Badge variant="outline" className={`text-xs capitalize whitespace-nowrap ${
+                                    user.function === 'arts' ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' :
+                                    user.function === 'verpleegkundige' ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700' :
+                                    user.function === 'apotheker' ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700' : ''
+                                  }`}>
+                                    {user.function}
+                                  </Badge>
+                                  {user.discipline && (
+                                    <span className="text-[10px] text-muted-foreground capitalize">{user.discipline}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center gap-0.5 flex-shrink-0 border-l pl-2 ml-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => { setResetUser(user); setResetDialogOpen(true); }}
+                                    disabled={user.id === currentUser?.id}
+                                    title={t('userMgmt.resetPassword')}
+                                  >
+                                    <KeyRound className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{t('userMgmt.resetPassword')}</TooltipContent>
+                              </Tooltip>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSendCredentials(user)} title={t('userMgmt.sendCredentials')}>
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(user)} title={t('common.edit')}>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteClick(user)}
+                                disabled={user.id === currentUser?.id || user.username === 'admin'}
+                                title={user.username === 'admin' ? 'Het primaire admin-account kan niet worden verwijderd' : t('common.delete')}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user.username && <span className="font-medium">{user.username}</span>}
-                      {user.username && ' · '}{user.email}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground/70 truncate">
-                      Laatste login: {formatDate(user.last_sign_in_at)}
-                    </p>
-                    {/* Show hospital & function inline on smaller screens */}
-                    <p className="lg:hidden text-xs text-muted-foreground truncate mt-0.5">
-                      {[
-                        isSuperAdmin && user.hospital_name ? user.hospital_name : null,
-                        user.function,
-                        user.discipline
-                      ].filter(Boolean).join(' · ') || null}
-                    </p>
-                  </div>
-
-                  {/* Hospital - fixed width for vertical alignment */}
-                  {isSuperAdmin && (
-                    <div className="hidden lg:flex w-[160px] justify-end flex-shrink-0">
-                      {user.hospital_name ? (
-                        <Badge
-                          variant="outline"
-                          className="text-xs gap-1 border-transparent text-white whitespace-nowrap max-w-full truncate"
-                          style={{ backgroundColor: user.hospital_color || 'hsl(var(--muted-foreground))' }}
-                        >
-                          <Building2 className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{user.hospital_name}</span>
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Function + discipline - fixed width for vertical alignment */}
-                  <div className="hidden lg:flex w-[180px] justify-end flex-shrink-0">
-                    {user.function ? (
-                      <div className="flex flex-col items-end gap-0.5">
-                        <Badge variant="outline" className="text-xs capitalize whitespace-nowrap">
-                          {user.function}
-                        </Badge>
-                        {user.discipline && (
-                          <span className="text-[10px] text-muted-foreground capitalize">{user.discipline}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-0.5 flex-shrink-0 border-l pl-2 ml-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => { setResetUser(user); setResetDialogOpen(true); }}
-                          disabled={user.id === currentUser?.id}
-                          title={t('userMgmt.resetPassword')}
-                        >
-                          <KeyRound className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{t('userMgmt.resetPassword')}</TooltipContent>
-                    </Tooltip>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleSendCredentials(user)} title={t('userMgmt.sendCredentials')}>
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(user)} title={t('common.edit')}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteClick(user)}
-                      disabled={user.id === currentUser?.id}
-                      title={t('common.delete')}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                );
-              })}
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
               {filteredUsers.length === 0 && !isLoading && (
                 <p className="text-center text-muted-foreground py-8">{t('userMgmt.noUsers')}</p>
               )}
@@ -394,6 +442,7 @@ export function UserManagement() {
         mode={dialogMode}
         user={selectedUser}
         onSubmit={handleDialogSubmit}
+        onUpdateHospitals={(userId, hospitalIds) => updateHospitals.mutate({ user_id: userId, hospital_ids: hospitalIds })}
         isLoading={createUser.isPending || updateUser.isPending}
         callerIsSuperAdmin={isSuperAdmin}
         hospitals={allHospitals}

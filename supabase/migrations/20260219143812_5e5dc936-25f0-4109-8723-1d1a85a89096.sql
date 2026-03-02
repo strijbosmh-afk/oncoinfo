@@ -1,0 +1,1 @@
+ALTER TABLE public.drugs ADD COLUMN registration_trial text;

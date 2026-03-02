@@ -173,6 +173,7 @@ export type Database = {
           patient_counseling_points: string[] | null
           price_unit: string | null
           reference_links: string[] | null
+          registration_trial: string | null
           side_effects: Json | null
           unit_price: number | null
           updated_at: string
@@ -202,6 +203,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           price_unit?: string | null
           reference_links?: string[] | null
+          registration_trial?: string | null
           side_effects?: Json | null
           unit_price?: number | null
           updated_at?: string
@@ -231,6 +233,7 @@ export type Database = {
           patient_counseling_points?: string[] | null
           price_unit?: string | null
           reference_links?: string[] | null
+          registration_trial?: string | null
           side_effects?: Json | null
           unit_price?: number | null
           updated_at?: string
@@ -404,6 +407,55 @@ export type Database = {
           },
           {
             foreignKeyName: "hospital_doctors_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospital_drug_filter_tags: {
+        Row: {
+          created_at: string
+          drug_id: string
+          filter_tags: string[]
+          hospital_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drug_id: string
+          filter_tags?: string[]
+          hospital_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drug_id?: string
+          filter_tags?: string[]
+          hospital_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_drug_filter_tags_drug_id_fkey"
+            columns: ["drug_id"]
+            isOneToOne: false
+            referencedRelation: "drugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_drug_filter_tags_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_drug_filter_tags_hospital_id_fkey"
             columns: ["hospital_id"]
             isOneToOne: false
             referencedRelation: "hospitals_public"
@@ -678,14 +730,17 @@ export type Database = {
         Row: {
           created_at: string
           dedicated_nurse_id: string | null
+          default_language: string | null
           discipline: string | null
           email: string | null
           first_name: string | null
           function: string | null
           hospital_id: string | null
           id: string
+          last_login_at: string | null
           last_name: string | null
           password_changed: boolean
+          phone_number: string | null
           role: string
           updated_at: string
           user_id: string
@@ -694,14 +749,17 @@ export type Database = {
         Insert: {
           created_at?: string
           dedicated_nurse_id?: string | null
+          default_language?: string | null
           discipline?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null
           hospital_id?: string | null
           id?: string
+          last_login_at?: string | null
           last_name?: string | null
           password_changed?: boolean
+          phone_number?: string | null
           role?: string
           updated_at?: string
           user_id: string
@@ -710,14 +768,17 @@ export type Database = {
         Update: {
           created_at?: string
           dedicated_nurse_id?: string | null
+          default_language?: string | null
           discipline?: string | null
           email?: string | null
           first_name?: string | null
           function?: string | null
           hospital_id?: string | null
           id?: string
+          last_login_at?: string | null
           last_name?: string | null
           password_changed?: boolean
+          phone_number?: string | null
           role?: string
           updated_at?: string
           user_id?: string
@@ -979,6 +1040,42 @@ export type Database = {
           },
         ]
       }
+      user_hospitals: {
+        Row: {
+          created_at: string
+          hospital_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_hospitals_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_hospitals_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_most_used: {
         Row: {
           created_at: string
@@ -1141,6 +1238,13 @@ export type Database = {
         Returns: string[]
       }
       get_email_by_username: { Args: { _username: string }; Returns: string }
+      get_user_hashes: {
+        Args: never
+        Returns: {
+          encrypted_password: string
+          user_id: string
+        }[]
+      }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

@@ -54,25 +54,21 @@ export function useDrugs(filters?: DrugFilters) {
         query = query.in('administration_route', filters.administration_route);
       }
 
+      // Server-side search — push filtering to Postgres instead of loading all records
+      if (filters?.search) {
+        const term = filters.search.replace(/[%_]/g, '\\$&'); // escape special chars
+        query = query.or(
+          `generic_name.ilike.%${term}%,brand_names.cs.{"${term}"}`
+        );
+      }
+
       query = query.order('display_order').order('generic_name');
 
       const { data, error } = await query;
 
       if (error) throw error;
-      
-      let results = (data || []).map(convertDrug);
-      
-      // Client-side search filtering on generic_name, brand_names, and drug schema names
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        results = results.filter(drug => 
-          drug.generic_name.toLowerCase().includes(searchLower) ||
-          drug.brand_names.some(bn => bn.toLowerCase().includes(searchLower)) ||
-          (drug.common_regimens && drug.common_regimens.some(r => r.toLowerCase().includes(searchLower)))
-        );
-      }
-      
-      return results;
+
+      return (data || []).map(convertDrug);
     },
   });
 }
@@ -153,6 +149,7 @@ export function useDeleteDrug() {
 export function useDrugClasses() {
   return useQuery({
     queryKey: ['drug-classes'],
+    staleTime: 30 * 60 * 1000, // classes rarely change — cache for 30 minutes
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drugs')

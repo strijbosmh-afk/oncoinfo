@@ -39,14 +39,14 @@ const COLORS = [
   'hsl(25, 95%, 53%)', 'hsl(330, 81%, 60%)',
 ];
 
-const ACTION_LABELS: Record<string, string> = {
-  login: 'Login',
-  update: 'Wijziging',
-  create: 'Aanmaak',
-  delete: 'Verwijdering',
-  email_sent: 'E-mail verzonden',
-  auto_update_scan: 'Auto-update scan',
-  print_folder: 'Folder afgedrukt',
+const ACTION_LABEL_KEYS: Record<string, string> = {
+  login: 'usageDashboard.actionLogin',
+  update: 'usageDashboard.actionUpdate',
+  create: 'usageDashboard.actionCreate',
+  delete: 'usageDashboard.actionDelete',
+  email_sent: 'usageDashboard.actionEmailSent',
+  auto_update_scan: 'usageDashboard.actionAutoUpdateScan',
+  print_folder: 'usageDashboard.actionPrintFolder',
 };
 
 export function UsageDashboard() {
@@ -129,7 +129,7 @@ export function UsageDashboard() {
       counts.set(key, (counts.get(key) || 0) + 1);
     });
     return Array.from(counts.entries())
-      .map(([action, count]) => ({ action: ACTION_LABELS[action] || action, count }))
+      .map(([action, count]) => ({ action: t(ACTION_LABEL_KEYS[action] || action, action), count }))
       .sort((a, b) => b.count - a.count);
   }, [filtered]);
 
@@ -175,7 +175,7 @@ export function UsageDashboard() {
       return [
         format(parseISO(row.created_at), 'yyyy-MM-dd HH:mm'),
         row.username || '',
-        ACTION_LABELS[row.action] || row.action,
+        t(ACTION_LABEL_KEYS[row.action] || row.action, row.action),
         row.entity_type || '',
         profile?.discipline || '',
         profile?.function || '',

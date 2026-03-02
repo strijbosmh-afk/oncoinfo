@@ -1,13 +1,8 @@
 {
-  "name": "oncoinfo",
+  "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
-  "main": "electron/main.cjs",
-  "author": {
-    "name": "DRMSoftware"
-  },
-  "description": "OncoInfo - Oncology Drug Information Library for Healthcare Professionals",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,10 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "electron:dev": "vite build && electron .",
-    "electron:build": "vite build && electron-builder --win --x64",
-    "electron:build:dir": "vite build && electron-builder --win --x64 --dir"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -54,6 +46,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@supabase/supabase-js": "^2.90.1",
     "@tanstack/react-query": "^5.83.0",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -70,6 +63,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.61.1",
     "react-i18next": "^16.5.4",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^6.30.1",
     "recharts": "^2.15.4",
@@ -90,8 +84,6 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
-    "electron": "^40.6.0",
-    "electron-builder": "^26.8.1",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
@@ -104,51 +96,5 @@
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
     "vitest": "^3.2.4"
-  },
-  "build": {
-    "appId": "com.drmsoftware.oncoinfo",
-    "productName": "OncoInfo",
-    "copyright": "Copyright © DRMSoftware",
-    "directories": {
-      "output": "release",
-      "buildResources": "build-resources"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "!node_modules/**/*"
-    ],
-    "extraMetadata": {
-      "main": "electron/main.cjs"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "build-resources/icon.png",
-      "artifactName": "OncoInfo-Setup-${version}.${ext}",
-      "signAndEditExecutable": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "build-resources/icon.ico",
-      "uninstallerIcon": "build-resources/icon.ico",
-      "installerHeaderIcon": "build-resources/icon.ico",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "OncoInfo",
-      "license": "desktop/LICENSE.txt"
-    },
-    "portable": {
-      "artifactName": "OncoInfo-Portable-${version}.${ext}"
-    }
   }
 }
