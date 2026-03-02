@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Megaphone } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 interface PlatformUpdate {
   id: string;
@@ -75,7 +76,7 @@ export function PlatformUpdatePopup() {
             <DialogTitle className="text-lg">{unreadUpdate.title}</DialogTitle>
           </div>
           <div className="text-left pt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:font-semibold [&_p]:mb-2 [&_li]:mb-1">
-            <ReactMarkdown>{unreadUpdate.content}</ReactMarkdown>
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{unreadUpdate.content}</ReactMarkdown>
           </div>
         </DialogHeader>
         <DialogFooter>
