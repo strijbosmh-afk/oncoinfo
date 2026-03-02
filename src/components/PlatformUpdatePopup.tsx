@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Megaphone } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface PlatformUpdate {
   id: string;
@@ -73,9 +74,9 @@ export function PlatformUpdatePopup() {
             </div>
             <DialogTitle className="text-lg">{unreadUpdate.title}</DialogTitle>
           </div>
-          <DialogDescription className="text-left pt-2 whitespace-pre-line">
-            {unreadUpdate.content}
-          </DialogDescription>
+          <div className="text-left pt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:font-semibold [&_p]:mb-2 [&_li]:mb-1">
+            <ReactMarkdown>{unreadUpdate.content}</ReactMarkdown>
+          </div>
         </DialogHeader>
         <DialogFooter>
           <Button onClick={handleDismiss} className="w-full">
