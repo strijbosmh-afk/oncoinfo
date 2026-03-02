@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Send, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Send, Trash2, Eye, EyeOff, Bold, Italic, Underline, List, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 interface PlatformUpdate {
   id: string;
@@ -26,6 +27,23 @@ export function SendUpdate() {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertMarkdown = useCallback((prefix: string, suffix: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = content.substring(start, end);
+    const newText = content.substring(0, start) + prefix + selected + suffix + content.substring(end);
+    if (newText.length > 2000) return;
+    setContent(newText);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.selectionStart = start + prefix.length;
+      ta.selectionEnd = end + prefix.length;
+    });
+  }, [content]);
 
   const { data: updates, isLoading } = useQuery({
     queryKey: ['platform-updates'],
@@ -113,7 +131,26 @@ export function SendUpdate() {
             />
           </div>
           <div>
+            <div className="flex items-center gap-0.5 mb-1 border rounded-t-md p-1 bg-muted/30">
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertMarkdown('**', '**')} title="Vet">
+                <Bold className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertMarkdown('*', '*')} title="Cursief">
+                <Italic className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertMarkdown('<u>', '</u>')} title="Onderstrepen">
+                <Underline className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertMarkdown('\n- ', '')} title="Opsomming">
+                <List className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => insertMarkdown('[', '](url)')} title="Link">
+                <Link className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <Textarea
+              ref={textareaRef}
+              className="rounded-t-none"
               placeholder={t('platformUpdate.contentPlaceholder', 'Beschrijf de nieuwe features of wijzigingen...')}
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -137,7 +174,7 @@ export function SendUpdate() {
             {title.trim() && <p className="text-base font-semibold">{title}</p>}
             {content.trim() && (
               <div className="text-sm prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:font-semibold [&_p]:mb-2 [&_li]:mb-1">
-                <ReactMarkdown>{content}</ReactMarkdown>
+                <ReactMarkdown rehypePlugins={[rehypeRaw]}>{content}</ReactMarkdown>
               </div>
             )}
           </div>
