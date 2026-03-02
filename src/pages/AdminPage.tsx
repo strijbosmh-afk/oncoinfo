@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot, Shield } from 'lucide-react';
+import { Loader2, Pill, Layers, FileText, Users, Plus, ClipboardList, Sparkles, ChevronLeft, Trash2, Archive, ArchiveRestore, Bot, Shield, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { UsageDashboard } from '@/components/admin/UsageDashboard';
 import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
 import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
+import { SendUpdate } from '@/components/admin/SendUpdate';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -34,7 +35,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | 'send-update' | null>(null);
   const [editDrugParam, setEditDrugParam] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -400,6 +401,15 @@ export default function AdminPage() {
                 <Globe className="h-4 w-4" />
                 API Documentatie
               </Button>
+              <Button
+                variant={activeSection === 'send-update' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'send-update' ? null : 'send-update')}
+                className="gap-2"
+                size="sm"
+              >
+                <Send className="h-4 w-4" />
+                {t('platformUpdate.title', 'Update Versturen')}
+              </Button>
             </div>
           )}
         </div>
@@ -439,6 +449,12 @@ export default function AdminPage() {
         {activeSection === 'api-docs' && isSuperAdmin && (
           <div className="mb-8">
             <ApiDocumentation />
+          </div>
+        )}
+
+        {activeSection === 'send-update' && isSuperAdmin && (
+          <div className="mb-8">
+            <SendUpdate />
           </div>
         )}
 

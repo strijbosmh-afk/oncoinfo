@@ -1005,5 +1005,16 @@
     "title": "Environnement de démonstration",
     "description": "Ceci est un environnement de démonstration. L'impression, la génération de PDF et les fonctions d'exportation sont désactivées. Contactez-nous pour une licence complète.",
     "dismiss": "Compris"
+  },
+  "platformUpdate": {
+    "title": "Envoyer une mise à jour",
+    "description": "Envoyez une notification de mise à jour à tous les utilisateurs. La notification est affichée une seule fois lors de la connexion.",
+    "titlePlaceholder": "Titre de la mise à jour...",
+    "contentPlaceholder": "Décrivez les nouvelles fonctionnalités ou modifications...",
+    "send": "Envoyer",
+    "sent": "Mise à jour envoyée à tous les utilisateurs",
+    "previousUpdates": "Mises à jour précédentes",
+    "deactivate": "Désactiver",
+    "activate": "Activer"
   }
 }

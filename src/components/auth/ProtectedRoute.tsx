@@ -6,6 +6,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { PlatformUpdatePopup } from '@/components/PlatformUpdatePopup';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -111,6 +112,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
           isExpired={isAccountExpired}
         />
       )}
+      {!needsPasswordChange && <PlatformUpdatePopup />}
       {children}
     </>
   );
