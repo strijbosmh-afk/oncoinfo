@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Send, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
 
 interface PlatformUpdate {
   id: string;
@@ -128,6 +129,19 @@ export function SendUpdate() {
             {t('platformUpdate.send', 'Versturen')}
           </Button>
         </form>
+
+        {/* Live preview */}
+        {(title.trim() || content.trim()) && (
+          <div className="rounded-lg border bg-muted/20 p-4 space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t('platformUpdate.preview', 'Voorbeeld')}</p>
+            {title.trim() && <p className="text-base font-semibold">{title}</p>}
+            {content.trim() && (
+              <div className="text-sm prose prose-sm dark:prose-invert max-w-none [&_a]:text-primary [&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_strong]:font-semibold [&_p]:mb-2 [&_li]:mb-1">
+                <ReactMarkdown>{content}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Previous updates */}
         {isLoading ? (
