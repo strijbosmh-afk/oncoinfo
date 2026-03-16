@@ -305,14 +305,14 @@ Deno.serve(async (req) => {
       console.error('Could not fetch logo:', e);
     }
 
-    // Prepare content texts — compact mode limits content to fit 1 page
-    const isCompact = folder_mode === 'compact';
-    const maxIndications = isCompact ? 3 : 6;
-    const maxCommonSideEffects = isCompact ? 4 : 8;
-    const maxSeriousSideEffects = isCompact ? 2 : 5;
-    const maxCounselingPoints = isCompact ? 3 : 6;
-    const maxContraindications = isCompact ? 3 : 6;
-    const maxMonitoring = isCompact ? 3 : 6;
+    // Content limits — generous for 2-page layout
+    const isCompact = false; // Always use full content, 2-page layout
+    const maxIndications = 10;
+    const maxCommonSideEffects = 10;
+    const maxSeriousSideEffects = 8;
+    const maxCounselingPoints = 8;
+    const maxContraindications = 8;
+    const maxMonitoring = 8;
 
     let introductionText = customContent?.introduction || drug.mechanism_of_action || null;
     let usageText = customContent?.usage_info || 
