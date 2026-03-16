@@ -132,10 +132,10 @@ export function generateStaticPreviewHtml(
       if (di.adjuvant) dosingItems.push(`${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
       // Simple schemas
       if (dosingItems.length === 0) {
-        if (di.standard_dose && folderMode === 'uitgebreid') {
-          const doseLabel = isEn ? 'Dose' : isDe ? 'Dosis' : isFr ? 'Dose' : 'Dosis';
-          dosingItems.push(`${doseLabel}: ${di.standard_dose}`);
-        }
+        if (di.standard_dose) {
+          dosingItems.push(di.standard_dose);
+          // Only add frequency if not already included in standard_dose
+          if (di.frequency && !di.standard_dose.toLowerCase().includes(di.frequency.toLowerCase().substring(0, 10))) {
         if (di.frequency) dosingItems.push(di.frequency);
         if (drug.cycle_length_days) {
           const cycleLabel = isEn ? 'Cycle' : isDe ? 'Zyklus' : isFr ? 'Cycle' : 'Cyclus';
