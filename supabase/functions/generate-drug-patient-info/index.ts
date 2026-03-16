@@ -832,21 +832,6 @@ function generatePatientInfoHtml(
 
   ${premedicatiePageHtml}
 
-<script>
-(function() {
-  var page = document.querySelector('.page-container');
-  if (!page) return;
-  var maxH = 297 * 3.7795; // A4 height in px (~1122px)
-  var padding = ${isCompact ? 10 : 12} * 2 * 3.7795; // top+bottom padding in px
-  var available = maxH - padding;
-  var tries = 0;
-  while (page.scrollHeight > available && tries < 8) {
-    var current = parseFloat(window.getComputedStyle(document.body).fontSize);
-    document.body.style.fontSize = (current - 0.5) + 'px';
-    tries++;
-  }
-})();
-</script>
 </body>
 </html>
   `.trim();
