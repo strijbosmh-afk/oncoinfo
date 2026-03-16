@@ -193,7 +193,7 @@ export default function DrugDetailPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr' | 'de' | 'en'>(defaultFolderLang);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
-  const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
+  const [folderMode] = useState<'compact' | 'uitgebreid'>('uitgebreid');
   const [folderFontSize, setFolderFontSize] = useState(() => {
     const saved = localStorage.getItem('folder-font-size-default');
     return saved ? parseInt(saved, 10) : 14;
