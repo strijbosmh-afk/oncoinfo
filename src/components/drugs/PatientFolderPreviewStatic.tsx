@@ -356,9 +356,9 @@ export function generateStaticPreviewHtml(
        font-size: ${fontSize}px; line-height: 1.55; color: #1a1a1a;
        padding: 10mm; background: white;
      }
-     .page-container { display: flex; flex-direction: column; min-height: calc(297mm - 24mm); }
+     .page-container { display: flex; flex-direction: column; }
      .page-content { flex: 1 1 auto; }
-     .page-footer-block { flex-shrink: 0; margin-top: auto; }
+     .page-footer-block { flex-shrink: 0; margin-top: 16px; }
      .preview-badge { background: ${hospitalColor}; color: white; text-align: center; padding: 6px; font-size: 12px; border-radius: 4px; margin-bottom: 12px; letter-spacing: 0.5px; }
      .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid ${hospitalColor}; }
      .logo-name { display: flex; align-items: center; gap: 10px; }
