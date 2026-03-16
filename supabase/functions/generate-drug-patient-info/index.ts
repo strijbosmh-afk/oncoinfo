@@ -498,9 +498,9 @@ function generatePatientInfoHtml(
   premedicatieItems: string[] = [],
   customFontSize: number = 0,
 ): string {
-  const isCompact = folderMode === 'compact';
-  // Use custom font size if provided, otherwise fall back to compact/uitgebreid defaults
-  const fontSize = customFontSize > 0 ? customFontSize : (isCompact ? 11 : 14);
+  const isCompact = false; // Always 2-page layout
+  // Use custom font size if provided, otherwise use comfortable reading size
+  const fontSize = customFontSize > 0 ? customFontSize : 13;
   const h2Size = fontSize + 2;
   const smallSize = fontSize - 1;
   const tinySize = fontSize - 3;
