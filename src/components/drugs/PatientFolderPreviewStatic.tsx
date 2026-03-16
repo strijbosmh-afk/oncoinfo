@@ -136,11 +136,15 @@ export function generateStaticPreviewHtml(
           dosingItems.push(di.standard_dose);
           // Only add frequency if not already included in standard_dose
           if (di.frequency && !di.standard_dose.toLowerCase().includes(di.frequency.toLowerCase().substring(0, 10))) {
-        if (di.frequency) dosingItems.push(di.frequency);
-        if (drug.cycle_length_days) {
-          const cycleLabel = isEn ? 'Cycle' : isDe ? 'Zyklus' : isFr ? 'Cycle' : 'Cyclus';
-          const daysLabel = isEn ? 'days' : isDe ? 'Tage' : isFr ? 'jours' : 'dagen';
-          dosingItems.push(`${cycleLabel}: ${drug.cycle_length_days} ${daysLabel}`);
+            dosingItems.push(di.frequency);
+          }
+        } else {
+          if (di.frequency) dosingItems.push(di.frequency);
+          if (drug.cycle_length_days) {
+            const cycleLabel = isEn ? 'Cycle' : isDe ? 'Zyklus' : isFr ? 'Cycle' : 'Cyclus';
+            const daysLabel = isEn ? 'days' : isDe ? 'Tage' : isFr ? 'jours' : 'dagen';
+            dosingItems.push(`${cycleLabel}: ${drug.cycle_length_days} ${daysLabel}`);
+          }
         }
         if (di.duration) {
           const durLabel = isEn ? 'Duration' : isDe ? 'Dauer' : isFr ? 'Durée' : 'Duur';
@@ -151,9 +155,7 @@ export function generateStaticPreviewHtml(
     }
     // Fallback to common_regimens
     if (dosingItems.length === 0 && drug.common_regimens?.length > 0) {
-      dosingItems = folderMode === 'uitgebreid' 
-        ? [...drug.common_regimens] 
-        : drug.common_regimens.slice(0, 3);
+      dosingItems = [...(drug.common_regimens || [])];
     }
     // Add instruction to always follow physician's instructions for oral medications (as first item, bold)
     if (drug.administration_route?.toLowerCase() === 'oraal') {
