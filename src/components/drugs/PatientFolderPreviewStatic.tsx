@@ -120,9 +120,7 @@ export function generateStaticPreviewHtml(
 
   const labels = labelsByLang[language] || labelsByLang['nl'];
   const introText = drug.mechanism_of_action || '';
-  const usageItems = folderMode === 'uitgebreid' 
-    ? (drug.approved_indications || []) 
-    : (drug.approved_indications?.slice(0, 4) || []);
+  const usageItems = drug.approved_indications || [];
   
   let dosingItems: string[] = [];
   if (includeDosing) {
