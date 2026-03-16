@@ -350,10 +350,19 @@ Deno.serve(async (req) => {
       if (di.neoadjuvant_phase1) parts.push(`• ${di.neoadjuvant_phase1}${di.neoadjuvant_phase1_duration ? ` (${di.neoadjuvant_phase1_duration})` : ''}`);
       if (di.neoadjuvant_phase2) parts.push(`• ${di.neoadjuvant_phase2}${di.neoadjuvant_phase2_duration ? ` (${di.neoadjuvant_phase2_duration})` : ''}`);
       if (di.adjuvant) parts.push(`• ${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
-      // Simple schemas
+      // Simple schemas — prioritize standard_dose which contains complete schedule info
+      // (e.g. "125 mg 1x daags, dag 1-21 van 28-daagse cyclus (schema 3/1)")
       if (parts.length === 0) {
-        if (di.frequency) parts.push(`• ${di.frequency}`);
-        if (drug.cycle_length_days) parts.push(`• Cyclus: ${drug.cycle_length_days} dagen`);
+        if (di.standard_dose) {
+          parts.push(`• ${di.standard_dose}`);
+          // Only add frequency separately if it contains info NOT already in standard_dose
+          if (di.frequency && !di.standard_dose.toLowerCase().includes(di.frequency.toLowerCase().substring(0, 10))) {
+            parts.push(`• ${di.frequency}`);
+          }
+        } else {
+          if (di.frequency) parts.push(`• ${di.frequency}`);
+          if (drug.cycle_length_days) parts.push(`• Cyclus: ${drug.cycle_length_days} dagen`);
+        }
         if (di.duration) parts.push(`• Duur: ${di.duration}`);
       }
       // Common regimens as fallback
