@@ -326,21 +326,11 @@ export function generateStaticPreviewHtml(
 
   const rawCommon = drug.side_effects?.common || drug.side_effects?.veel_voorkomend || [];
   const rawSerious = drug.side_effects?.serious || drug.side_effects?.ernstig || [];
-  const commonSE = folderMode === 'uitgebreid'
-    ? rawCommon.map(humanize)
-    : rawCommon.slice(0, 5).map(humanize);
-  const seriousSE = folderMode === 'uitgebreid'
-    ? rawSerious.map(humanize)
-    : rawSerious.slice(0, 3).map(humanize);
-  const contraItems = folderMode === 'uitgebreid'
-    ? (drug.contraindications || [])
-    : (drug.contraindications?.slice(0, 4) || []);
-  const tipItems = folderMode === 'uitgebreid'
-    ? (drug.patient_counseling_points || [])
-    : (drug.patient_counseling_points?.slice(0, 4) || []);
-  const monitorItems = folderMode === 'uitgebreid'
-    ? (drug.monitoring_requirements || [])
-    : (drug.monitoring_requirements?.slice(0, 4) || []);
+  const commonSE = rawCommon.map(humanize);
+  const seriousSE = rawSerious.map(humanize);
+  const contraItems = drug.contraindications || [];
+  const tipItems = drug.patient_counseling_points || [];
+  const monitorItems = drug.monitoring_requirements || [];
 
   const listHtml = (items: string[]) =>
     items.length > 0 ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '';
