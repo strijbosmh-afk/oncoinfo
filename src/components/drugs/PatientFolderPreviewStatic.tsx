@@ -120,9 +120,7 @@ export function generateStaticPreviewHtml(
 
   const labels = labelsByLang[language] || labelsByLang['nl'];
   const introText = drug.mechanism_of_action || '';
-  const usageItems = folderMode === 'uitgebreid' 
-    ? (drug.approved_indications || []) 
-    : (drug.approved_indications?.slice(0, 4) || []);
+  const usageItems = drug.approved_indications || [];
   
   let dosingItems: string[] = [];
   if (includeDosing) {
@@ -134,15 +132,19 @@ export function generateStaticPreviewHtml(
       if (di.adjuvant) dosingItems.push(`${di.adjuvant}${di.adjuvant_duration ? ` (${di.adjuvant_duration})` : ''}`);
       // Simple schemas
       if (dosingItems.length === 0) {
-        if (di.standard_dose && folderMode === 'uitgebreid') {
-          const doseLabel = isEn ? 'Dose' : isDe ? 'Dosis' : isFr ? 'Dose' : 'Dosis';
-          dosingItems.push(`${doseLabel}: ${di.standard_dose}`);
-        }
-        if (di.frequency) dosingItems.push(di.frequency);
-        if (drug.cycle_length_days) {
-          const cycleLabel = isEn ? 'Cycle' : isDe ? 'Zyklus' : isFr ? 'Cycle' : 'Cyclus';
-          const daysLabel = isEn ? 'days' : isDe ? 'Tage' : isFr ? 'jours' : 'dagen';
-          dosingItems.push(`${cycleLabel}: ${drug.cycle_length_days} ${daysLabel}`);
+        if (di.standard_dose) {
+          dosingItems.push(di.standard_dose);
+          // Only add frequency if not already included in standard_dose
+          if (di.frequency && !di.standard_dose.toLowerCase().includes(di.frequency.toLowerCase().substring(0, 10))) {
+            dosingItems.push(di.frequency);
+          }
+        } else {
+          if (di.frequency) dosingItems.push(di.frequency);
+          if (drug.cycle_length_days) {
+            const cycleLabel = isEn ? 'Cycle' : isDe ? 'Zyklus' : isFr ? 'Cycle' : 'Cyclus';
+            const daysLabel = isEn ? 'days' : isDe ? 'Tage' : isFr ? 'jours' : 'dagen';
+            dosingItems.push(`${cycleLabel}: ${drug.cycle_length_days} ${daysLabel}`);
+          }
         }
         if (di.duration) {
           const durLabel = isEn ? 'Duration' : isDe ? 'Dauer' : isFr ? 'Durée' : 'Duur';
@@ -153,9 +155,7 @@ export function generateStaticPreviewHtml(
     }
     // Fallback to common_regimens
     if (dosingItems.length === 0 && drug.common_regimens?.length > 0) {
-      dosingItems = folderMode === 'uitgebreid' 
-        ? [...drug.common_regimens] 
-        : drug.common_regimens.slice(0, 3);
+      dosingItems = [...(drug.common_regimens || [])];
     }
     // Add instruction to always follow physician's instructions for oral medications (as first item, bold)
     if (drug.administration_route?.toLowerCase() === 'oraal') {
@@ -326,21 +326,11 @@ export function generateStaticPreviewHtml(
 
   const rawCommon = drug.side_effects?.common || drug.side_effects?.veel_voorkomend || [];
   const rawSerious = drug.side_effects?.serious || drug.side_effects?.ernstig || [];
-  const commonSE = folderMode === 'uitgebreid'
-    ? rawCommon.map(humanize)
-    : rawCommon.slice(0, 5).map(humanize);
-  const seriousSE = folderMode === 'uitgebreid'
-    ? rawSerious.map(humanize)
-    : rawSerious.slice(0, 3).map(humanize);
-  const contraItems = folderMode === 'uitgebreid'
-    ? (drug.contraindications || [])
-    : (drug.contraindications?.slice(0, 4) || []);
-  const tipItems = folderMode === 'uitgebreid'
-    ? (drug.patient_counseling_points || [])
-    : (drug.patient_counseling_points?.slice(0, 4) || []);
-  const monitorItems = folderMode === 'uitgebreid'
-    ? (drug.monitoring_requirements || [])
-    : (drug.monitoring_requirements?.slice(0, 4) || []);
+  const commonSE = rawCommon.map(humanize);
+  const seriousSE = rawSerious.map(humanize);
+  const contraItems = drug.contraindications || [];
+  const tipItems = drug.patient_counseling_points || [];
+  const monitorItems = drug.monitoring_requirements || [];
 
   const listHtml = (items: string[]) =>
     items.length > 0 ? `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>` : '';

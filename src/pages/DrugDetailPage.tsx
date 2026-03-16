@@ -193,7 +193,7 @@ export default function DrugDetailPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr' | 'de' | 'en'>(defaultFolderLang);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
-  const [folderMode, setFolderMode] = useState<'compact' | 'uitgebreid'>('compact');
+  const [folderMode] = useState<'compact' | 'uitgebreid'>('uitgebreid');
   const [folderFontSize, setFolderFontSize] = useState(() => {
     const saved = localStorage.getItem('folder-font-size-default');
     return saved ? parseInt(saved, 10) : 14;
@@ -1400,34 +1400,6 @@ export default function DrugDetailPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 sm:space-y-3 border-t pt-3 sm:pt-4">
-                      <Label className="text-xs sm:text-sm font-medium">{t('patientFolder.folderType')}</Label>
-                      <div className="flex gap-1.5 sm:gap-2">
-                        <Button
-                          type="button"
-                          variant={folderMode === 'compact' ? 'default' : 'outline'}
-                          onClick={() => setFolderMode('compact')}
-                          className="flex-1 h-7 sm:h-8 text-xs"
-                          size="sm"
-                        >
-                          {t('patientFolder.compact')}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={folderMode === 'uitgebreid' ? 'default' : 'outline'}
-                          onClick={() => setFolderMode('uitgebreid')}
-                          className="flex-1 h-7 sm:h-8 text-xs"
-                          size="sm"
-                        >
-                          {t('patientFolder.extended')}
-                        </Button>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground">
-                        {folderMode === 'compact'
-                          ? t('patientFolder.compactDesc')
-                          : t('patientFolder.extendedDesc')}
-                      </p>
-                    </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
                       <div className="flex items-center justify-between">
