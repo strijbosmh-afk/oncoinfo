@@ -795,6 +795,8 @@ function generatePatientInfoHtml(
       .page-container { max-height: none !important; overflow: visible !important; }
       .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
       .page-break { page-break-before: always; break-before: page; }
+      .section, .warning-box, .danger-box, .selfcare-box, .info-box, .contact-section, .timeline-item { break-inside: avoid; page-break-inside: avoid; }
+      h2, h3, strong { break-after: avoid; page-break-after: avoid; }
     }
   </style>
 </head>

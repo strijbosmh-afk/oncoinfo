@@ -509,25 +509,70 @@ export default function DrugDetailPage() {
         const imgData = canvas.toDataURL('image/png');
         const imgWidthMm = pdfWidth;
         const imgHeightMm = (canvas.height * pdfWidth) / canvas.width;
-        return { imgData, imgWidthMm, imgHeightMm };
+        return { canvas, imgData, imgWidthMm, imgHeightMm };
       };
 
-      // Helper: add section image to PDF, handling page overflow
-      const addSectionToPdf = (imgData: string, imgW: number, imgH: number) => {
-        // If this section won't fit on the current page, start a new one
-        if (yPosition > 0 && (yPosition + imgH) > contentAreaHeight) {
-          addDisclaimerToPage(pdf);
-          pdf.addPage();
-          isFirstPdfPage = false;
-          yPosition = 0;
-        } else if (!isFirstPdfPage && yPosition === 0) {
-          // Already on a fresh page from a previous addPage
-        } else if (isFirstPdfPage && yPosition === 0) {
+      const addCanvasSliceToPdf = (canvas: HTMLCanvasElement, startYpx: number, sliceHeightPx: number) => {
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeightPx;
+        const ctx = sliceCanvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(canvas, 0, startYpx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        const sliceMm = (sliceHeightPx * pdfWidth) / canvas.width;
+        const sliceData = sliceCanvas.toDataURL('image/png');
+        pdf.addImage(sliceData, 'PNG', 0, yPosition, pdfWidth, sliceMm);
+        yPosition += sliceMm + sectionGap;
+      };
+
+      // Helper: add section image to PDF, handling page overflow and oversized sections
+      const addSectionToPdf = (canvas: HTMLCanvasElement, imgData: string, imgW: number, imgH: number) => {
+        if (isFirstPdfPage && yPosition === 0) {
           isFirstPdfPage = false;
         }
 
-        pdf.addImage(imgData, 'PNG', 0, yPosition, imgW, imgH);
-        yPosition += imgH + sectionGap;
+        if (imgH <= contentAreaHeight) {
+          if (yPosition > 0 && (yPosition + imgH) > contentAreaHeight) {
+            addDisclaimerToPage(pdf);
+            pdf.addPage();
+            yPosition = 0;
+          }
+          pdf.addImage(imgData, 'PNG', 0, yPosition, imgW, imgH);
+          yPosition += imgH + sectionGap;
+          return;
+        }
+
+        const pxPerMm = canvas.height / imgH;
+        let remainingPx = canvas.height;
+        let startYpx = 0;
+
+        while (remainingPx > 0) {
+          const availableMm = yPosition > 0 ? contentAreaHeight - yPosition : contentAreaHeight;
+          if (availableMm <= 2) {
+            addDisclaimerToPage(pdf);
+            pdf.addPage();
+            yPosition = 0;
+            continue;
+          }
+
+          const sliceHeightPx = Math.min(remainingPx, Math.floor(availableMm * pxPerMm));
+          if (sliceHeightPx <= 0) {
+            addDisclaimerToPage(pdf);
+            pdf.addPage();
+            yPosition = 0;
+            continue;
+          }
+
+          addCanvasSliceToPdf(canvas, startYpx, sliceHeightPx);
+          startYpx += sliceHeightPx;
+          remainingPx -= sliceHeightPx;
+
+          if (remainingPx > 0) {
+            addDisclaimerToPage(pdf);
+            pdf.addPage();
+            yPosition = 0;
+          }
+        }
       };
 
       // Capture main page sections individually
