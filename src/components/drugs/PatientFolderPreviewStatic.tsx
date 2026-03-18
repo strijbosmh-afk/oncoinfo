@@ -470,6 +470,8 @@ export function generateStaticPreviewHtml(
         body { padding: 10mm; padding-bottom: 28mm; }
         .fixed-print-disclaimer { position: fixed; bottom: 0; left: 10mm; right: 10mm; background: white; z-index: 999; }
         .inline-disclaimer { display: none !important; }
+        .info-section, .se-category, .tips-box, .contact-section, .drug-header, .timeline-item, .inline-list, .se-grid-row, .print-disclaimer { break-inside: avoid; page-break-inside: avoid; }
+        h2, h3, strong { break-after: avoid; page-break-after: avoid; }
       }
       @media screen { .fixed-print-disclaimer { display: none !important; } }
      .timeline { position: relative; margin: 16px 0; padding-left: 0; }
