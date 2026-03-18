@@ -352,6 +352,7 @@ export default function DrugsPage() {
       setDisciplines(data || []);
     };
     const fetchFilterTags = async () => {
+      setFilterTagsLoaded(false);
       const { data } = await supabase
         .from('hospital_drug_filter_tags')
         .select('drug_id, filter_tags')
@@ -363,6 +364,7 @@ export default function DrugsPage() {
         }
         setHospitalFilterTags(map);
       }
+      setFilterTagsLoaded(true);
     };
     fetchDisciplines();
     fetchFilterTags();
