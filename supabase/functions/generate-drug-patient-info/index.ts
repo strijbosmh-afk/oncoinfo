@@ -795,6 +795,8 @@ function generatePatientInfoHtml(
       .page-container { max-height: none !important; overflow: visible !important; }
       .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
       .page-break { page-break-before: always; break-before: page; }
+      .section, .warning-box, .danger-box, .selfcare-box, .info-box, .contact-section, .timeline-item { break-inside: avoid; page-break-inside: avoid; }
+      h2, h3, strong { break-after: avoid; page-break-after: avoid; }
     }
   </style>
 </head>
@@ -813,21 +815,21 @@ function generatePatientInfoHtml(
   <div class="page-container">
   <div class="content">
     ${introductionText ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.whatIs}</h2>
       <p>${introductionText}</p>
     </div>
     ` : ''}
 
     ${usageText ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.usedFor}</h2>
       ${formatAsList(usageText)}
     </div>
     ` : ''}
 
     ${includeDosing && (dosingText || dosingStructured || drug.dosing_info || drug.common_regimens?.length > 0) ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.howGiven}</h2>
       ${dosingText ? formatAsList(dosingText) 
         : dosingStructured ? formatAsList(dosingStructured)
@@ -837,31 +839,31 @@ function generatePatientInfoHtml(
     ` : ''}
 
     ${premedicatieItems && premedicatieItems.length > 0 ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.premedicatie}</h2>
       <p style="font-size: ${fontSize - 2}px; color: #666; font-style: italic;">${language === 'fr' ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p>
     </div>
     ` : ''}
 
     ${contraindicationsText ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.whenNot}</h2>
       ${formatAsList(contraindicationsText)}
     </div>
     ` : ''}
 
     ${includeSideEffects && (sideEffectsCommon.length > 0 || sideEffectsSerious.length > 0) ? `
-    <div class="section full-width">
+    <div class="section full-width" data-pdf-section>
       <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         ${sideEffectsCommon.length > 0 ? `
-        <div class="warning-box">
+        <div class="warning-box" data-pdf-section>
           <h3>⚡ ${labels.commonSE}</h3>
           ${renderGroupedSE(sideEffectsCommon, 'rgba(232,119,34,0.06)')}
         </div>
         ` : ''}
         ${sideEffectsSerious.length > 0 ? `
-        <div class="danger-box">
+        <div class="danger-box" data-pdf-section>
           <h3>🚨 ${labels.seriousSE}</h3>
           ${renderGroupedSE(sideEffectsSerious, 'rgba(204,0,0,0.04)')}
         </div>
@@ -871,7 +873,7 @@ function generatePatientInfoHtml(
     ` : ''}
 
     ${selfCareTips ? `
-    <div class="section full-width">
+    <div class="section full-width" data-pdf-section>
       <h2>${labels.selfCare}</h2>
       <div class="selfcare-box">
         ${formatAsList(selfCareTips)}
@@ -880,7 +882,7 @@ function generatePatientInfoHtml(
     ` : ''}
 
     ${tipsText ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.tips}</h2>
       <div class="info-box">
         ${formatAsList(tipsText)}
@@ -889,14 +891,14 @@ function generatePatientInfoHtml(
     ` : ''}
 
     ${monitoringText ? `
-    <div class="section">
+    <div class="section" data-pdf-section>
       <h2>${labels.monitoring}</h2>
       ${formatAsList(monitoringText)}
     </div>
     ` : ''}
   </div> <!-- end content grid -->
 
-  <div class="page-bottom">
+  <div class="page-bottom" data-pdf-section>
     <div class="contact-section">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
