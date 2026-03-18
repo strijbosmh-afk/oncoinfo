@@ -328,7 +328,78 @@ export function generateStaticPreviewHtml(
   const rawSerious = drug.side_effects?.serious || drug.side_effects?.ernstig || [];
   const commonSE = rawCommon.map(humanize);
   const seriousSE = rawSerious.map(humanize);
-  const contraItems = drug.contraindications || [];
+
+  // Categorize side effects by body system
+  const seCategories: Record<string, { icon: string; label: Record<string, string>; keywords: string[] }> = {
+    blood: {
+      icon: '🩸',
+      label: { nl: 'Bloed', fr: 'Sang', en: 'Blood', de: 'Blut' },
+      keywords: ['neutro', 'leuko', 'anemie', 'anemia', 'trombocyto', 'thrombocyto', 'myelosuppressie', 'bloedcel', 'blood cell', 'witte bloedcel', 'rode bloedcel', 'bloedplaatjes', 'platelet', 'febriele', 'febrile', 'koorts door verlaagde', 'fever due to lowered'],
+    },
+    gi: {
+      icon: '🫃',
+      label: { nl: 'Maag-darm', fr: 'Gastro-intestinal', en: 'Gastrointestinal', de: 'Magen-Darm' },
+      keywords: ['misselijk', 'nausea', 'braken', 'vomit', 'diarree', 'diarrhea', 'durchfall', 'obstipatie', 'constipat', 'verstopf', 'buikpijn', 'abdominal', 'bauchschmerz', 'stomatitis', 'mucositis', 'mond', 'mouth', 'mund', 'smaak', 'taste', 'geschmack', 'übelkeit', 'erbrechen', 'doorbraak in de darmwand', 'perforation'],
+    },
+    skin: {
+      icon: '🧴',
+      label: { nl: 'Huid & haar', fr: 'Peau & cheveux', en: 'Skin & hair', de: 'Haut & Haare' },
+      keywords: ['huid', 'skin', 'haut', 'uitslag', 'rash', 'ausschlag', 'alopecia', 'haar', 'hair', 'hand-voet', 'palm', 'sole', 'handfläch', 'voetzol', 'nagel', 'nail', 'droge huid', 'dry skin', 'trockene haut', 'acne', 'jeuk', 'itch', 'juckreiz', 'pruritus'],
+    },
+    neuro: {
+      icon: '🧠',
+      label: { nl: 'Zenuwstelsel', fr: 'Système nerveux', en: 'Nervous system', de: 'Nervensystem' },
+      keywords: ['neuropathie', 'neuropathy', 'tintel', 'tingling', 'kribbel', 'gevoelloos', 'numbness', 'taubheit', 'hoofdpijn', 'headache', 'kopfschmerz'],
+    },
+    cardiac: {
+      icon: '❤️',
+      label: { nl: 'Hart & vaten', fr: 'Cœur & vaisseaux', en: 'Heart & vessels', de: 'Herz & Gefäße' },
+      keywords: ['cardio', 'hart', 'heart', 'herz', 'bloeddruk', 'hypertens', 'blutdruck', 'blood pressure', 'stolsel', 'clot', 'thrombos', 'gerinnsel', 'oedeem', 'edema', 'ödem', 'zwelling', 'swelling', 'schwellung'],
+    },
+    general: {
+      icon: '💊',
+      label: { nl: 'Algemeen', fr: 'Général', en: 'General', de: 'Allgemein' },
+      keywords: [],
+    },
+  };
+
+  const categorizeSE = (item: string): string => {
+    const lower = item.toLowerCase();
+    for (const [key, cat] of Object.entries(seCategories)) {
+      if (key === 'general') continue;
+      if (cat.keywords.some(kw => lower.includes(kw))) return key;
+    }
+    return 'general';
+  };
+
+  const groupSEByCategory = (items: string[]): Record<string, string[]> => {
+    const groups: Record<string, string[]> = {};
+    items.forEach(item => {
+      const cat = categorizeSE(item);
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+    return groups;
+  };
+
+  const renderGroupedSE = (items: string[], bgAlt: string): string => {
+    const groups = groupSEByCategory(items);
+    const catOrder = ['blood', 'gi', 'skin', 'neuro', 'cardiac', 'general'];
+    return catOrder
+      .filter(cat => groups[cat]?.length > 0)
+      .map(cat => {
+        const info = seCategories[cat];
+        const catLabel = info.label[language] || info.label['nl'];
+        return `<div style="margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+            <span style="font-size:${fontSize - 2}px;">${info.icon}</span>
+            <span style="font-size:${fontSize - 2}px; font-weight:600; color:#555;">${catLabel}</span>
+          </div>
+          ${groups[cat].map((se, i) => `<div style="padding:2px 6px 2px 20px; font-size:${listFontSize}px; color:#333; background:${i % 2 === 0 ? 'transparent' : bgAlt};">• ${se}</div>`).join('')}
+        </div>`;
+      }).join('');
+  };
+
   const tipItems = drug.patient_counseling_points || [];
   const monitorItems = drug.monitoring_requirements || [];
 
