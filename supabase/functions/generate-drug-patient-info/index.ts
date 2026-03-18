@@ -383,20 +383,24 @@ Deno.serve(async (req) => {
       dosingStructured = parts.join('\n');
     }
 
-    // Humanize side effects with AI (skip if custom self_care_tips provided)
+    // Generate self-care tips with AI (keep structured side effects for categorized display)
     let selfCareTips: string | null = customContent?.self_care_tips || null;
-    if (include_side_effects && (sideEffectsCommonText || sideEffectsSeriousText)) {
-      console.log('Humanizing side effects...');
+    if (include_side_effects && !selfCareTips && (sideEffectsCommonText || sideEffectsSeriousText)) {
+      console.log('Generating self-care tips...');
       const humanized = await humanizeSideEffects(
         sideEffectsCommonText, sideEffectsSeriousText, drug.generic_name, language
       );
-      sideEffectsCommonText = humanized.commonHumanized;
-      sideEffectsSeriousText = humanized.seriousHumanized;
-      if (!selfCareTips) {
-        selfCareTips = humanized.selfCareTips;
-      }
-      console.log('Side effects humanized');
+      selfCareTips = humanized.selfCareTips;
+      console.log('Self-care tips generated');
     }
+
+    // Prepare raw side effects arrays for structured/categorized rendering
+    const rawCommonSE: string[] = customContent?.side_effects_common
+      ? customContent.side_effects_common.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
+      : (drug.side_effects?.common || drug.side_effects?.veel_voorkomend || []).slice(0, maxCommonSideEffects);
+    const rawSeriousSE: string[] = customContent?.side_effects_serious
+      ? customContent.side_effects_serious.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
+      : (drug.side_effects?.serious || drug.side_effects?.ernstig || []).slice(0, maxSeriousSideEffects);
 
     // Translate content if not Dutch (skip side effects — already generated in target language by humanize)
     if (language !== 'nl') {
