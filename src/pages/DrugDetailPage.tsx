@@ -583,13 +583,13 @@ export default function DrugDetailPage() {
           // Also capture the header (everything before first section)
           const logoHeader = pageContainer.querySelector('.logo-header') as HTMLElement;
           if (logoHeader) {
-            const { imgData, imgWidthMm, imgHeightMm } = await captureElement(logoHeader);
-            addSectionToPdf(imgData, imgWidthMm, imgHeightMm);
+            const { canvas, imgData, imgWidthMm, imgHeightMm } = await captureElement(logoHeader);
+            addSectionToPdf(canvas, imgData, imgWidthMm, imgHeightMm);
           }
 
           for (const section of sections) {
-            const { imgData, imgWidthMm, imgHeightMm } = await captureElement(section);
-            addSectionToPdf(imgData, imgWidthMm, imgHeightMm);
+            const { canvas, imgData, imgWidthMm, imgHeightMm } = await captureElement(section);
+            addSectionToPdf(canvas, imgData, imgWidthMm, imgHeightMm);
           }
           addDisclaimerToPage(pdf);
         } else {
