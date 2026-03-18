@@ -339,6 +339,7 @@ export default function DrugsPage() {
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   // Hospital-specific filter tags: map drug_id -> Set of canonical tag strings
   const [hospitalFilterTags, setHospitalFilterTags] = useState<Record<string, string[]>>({});
+  const [filterTagsLoaded, setFilterTagsLoaded] = useState(false);
 
   // Fetch hospital disciplines and filter tags
   useEffect(() => {
@@ -351,6 +352,7 @@ export default function DrugsPage() {
       setDisciplines(data || []);
     };
     const fetchFilterTags = async () => {
+      setFilterTagsLoaded(false);
       const { data } = await supabase
         .from('hospital_drug_filter_tags')
         .select('drug_id, filter_tags')
@@ -362,6 +364,7 @@ export default function DrugsPage() {
         }
         setHospitalFilterTags(map);
       }
+      setFilterTagsLoaded(true);
     };
     fetchDisciplines();
     fetchFilterTags();
@@ -596,7 +599,7 @@ export default function DrugsPage() {
    }
     
     // Filter by subtypes using hospital-specific filter tags (multi-select, OR logic)
-    if (selectedSubtypes.length > 0) {
+    if (selectedSubtypes.length > 0 && filterTagsLoaded) {
       const subtypeCanonicals: Record<string, string> = {
         'hr_positive': 'HR-positief',
         'her2_positive': 'HER2-positief',
@@ -612,7 +615,7 @@ export default function DrugsPage() {
     }
     
     // Filter by stages using hospital-specific filter tags (multi-select, OR logic)
-    if (selectedStages.length > 0) {
+    if (selectedStages.length > 0 && filterTagsLoaded) {
       const stageCanonicals: Record<string, string> = {
         'neoadjuvant_adjuvant': 'Neoadjuvant',
         'metastatic': 'Gemetastaseerd',
@@ -627,7 +630,7 @@ export default function DrugsPage() {
     }
     
     return result;
-  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas, hospitalFilterTags]);
+  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas, hospitalFilterTags, filterTagsLoaded]);
 
   // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
   const { combinationDrugs, hormonalDrugs, cdk46Drugs, artaDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
