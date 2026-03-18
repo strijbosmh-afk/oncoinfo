@@ -850,20 +850,20 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText) ? `
+    ${includeSideEffects && (sideEffectsCommon.length > 0 || sideEffectsSerious.length > 0) ? `
     <div class="section full-width">
       <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        ${sideEffectsCommonText ? `
+        ${sideEffectsCommon.length > 0 ? `
         <div class="warning-box">
-          <h3>${labels.commonSE}</h3>
-          ${formatAsList(sideEffectsCommonText)}
+          <h3>⚡ ${labels.commonSE}</h3>
+          ${renderGroupedSE(sideEffectsCommon, 'rgba(232,119,34,0.06)')}
         </div>
         ` : ''}
-        ${sideEffectsSeriousText ? `
+        ${sideEffectsSerious.length > 0 ? `
         <div class="danger-box">
-          <h3>${labels.seriousSE}</h3>
-          ${formatAsList(sideEffectsSeriousText)}
+          <h3>🚨 ${labels.seriousSE}</h3>
+          ${renderGroupedSE(sideEffectsSerious, 'rgba(204,0,0,0.04)')}
         </div>
         ` : ''}
       </div>
