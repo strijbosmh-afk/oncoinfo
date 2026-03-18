@@ -615,7 +615,7 @@ export default function DrugsPage() {
     }
     
     // Filter by stages using hospital-specific filter tags (multi-select, OR logic)
-    if (selectedStages.length > 0) {
+    if (selectedStages.length > 0 && filterTagsLoaded) {
       const stageCanonicals: Record<string, string> = {
         'neoadjuvant_adjuvant': 'Neoadjuvant',
         'metastatic': 'Gemetastaseerd',
