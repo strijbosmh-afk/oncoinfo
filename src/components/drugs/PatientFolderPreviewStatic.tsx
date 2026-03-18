@@ -456,12 +456,18 @@ export function generateStaticPreviewHtml(
      .contact-section h2 { font-size: ${contactFontSize + 2}px; margin-bottom: 6px; color: ${hospitalColor}; }
      .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
      .footer { padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: ${footerFontSize}px; color: #666; text-align: center; }
-     .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
-     @media print {
-       .preview-badge { display: none !important; }
-       .page-break { margin-top: 0; padding-top: 10mm; border-top: none; }
-       body { padding: 10mm; }
-     }
+      .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
+      .print-disclaimer { margin-top: 8px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5; }
+      .print-disclaimer-title { font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 3px; }
+      .print-disclaimer-text { font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4; }
+      @media print {
+        .preview-badge { display: none !important; }
+        .page-break { margin-top: 0; padding-top: 10mm; border-top: none; }
+        body { padding: 10mm; padding-bottom: 28mm; }
+        .fixed-print-disclaimer { position: fixed; bottom: 0; left: 10mm; right: 10mm; background: white; z-index: 999; }
+        .inline-disclaimer { display: none !important; }
+      }
+      @media screen { .fixed-print-disclaimer { display: none !important; } }
      .timeline { position: relative; margin: 16px 0; padding-left: 0; }
      .timeline-line { position: absolute; left: 22px; top: 0; bottom: 0; width: 3px; background: ${hospitalColor}; border-radius: 2px; }
      .timeline-item { position: relative; display: flex; align-items: flex-start; margin-bottom: 14px; padding-left: 50px; }
