@@ -630,7 +630,7 @@ export default function DrugsPage() {
     }
     
     return result;
-  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas, hospitalFilterTags]);
+  }, [drugs, category, selectedSubtypes, selectedStages, selectedSubcategories, selectedDiseaseAreas, hospitalFilterTags, filterTagsLoaded]);
 
   // Separate combination regimens from individual drugs, plus hormonal and CDK4/6 (breast only)
   const { combinationDrugs, hormonalDrugs, cdk46Drugs, artaDrugs, lhrhDrugs, individualDrugs } = useMemo(() => {
