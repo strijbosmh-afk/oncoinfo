@@ -414,6 +414,10 @@ export function generateStaticPreviewHtml(
   const disclaimerTitleSize = fontSize - 4;
   const disclaimerTextSize = fontSize - 5;
 
+  const disclaimerTitle = language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling';
+  const disclaimerText = language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.';
+  const disclaimerHtml = `<div class="print-disclaimer"><p class="print-disclaimer-title">⚠ ${disclaimerTitle}</p><p class="print-disclaimer-text">${disclaimerText}</p></div>`;
+
   return `<!DOCTYPE html>
 <html lang="${isFr ? 'fr' : 'nl'}">
 <head>
