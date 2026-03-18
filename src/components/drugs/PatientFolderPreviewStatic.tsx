@@ -500,13 +500,13 @@ export function generateStaticPreviewHtml(
 
   <div class="page-content">
   <div class="content">
-    ${introText ? `<div class="section"><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
-    ${usageItems.length > 0 ? `<div class="section"><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
-    ${includeDosing && dosingItems.length > 0 ? `<div class="section"><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
-    ${premedicatieItems.length > 0 ? `<div class="section"><h2>${labels.premedicatie}</h2><p style="font-size: ${fontSize - 2}px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p></div>` : ''}
+    ${introText ? `<div class="section" data-pdf-section><h2>${labels.whatIs}</h2><p>${introText}</p></div>` : ''}
+    ${usageItems.length > 0 ? `<div class="section" data-pdf-section><h2>${labels.usedFor}</h2>${listHtml(usageItems)}</div>` : ''}
+    ${includeDosing && dosingItems.length > 0 ? `<div class="section" data-pdf-section><h2>${labels.howGiven}</h2>${listHtml(dosingItems)}</div>` : ''}
+    ${premedicatieItems.length > 0 ? `<div class="section" data-pdf-section><h2>${labels.premedicatie}</h2><p style="font-size: ${fontSize - 2}px; color: #666; font-style: italic;">${isFr ? 'Voir le schéma ci-joint' : language === 'de' ? 'Siehe beigefügtes Schema' : language === 'en' ? 'See attached schedule' : 'Zie bijgevoegd schema'}</p></div>` : ''}
 
     ${includeSideEffects && (commonSE.length > 0 || seriousSE.length > 0) ? `
-    <div class="section full-width">
+    <div class="section full-width" data-pdf-section>
       <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         ${commonSE.length > 0 ? `<div class="warning-box"><h3>⚡ ${labels.commonSE}</h3>${renderGroupedSE(commonSE, 'rgba(232,119,34,0.06)')}</div>` : ''}
@@ -514,7 +514,7 @@ export function generateStaticPreviewHtml(
       </div>
     </div>` : ''}
 
-    <div class="section full-width">
+    <div class="section full-width" data-pdf-section>
       <h2>${labels.selfCare}</h2>
       <div class="selfcare-box">
         <h3>${isFr ? 'Conseils pratiques' : 'Praktische tips'}</h3>
@@ -522,8 +522,8 @@ export function generateStaticPreviewHtml(
       </div>
     </div>
 
-    ${tipItems.length > 0 ? `<div class="section"><h2>${labels.tips}</h2><div class="info-box">${listHtml(tipItems)}</div></div>` : ''}
-    ${monitorItems.length > 0 ? `<div class="section"><h2>${labels.monitoring}</h2>${listHtml(monitorItems)}</div>` : ''}
+    ${tipItems.length > 0 ? `<div class="section" data-pdf-section><h2>${labels.tips}</h2><div class="info-box">${listHtml(tipItems)}</div></div>` : ''}
+    ${monitorItems.length > 0 ? `<div class="section" data-pdf-section><h2>${labels.monitoring}</h2>${listHtml(monitorItems)}</div>` : ''}
   </div>
   </div>
 
