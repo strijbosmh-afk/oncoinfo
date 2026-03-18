@@ -339,6 +339,7 @@ export default function DrugsPage() {
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
   // Hospital-specific filter tags: map drug_id -> Set of canonical tag strings
   const [hospitalFilterTags, setHospitalFilterTags] = useState<Record<string, string[]>>({});
+  const [filterTagsLoaded, setFilterTagsLoaded] = useState(false);
 
   // Fetch hospital disciplines and filter tags
   useEffect(() => {
