@@ -527,7 +527,7 @@ export function generateStaticPreviewHtml(
   </div>
   </div>
 
-  <div class="page-footer-block">
+  <div class="page-footer-block" data-pdf-section>
      <div class="contact-section full-width">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
