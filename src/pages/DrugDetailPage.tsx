@@ -486,63 +486,97 @@ export default function DrugDetailPage() {
       const pageContainer = iframeDoc.querySelector('.page-container') as HTMLElement;
       const pageBreaks = Array.from(iframeDoc.querySelectorAll('.page-break')) as HTMLElement[];
       
-      const pagesToRender: HTMLElement[] = [];
+      // --- Section-based capture for main page ---
       if (pageContainer) {
-        // Temporarily remove overflow:hidden for full capture
         pageContainer.style.maxHeight = 'none';
         pageContainer.style.overflow = 'visible';
-        pagesToRender.push(pageContainer);
-      }
-      pagesToRender.push(...pageBreaks);
-
-      // If no structured pages found, fall back to body
-      if (pagesToRender.length === 0) {
-        pagesToRender.push(iframeDoc.body);
       }
 
       const contentAreaHeight = pdfHeight - disclaimerBoxHeight;
+      const sectionGap = 1.5; // mm gap between sections
       let isFirstPdfPage = true;
+      let yPosition = 0; // current vertical position on the page in mm
 
-      for (const pageEl of pagesToRender) {
-        const canvas = await html2canvas(pageEl, {
+      // Helper: render a single HTML element to a canvas and get its image + mm dimensions
+      const captureElement = async (el: HTMLElement) => {
+        const canvas = await html2canvas(el, {
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
-          windowWidth: pageEl.scrollWidth || 794,
+          windowWidth: 794,
         });
-
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = pdfWidth;
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        const imgWidthMm = pdfWidth;
+        const imgHeightMm = (canvas.height * pdfWidth) / canvas.width;
+        return { imgData, imgWidthMm, imgHeightMm };
+      };
 
-        if (!isFirstPdfPage) {
+      // Helper: add section image to PDF, handling page overflow
+      const addSectionToPdf = (imgData: string, imgW: number, imgH: number) => {
+        // If this section won't fit on the current page, start a new one
+        if (yPosition > 0 && (yPosition + imgH) > contentAreaHeight) {
+          addDisclaimerToPage(pdf);
           pdf.addPage();
+          isFirstPdfPage = false;
+          yPosition = 0;
+        } else if (!isFirstPdfPage && yPosition === 0) {
+          // Already on a fresh page from a previous addPage
+        } else if (isFirstPdfPage && yPosition === 0) {
+          isFirstPdfPage = false;
         }
 
-        if (imgHeight <= contentAreaHeight) {
-          // Fits on one page
-          pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, yPosition, imgW, imgH);
+        yPosition += imgH + sectionGap;
+      };
+
+      // Capture main page sections individually
+      if (pageContainer) {
+        const sections = Array.from(pageContainer.querySelectorAll('[data-pdf-section]')) as HTMLElement[];
+        
+        if (sections.length > 0) {
+          // Also capture the header (everything before first section)
+          const logoHeader = pageContainer.querySelector('.logo-header') as HTMLElement;
+          if (logoHeader) {
+            const { imgData, imgWidthMm, imgHeightMm } = await captureElement(logoHeader);
+            addSectionToPdf(imgData, imgWidthMm, imgHeightMm);
+          }
+
+          for (const section of sections) {
+            const { imgData, imgWidthMm, imgHeightMm } = await captureElement(section);
+            addSectionToPdf(imgData, imgWidthMm, imgHeightMm);
+          }
           addDisclaimerToPage(pdf);
         } else {
-          // Multi-page slice for this section
-          let heightLeft = imgHeight;
-          let position = 0;
-          
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          addDisclaimerToPage(pdf);
-          heightLeft -= contentAreaHeight;
-          
-          while (heightLeft > 5) {
-            position -= contentAreaHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          // Fallback: no sections found, capture entire page container
+          const { imgData, imgWidthMm, imgHeightMm } = await captureElement(pageContainer);
+          if (imgHeightMm <= contentAreaHeight) {
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
+            addDisclaimerToPage(pdf);
+          } else {
+            let heightLeft = imgHeightMm;
+            let pos = 0;
+            pdf.addImage(imgData, 'PNG', 0, pos, imgWidthMm, imgHeightMm);
             addDisclaimerToPage(pdf);
             heightLeft -= contentAreaHeight;
+            while (heightLeft > 5) {
+              pos -= contentAreaHeight;
+              pdf.addPage();
+              pdf.addImage(imgData, 'PNG', 0, pos, imgWidthMm, imgHeightMm);
+              addDisclaimerToPage(pdf);
+              heightLeft -= contentAreaHeight;
+            }
           }
         }
+      }
 
-        isFirstPdfPage = false;
+      // Capture premedicatie pages as full-page renders (separate pages)
+      for (const pageEl of pageBreaks) {
+        pdf.addPage();
+        yPosition = 0;
+        const { imgData, imgWidthMm, imgHeightMm } = await captureElement(pageEl);
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
+        addDisclaimerToPage(pdf);
       }
       
       pdf.save(`patienteninfo-${drug.generic_name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
