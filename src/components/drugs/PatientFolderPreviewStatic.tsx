@@ -414,6 +414,10 @@ export function generateStaticPreviewHtml(
   const disclaimerTitleSize = fontSize - 4;
   const disclaimerTextSize = fontSize - 5;
 
+  const disclaimerTitle = language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling';
+  const disclaimerText = language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.';
+  const disclaimerHtml = `<div class="print-disclaimer"><p class="print-disclaimer-title">⚠ ${disclaimerTitle}</p><p class="print-disclaimer-text">${disclaimerText}</p></div>`;
+
   return `<!DOCTYPE html>
 <html lang="${isFr ? 'fr' : 'nl'}">
 <head>
@@ -456,12 +460,18 @@ export function generateStaticPreviewHtml(
      .contact-section h2 { font-size: ${contactFontSize + 2}px; margin-bottom: 6px; color: ${hospitalColor}; }
      .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
      .footer { padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: ${footerFontSize}px; color: #666; text-align: center; }
-     .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
-     @media print {
-       .preview-badge { display: none !important; }
-       .page-break { margin-top: 0; padding-top: 10mm; border-top: none; }
-       body { padding: 10mm; }
-     }
+      .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
+      .print-disclaimer { margin-top: 8px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5; }
+      .print-disclaimer-title { font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 3px; }
+      .print-disclaimer-text { font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4; }
+      @media print {
+        .preview-badge { display: none !important; }
+        .page-break { margin-top: 0; padding-top: 10mm; border-top: none; }
+        body { padding: 10mm; padding-bottom: 28mm; }
+        .fixed-print-disclaimer { position: fixed; bottom: 0; left: 10mm; right: 10mm; background: white; z-index: 999; }
+        .inline-disclaimer { display: none !important; }
+      }
+      @media screen { .fixed-print-disclaimer { display: none !important; } }
      .timeline { position: relative; margin: 16px 0; padding-left: 0; }
      .timeline-line { position: absolute; left: 22px; top: 0; bottom: 0; width: 3px; background: ${hospitalColor}; border-radius: 2px; }
      .timeline-item { position: relative; display: flex; align-items: flex-start; margin-bottom: 14px; padding-left: 50px; }
@@ -525,10 +535,13 @@ export function generateStaticPreviewHtml(
       </div>
     </div>
 
-    <div class="disclaimer-box" style="margin-top: 8px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-      <p style="font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-      <p style="font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
-    </div>
+    <div class="inline-disclaimer">${disclaimerHtml}</div>
+
+    <div class="footer"><p>${labels.footer}</p></div>
+  </div>
+  </div>
+
+  <div class="fixed-print-disclaimer">${disclaimerHtml}</div>
 
     <div class="footer"><p>${labels.footer}</p></div>
   </div>
@@ -579,10 +592,7 @@ export function generateStaticPreviewHtml(
         </div>
       </div>
 
-      <div style="padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-        <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-        <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
-      </div>
+      <div class="inline-disclaimer">${disclaimerHtml}</div>
       <div class="footer"><p>${labels.footer}</p></div>
     </div>
   </div>
