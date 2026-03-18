@@ -599,7 +599,7 @@ export default function DrugsPage() {
    }
     
     // Filter by subtypes using hospital-specific filter tags (multi-select, OR logic)
-    if (selectedSubtypes.length > 0) {
+    if (selectedSubtypes.length > 0 && filterTagsLoaded) {
       const subtypeCanonicals: Record<string, string> = {
         'hr_positive': 'HR-positief',
         'her2_positive': 'HER2-positief',
