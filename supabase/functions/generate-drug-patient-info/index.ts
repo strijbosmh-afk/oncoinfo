@@ -456,7 +456,7 @@ Deno.serve(async (req) => {
       drug, include_dosing, include_side_effects, logoDataUri, 
       physician_name, nurse_name, language,
       introductionText, usageText, dosingText, dosingStructured,
-      contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
+      contraindicationsText, rawCommonSE, rawSeriousSE, 
       tipsText, monitoringText, phone_number, selfCareTips,
       hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie, font_size
     );
