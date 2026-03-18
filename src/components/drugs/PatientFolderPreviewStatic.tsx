@@ -497,8 +497,8 @@ export function generateStaticPreviewHtml(
     <div class="section full-width">
       <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        ${commonSE.length > 0 ? `<div class="warning-box"><h3>⚡ ${labels.commonSE}</h3><table style="width:100%; border-collapse:collapse;"><tbody>${commonSE.map((se, i) => `<tr style="background:${i % 2 === 0 ? 'transparent' : 'rgba(232,119,34,0.06)'}"><td style="padding:3px 6px; font-size:${listFontSize}px; color:#333; border-bottom:1px solid rgba(0,0,0,0.05);">• ${se}</td></tr>`).join('')}</tbody></table></div>` : ''}
-        ${seriousSE.length > 0 ? `<div class="danger-box"><h3>🚨 ${labels.seriousSE}</h3><table style="width:100%; border-collapse:collapse;"><tbody>${seriousSE.map((se, i) => `<tr style="background:${i % 2 === 0 ? 'transparent' : 'rgba(204,0,0,0.04)'}"><td style="padding:3px 6px; font-size:${listFontSize}px; color:#333; border-bottom:1px solid rgba(0,0,0,0.05);">• ${se}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${commonSE.length > 0 ? `<div class="warning-box"><h3>⚡ ${labels.commonSE}</h3>${renderGroupedSE(commonSE, 'rgba(232,119,34,0.06)')}</div>` : ''}
+        ${seriousSE.length > 0 ? `<div class="danger-box"><h3>🚨 ${labels.seriousSE}</h3>${renderGroupedSE(seriousSE, 'rgba(204,0,0,0.04)')}</div>` : ''}
       </div>
     </div>` : ''}
 
