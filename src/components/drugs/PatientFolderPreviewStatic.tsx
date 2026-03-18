@@ -592,10 +592,7 @@ export function generateStaticPreviewHtml(
         </div>
       </div>
 
-      <div style="padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5;">
-        <p style="font-weight: 700; color: #cc0000; font-size: 9px; margin-bottom: 3px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
-        <p style="font-size: 8px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
-      </div>
+      <div class="inline-disclaimer">${disclaimerHtml}</div>
       <div class="footer"><p>${labels.footer}</p></div>
     </div>
   </div>
