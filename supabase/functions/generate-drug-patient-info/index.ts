@@ -383,20 +383,24 @@ Deno.serve(async (req) => {
       dosingStructured = parts.join('\n');
     }
 
-    // Humanize side effects with AI (skip if custom self_care_tips provided)
+    // Generate self-care tips with AI (keep structured side effects for categorized display)
     let selfCareTips: string | null = customContent?.self_care_tips || null;
-    if (include_side_effects && (sideEffectsCommonText || sideEffectsSeriousText)) {
-      console.log('Humanizing side effects...');
+    if (include_side_effects && !selfCareTips && (sideEffectsCommonText || sideEffectsSeriousText)) {
+      console.log('Generating self-care tips...');
       const humanized = await humanizeSideEffects(
         sideEffectsCommonText, sideEffectsSeriousText, drug.generic_name, language
       );
-      sideEffectsCommonText = humanized.commonHumanized;
-      sideEffectsSeriousText = humanized.seriousHumanized;
-      if (!selfCareTips) {
-        selfCareTips = humanized.selfCareTips;
-      }
-      console.log('Side effects humanized');
+      selfCareTips = humanized.selfCareTips;
+      console.log('Self-care tips generated');
     }
+
+    // Prepare raw side effects arrays for structured/categorized rendering
+    const rawCommonSE: string[] = customContent?.side_effects_common
+      ? customContent.side_effects_common.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
+      : (drug.side_effects?.common || drug.side_effects?.veel_voorkomend || []).slice(0, maxCommonSideEffects);
+    const rawSeriousSE: string[] = customContent?.side_effects_serious
+      ? customContent.side_effects_serious.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
+      : (drug.side_effects?.serious || drug.side_effects?.ernstig || []).slice(0, maxSeriousSideEffects);
 
     // Translate content if not Dutch (skip side effects — already generated in target language by humanize)
     if (language !== 'nl') {
@@ -452,7 +456,7 @@ Deno.serve(async (req) => {
       drug, include_dosing, include_side_effects, logoDataUri, 
       physician_name, nurse_name, language,
       introductionText, usageText, dosingText, dosingStructured,
-      contraindicationsText, sideEffectsCommonText, sideEffectsSeriousText, 
+      contraindicationsText, rawCommonSE, rawSeriousSE, 
       tipsText, monitoringText, phone_number, selfCareTips,
       hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie, font_size
     );
@@ -485,8 +489,8 @@ function generatePatientInfoHtml(
   dosingText: string | null,
   dosingStructured: string,
   contraindicationsText: string | null,
-  sideEffectsCommonText: string | null,
-  sideEffectsSeriousText: string | null,
+  sideEffectsCommon: string[],
+  sideEffectsSerious: string[],
   tipsText: string | null,
   monitoringText: string | null,
   phoneNumber: string = '',
@@ -606,6 +610,87 @@ function generatePatientInfoHtml(
       const content = trimmed.startsWith('•') ? trimmed.substring(1).trim() : trimmed;
       return `<li>${content}</li>`;
     }).join('')}</ul>`;
+  };
+
+  // Humanize side effect terms for patient-friendly language
+  const humanize = (term: string): string => {
+    const map: Record<string, Record<string, string>> = {
+      'cardiotoxiciteit': { nl: 'Mogelijke belasting van het hart – uw arts volgt dit op via regelmatige controles', fr: 'Risque cardiaque possible – votre médecin surveille cela régulièrement', en: 'Possible cardiac effects – your doctor will monitor this', de: 'Mögliche Herzbelastung – regelmäßige Kontrollen' },
+      'febriele neutropenie': { nl: 'Koorts door verlaagde afweer – neem onmiddellijk contact op bij koorts boven 38°C', fr: 'Fièvre due à une baisse de l\'immunité – contactez si fièvre > 38°C', en: 'Fever due to lowered immunity – contact if fever above 38°C', de: 'Fieber durch geschwächte Abwehr – kontaktieren bei Fieber über 38°C' },
+      'neutropenie': { nl: 'Verlaagde witte bloedcellen, waardoor u vatbaarder bent voor infecties', fr: 'Baisse des globules blancs, sensibilité aux infections', en: 'Low white blood cells, more susceptible to infections', de: 'Erniedrigte weiße Blutkörperchen' },
+      'anemie': { nl: 'Verlaagde rode bloedcellen, waardoor u zich moe kunt voelen', fr: 'Baisse des globules rouges, fatigue possible', en: 'Low red blood cells, may cause tiredness', de: 'Erniedrigte rote Blutkörperchen' },
+      'trombocytopenie': { nl: 'Verlaagde bloedplaatjes – sneller blauwe plekken', fr: 'Baisse des plaquettes – bleus plus facilement', en: 'Low platelets – may bruise more easily', de: 'Erniedrigte Blutplättchen' },
+      'myelosuppressie': { nl: 'Verminderde aanmaak van bloedcellen – wordt gevolgd via bloedonderzoek', fr: 'Production réduite de cellules sanguines – suivie par analyses', en: 'Reduced blood cell production – monitored through blood tests', de: 'Verminderte Blutzellenproduktion – Blutuntersuchungen' },
+      'misselijkheid': { nl: 'Misselijkheid – er bestaan goede medicijnen hiervoor', fr: 'Nausées – des médicaments efficaces existent', en: 'Nausea – effective medications available', de: 'Übelkeit – wirksame Medikamente verfügbar' },
+      'braken': { nl: 'Braken – meld dit aan uw arts', fr: 'Vomissements – signalez-le à votre médecin', en: 'Vomiting – report to your doctor', de: 'Erbrechen – melden Sie es Ihrem Arzt' },
+      'alopecia': { nl: 'Tijdelijk haarverlies – groeit na behandeling weer aan', fr: 'Perte de cheveux temporaire – repousse après traitement', en: 'Temporary hair loss – grows back after treatment', de: 'Vorübergehender Haarausfall' },
+      'vermoeidheid': { nl: 'Vermoeidheid – luister naar uw lichaam en rust voldoende', fr: 'Fatigue – reposez-vous suffisamment', en: 'Fatigue – rest enough', de: 'Müdigkeit – ruhen Sie sich aus' },
+      'diarree': { nl: 'Diarree – drink voldoende en meld het als het aanhoudt', fr: 'Diarrhée – buvez suffisamment', en: 'Diarrhea – drink enough fluids', de: 'Durchfall – ausreichend trinken' },
+      'stomatitis': { nl: 'Pijnlijke mondwondjes – goed mondspoelen helpt', fr: 'Aphtes douloureux – rincer la bouche aide', en: 'Mouth sores – rinsing mouth helps', de: 'Mundgeschwüre – Mundspülung hilft' },
+      'neuropathie': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit tijdig', fr: 'Picotements mains/pieds – signalez-le', en: 'Tingling/numbness in hands/feet – report promptly', de: 'Kribbeln/Taubheit in Händen/Füßen – rechtzeitig melden' },
+      'perifere neuropathie': { nl: 'Tintelingen of gevoelloosheid in handen/voeten – meld dit aan uw arts', fr: 'Picotements mains/pieds – signalez à votre médecin', en: 'Tingling/numbness in hands/feet – report to doctor', de: 'Kribbeln/Taubheit – Ihrem Arzt melden' },
+      'huiduitslag': { nl: 'Huiduitslag – meld dit aan uw arts', fr: 'Éruption cutanée – signalez-le', en: 'Skin rash – report to your doctor', de: 'Hautausschlag – Ihrem Arzt melden' },
+      'hand-voetsyndroom': { nl: 'Roodheid of pijn aan handpalmen/voetzolen – goed insmeren helpt', fr: 'Rougeur paumes/plantes – hydrater aide', en: 'Redness/pain on palms/soles – moisturizing helps', de: 'Rötung Handflächen/Fußsohlen – Eincremen hilft' },
+      'obstipatie': { nl: 'Verstopping – voldoende drinken en vezelrijk eten helpt', fr: 'Constipation – boire et manger des fibres aide', en: 'Constipation – fluids and fiber help', de: 'Verstopfung – trinken und ballaststoffreich essen' },
+      'pneumonitis': { nl: 'Longontsteking – meld kortademigheid of hoest', fr: 'Inflammation pulmonaire – signalez essoufflement', en: 'Lung inflammation – report shortness of breath', de: 'Lungenentzündung – Atemnot melden' },
+      'levertoxiciteit': { nl: 'Mogelijke belasting van de lever – wordt gevolgd via bloedonderzoek', fr: 'Risque hépatique – suivi par analyses', en: 'Possible liver effects – monitored via blood tests', de: 'Mögliche Leberbelastung – Blutuntersuchungen' },
+      'hepatitis': { nl: 'Leverontsteking – wordt gevolgd via bloedonderzoek', fr: 'Hépatite – suivie par analyses', en: 'Liver inflammation – monitored via blood tests', de: 'Leberentzündung – Blutuntersuchungen' },
+      'hypertensie': { nl: 'Verhoogde bloeddruk – wordt regelmatig gecontroleerd', fr: 'Hypertension – contrôlée régulièrement', en: 'High blood pressure – monitored regularly', de: 'Bluthochdruck – regelmäßig kontrolliert' },
+      'oedeem': { nl: 'Vochtophoping (zwelling) – meld het als het toeneemt', fr: 'Rétention d\'eau – signalez si augmentation', en: 'Fluid retention – report if increasing', de: 'Wassereinlagerungen – melden wenn zunehmend' },
+      'hoofdpijn': { nl: 'Hoofdpijn – meestal mild en tijdelijk', fr: 'Maux de tête – généralement légers', en: 'Headache – usually mild and temporary', de: 'Kopfschmerzen – meist leicht' },
+      'nagelveranderingen': { nl: 'Veranderingen aan de nagels – meestal tijdelijk', fr: 'Modifications des ongles – temporaires', en: 'Nail changes – usually temporary', de: 'Nagelveränderungen – vorübergehend' },
+      'colitis': { nl: 'Darmontsteking – meld aanhoudende diarree of buikpijn', fr: 'Inflammation intestinale – signalez diarrhée persistante', en: 'Intestinal inflammation – report persistent diarrhea', de: 'Darmentzündung – anhaltenden Durchfall melden' },
+      'interstitiële longziekte': { nl: 'Zeldzame longontsteking – meld kortademigheid', fr: 'Inflammation pulmonaire rare – signalez essoufflement', en: 'Rare lung inflammation – report shortness of breath', de: 'Seltene Lungenentzündung – Atemnot melden' },
+    };
+    const cleaned = term.toLowerCase().trim();
+    const getLang = (entry: Record<string, string>) => entry[language] || entry['nl'] || term;
+    if (map[cleaned]) return getLang(map[cleaned]);
+    const withoutParens = cleaned.replace(/\s*\(.*?\)\s*$/, '').trim();
+    if (withoutParens !== cleaned && map[withoutParens]) return getLang(map[withoutParens]);
+    return term;
+  };
+
+  // Categorize side effects by body system
+  const seCategories: Record<string, { icon: string; label: Record<string, string>; keywords: string[] }> = {
+    blood: { icon: '🩸', label: { nl: 'Bloed', fr: 'Sang', en: 'Blood', de: 'Blut' }, keywords: ['neutro', 'leuko', 'anemie', 'anemia', 'trombocyto', 'thrombocyto', 'myelosuppressie', 'bloedcel', 'blood cell', 'bloedplaatjes', 'platelet', 'febriele', 'febrile', 'koorts door verlaagde', 'fever due to lowered'] },
+    gi: { icon: '🫃', label: { nl: 'Maag-darm', fr: 'Gastro-intestinal', en: 'Gastrointestinal', de: 'Magen-Darm' }, keywords: ['misselijk', 'nausea', 'braken', 'vomit', 'diarree', 'diarrhea', 'durchfall', 'obstipatie', 'constipat', 'verstopf', 'buikpijn', 'abdominal', 'stomatitis', 'mucositis', 'mond', 'mouth', 'smaak', 'taste', 'übelkeit', 'erbrechen', 'perforation'] },
+    skin: { icon: '🧴', label: { nl: 'Huid & haar', fr: 'Peau & cheveux', en: 'Skin & hair', de: 'Haut & Haare' }, keywords: ['huid', 'skin', 'haut', 'uitslag', 'rash', 'ausschlag', 'alopecia', 'haar', 'hair', 'hand-voet', 'palm', 'sole', 'nagel', 'nail', 'droge huid', 'dry skin', 'acne', 'jeuk', 'itch', 'pruritus'] },
+    neuro: { icon: '🧠', label: { nl: 'Zenuwstelsel', fr: 'Système nerveux', en: 'Nervous system', de: 'Nervensystem' }, keywords: ['neuropathie', 'neuropathy', 'tintel', 'tingling', 'kribbel', 'gevoelloos', 'numbness', 'taubheit', 'hoofdpijn', 'headache', 'kopfschmerz'] },
+    cardiac: { icon: '❤️', label: { nl: 'Hart & vaten', fr: 'Cœur & vaisseaux', en: 'Heart & vessels', de: 'Herz & Gefäße' }, keywords: ['cardio', 'hart', 'heart', 'herz', 'bloeddruk', 'hypertens', 'blutdruck', 'blood pressure', 'stolsel', 'clot', 'thrombos', 'oedeem', 'edema', 'zwelling', 'swelling'] },
+    general: { icon: '💊', label: { nl: 'Algemeen', fr: 'Général', en: 'General', de: 'Allgemein' }, keywords: [] },
+  };
+
+  const categorizeSE = (item: string): string => {
+    const lower = item.toLowerCase();
+    for (const [key, cat] of Object.entries(seCategories)) {
+      if (key === 'general') continue;
+      if (cat.keywords.some(kw => lower.includes(kw))) return key;
+    }
+    return 'general';
+  };
+
+  const renderGroupedSE = (items: string[], bgAlt: string): string => {
+    const humanized = items.map(humanize);
+    const groups: Record<string, string[]> = {};
+    humanized.forEach(item => {
+      const cat = categorizeSE(item);
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+    const catOrder = ['blood', 'gi', 'skin', 'neuro', 'cardiac', 'general'];
+    return catOrder
+      .filter(cat => groups[cat]?.length > 0)
+      .map(cat => {
+        const info = seCategories[cat];
+        const catLabel = info.label[language] || info.label['nl'];
+        return `<div style="margin-bottom:6px;">
+          <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
+            <span style="font-size:${fontSize - 2}px;">${info.icon}</span>
+            <span style="font-size:${fontSize - 2}px; font-weight:600; color:#555;">${catLabel}</span>
+          </div>
+          ${groups[cat].map((se, i) => `<div style="padding:2px 6px 2px 20px; font-size:${fontSize}px; color:#333; background:${i % 2 === 0 ? 'transparent' : bgAlt};">• ${se}</div>`).join('')}
+        </div>`;
+      }).join('');
   };
 
   const htmlLang = language;
@@ -765,20 +850,20 @@ function generatePatientInfoHtml(
     </div>
     ` : ''}
 
-    ${includeSideEffects && (sideEffectsCommonText || sideEffectsSeriousText) ? `
+    ${includeSideEffects && (sideEffectsCommon.length > 0 || sideEffectsSerious.length > 0) ? `
     <div class="section full-width">
       <h2>${labels.sideEffects}</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-        ${sideEffectsCommonText ? `
+        ${sideEffectsCommon.length > 0 ? `
         <div class="warning-box">
-          <h3>${labels.commonSE}</h3>
-          ${formatAsList(sideEffectsCommonText)}
+          <h3>⚡ ${labels.commonSE}</h3>
+          ${renderGroupedSE(sideEffectsCommon, 'rgba(232,119,34,0.06)')}
         </div>
         ` : ''}
-        ${sideEffectsSeriousText ? `
+        ${sideEffectsSerious.length > 0 ? `
         <div class="danger-box">
-          <h3>${labels.seriousSE}</h3>
-          ${formatAsList(sideEffectsSeriousText)}
+          <h3>🚨 ${labels.seriousSE}</h3>
+          ${renderGroupedSE(sideEffectsSerious, 'rgba(204,0,0,0.04)')}
         </div>
         ` : ''}
       </div>
