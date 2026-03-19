@@ -831,13 +831,6 @@ export default function DrugDetailPage() {
                     <p className="text-sm font-medium">{t('patientFolder.folderOptions')}</p>
                     <label className="flex items-center gap-2 text-sm">
                       <Checkbox
-                        checked={includeDosing}
-                        onCheckedChange={(checked) => setIncludeDosing(checked as boolean)}
-                      />
-                      {t('patientFolder.includeDosing')}
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox
                         checked={includeSideEffects}
                         onCheckedChange={(checked) => setIncludeSideEffects(checked as boolean)}
                       />
