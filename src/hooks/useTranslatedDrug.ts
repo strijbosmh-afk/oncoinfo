@@ -22,7 +22,7 @@ export function useTranslatedDrug(drug: Drug | undefined) {
   const needsTranslation = !!drug && language !== 'nl';
 
   const { data: translatedContent, isLoading: isTranslating } = useQuery({
-    queryKey: ['drug-translation', drug?.id, language],
+    queryKey: ['drug-translation', 'v2', drug?.id, language],
     queryFn: async (): Promise<TranslatableContent> => {
       if (!drug) return {};
 
