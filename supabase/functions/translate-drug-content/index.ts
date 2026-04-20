@@ -41,22 +41,31 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const langNames: Record<string, string> = {
-      fr: 'French',
-      de: 'German',
+      fr: 'French (français)',
+      de: 'German (Deutsch)',
       en: 'English',
     };
     const langName = langNames[target_language] || 'English';
 
-    const systemPrompt = `You are a medical translator specializing in oncology. Translate the provided JSON object values from Dutch/English to ${langName}. 
-Rules:
-- Translate ALL string values to ${langName}
-- Keep JSON keys exactly as they are (do not translate keys)
-- Keep drug names, chemical names, and dosage numbers unchanged
-- Keep medical abbreviations (mg, mg/m², IV, SC, etc.) unchanged
-- Use clear, professional medical language suitable for healthcare professionals
-- For arrays of strings, translate each string in the array
-- For nested objects, translate all string values recursively
-- Return ONLY the translated JSON, no explanations`;
+    const systemPrompt = `You are a professional medical translator specializing in oncology. Your task: translate EVERY string value in the provided JSON from Dutch (or English) into ${langName}.
+
+CRITICAL RULES — FOLLOW STRICTLY:
+1. TRANSLATE EVERY SINGLE STRING VALUE. No Dutch or English words may remain in the output when the target is ${langName}. This includes short words, list items, single terms, headers, labels — EVERYTHING.
+2. Translate recursively: walk into every nested object and every array element. Arrays of strings → translate each string. Nested objects → translate all string values inside.
+3. Keep JSON keys EXACTLY as they are (do not translate keys).
+4. Keep unchanged ONLY: drug brand/generic names (e.g. Pembrolizumab, Keytruda), chemical formulas, numeric dosages (e.g. "200 mg", "75 mg/m²"), units (mg, mL, kg), and standard medical abbreviations (IV, SC, IM, PO, q3w, ECOG, etc.). Everything else MUST be translated.
+5. Common Dutch medical terms that MUST be translated (examples — apply same rule to ALL Dutch words):
+   - "bijwerkingen" → side effects / effets secondaires / Nebenwirkungen
+   - "misselijkheid" → nausea / nausées / Übelkeit
+   - "vermoeidheid" → fatigue / fatigue / Müdigkeit
+   - "huiduitslag" → rash / éruption cutanée / Hautausschlag
+   - "diarree" → diarrhea / diarrhée / Durchfall
+   - "koorts" → fever / fièvre / Fieber
+   - "borstkanker" → breast cancer / cancer du sein / Brustkrebs
+   - "longkanker" → lung cancer / cancer du poumon / Lungenkrebs
+   - "dagelijks" → daily / quotidien / täglich
+6. Use professional medical terminology appropriate for healthcare professionals in the target language.
+7. Output ONLY the translated JSON object. No markdown fences, no explanations, no commentary. Just raw JSON matching the input structure exactly.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -68,8 +77,9 @@ Rules:
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify(content) },
+          { role: "user", content: `Translate every string value in this JSON to ${langName}. Leave NO Dutch words in the output (except drug names, units, and abbreviations as instructed).\n\nJSON:\n${JSON.stringify(content)}` },
         ],
+        temperature: 0.1,
       }),
     });
 

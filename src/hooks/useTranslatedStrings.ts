@@ -14,7 +14,9 @@ export function useTranslatedStrings(strings: string[]) {
 
   // Deduplicate and sort for stable cache key
   const uniqueStrings = [...new Set(strings)].filter(Boolean).sort();
-  const cacheKey = uniqueStrings.join('|').substring(0, 200); // truncate for reasonable key size
+  // Use a hash-like stable key based on full content to avoid cache collisions
+  // (truncating to 200 chars caused different term-sets to share the same cache entry)
+  const cacheKey = `${uniqueStrings.length}:${uniqueStrings.join('|')}`;
 
   const { data: translationMap, isLoading } = useQuery({
     queryKey: ['translated-strings', language, cacheKey],
