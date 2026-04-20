@@ -19,7 +19,7 @@ export function useTranslatedStrings(strings: string[]) {
   const cacheKey = `${uniqueStrings.length}:${uniqueStrings.join('|')}`;
 
   const { data: translationMap, isLoading } = useQuery({
-    queryKey: ['translated-strings', language, cacheKey],
+    queryKey: ['translated-strings', 'v2', language, cacheKey],
     queryFn: async (): Promise<Record<string, string>> => {
       if (uniqueStrings.length === 0) return {};
 
