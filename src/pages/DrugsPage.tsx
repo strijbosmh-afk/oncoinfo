@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SortableDrugList } from '@/components/drugs/SortableDrugList';
 import { useHospital } from '@/contexts/HospitalContext';
+import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],
