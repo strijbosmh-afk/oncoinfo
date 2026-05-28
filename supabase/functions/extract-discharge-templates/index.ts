@@ -75,6 +75,8 @@ Regels:
 TEKST:
 ${documentText.slice(0, 60000)}`;
 
+    console.log(`Extracting templates: textLength=${documentText.length}, title=${documentTitle}`);
+    const aiStart = Date.now();
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -82,11 +84,12 @@ ${documentText.slice(0, 60000)}`;
         "Authorization": `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       }),
     });
+    console.log(`AI response in ${Date.now() - aiStart}ms, status=${aiResp.status}`);
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
