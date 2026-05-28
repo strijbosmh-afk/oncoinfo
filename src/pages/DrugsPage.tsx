@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SortableDrugList } from '@/components/drugs/SortableDrugList';
+import { TemplateSearchResults } from '@/components/drugs/TemplateSearchResults';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
 
