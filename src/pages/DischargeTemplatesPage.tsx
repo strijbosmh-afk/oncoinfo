@@ -15,6 +15,8 @@ export default function DischargeTemplatesPage() {
   const { discipline } = useParams<{ discipline: string }>();
   const { permissions, isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const { data, isLoading } = useDischargeTemplates();
+  const { isFavorite, toggleFavorite } = useTemplateFavorites();
+  const { isMostUsed, toggleMostUsed } = useTemplateMostUsed();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const canView = isAdmin || isSuperAdmin || !!permissions?.is_physician;
