@@ -411,6 +411,15 @@ export default function AdminPage() {
                 <Send className="h-4 w-4" />
                 {t('platformUpdate.title', 'Update Versturen')}
               </Button>
+              <Button
+                variant={activeSection === 'discharge-templates' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'discharge-templates' ? null : 'discharge-templates')}
+                className="gap-2"
+                size="sm"
+              >
+                <FileText className="h-4 w-4" />
+                Ontslagbrief-sjablonen
+              </Button>
             </div>
           )}
         </div>
