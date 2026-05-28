@@ -170,6 +170,7 @@ const Index = () => {
   return (
     <Layout>
       <NewDrugsDialog open={showPopup} onClose={dismissPopup} drugs={newDrugs} />
+      <DischargeTemplatesAnnouncement />
       <section className="flex-1 flex items-center py-6 md:py-10">
         <div className="container">
           {/* Quick access: most used drugs — at the very top for power users */}
