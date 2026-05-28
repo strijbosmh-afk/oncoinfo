@@ -1209,6 +1209,10 @@ export default function DrugsPage() {
           </Button>
         </div>
 
+        {/* Template search results */}
+        <TemplateSearchResults query={searchQuery || urlSearchQuery} />
+
+
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {/* Filters Sidebar */}
           <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
