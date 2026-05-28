@@ -3,9 +3,11 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
+import { useTemplateFavorites } from '@/hooks/useTemplateFavorites';
+import { useTemplateMostUsed } from '@/hooks/useTemplateMostUsed';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Copy, Check, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, Check, FileText, Loader2, Star, Pin } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
