@@ -427,6 +427,8 @@ export default function AdminPage() {
                 <FileText className="h-4 w-4" />
                 Ontslagbrief-sjablonen
               </Button>
+            </div>
+          )}
         </div>
         <div className="border-t border-border/50 mb-8" />
 
