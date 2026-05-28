@@ -291,6 +291,8 @@ const Index = () => {
               </div>
             </SortableContext>
           </DndContext>
+
+          <DischargeTemplatesSection />
         </div>
       </section>
 
