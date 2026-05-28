@@ -411,6 +411,13 @@ export default function AdminPage() {
                 <Send className="h-4 w-4" />
                 {t('platformUpdate.title', 'Update Versturen')}
               </Button>
+            </div>
+          )}
+
+          {/* Row 4: Discharge templates — admins and super admins */}
+          {(isAdmin || isSuperAdmin) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Sjablonen</span>
               <Button
                 variant={activeSection === 'discharge-templates' ? 'default' : 'outline'}
                 onClick={() => setActiveSection(activeSection === 'discharge-templates' ? null : 'discharge-templates')}
@@ -420,8 +427,6 @@ export default function AdminPage() {
                 <FileText className="h-4 w-4" />
                 Ontslagbrief-sjablonen
               </Button>
-            </div>
-          )}
         </div>
         <div className="border-t border-border/50 mb-8" />
 
