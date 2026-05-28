@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { DischargeTemplatesSection } from '@/components/home/DischargeTemplatesSection';
 import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
+import { DischargeTemplatesAnnouncement } from '@/components/home/DischargeTemplatesAnnouncement';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],

@@ -87,7 +87,10 @@
     "skin": "Haut",
     "skinDesc": "Dermatologische Onkologie",
     "headNeck": "Kopf & Hals",
-    "headNeckDesc": "Kopf-Hals-Tumoren"
+    "headNeckDesc": "Kopf-Hals-Tumoren",
+    "dischargeAnnouncementTitle": "Neu: Entlassungsbrief-Vorlagen",
+    "dischargeAnnouncementDesc": "Ab sofort können Sie pro Fachgebiet Standardtexte für Entlassungsbriefe einsehen und in Ihre Patientenverwaltung kopieren.",
+    "dischargeAnnouncementPhysicianOnly": "Diese Funktion ist ausschließlich für Ärzte verfügbar."
   },
   "drugs": {
     "title": "Medikamente",

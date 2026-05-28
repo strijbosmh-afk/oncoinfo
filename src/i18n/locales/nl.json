@@ -87,7 +87,10 @@
     "skin": "Huid",
     "skinDesc": "Dermatologische oncologie",
     "headNeck": "Hoofd & Hals",
-    "headNeckDesc": "Hoofd-halstumoren"
+    "headNeckDesc": "Hoofd-halstumoren",
+    "dischargeAnnouncementTitle": "Nieuw: Ontslagbrief-sjablonen",
+    "dischargeAnnouncementDesc": "Vanaf nu kunt u per specialiteit standaardteksten voor ontslagbrieven raadplegen en kopiëren naar uw patiëntenadministratie.",
+    "dischargeAnnouncementPhysicianOnly": "Deze functie is exclusief beschikbaar voor artsen."
   },
   "drugs": {
     "title": "Medicijnen",
