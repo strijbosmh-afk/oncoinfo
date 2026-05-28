@@ -25,6 +25,7 @@ import { UsageDashboard } from '@/components/admin/UsageDashboard';
 import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
 import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
 import { SendUpdate } from '@/components/admin/SendUpdate';
+import { DischargeTemplatesUpload } from '@/components/admin/DischargeTemplatesUpload';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
