@@ -87,7 +87,10 @@
     "skin": "Skin",
     "skinDesc": "Dermatological oncology",
     "headNeck": "Head & Neck",
-    "headNeckDesc": "Head and neck tumors"
+    "headNeckDesc": "Head and neck tumors",
+    "dischargeAnnouncementTitle": "New: Discharge Letter Templates",
+    "dischargeAnnouncementDesc": "From now on, you can consult and copy standard discharge letter texts per specialty to your patient administration.",
+    "dischargeAnnouncementPhysicianOnly": "This feature is exclusively available to physicians."
   },
   "drugs": {
     "title": "Drugs",

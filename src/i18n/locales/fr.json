@@ -87,7 +87,10 @@
     "skin": "Peau",
     "skinDesc": "Oncologie dermatologique",
     "headNeck": "Tête & Cou",
-    "headNeckDesc": "Tumeurs de la tête et du cou"
+    "headNeckDesc": "Tumeurs de la tête et du cou",
+    "dischargeAnnouncementTitle": "Nouveau : Modèles de lettres de sortie",
+    "dischargeAnnouncementDesc": "Désormais, vous pouvez consulter et copier les textes standard de lettres de sortie par spécialité vers votre administration patient.",
+    "dischargeAnnouncementPhysicianOnly": "Cette fonctionnalité est exclusivement réservée aux médecins."
   },
   "drugs": {
     "title": "Médicaments",
