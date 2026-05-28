@@ -41,6 +41,7 @@ const App = () => (
               <Route path="/color-preview" element={<ColorPreview />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/handleiding" element={<ProtectedRoute><UserManualPage /></ProtectedRoute>} />
+              <Route path="/discharge-templates/:discipline" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
