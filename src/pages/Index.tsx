@@ -294,6 +294,7 @@ const Index = () => {
           </DndContext>
 
           <DischargeTemplatesSection />
+          <TemplateShortcutsSection />
         </div>
       </section>
 
