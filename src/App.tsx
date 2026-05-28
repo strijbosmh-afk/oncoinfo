@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ColorPreview from "./pages/ColorPreview";
 import UserManualPage from "./pages/UserManualPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import DischargeTemplatesPage from "./pages/DischargeTemplatesPage";
 
 const queryClient = new QueryClient();
 
