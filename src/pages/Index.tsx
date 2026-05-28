@@ -23,6 +23,7 @@ import {
   SortableContext, rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { DischargeTemplatesSection } from '@/components/home/DischargeTemplatesSection';
+import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],
@@ -293,6 +294,7 @@ const Index = () => {
           </DndContext>
 
           <DischargeTemplatesSection />
+          <TemplateShortcutsSection />
         </div>
       </section>
 

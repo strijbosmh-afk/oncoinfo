@@ -23,7 +23,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SortableDrugList } from '@/components/drugs/SortableDrugList';
+import { TemplateSearchResults } from '@/components/drugs/TemplateSearchResults';
 import { useHospital } from '@/contexts/HospitalContext';
+import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],
@@ -1206,6 +1208,10 @@ export default function DrugsPage() {
             )}
           </Button>
         </div>
+
+        {/* Template search results */}
+        <TemplateSearchResults query={searchQuery || urlSearchQuery} />
+
 
         <div className="grid lg:grid-cols-[280px_1fr] gap-6">
           {/* Filters Sidebar */}

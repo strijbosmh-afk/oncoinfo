@@ -3,9 +3,11 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
+import { useTemplateFavorites } from '@/hooks/useTemplateFavorites';
+import { useTemplateMostUsed } from '@/hooks/useTemplateMostUsed';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Copy, Check, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Copy, Check, FileText, Loader2, Star, Pin } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -13,6 +15,8 @@ export default function DischargeTemplatesPage() {
   const { discipline } = useParams<{ discipline: string }>();
   const { permissions, isAdmin, isSuperAdmin, loading: authLoading } = useAuth();
   const { data, isLoading } = useDischargeTemplates();
+  const { isFavorite, toggleFavorite } = useTemplateFavorites();
+  const { isMostUsed, toggleMostUsed } = useTemplateMostUsed();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const canView = isAdmin || isSuperAdmin || !!permissions?.is_physician;
@@ -73,18 +77,35 @@ export default function DischargeTemplatesPage() {
               <Card key={t.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
                   <CardTitle className="text-base leading-snug">{t.title}</CardTitle>
-                  <Button
-                    size="sm"
-                    variant={copiedId === t.id ? 'default' : 'outline'}
-                    onClick={() => handleCopy(t.id, t.content)}
-                    className="shrink-0"
-                  >
-                    {copiedId === t.id ? (
-                      <><Check className="h-4 w-4 mr-1" /> Gekopieerd</>
-                    ) : (
-                      <><Copy className="h-4 w-4 mr-1" /> Kopieer</>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => toggleFavorite(t.id)}
+                      title={isFavorite(t.id) ? 'Verwijder uit favorieten' : 'Markeer als favoriet'}
+                    >
+                      <Star className={`h-4 w-4 ${isFavorite(t.id) ? 'fill-yellow-400 text-yellow-400' : ''}`} />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => toggleMostUsed(t.id)}
+                      title={isMostUsed(t.id) ? 'Verwijder uit meest gebruikt' : 'Markeer als meest gebruikt'}
+                    >
+                      <Pin className={`h-4 w-4 ${isMostUsed(t.id) ? 'fill-primary text-primary' : ''}`} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={copiedId === t.id ? 'default' : 'outline'}
+                      onClick={() => handleCopy(t.id, t.content)}
+                    >
+                      {copiedId === t.id ? (
+                        <><Check className="h-4 w-4 mr-1" /> Gekopieerd</>
+                      ) : (
+                        <><Copy className="h-4 w-4 mr-1" /> Kopieer</>
+                      )}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground/90">
