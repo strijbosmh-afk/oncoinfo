@@ -468,6 +468,12 @@ export default function AdminPage() {
           </div>
         )}
 
+        {activeSection === 'discharge-templates' && (isAdmin || isSuperAdmin) && (
+          <div className="mb-8">
+            <DischargeTemplatesUpload />
+          </div>
+        )}
+
         {activeSection === 'schema-assistant' && (
           <div className="mb-8">
             <SchemaAssistant existingDrugs={drugs || []} initialEditDrugId={editDrugParam || undefined} />
