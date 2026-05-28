@@ -147,6 +147,74 @@ export type Database = {
           },
         ]
       }
+      discharge_letter_documents: {
+        Row: {
+          created_at: string
+          document_title: string
+          hospital_id: string | null
+          id: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_title: string
+          hospital_id?: string | null
+          id?: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_title?: string
+          hospital_id?: string | null
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      discharge_letter_templates: {
+        Row: {
+          content: string
+          created_at: string
+          discipline: string
+          display_order: number
+          document_id: string
+          hospital_id: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          discipline: string
+          display_order?: number
+          document_id: string
+          hospital_id?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          discipline?: string
+          display_order?: number
+          document_id?: string
+          hospital_id?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discharge_letter_templates_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "discharge_letter_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drugs: {
         Row: {
           administration_route: string | null

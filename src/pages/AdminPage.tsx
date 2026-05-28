@@ -25,6 +25,7 @@ import { UsageDashboard } from '@/components/admin/UsageDashboard';
 import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
 import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
 import { SendUpdate } from '@/components/admin/SendUpdate';
+import { DischargeTemplatesUpload } from '@/components/admin/DischargeTemplatesUpload';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -35,7 +36,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState<string>('all');
   const [regimenDialogOpen, setRegimenDialogOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | 'send-update' | null>(null);
+  const [activeSection, setActiveSection] = useState<'users' | 'audit' | 'auto-update' | 'schedule' | 'dashboard' | 'api-docs' | 'schema-assistant' | 'send-update' | 'discharge-templates' | null>(null);
   const [editDrugParam, setEditDrugParam] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -412,6 +413,22 @@ export default function AdminPage() {
               </Button>
             </div>
           )}
+
+          {/* Row 4: Discharge templates — admins and super admins */}
+          {(isAdmin || isSuperAdmin) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider w-full sm:w-auto sm:min-w-[80px]">Sjablonen</span>
+              <Button
+                variant={activeSection === 'discharge-templates' ? 'default' : 'outline'}
+                onClick={() => setActiveSection(activeSection === 'discharge-templates' ? null : 'discharge-templates')}
+                className="gap-2"
+                size="sm"
+              >
+                <FileText className="h-4 w-4" />
+                Ontslagbrief-sjablonen
+              </Button>
+            </div>
+          )}
         </div>
         <div className="border-t border-border/50 mb-8" />
 
@@ -455,6 +472,12 @@ export default function AdminPage() {
         {activeSection === 'send-update' && isSuperAdmin && (
           <div className="mb-8">
             <SendUpdate />
+          </div>
+        )}
+
+        {activeSection === 'discharge-templates' && (isAdmin || isSuperAdmin) && (
+          <div className="mb-8">
+            <DischargeTemplatesUpload />
           </div>
         )}
 

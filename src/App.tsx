@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ColorPreview from "./pages/ColorPreview";
 import UserManualPage from "./pages/UserManualPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import DischargeTemplatesPage from "./pages/DischargeTemplatesPage";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="/color-preview" element={<ColorPreview />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/handleiding" element={<ProtectedRoute><UserManualPage /></ProtectedRoute>} />
+              <Route path="/discharge-templates/:discipline" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
