@@ -1310,6 +1310,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_template_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_template_most_used: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       hospitals_public: {
