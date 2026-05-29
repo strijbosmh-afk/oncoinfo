@@ -929,10 +929,10 @@ export default function HospitalManagementPage() {
         .select('*')
         .eq('hospital_id', h.id),
       supabase
-        .from('hospitals')
-        .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
-        .eq('id', h.id)
-        .single(),
+        .from('hospital_billing')
+        .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
+        .eq('hospital_id', h.id)
+        .maybeSingle(),
       supabase
         .from('profiles')
         .select('id, user_id, first_name, last_name, username, function, discipline, role')
@@ -967,7 +967,7 @@ export default function HospitalManagementPage() {
         billing_address_line2: billingRes.data.billing_address_line2 || '',
         billing_postal_code: billingRes.data.billing_postal_code || '',
         billing_city: billingRes.data.billing_city || '',
-        billing_country: billingRes.data.billing_country || 'België',
+        billing_country: h.billing_country || 'België',
         billing_vat_number: billingRes.data.billing_vat_number || '',
         billing_email: billingRes.data.billing_email || '',
         billing_phone: billingRes.data.billing_phone || '',
@@ -979,7 +979,7 @@ export default function HospitalManagementPage() {
         billing_po_number: billingRes.data.billing_po_number || '',
       });
     } else {
-      setBilling(emptyBilling);
+      setBilling({ ...emptyBilling, billing_country: h.billing_country || 'België' });
     }
     setStaffLoading(false);
     setDisciplinesLoading(false);
@@ -991,12 +991,21 @@ export default function HospitalManagementPage() {
   const saveBilling = async () => {
     if (!selectedHospital) return;
     setBillingSaving(true);
-    const { error } = await supabase
+    const { billing_country, ...sensitiveBilling } = billing;
+    // Country is non-sensitive and lives on the hospital record
+    const { error: countryError } = await supabase
       .from('hospitals')
-      .update(billing)
+      .update({ billing_country: billing_country || null })
       .eq('id', selectedHospital.id);
-    if (error) {
-      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    // Sensitive billing details live in the admin-only hospital_billing table
+    const { error } = await supabase
+      .from('hospital_billing')
+      .upsert(
+        { hospital_id: selectedHospital.id, ...sensitiveBilling },
+        { onConflict: 'hospital_id' }
+      );
+    if (error || countryError) {
+      toast({ title: 'Fout', description: (error || countryError)?.message, variant: 'destructive' });
     } else {
       toast({ title: 'Facturatiegegevens opgeslagen' });
     }
