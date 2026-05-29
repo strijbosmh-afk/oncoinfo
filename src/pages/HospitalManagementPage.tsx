@@ -929,10 +929,10 @@ export default function HospitalManagementPage() {
         .select('*')
         .eq('hospital_id', h.id),
       supabase
-        .from('hospitals')
-        .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
-        .eq('id', h.id)
-        .single(),
+        .from('hospital_billing')
+        .select('billing_name, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_vat_number, billing_email, billing_phone, billing_contact_person, billing_peppol_id, billing_peppol_scheme, billing_iban, billing_bic, billing_po_number')
+        .eq('hospital_id', h.id)
+        .maybeSingle(),
       supabase
         .from('profiles')
         .select('id, user_id, first_name, last_name, username, function, discipline, role')
