@@ -967,7 +967,7 @@ export default function HospitalManagementPage() {
         billing_address_line2: billingRes.data.billing_address_line2 || '',
         billing_postal_code: billingRes.data.billing_postal_code || '',
         billing_city: billingRes.data.billing_city || '',
-        billing_country: billingRes.data.billing_country || 'België',
+        billing_country: h.billing_country || 'België',
         billing_vat_number: billingRes.data.billing_vat_number || '',
         billing_email: billingRes.data.billing_email || '',
         billing_phone: billingRes.data.billing_phone || '',
