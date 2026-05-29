@@ -979,7 +979,7 @@ export default function HospitalManagementPage() {
         billing_po_number: billingRes.data.billing_po_number || '',
       });
     } else {
-      setBilling(emptyBilling);
+      setBilling({ ...emptyBilling, billing_country: h.billing_country || 'België' });
     }
     setStaffLoading(false);
     setDisciplinesLoading(false);
@@ -991,12 +991,21 @@ export default function HospitalManagementPage() {
   const saveBilling = async () => {
     if (!selectedHospital) return;
     setBillingSaving(true);
-    const { error } = await supabase
+    const { billing_country, ...sensitiveBilling } = billing;
+    // Country is non-sensitive and lives on the hospital record
+    const { error: countryError } = await supabase
       .from('hospitals')
-      .update(billing)
+      .update({ billing_country: billing_country || null })
       .eq('id', selectedHospital.id);
-    if (error) {
-      toast({ title: 'Fout', description: error.message, variant: 'destructive' });
+    // Sensitive billing details live in the admin-only hospital_billing table
+    const { error } = await supabase
+      .from('hospital_billing')
+      .upsert(
+        { hospital_id: selectedHospital.id, ...sensitiveBilling },
+        { onConflict: 'hospital_id' }
+      );
+    if (error || countryError) {
+      toast({ title: 'Fout', description: (error || countryError)?.message, variant: 'destructive' });
     } else {
       toast({ title: 'Facturatiegegevens opgeslagen' });
     }
