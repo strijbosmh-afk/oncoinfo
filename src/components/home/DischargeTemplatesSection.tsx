@@ -15,7 +15,7 @@ export function DischargeTemplatesSection() {
     <div className="mt-12 max-w-6xl mx-auto">
       <div className="flex items-center justify-center gap-2 mb-2">
         <FileText className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-base font-semibold text-center">Ontslagbrief-sjablonen</h2>
+        <h2 className="font-semibold text-center text-xl">Ontslagbrief Sjabonen</h2>
       </div>
       {document && (
         <p className="text-[11px] text-center text-muted-foreground mb-4">
