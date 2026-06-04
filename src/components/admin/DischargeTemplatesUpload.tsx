@@ -81,6 +81,25 @@ export function DischargeTemplatesUpload() {
           </div>
         )}
 
+        {data?.previousDocuments && data.previousDocuments.length > 0 && (
+          <div className="rounded-md border p-3 text-sm">
+            <div className="flex items-center gap-2 font-medium text-muted-foreground">
+              <FileText className="h-4 w-4" />
+              Eerdere versies
+            </div>
+            <ul className="mt-2 space-y-1.5">
+              {data.previousDocuments.map((doc) => (
+                <li key={doc.id} className="flex flex-wrap items-center gap-x-2 text-muted-foreground">
+                  <span className="font-medium text-foreground/80">{doc.document_title}</span>
+                  <span>·</span>
+                  <span>Geüpload op {format(new Date(doc.uploaded_at), 'dd/MM/yyyy HH:mm')}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+
         <input
           ref={fileRef}
           type="file"
