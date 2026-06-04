@@ -20,24 +20,32 @@ export function useDischargeTemplates(enabled = true) {
     queryKey: ['discharge-templates'],
     enabled,
     queryFn: async () => {
-      const { data: doc } = await supabase
+      const { data: docs } = await supabase
         .from('discharge_letter_documents' as any)
         .select('id, document_title, uploaded_at')
-        .order('uploaded_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('uploaded_at', { ascending: false });
 
-      const { data: templates, error } = await supabase
-        .from('discharge_letter_templates' as any)
-        .select('id, discipline, title, content, display_order')
-        .order('discipline', { ascending: true })
-        .order('display_order', { ascending: true });
+      const documents = (docs as unknown as DischargeDocument[]) || [];
+      const current = documents[0] || null;
+      const previousDocuments = documents.slice(1);
 
-      if (error) throw error;
+      let templates: DischargeTemplate[] = [];
+      if (current) {
+        const { data, error } = await supabase
+          .from('discharge_letter_templates' as any)
+          .select('id, discipline, title, content, display_order')
+          .eq('document_id', current.id)
+          .order('discipline', { ascending: true })
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        templates = (data as unknown as DischargeTemplate[]) || [];
+      }
 
       return {
-        document: (doc as unknown as DischargeDocument) || null,
-        templates: (templates as unknown as DischargeTemplate[]) || [],
+        document: current,
+        previousDocuments,
+        templates,
       };
     },
   });
