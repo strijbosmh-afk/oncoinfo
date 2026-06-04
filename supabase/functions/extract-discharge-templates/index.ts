@@ -68,7 +68,10 @@ Retourneer ENKEL valide JSON in dit exacte formaat:
 Regels:
 - discipline = de hoofdstuktitel waar de tekst onder valt (zonder nummer, bv "Borstkanker" niet "1. Borstkanker")
 - title = de naam na "Ter info:" (zonder de woorden "Ter info:")
-- content = MOET ALTIJD beginnen met de volledige "Ter info:"-titelregel (bv "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant"), gevolgd door een onderstreping op een eigen regel met "---", daarna een lege regel, en daarna de volledige inhoud die bij dit sjabloon hoort (beschrijving + nevenwerkingen + verwijscriteria), behoud bullets met "•" of "-", behoud paragrafen met dubbele newlines
+- content = MOET ALTIJD beginnen met de volledige "Ter info:"-titelregel (bv "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant"), gevolgd door een onderstreping op een eigen regel met "---", daarna een lege regel, en daarna de volledige inhoud die bij dit sjabloon hoort (beschrijving + nevenwerkingen + verwijscriteria)
+- Zet ELKE bullet om naar een regel die begint met "- " (gebruik nooit "•")
+- Plaats bullets DIRECT onder elkaar zonder lege regels ertussen (elke bullet op een eigen regel, geen lege regel tussen opeenvolgende bullets)
+- Gebruik enkel een lege regel om paragrafen/secties te scheiden, NOOIT tussen bullets
 - Neem de "Ter info:"-regel en de "---"-onderstreping ALTIJD op bovenaan de content, ook al staat de onderstreping niet expliciet in de brontekst
 - Geen markdown headers (##, ###) in content
 - Geen toelichting buiten de JSON
