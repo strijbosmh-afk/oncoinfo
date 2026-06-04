@@ -122,16 +122,10 @@ ${documentText.slice(0, 60000)}`;
       return json({ error: "Geen sjablonen kunnen extraheren uit dit document." }, 400);
     }
 
-    // Use service role to do the destructive replace atomically
+    // Use service role to insert the new version (previous versions are kept as history)
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Delete existing doc (cascades templates) for this hospital scope
-    if (targetHospitalId === null) {
-      await adminClient.from("discharge_letter_documents").delete().is("hospital_id", null);
-    } else {
-      await adminClient.from("discharge_letter_documents").delete().eq("hospital_id", targetHospitalId);
-    }
 
     const { data: doc, error: docErr } = await adminClient
       .from("discharge_letter_documents")
