@@ -57,7 +57,7 @@ export function DischargeTemplatesUpload() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" /> Ontslagbrief-sjablonen
+          <FileText className="h-5 w-5" /> Ontslagbrief Sjabonen
         </CardTitle>
         <CardDescription>
           Upload een .docx document met standaardteksten. De AI extraheert automatisch elk sjabloon
