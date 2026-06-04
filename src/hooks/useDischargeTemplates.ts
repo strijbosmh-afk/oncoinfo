@@ -43,10 +43,23 @@ export function useDischargeTemplates(enabled = true) {
   });
 }
 
+// Explicit ordering: prostaat/testis/blaas first, indicatie-overstijgende last.
+const TOP_DISCIPLINES = ['prostaat', 'testis', 'blaas'];
+
+function disciplineRank(name: string): number {
+  const n = name.replace(/[\u200B-\u200D\uFEFF]/g, '').trim().toLowerCase();
+  const topIdx = TOP_DISCIPLINES.findIndex(k => n.includes(k));
+  if (topIdx !== -1) return topIdx; // 0,1,2
+  if (n.includes('indicatie-overstijgende') || n.includes('indicatie overstijgende')) return 1000;
+  return 100; // middle group, keeps alphabetical via stable sort
+}
+
 export function useDischargeDisciplines(enabled = true) {
   const { data, isLoading } = useDischargeTemplates(enabled);
   const disciplines = data?.templates
-    ? Array.from(new Set(data.templates.map(t => t.discipline)))
+    ? Array.from(new Set(data.templates.map(t => t.discipline))).sort(
+        (a, b) => disciplineRank(a) - disciplineRank(b)
+      )
     : [];
   return { disciplines, isLoading, document: data?.document || null };
 }
