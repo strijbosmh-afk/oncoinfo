@@ -60,7 +60,7 @@ Retourneer ENKEL valide JSON in dit exacte formaat:
     {
       "discipline": "Borstkanker",
       "title": "EC dose-dense gevolgd door paclitaxel — adjuvant",
-      "content": "Volledige tekst van het sjabloon, inclusief 'Verwachte nevenwerkingen' en 'Indicaties tot verwijzing'."
+      "content": "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant\n---\n\nVolledige tekst van het sjabloon, inclusief 'Verwachte nevenwerkingen' en 'Indicaties tot verwijzing'."
     }
   ]
 }
@@ -68,7 +68,8 @@ Retourneer ENKEL valide JSON in dit exacte formaat:
 Regels:
 - discipline = de hoofdstuktitel waar de tekst onder valt (zonder nummer, bv "Borstkanker" niet "1. Borstkanker")
 - title = de naam na "Ter info:" (zonder de woorden "Ter info:")
-- content = de volledige inhoud die bij dit sjabloon hoort (beschrijving + nevenwerkingen + verwijscriteria), behoud bullets met "•" of "-", behoud paragrafen met dubbele newlines
+- content = MOET ALTIJD beginnen met de volledige "Ter info:"-titelregel (bv "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant"), gevolgd door een onderstreping op een eigen regel met "---", daarna een lege regel, en daarna de volledige inhoud die bij dit sjabloon hoort (beschrijving + nevenwerkingen + verwijscriteria), behoud bullets met "•" of "-", behoud paragrafen met dubbele newlines
+- Neem de "Ter info:"-regel en de "---"-onderstreping ALTIJD op bovenaan de content, ook al staat de onderstreping niet expliciet in de brontekst
 - Geen markdown headers (##, ###) in content
 - Geen toelichting buiten de JSON
 
