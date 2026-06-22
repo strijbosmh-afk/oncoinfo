@@ -38,7 +38,7 @@
     "footerNote": "This message appears once per user on this device.",
     "cta": "Got it",
     "workflowTitle": "New care-team workflows",
-    "workflowDescription": "Use regimen navigation, the monitoring calendar, supportive-care presets, regimen comparison, and folder preflight to reach the right sheet and planning faster."
+    "workflowDescription": "Use the monitoring calendar, supportive-care presets, regimen comparison, and folder preflight to reach the right planning faster."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -220,17 +220,6 @@
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
     "disciplineDisabled": "This feature has been disabled for your institution.",
-    "decisionTreeTitle": "Which regimen fits?",
-    "decisionTreeDesc": "Navigate by disease area, setting, biomarker, and line to relevant sheets.",
-    "decisionTree": {
-      "disease": "Disease area",
-      "setting": "Setting",
-      "biomarker": "Biomarker",
-      "line": "Line"
-    },
-    "relevantTreatments": "Relevant treatments",
-    "noGuideMatches": "No matching sheets found within the current filters.",
-    "decisionTreeDisclaimer": "Navigation aid only: not treatment advice or a medical decision system.",
     "compareTitle": "Compare two regimens",
     "compareDesc": "Compare route, cycle, monitoring, side effects, and practical patient burden.",
     "compareFirst": "Choose first regimen",

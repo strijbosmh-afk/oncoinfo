@@ -38,7 +38,7 @@
     "footerNote": "Diese Meldung erscheint einmal pro Benutzer auf diesem Gerät.",
     "cta": "Verstanden",
     "workflowTitle": "Neue Team-Workflows",
-    "workflowDescription": "Nutzen Sie Schema-Navigation, Monitoring-Kalender, Supportive-Care-Presets, Schema-Vergleich und Folder-Preflight, um schneller zum passenden Datenblatt und Plan zu gelangen."
+    "workflowDescription": "Nutzen Sie Monitoring-Kalender, Supportive-Care-Presets, Schema-Vergleich und Folder-Preflight, um schneller zum passenden Plan zu gelangen."
   },
   "workflow": {
     "consultTab": "Konsultation",
@@ -220,17 +220,6 @@
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
     "disciplineDisabled": "Diese Funktion wurde für Ihre Einrichtung deaktiviert.",
-    "decisionTreeTitle": "Welches Schema passt?",
-    "decisionTreeDesc": "Nach Tumorbereich, Setting, Biomarker und Linie zu passenden Datenblättern navigieren.",
-    "decisionTree": {
-      "disease": "Tumorbereich",
-      "setting": "Setting",
-      "biomarker": "Biomarker",
-      "line": "Linie"
-    },
-    "relevantTreatments": "Relevante Behandlungen",
-    "noGuideMatches": "Keine passenden Datenblätter mit den aktuellen Filtern gefunden.",
-    "decisionTreeDisclaimer": "Nur Navigationshilfe: keine Therapieempfehlung und kein medizinisches Entscheidungssystem.",
     "compareTitle": "Zwei Schemata vergleichen",
     "compareDesc": "Applikation, Zyklus, Monitoring, Nebenwirkungen und praktische Belastung vergleichen.",
     "compareFirst": "Erstes Schema wählen",
