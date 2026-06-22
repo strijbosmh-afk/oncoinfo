@@ -1,5 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { AIClientError, callAIStream, callAIToolJson, z } from "../_shared/aiClient.ts";
+
+const AI_MODEL = 'google/gemini-2.5-flash';
+const SCHEMA_ASSISTANT_PROMPT_VERSION = 'schema-assistant-v2';
+const MAX_CONTEXT_MESSAGES = 12;
+const MAX_MESSAGE_CHARS = 1600;
+const SUMMARY_CHARS = 3000;
+
+const PhaseSchema = z.object({
+  phase_name: z.string().optional(),
+  drugs: z.string().optional(),
+  schedule: z.string().optional(),
+  duration: z.string().optional(),
+});
+
+const DrugSchema = z.object({
+  drug_id: z.string().optional(),
+  schema_name: z.string().min(1),
+  generic_name: z.string().min(1),
+  brand_names: z.array(z.string()).optional(),
+  drug_class: z.string().min(1),
+  mechanism_of_action: z.string().optional(),
+  disease_areas: z.array(z.string()).default([]),
+  administration_route: z.string().optional(),
+  standard_dose: z.string().optional(),
+  dosing_frequency: z.string().optional(),
+  cycle_length_days: z.number().optional(),
+  is_on_zvz: z.boolean().optional(),
+  registration_trial: z.string().optional(),
+  approved_indications: z.array(z.string()).optional(),
+  components_description: z.string().optional(),
+  phases: z.array(PhaseSchema).optional(),
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,6 +82,46 @@ const TOOL_DEF = {
   },
 };
 
+type ChatMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
+
+function truncateText(value: unknown, maxChars = MAX_MESSAGE_CHARS): string {
+  const text = typeof value === 'string' ? value : '';
+  return text.length > maxChars ? `${text.slice(0, maxChars)}\n[...ingekort...]` : text;
+}
+
+function summarizeOlderMessages(messages: ChatMessage[]): ChatMessage | null {
+  if (messages.length === 0) return null;
+  const summary = messages
+    .map((message, index) => `${index + 1}. ${message.role}: ${truncateText(message.content, 500)}`)
+    .join('\n')
+    .slice(0, SUMMARY_CHARS);
+
+  return {
+    role: 'system',
+    content: `Samenvatting van eerdere context voor continuiteit. Gebruik dit alleen als achtergrond; de meest recente berichten hieronder zijn leidend.\n${summary}`,
+  };
+}
+
+function compactMessages(input: unknown): ChatMessage[] {
+  const messages = Array.isArray(input) ? input : [];
+  const normalized = messages
+    .filter((message: any) => ['user', 'assistant', 'system'].includes(message?.role))
+    .map((message: any) => ({
+      role: message.role as ChatMessage['role'],
+      content: truncateText(message.content),
+    }));
+
+  if (normalized.length <= MAX_CONTEXT_MESSAGES) return normalized;
+
+  const older = normalized.slice(0, -MAX_CONTEXT_MESSAGES);
+  const recent = normalized.slice(-MAX_CONTEXT_MESSAGES);
+  const summary = summarizeOlderMessages(older);
+  return summary ? [summary, ...recent] : recent;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -73,7 +146,8 @@ serve(async (req) => {
       });
     }
 
-    const { messages, action, drug_id } = await req.json();
+    const { messages: rawMessages, action, drug_id } = await req.json();
+    const messages = compactMessages(rawMessages);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -97,42 +171,27 @@ serve(async (req) => {
     // Stream chat
     const systemPrompt = buildSystemPrompt();
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [{ role: 'system', content: systemPrompt }, ...messages],
-        stream: true,
-      }),
+    const response = await callAIStream({
+      operation: 'schema_assistant_stream',
+      apiKey: LOVABLE_API_KEY,
+      model: AI_MODEL,
+      timeoutMs: 30_000,
+      messages: [
+        { role: 'system', content: `${systemPrompt}\n\nPromptversie: ${SCHEMA_ASSISTANT_PROMPT_VERSION}` },
+        ...messages,
+      ],
     });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit bereikt, probeer later opnieuw.' }), {
-          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Credits op, voeg credits toe.' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const text = await response.text();
-      console.error('AI gateway error:', response.status, text);
-      return new Response(JSON.stringify({ error: 'AI service error' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     return new Response(response.body, {
       headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
     });
   } catch (error) {
-    console.error('schema-assistant error:', error);
+    console.error('schema-assistant error:', error instanceof Error ? error.name : 'UnknownError');
+    if (error instanceof AIClientError) {
+      return new Response(JSON.stringify({ error: error.userMessage }), {
+        status: error.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -331,37 +390,19 @@ Belangrijk:
 }
 
 async function callAIExtraction(messages: any[], apiKey: string) {
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
-      messages: [
-        { role: 'system', content: buildExtractionPrompt() },
-        ...messages,
-      ],
-      tools: [TOOL_DEF],
-      tool_choice: { type: 'function', function: { name: 'save_drug_schema' } },
-    }),
+  return await callAIToolJson({
+    operation: 'schema_assistant_extract',
+    apiKey,
+    model: AI_MODEL,
+    timeoutMs: 30_000,
+    messages: [
+      { role: 'system', content: `${buildExtractionPrompt()}\n\nPromptversie: ${SCHEMA_ASSISTANT_PROMPT_VERSION}` },
+      ...compactMessages(messages),
+    ],
+    tools: [TOOL_DEF],
+    tool_choice: { type: 'function', function: { name: 'save_drug_schema' } },
+    schema: DrugSchema,
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    console.error('AI extraction error:', response.status, text);
-    throw new Error('Kon schema niet extraheren uit gesprek');
-  }
-
-  const data = await response.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-  if (!toolCall?.function?.arguments) {
-    throw new Error('Kon geen gestructureerde data extraheren');
-  }
-
-  return JSON.parse(toolCall.function.arguments);
 }
 
 async function handleExtract(
@@ -375,8 +416,10 @@ async function handleExtract(
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const message = e instanceof AIClientError ? e.userMessage : e.message;
+    return new Response(JSON.stringify({ error: message }), {
+      status: e instanceof AIClientError ? e.status : 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 }
@@ -410,8 +453,10 @@ async function handleSave(
   try {
     drugData = await callAIExtraction(messages, apiKey);
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const message = e instanceof AIClientError ? e.userMessage : e.message;
+    return new Response(JSON.stringify({ error: message }), {
+      status: e instanceof AIClientError ? e.status : 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 

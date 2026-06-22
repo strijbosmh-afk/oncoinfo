@@ -1,9 +1,61 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { callAIJson, callAIToolJson, z } from "../_shared/aiClient.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+const AI_MODEL = 'google/gemini-2.5-flash';
+const PATIENT_FOLDER_PROMPT_VERSION = 'patient-folder-text-v2';
+const PATIENT_FOLDER_CONTENT_VERSION = 'patient-folder-layout-v3';
+
+const SideEffectsSchema = z.object({
+  common_friendly: z.string().nullable().optional(),
+  serious_friendly: z.string().nullable().optional(),
+  self_care: z.string().nullable().optional(),
+});
+
+const TranslationSchema = z.record(z.string());
+
+type GenerationMetadata = {
+  model: string;
+  prompt_version: string;
+  content_version: string;
+  timestamp: string;
 };
+
+const allowedOrigins = new Set([
+  'https://oncoinfo.lovable.app',
+  'https://www.oncoinfo.be',
+  'https://oncoinfo.be',
+  'http://localhost:8080',
+  'http://localhost:5173',
+]);
+
+const baseCorsHeaders = {
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') || '';
+  return {
+    ...baseCorsHeaders,
+    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://oncoinfo.lovable.app',
+    'Vary': 'Origin',
+  };
+}
+
+async function sha256(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function escapeHtmlAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
 async function humanizeSideEffects(
   commonText: string | null,
@@ -37,55 +89,41 @@ Serious side effects:
 ${seriousText || 'None provided'}`;
 
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: `You are a compassionate medical writer creating patient information in ${lang}. Return only valid JSON.` },
-          { role: 'user', content: prompt }
-        ],
-        tools: [{
-          type: 'function',
-          function: {
-            name: 'format_side_effects',
-            description: 'Return humanized side effects and self-care tips',
-            parameters: {
-              type: 'object',
-              properties: {
-                common_friendly: { type: 'string', description: `Patient-friendly paragraph about common side effects in ${lang}` },
-                serious_friendly: { type: 'string', description: `Patient-friendly paragraph about serious side effects in ${lang}` },
-                self_care: { type: 'string', description: `Bullet-point self-care tips (each line starting with •) in ${lang}` },
-              },
-              required: ['common_friendly', 'serious_friendly', 'self_care'],
+    const result = await callAIToolJson({
+      operation: 'patient_folder_humanize_side_effects',
+      apiKey: LOVABLE_API_KEY,
+      model: AI_MODEL,
+      timeoutMs: 25_000,
+      messages: [
+        { role: 'system', content: `You are a compassionate medical writer creating patient information in ${lang}. Return only valid JSON.` },
+        { role: 'user', content: prompt }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'format_side_effects',
+          description: 'Return humanized side effects and self-care tips',
+          parameters: {
+            type: 'object',
+            properties: {
+              common_friendly: { type: 'string', description: `Patient-friendly paragraph about common side effects in ${lang}` },
+              serious_friendly: { type: 'string', description: `Patient-friendly paragraph about serious side effects in ${lang}` },
+              self_care: { type: 'string', description: `Bullet-point self-care tips (each line starting with bullet) in ${lang}` },
             },
+            required: ['common_friendly', 'serious_friendly', 'self_care'],
           },
-        }],
-        tool_choice: { type: 'function', function: { name: 'format_side_effects' } },
-      }),
+        },
+      }],
+      tool_choice: { type: 'function', function: { name: 'format_side_effects' } },
+      schema: SideEffectsSchema,
     });
-
-    if (!response.ok) {
-      console.error('AI humanize error:', response.status);
-      return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
-    }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
-
-    const result = JSON.parse(toolCall.function.arguments);
     return {
       commonHumanized: result.common_friendly || commonText,
       seriousHumanized: result.serious_friendly || seriousText,
       selfCareTips: result.self_care || null,
     };
   } catch (e) {
-    console.error('Humanize failed:', e);
+    console.error('Humanize failed:', e instanceof Error ? e.name : 'UnknownError');
     return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
   }
 }
@@ -117,50 +155,32 @@ Texts to translate:
 ${JSON.stringify(toTranslate, null, 2)}`;
 
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: `You are a professional medical translator specializing in Dutch to ${langName} translation for oncology patient information. Always return valid JSON only, no markdown formatting.` },
-          { role: 'user', content: prompt }
-        ],
-      }),
+    const translated = await callAIJson({
+      operation: 'patient_folder_translate_content',
+      apiKey: LOVABLE_API_KEY,
+      model: AI_MODEL,
+      timeoutMs: 25_000,
+      messages: [
+        { role: 'system', content: `You are a professional medical translator specializing in Dutch to ${langName} translation for oncology patient information. Always return valid JSON only, no markdown formatting.` },
+        { role: 'user', content: prompt }
+      ],
+      schema: TranslationSchema,
     });
 
-    if (!response.ok) {
-      console.error('AI translation error:', response.status, await response.text());
-      return textsMap;
-    }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) return textsMap;
-
-    // Parse the JSON response, stripping markdown code fences if present
-    let cleaned = content.trim();
-    if (cleaned.startsWith('```')) {
-      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-    }
-    const translated = JSON.parse(cleaned);
-
-    // Merge back
     const result: Record<string, string | null> = { ...textsMap };
     for (const key of Object.keys(toTranslate)) {
       if (translated[key]) result[key] = translated[key];
     }
     return result;
   } catch (e) {
-    console.error('Translation failed:', e);
+    console.error('Translation failed:', e instanceof Error ? e.name : 'UnknownError');
     return textsMap;
   }
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -248,7 +268,20 @@ Deno.serve(async (req) => {
       }
     }
  
-    const { drug_id, include_dosing = true, include_side_effects = true, physician_name = '', nurse_name = '', language = 'nl', phone_number = '', folder_mode = 'compact', font_size = 0, premedicatie = [] } = await req.json();
+    const {
+      drug_id,
+      include_dosing = true,
+      include_side_effects = true,
+      physician_name = '',
+      nurse_name = '',
+      language = 'nl',
+      phone_number = '',
+      physician_phone = '',
+      nurse_phone = '',
+      folder_mode = 'compact',
+      font_size = 0,
+      premedicatie = [],
+    } = await req.json();
  
     if (!drug_id) {
       return new Response(
@@ -284,6 +317,60 @@ Deno.serve(async (req) => {
         : hospitalLogoUrl.startsWith('/') ? `${APP_URL}${hospitalLogoUrl}`
         : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospitalLogoUrl}`)
       : `${APP_URL}/images/logo-rzt.png`;
+
+    const generationMetadata: GenerationMetadata = {
+      model: AI_MODEL,
+      prompt_version: PATIENT_FOLDER_PROMPT_VERSION,
+      content_version: `${PATIENT_FOLDER_CONTENT_VERSION};drug:${drug.updated_at || 'unknown'};custom:${customContent?.updated_at || 'none'}`,
+      timestamp: new Date().toISOString(),
+    };
+
+    const cacheKey = await sha256(JSON.stringify({
+      version: 1,
+      date: new Date().toISOString().slice(0, 10),
+      drug_id,
+      drug_updated_at: drug.updated_at,
+      custom_content_updated_at: customContent?.updated_at,
+      include_dosing,
+      include_side_effects,
+      physician_name,
+      nurse_name,
+      language,
+      phone_number,
+      physician_phone,
+      nurse_phone,
+      folder_mode,
+      font_size,
+      premedicatie,
+      hospitalName,
+      hospitalColor,
+      logoSourceUrl,
+      doctorsList,
+      generationMetadata: {
+        model: generationMetadata.model,
+        prompt_version: generationMetadata.prompt_version,
+        content_version: generationMetadata.content_version,
+      },
+    }));
+
+    try {
+      const { data: cached } = await supabase
+        .from('ai_generation_cache')
+        .select('content')
+        .eq('cache_key', cacheKey)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      if ((cached?.content as any)?.html) {
+        return new Response(
+          JSON.stringify({ ...(cached.content as any), cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (e) {
+      console.error('AI generation cache read failed:', e);
+    }
+
     try {
       const logoResponse = await fetch(logoSourceUrl);
       if (logoResponse.ok) {
@@ -458,11 +545,33 @@ Deno.serve(async (req) => {
       introductionText, usageText, dosingText, dosingStructured,
       contraindicationsText, rawCommonSE, rawSeriousSE, 
       tipsText, monitoringText, phone_number, selfCareTips,
-      hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie, font_size
+      hospitalName, hospitalColor, doctorsList, folder_mode, premedicatie, font_size,
+      physician_phone, nurse_phone, generationMetadata
     );
 
+    const responsePayload = {
+      html,
+      drug_name: drug.generic_name,
+      brand_names: drug.brand_names,
+      language,
+      cached: false,
+      source: generationMetadata,
+    };
+
+    try {
+      await supabase
+        .from('ai_generation_cache')
+        .upsert({
+          cache_key: cacheKey,
+          content: responsePayload,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        });
+    } catch (e) {
+      console.error('AI generation cache write failed:', e);
+    }
+
     return new Response(
-      JSON.stringify({ html, drug_name: drug.generic_name, brand_names: drug.brand_names, language }),
+      JSON.stringify(responsePayload),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -501,6 +610,9 @@ function generatePatientInfoHtml(
   folderMode: string = 'compact',
   premedicatieItems: string[] = [],
   customFontSize: number = 0,
+  physicianPhone: string = '',
+  nursePhone: string = '',
+  generationMetadata?: GenerationMetadata,
 ): string {
   const isCompact = false; // Always 2-page layout
   // Use custom font size if provided, otherwise use comfortable reading size
@@ -596,6 +708,8 @@ function generatePatientInfoHtml(
   };
 
   const labels = allLabels[language] || allLabels.nl;
+  const finalPhysicianPhone = physicianPhone || '';
+  const finalNursePhone = nursePhone || phoneNumber || '';
 
   const brandNamesText = drug.brand_names?.length > 0 
     ? ` (${drug.brand_names.join(', ')})` 
@@ -740,6 +854,10 @@ function generatePatientInfoHtml(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${generationMetadata ? `<meta name="oncoinfo-ai-model" content="${escapeHtmlAttr(generationMetadata.model)}">
+  <meta name="oncoinfo-prompt-version" content="${escapeHtmlAttr(generationMetadata.prompt_version)}">
+  <meta name="oncoinfo-content-version" content="${escapeHtmlAttr(generationMetadata.content_version)}">
+  <meta name="oncoinfo-generated-at" content="${escapeHtmlAttr(generationMetadata.timestamp)}">` : ''}
   <title>${labels.pageTitle} - ${drug.generic_name}</title>
   <style>
     @page { size: A4; margin: ${isCompact ? '10mm' : '12mm'}; }
@@ -773,12 +891,13 @@ function generatePatientInfoHtml(
     .full-width { grid-column: 1 / -1; }
     .contact-section { background: #f5f5f5; padding: ${isCompact ? '5px 8px' : '10px 12px'}; border-radius: 4px; margin-top: ${isCompact ? '6px' : '12px'}; font-size: ${contactSize}px; }
     .contact-section h2 { font-size: ${contactSize + 2}px; margin-bottom: ${isCompact ? '4px' : '8px'}; color: ${hospitalColor}; }
-    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: ${isCompact ? '6px' : '10px'}; }
-    .contact-grid p { margin: 0; white-space: nowrap; }
+    .contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: ${isCompact ? '6px' : '10px'}; }
+    .contact-grid p { margin: 0; overflow-wrap: anywhere; }
     .footer { margin-top: ${isCompact ? '4px' : '12px'}; padding-top: ${isCompact ? '4px' : '8px'}; border-top: 1px solid #e0e0e0; font-size: ${footerSize}px; color: #666; text-align: center; }
     .page-container { position: relative; padding: ${isCompact ? '10mm' : '12mm'}; display: flex; flex-direction: column; min-height: calc(297mm - ${isCompact ? '20mm' : '24mm'}); }
     .content { flex: 1; }
-    .page-bottom { margin-top: auto; padding-top: 8px; }
+    .page-bottom { margin-top: auto; padding-top: 8px; break-inside: avoid; page-break-inside: avoid; }
+    .folder-disclaimer { margin-top: 8px; padding: 6px 10px; border: 1.5px solid #cc0000; border-radius: 5px; background: #fff5f5; break-inside: avoid; page-break-inside: avoid; }
     .page-break { page-break-before: always; break-before: page; padding: 12mm; }
     /* Timeline styles */
     .timeline { position: relative; margin: 20px 0; padding-left: 0; }
@@ -795,7 +914,7 @@ function generatePatientInfoHtml(
       .page-container { max-height: none !important; overflow: visible !important; }
       .logo-header img { max-height: ${isCompact ? '40px' : '55px'} !important; max-width: 200px !important; }
       .page-break { page-break-before: always; break-before: page; }
-      .section, .warning-box, .danger-box, .selfcare-box, .info-box, .contact-section, .timeline-item { break-inside: avoid; page-break-inside: avoid; }
+      .section, .warning-box, .danger-box, .selfcare-box, .info-box, .contact-section, .folder-disclaimer, .page-bottom, .timeline-item { break-inside: avoid; page-break-inside: avoid; }
       h2, h3, strong { break-after: avoid; page-break-after: avoid; }
     }
   </style>
@@ -902,12 +1021,11 @@ function generatePatientInfoHtml(
     <div class="contact-section">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
-        <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}</p>
-        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-        <p><strong>${labels.phone}:</strong> ${phoneNumber || '_________________'}</p>
+        <p><strong>${labels.physician}:</strong> ${physicianName || (doctorsList.length > 0 ? doctorsList[0] : '_________________')}<br><strong>${labels.phone}:</strong> ${finalPhysicianPhone || '_________________'}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}<br><strong>${labels.phone}:</strong> ${finalNursePhone || '_________________'}</p>
       </div>
     </div>
-    <div style="margin-top: 8px; padding: 6px 10px; border: 1.5px solid #cc0000; border-radius: 5px; background: #fff5f5;">
+    <div class="folder-disclaimer">
       <p style="font-weight: 700; color: #cc0000; font-size: ${disclaimerTitleSize}px; margin-bottom: 2px;">⚠ ${language === 'fr' ? 'Avis important' : language === 'de' ? 'Wichtiger Hinweis' : language === 'en' ? 'Important notice' : 'Belangrijke mededeling'}</p>
       <p style="font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4;">${language === 'fr' ? 'Ce document est uniquement destiné à des fins informatives et ne constitue pas un dispositif médical (MDR 2017/745). Son contenu peut contenir des erreurs et ne doit pas servir de base unique pour des décisions cliniques. Consultez toujours votre médecin ou pharmacien.' : language === 'de' ? 'Dieses Dokument dient ausschließlich zu Informationszwecken und ist kein Medizinprodukt (MDR 2017/745). Der Inhalt kann Fehler enthalten und darf nicht als alleinige Grundlage für klinische Entscheidungen dienen. Konsultieren Sie immer Ihren Arzt oder Apotheker.' : language === 'en' ? 'This document is for informational purposes only and is not a medical device (MDR 2017/745). Its content may contain errors and should not serve as the sole basis for clinical decisions. Always consult your physician or pharmacist.' : 'Dit document is uitsluitend bedoeld als informatief hulpmiddel en is geen medisch hulpmiddel (MDR 2017/745). De inhoud kan fouten bevatten en mag niet als enige basis voor klinische beslissingen dienen. Raadpleeg altijd uw behandelend arts of apotheker.'}</p>
     </div>

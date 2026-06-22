@@ -4,6 +4,114 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+function manualChunks(id: string) {
+  if (!id.includes("node_modules")) return undefined;
+
+  const normalizedId = id.replace(/\\/g, "/");
+
+  if (
+    normalizedId.includes("/node_modules/react/") ||
+    normalizedId.includes("/node_modules/react-dom/") ||
+    normalizedId.includes("/node_modules/scheduler/")
+  ) {
+    return "vendor-react";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/react-router") ||
+    normalizedId.includes("/node_modules/@remix-run/")
+  ) {
+    return "vendor-router";
+  }
+
+  if (normalizedId.includes("/node_modules/@supabase/")) {
+    return "vendor-supabase";
+  }
+
+  if (normalizedId.includes("/node_modules/@tanstack/")) {
+    return "vendor-query";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@radix-ui/") ||
+    normalizedId.includes("/node_modules/cmdk/") ||
+    normalizedId.includes("/node_modules/vaul/") ||
+    normalizedId.includes("/node_modules/input-otp/") ||
+    normalizedId.includes("/node_modules/react-day-picker/") ||
+    normalizedId.includes("/node_modules/embla-carousel")
+  ) {
+    return "vendor-ui";
+  }
+
+  if (normalizedId.includes("/node_modules/jspdf/")) {
+    return "vendor-jspdf";
+  }
+
+  if (normalizedId.includes("/node_modules/html2canvas/")) {
+    return "vendor-html2canvas";
+  }
+
+  if (normalizedId.includes("/node_modules/dompurify/")) {
+    return "vendor-dompurify";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/recharts/") ||
+    normalizedId.includes("/node_modules/d3-") ||
+    normalizedId.includes("/node_modules/victory-vendor/")
+  ) {
+    return "vendor-charts";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/react-hook-form/") ||
+    normalizedId.includes("/node_modules/@hookform/") ||
+    normalizedId.includes("/node_modules/zod/")
+  ) {
+    return "vendor-forms";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/i18next/") ||
+    normalizedId.includes("/node_modules/react-i18next/")
+  ) {
+    return "vendor-i18n";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/react-markdown/") ||
+    normalizedId.includes("/node_modules/rehype-") ||
+    normalizedId.includes("/node_modules/remark-") ||
+    normalizedId.includes("/node_modules/unified/") ||
+    normalizedId.includes("/node_modules/micromark") ||
+    normalizedId.includes("/node_modules/hast-") ||
+    normalizedId.includes("/node_modules/mdast-")
+  ) {
+    return "vendor-markdown";
+  }
+
+  if (
+    normalizedId.includes("/node_modules/@dnd-kit/") ||
+    normalizedId.includes("/node_modules/sortablejs/")
+  ) {
+    return "vendor-dnd";
+  }
+
+  if (normalizedId.includes("/node_modules/lucide-react/")) {
+    return "vendor-icons";
+  }
+
+  if (normalizedId.includes("/node_modules/date-fns/")) {
+    return "vendor-date";
+  }
+
+  if (normalizedId.includes("/node_modules/mammoth/")) {
+    return "vendor-docx";
+  }
+
+  return undefined;
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -72,6 +180,13 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks,
+      },
     },
   },
 }));
