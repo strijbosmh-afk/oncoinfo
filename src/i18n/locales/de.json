@@ -28,7 +28,7 @@
   },
   "releaseNotes": {
     "title": "OncoInfo wurde verbessert",
-    "subtitle": "Wir haben Patienteninformationen und KI-Unterstützung zuverlässiger, schneller und sicherer gemacht.",
+    "subtitle": "Wir haben Patienteninformationen, KI-Unterstützung und die täglichen Workflows des Behandlungsteams zuverlässiger, schneller und praktischer gemacht.",
     "printTitle": "Bessere Patienteninformationen",
     "printDescription": "Druck- und PDF-Layouts sind stabiler, mit korrekter Platzierung von Arzt, Pflegekraft, Telefonnummern und Hinweistext.",
     "speedTitle": "Schnelleres Laden",
@@ -36,7 +36,9 @@
     "aiTitle": "Sicherere KI-Generierung",
     "aiDescription": "KI-Ausgaben werden validiert, wenn möglich wiederverwendet, und das Layout der Patienteninformation wird weiterhin deterministisch von OncoInfo erstellt.",
     "footerNote": "Diese Meldung erscheint einmal pro Benutzer auf diesem Gerät.",
-    "cta": "Verstanden"
+    "cta": "Verstanden",
+    "workflowTitle": "Neue Team-Workflows",
+    "workflowDescription": "Nutzen Sie Schema-Navigation, Monitoring-Kalender, Supportive-Care-Presets, Schema-Vergleich und Folder-Preflight, um schneller zum passenden Datenblatt und Plan zu gelangen."
   },
   "workflow": {
     "consultTab": "Konsultation",
