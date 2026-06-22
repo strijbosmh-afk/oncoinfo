@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { HospitalProvider } from "@/contexts/HospitalContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ReleaseNotesDialog } from "@/components/ReleaseNotesDialog";
 import { Loader2 } from "lucide-react";
 
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
@@ -49,6 +50,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ReleaseNotesDialog />
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<LoginPage />} />

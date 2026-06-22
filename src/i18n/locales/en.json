@@ -26,6 +26,18 @@
     "noResults": "No results found",
     "comingSoon": "Coming soon"
   },
+  "releaseNotes": {
+    "title": "OncoInfo has been improved",
+    "subtitle": "We made patient folders and AI support more reliable, faster, and safer.",
+    "printTitle": "Better patient folders",
+    "printDescription": "Print and PDF layouts are more stable, with correct placement of physician, nurse, phone numbers, and disclaimer.",
+    "speedTitle": "Faster loading",
+    "speedDescription": "Pages and drug lists load more efficiently through split bundles, better caching, and lighter database queries.",
+    "aiTitle": "Safer AI generation",
+    "aiDescription": "AI output is validated, reused where possible, and the folder layout remains deterministically built by OncoInfo.",
+    "footerNote": "This message appears once per user on this device.",
+    "cta": "Got it"
+  },
   "auth": {
     "welcome": "Welcome to OncoInfo",
     "loginDescription": "Log in to access the drug library",

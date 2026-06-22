@@ -26,6 +26,18 @@
     "noResults": "Geen resultaten gevonden",
     "comingSoon": "Binnenkort beschikbaar"
   },
+  "releaseNotes": {
+    "title": "OncoInfo is verbeterd",
+    "subtitle": "We hebben de patiëntfolders en de AI-ondersteuning betrouwbaarder, sneller en veiliger gemaakt.",
+    "printTitle": "Betere patiëntfolders",
+    "printDescription": "Print en PDF-layouts blijven stabieler, met correcte plaatsing van arts, verpleegkundige, telefoonnummers en disclaimer.",
+    "speedTitle": "Sneller laden",
+    "speedDescription": "Pagina's en medicijnlijsten laden efficiënter dankzij opgesplitste bundles, betere caching en lichtere databasevragen.",
+    "aiTitle": "Veiligere AI-generatie",
+    "aiDescription": "AI-uitvoer wordt gevalideerd, hergebruikt waar mogelijk en de folderlayout blijft deterministisch door OncoInfo opgebouwd.",
+    "footerNote": "Deze melding verschijnt één keer per gebruiker op dit toestel.",
+    "cta": "Begrepen"
+  },
   "auth": {
     "welcome": "Welkom bij OncoInfo",
     "loginDescription": "Log in om toegang te krijgen tot de medicijnbibliotheek",
