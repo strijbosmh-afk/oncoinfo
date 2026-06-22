@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine, Scale, ClipboardList } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,18 +87,6 @@ const getDrugClassColor = (drugClass: string) => {
   };
   return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
-
-function formatCompareValue(value?: unknown, fallback = '-') {
-  if (!value) return fallback;
-  if (Array.isArray(value)) return value.slice(0, 4).join(', ') || fallback;
-  if (typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>)
-      .slice(0, 3)
-      .map(([key, item]) => `${key}: ${Array.isArray(item) ? item.join(', ') : String(item)}`)
-      .join(' | ') || fallback;
-  }
-  return String(value);
-}
 
 interface DrugCardProps {
   drug: Drug;
@@ -346,7 +334,6 @@ export default function DrugsPage() {
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
-  const [compareIds, setCompareIds] = useState<[string, string]>(['', '']);
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital, isDemoClinic } = useHospital();
@@ -665,20 +652,6 @@ export default function DrugsPage() {
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, artaDrugs: arta, lhrhDrugs: lhrh, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder, category]);
-
-  const compareDrugOptions = useMemo(() => applyUserOrder(filteredDrugs).slice(0, 80), [filteredDrugs, applyUserOrder]);
-  const compareA = compareDrugOptions.find(drug => drug.id === compareIds[0]);
-  const compareB = compareDrugOptions.find(drug => drug.id === compareIds[1]);
-
-  const getPatientBurden = (drug?: Drug) => {
-    if (!drug) return '-';
-    const route = drug.administration_route?.toLowerCase() || '';
-    const cycle = drug.cycle_length_days ? `${drug.cycle_length_days} ${t('drugDetail.days')}` : t('drugs.compareVariable');
-    if (route.includes('oraal')) return t('drugs.compareBurdenOral', { cycle });
-    if (route.includes('intraveneus')) return t('drugs.compareBurdenIv', { cycle });
-    if (route.includes('subcutaan')) return t('drugs.compareBurdenSc', { cycle });
-    return t('drugs.compareBurdenGeneric', { cycle });
-  };
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
@@ -1208,69 +1181,6 @@ export default function DrugsPage() {
             </div>
           </div>
         )}
-
-        <div className="mb-6 max-w-4xl">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Scale className="h-5 w-5 text-primary" />
-                {t('drugs.compareTitle')}
-              </CardTitle>
-              <CardDescription>{t('drugs.compareDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[0, 1].map(index => (
-                  <select
-                    key={index}
-                    value={compareIds[index]}
-                    onChange={(event) => setCompareIds(prev => index === 0 ? [event.target.value, prev[1]] : [prev[0], event.target.value])}
-                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="">{index === 0 ? t('drugs.compareFirst') : t('drugs.compareSecond')}</option>
-                    {compareDrugOptions.map(drug => (
-                      <option key={drug.id} value={drug.id}>{drug.generic_name}</option>
-                    ))}
-                  </select>
-                ))}
-              </div>
-
-              {compareA && compareB ? (
-                <div className="overflow-x-auto rounded-lg border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50 text-left">
-                        <th className="p-2 font-medium">{t('drugs.compareAspect')}</th>
-                        <th className="p-2 font-medium">{compareA.generic_name}</th>
-                        <th className="p-2 font-medium">{compareB.generic_name}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        [t('drugs.compareRoute'), compareA.administration_route, compareB.administration_route],
-                        [t('drugs.compareCycle'), compareA.cycle_length_days ? `${compareA.cycle_length_days} ${t('drugDetail.days')}` : '-', compareB.cycle_length_days ? `${compareB.cycle_length_days} ${t('drugDetail.days')}` : '-'],
-                        [t('drugs.compareMonitoring'), formatCompareValue(compareA.monitoring_requirements), formatCompareValue(compareB.monitoring_requirements)],
-                        [t('drugs.compareSideEffects'), formatCompareValue(compareA.side_effects?.common || compareA.side_effects?.veel_voorkomend), formatCompareValue(compareB.side_effects?.common || compareB.side_effects?.veel_voorkomend)],
-                        [t('drugs.comparePatientBurden'), getPatientBurden(compareA), getPatientBurden(compareB)],
-                      ].map(([label, first, second]) => (
-                        <tr key={label} className="border-b last:border-0">
-                          <td className="p-2 font-medium align-top">{label}</td>
-                          <td className="p-2 text-muted-foreground align-top">{first}</td>
-                          <td className="p-2 text-muted-foreground align-top">{second}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  <ClipboardList className="mx-auto mb-2 h-6 w-6" />
-                  {t('drugs.compareEmpty')}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Search Bar */}
         <div className="flex gap-4 mb-6">

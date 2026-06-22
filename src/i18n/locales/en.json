@@ -38,7 +38,7 @@
     "footerNote": "This message appears once per user on this device.",
     "cta": "Got it",
     "workflowTitle": "New care-team workflows",
-    "workflowDescription": "Use the monitoring calendar, supportive-care presets, regimen comparison, and folder preflight to reach the right planning faster."
+    "workflowDescription": "Use the monitoring calendar, supportive-care presets, and folder preflight to reach practical planning faster."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -219,23 +219,7 @@
     "tabCdk46": "CDK4/6",
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
-    "disciplineDisabled": "This feature has been disabled for your institution.",
-    "compareTitle": "Compare two regimens",
-    "compareDesc": "Compare route, cycle, monitoring, side effects, and practical patient burden.",
-    "compareFirst": "Choose first regimen",
-    "compareSecond": "Choose second regimen",
-    "compareEmpty": "Choose two regimens to compare.",
-    "compareAspect": "Aspect",
-    "compareRoute": "Route",
-    "compareCycle": "Cycle duration",
-    "compareMonitoring": "Monitoring",
-    "compareSideEffects": "Side effects",
-    "comparePatientBurden": "Practical burden",
-    "compareVariable": "variable",
-    "compareBurdenOral": "Oral pathway; follow-up and adherence are important. Cycle: {{cycle}}.",
-    "compareBurdenIv": "Hospital visit for IV administration. Cycle: {{cycle}}.",
-    "compareBurdenSc": "Subcutaneous administration with short contact moments. Cycle: {{cycle}}.",
-    "compareBurdenGeneric": "Practical burden depends on the local regimen. Cycle: {{cycle}}."
+    "disciplineDisabled": "This feature has been disabled for your institution."
   },
   "drugDetail": {
     "overview": "Overview",

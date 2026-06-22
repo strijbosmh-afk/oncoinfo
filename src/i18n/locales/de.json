@@ -38,7 +38,7 @@
     "footerNote": "Diese Meldung erscheint einmal pro Benutzer auf diesem Gerät.",
     "cta": "Verstanden",
     "workflowTitle": "Neue Team-Workflows",
-    "workflowDescription": "Nutzen Sie Monitoring-Kalender, Supportive-Care-Presets, Schema-Vergleich und Folder-Preflight, um schneller zum passenden Plan zu gelangen."
+    "workflowDescription": "Nutzen Sie Monitoring-Kalender, Supportive-Care-Presets und Folder-Preflight, um schneller zu einer praktischen Planung zu gelangen."
   },
   "workflow": {
     "consultTab": "Konsultation",
@@ -219,23 +219,7 @@
     "tabCdk46": "CDK4/6",
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
-    "disciplineDisabled": "Diese Funktion wurde für Ihre Einrichtung deaktiviert.",
-    "compareTitle": "Zwei Schemata vergleichen",
-    "compareDesc": "Applikation, Zyklus, Monitoring, Nebenwirkungen und praktische Belastung vergleichen.",
-    "compareFirst": "Erstes Schema wählen",
-    "compareSecond": "Zweites Schema wählen",
-    "compareEmpty": "Wählen Sie zwei Schemata zum Vergleich.",
-    "compareAspect": "Aspekt",
-    "compareRoute": "Applikation",
-    "compareCycle": "Zyklusdauer",
-    "compareMonitoring": "Monitoring",
-    "compareSideEffects": "Nebenwirkungen",
-    "comparePatientBurden": "Praktische Belastung",
-    "compareVariable": "variabel",
-    "compareBurdenOral": "Oraler Ablauf; Verlaufskontrolle und Adhärenz wichtig. Zyklus: {{cycle}}.",
-    "compareBurdenIv": "Krankenhausbesuch für IV-Applikation. Zyklus: {{cycle}}.",
-    "compareBurdenSc": "Subkutane Gabe mit kurzen Kontakten. Zyklus: {{cycle}}.",
-    "compareBurdenGeneric": "Praktische Belastung abhängig vom lokalen Schema. Zyklus: {{cycle}}."
+    "disciplineDisabled": "Diese Funktion wurde für Ihre Einrichtung deaktiviert."
   },
   "drugDetail": {
     "overview": "Übersicht",
