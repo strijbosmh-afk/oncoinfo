@@ -44,7 +44,13 @@ import {
   Printer,
   ChevronDown,
   AlertCircle,
-  PenLine
+  PenLine,
+  ClipboardCheck,
+  Eye,
+  Save,
+  RotateCcw,
+  CalendarDays,
+  History
 } from 'lucide-react';
 import { Download } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -79,6 +85,7 @@ const DISEASE_AREA_TO_CATEGORY: Record<string, string> = {
 };
 
 const DEFAULT_PHONE_VALUES = ['016 80 90 11'];
+const FOLDER_PRESET_KEY = 'patient-folder-workflow-preset-v1';
 
 function isMissingOrDefaultPhone(phone: string): boolean {
   const normalized = phone.replace(/\s+/g, ' ').trim();
@@ -91,6 +98,14 @@ function getDrugCategory(diseaseAreas?: string[] | null): string | null {
     if (DISEASE_AREA_TO_CATEGORY[area]) return DISEASE_AREA_TO_CATEGORY[area];
   }
   return null;
+}
+
+function countTextItems(value?: unknown): number {
+  if (!value) return 0;
+  if (Array.isArray(value)) return value.length;
+  if (typeof value === 'string') return value.trim() ? 1 : 0;
+  if (typeof value === 'object') return Object.values(value as Record<string, unknown>).reduce((sum, item) => sum + countTextItems(item), 0);
+  return 0;
 }
 
 export default function DrugDetailPage() {
@@ -391,6 +406,104 @@ export default function DrugDetailPage() {
     effectivePhysicianPhone,
     effectiveNursePhone,
   ) : '';
+
+  const updatedDate = new Date(drug?.updated_at || Date.now());
+  const createdDate = new Date(drug?.created_at || Date.now());
+  const isRecentlyUpdated = Date.now() - updatedDate.getTime() < 30 * 24 * 60 * 60 * 1000;
+  const hasContentChangedAfterCreation = Math.abs(updatedDate.getTime() - createdDate.getTime()) > 60 * 1000;
+  const dateFormatter = new Intl.DateTimeFormat(selectedLanguage === 'fr' ? 'fr-BE' : selectedLanguage === 'de' ? 'de-DE' : selectedLanguage === 'en' ? 'en-GB' : 'nl-BE', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const consultHighlights = {
+    indications: td?.approved_indications?.slice(0, 3) || [],
+    dosing: td?.dosing_info?.standard_dose || td?.dosing_info?.standard || td?.dosing_info?.frequency || drug?.common_regimens?.[0] || '',
+    commonEffects: (td?.side_effects?.common || td?.side_effects?.veel_voorkomend || []).slice(0, 5),
+    seriousEffects: (td?.side_effects?.serious || td?.side_effects?.ernstig || []).slice(0, 4),
+    monitoring: (drug?.monitoring_requirements || []).slice(0, 5),
+    counseling: (td?.patient_counseling_points || []).slice(0, 4),
+  };
+
+  const contentScore =
+    countTextItems(td?.approved_indications) +
+    countTextItems(td?.dosing_info) +
+    countTextItems(td?.side_effects) +
+    countTextItems(td?.contraindications) +
+    countTextItems(drug?.monitoring_requirements) +
+    countTextItems(td?.patient_counseling_points) +
+    selectedPremedicatie.length * 2;
+  const estimatedPages = folderFontSize >= 17 || contentScore > 38 ? 3 : contentScore > 22 || folderFontSize >= 15 ? 2 : 1;
+  const fitStatus = estimatedPages <= 2 ? 'ok' : 'warn';
+
+  const preflightItems = [
+    {
+      ok: Boolean(selectedPhysician),
+      label: t('workflow.preflightPhysician'),
+      detail: selectedPhysician || t('workflow.preflightMissing'),
+    },
+    {
+      ok: !isMissingOrDefaultPhone(effectivePhysicianPhone),
+      label: t('workflow.preflightPhysicianPhone'),
+      detail: effectivePhysicianPhone || t('workflow.preflightMissing'),
+    },
+    {
+      ok: Boolean(currentNurseName),
+      label: t('workflow.preflightNurse'),
+      detail: currentNurseName || t('workflow.preflightMissing'),
+    },
+    {
+      ok: !isMissingOrDefaultPhone(effectiveNursePhone),
+      label: t('workflow.preflightNursePhone'),
+      detail: effectiveNursePhone || t('workflow.preflightMissing'),
+    },
+    {
+      ok: Boolean(selectedLanguage),
+      label: t('workflow.preflightLanguage'),
+      detail: selectedLanguage.toUpperCase(),
+    },
+    {
+      ok: fitStatus === 'ok',
+      label: t('workflow.preflightFit'),
+      detail: fitStatus === 'ok' ? t('workflow.fitGood', { count: estimatedPages }) : t('workflow.fitRisk', { count: estimatedPages }),
+    },
+  ];
+  const preflightBlockingIssues = preflightItems.filter(item => !item.ok).length;
+
+  const saveFolderPreset = () => {
+    localStorage.setItem(FOLDER_PRESET_KEY, JSON.stringify({
+      selectedLanguage,
+      includeSideEffects,
+      includePremedicatie,
+      folderFontSize,
+      phoneMode,
+      customPhone,
+      selectedPremedicatie,
+    }));
+    toast.success(t('workflow.presetSaved'));
+  };
+
+  const applyFolderPreset = () => {
+    const raw = localStorage.getItem(FOLDER_PRESET_KEY);
+    if (!raw) {
+      toast.error(t('workflow.noPreset'));
+      return;
+    }
+    try {
+      const preset = JSON.parse(raw);
+      if (preset.selectedLanguage) setSelectedLanguage(preset.selectedLanguage);
+      if (typeof preset.includeSideEffects === 'boolean') setIncludeSideEffects(preset.includeSideEffects);
+      if (typeof preset.includePremedicatie === 'boolean') setIncludePremedicatie(preset.includePremedicatie);
+      if (typeof preset.folderFontSize === 'number') setFolderFontSize(preset.folderFontSize);
+      if (preset.phoneMode === 'nurse' || preset.phoneMode === 'custom') setPhoneMode(preset.phoneMode);
+      if (typeof preset.customPhone === 'string') setCustomPhone(preset.customPhone);
+      if (Array.isArray(preset.selectedPremedicatie)) setSelectedPremedicatie(preset.selectedPremedicatie);
+      toast.success(t('workflow.presetApplied'));
+    } catch {
+      toast.error(t('workflow.presetInvalid'));
+    }
+  };
 
   const handleOpenStaffDialog = () => {
     setPreviewHtml(null);
@@ -834,10 +947,11 @@ export default function DrugDetailPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+        <Tabs defaultValue="consult" className="space-y-4 sm:space-y-6">
             <div className="flex items-center gap-2">
               <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                 <TabsList className="w-max">
+                  <TabsTrigger value="consult" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('workflow.consultTab')}</TabsTrigger>
                   <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.overview')}</TabsTrigger>
                   <TabsTrigger value="dosing" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.dosing')}</TabsTrigger>
                   <TabsTrigger value="side-effects" className="text-xs sm:text-sm px-2.5 sm:px-3">{t('drugDetail.sideEffects')}</TabsTrigger>
@@ -923,6 +1037,117 @@ export default function DrugDetailPage() {
                 </Button>
               </div>
             </div>
+
+          <TabsContent value="consult" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardCheck className="h-5 w-5 text-primary" />
+                    {t('workflow.consultTitle')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">{t('drugDetail.indications')}</p>
+                      {consultHighlights.indications.length > 0 ? (
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                          {consultHighlights.indications.map((item, index) => <li key={index}>{item}</li>)}
+                        </ul>
+                      ) : (
+                        <p className="mt-2 text-sm text-muted-foreground">{t('workflow.noConsultData')}</p>
+                      )}
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <p className="text-xs font-medium uppercase text-muted-foreground">{t('drugDetail.dosingInfo')}</p>
+                      <p className="mt-2 text-sm">{consultHighlights.dosing || t('workflow.noConsultData')}</p>
+                      {drug.cycle_length_days && (
+                        <p className="mt-1 text-xs text-muted-foreground">{drug.cycle_length_days} {t('drugDetail.days')}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+                      <p className="text-xs font-medium uppercase text-amber-700 dark:text-amber-300">{t('drugDetail.commonSideEffects')}</p>
+                      <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                        {consultHighlights.commonEffects.length > 0
+                          ? consultHighlights.commonEffects.map((item, index) => <li key={index}>{item}</li>)
+                          : <li className="text-muted-foreground">{t('workflow.noConsultData')}</li>}
+                      </ul>
+                    </div>
+                    <div className="rounded-lg border border-red-200 bg-red-50/60 p-3 dark:border-red-900 dark:bg-red-950/20">
+                      <p className="text-xs font-medium uppercase text-red-700 dark:text-red-300">{t('drugDetail.seriousSideEffects')}</p>
+                      <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                        {consultHighlights.seriousEffects.length > 0
+                          ? consultHighlights.seriousEffects.map((item, index) => <li key={index}>{item}</li>)
+                          : <li className="text-muted-foreground">{t('workflow.noConsultData')}</li>}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">{t('drugDetail.monitoringRequirements')}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                      {consultHighlights.monitoring.length > 0
+                        ? consultHighlights.monitoring.map((item, index) => <li key={index}>{item}</li>)
+                        : <li className="text-muted-foreground">{t('workflow.noConsultData')}</li>}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <History className="h-4 w-4" />
+                      {t('workflow.updatesTitle')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{t('workflow.createdAt')}</span>
+                      <span className="font-medium">{dateFormatter.format(createdDate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{t('workflow.updatedAt')}</span>
+                      <span className="font-medium">{dateFormatter.format(updatedDate)}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {isRecentlyUpdated && <Badge variant="secondary">{t('workflow.recentlyUpdated')}</Badge>}
+                      {hasContentChangedAfterCreation && <Badge variant="outline">{t('workflow.changedSinceCreation')}</Badge>}
+                      {!hasContentChangedAfterCreation && <Badge variant="outline">{t('workflow.originalVersion')}</Badge>}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Stethoscope className="h-4 w-4" />
+                      {t('workflow.folderReadyTitle')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{t('workflow.preflightPhysician')}</span>
+                      <span className="font-medium">{selectedPhysician || t('workflow.preflightMissing')}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">{t('workflow.preflightNurse')}</span>
+                      <span className="font-medium">{currentNurseName || t('workflow.preflightMissing')}</span>
+                    </div>
+                    <Button onClick={handleOpenStaffDialog} className="w-full gap-2">
+                      <FileText className="h-4 w-4" />
+                      {t('patientFolder.patientInfo')}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             {isTranslating && (
@@ -1562,6 +1787,60 @@ export default function DrugDetailPage() {
                           {isDACH && (
                             <Button type="button" variant={selectedLanguage === 'de' ? 'default' : 'outline'} onClick={() => setSelectedLanguage('de')} className="flex-1 h-7 sm:h-8 text-xs" size="sm">DE</Button>
                           )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 border-t pt-3 sm:pt-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="text-xs sm:text-sm font-medium">{t('workflow.presetsTitle')}</Label>
+                        <div className="flex gap-1.5">
+                          <Button type="button" variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={saveFolderPreset}>
+                            <Save className="h-3.5 w-3.5" />
+                            {t('workflow.savePreset')}
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs" onClick={applyFolderPreset}>
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            {t('workflow.applyPreset')}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className={`rounded-lg border p-3 ${preflightBlockingIssues > 0 ? 'border-amber-300 bg-amber-50/70 dark:bg-amber-950/20' : 'border-green-200 bg-green-50/70 dark:bg-green-950/20'}`}>
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <p className="flex items-center gap-2 text-xs font-semibold">
+                            <ClipboardCheck className="h-4 w-4" />
+                            {t('workflow.preflightTitle')}
+                          </p>
+                          <Badge variant={preflightBlockingIssues > 0 ? 'secondary' : 'outline'} className="text-[10px]">
+                            {preflightBlockingIssues > 0 ? t('workflow.preflightAttention', { count: preflightBlockingIssues }) : t('workflow.preflightReady')}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1.5">
+                          {preflightItems.map((item) => (
+                            <div key={item.label} className="flex items-start justify-between gap-3 text-xs">
+                              <span className="flex items-center gap-1.5">
+                                <span className={`h-2 w-2 rounded-full ${item.ok ? 'bg-green-500' : 'bg-amber-500'}`} />
+                                {item.label}
+                              </span>
+                              <span className="max-w-[160px] truncate text-right text-muted-foreground">{item.detail}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`rounded-lg border p-3 ${fitStatus === 'ok' ? 'bg-muted/40' : 'border-amber-300 bg-amber-50/70 dark:bg-amber-950/20'}`}>
+                        <div className="flex items-start gap-2">
+                          <Eye className={`mt-0.5 h-4 w-4 ${fitStatus === 'ok' ? 'text-primary' : 'text-amber-600'}`} />
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold">{t('workflow.fitTitle')}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {fitStatus === 'ok' ? t('workflow.fitGood', { count: estimatedPages }) : t('workflow.fitRisk', { count: estimatedPages })}
+                            </p>
+                            {fitStatus !== 'ok' && (
+                              <p className="text-xs text-amber-700 dark:text-amber-300">{t('workflow.fitSuggestion')}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
