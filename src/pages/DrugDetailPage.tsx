@@ -78,6 +78,13 @@ const DISEASE_AREA_TO_CATEGORY: Record<string, string> = {
   'Supportive Care': 'other', 'Anti-emetica': 'other', 'Groeifactoren': 'other', 'Erytropoietines': 'other', 'Trombopoietine-agonisten': 'other', 'Antiresorptiva': 'other',
 };
 
+const DEFAULT_PHONE_VALUES = ['016 80 90 11'];
+
+function isMissingOrDefaultPhone(phone: string): boolean {
+  const normalized = phone.replace(/\s+/g, ' ').trim();
+  return !normalized || DEFAULT_PHONE_VALUES.includes(normalized);
+}
+
 function getDrugCategory(diseaseAreas?: string[] | null): string | null {
   if (!diseaseAreas || diseaseAreas.length === 0) return null;
   for (const area of diseaseAreas) {
@@ -119,7 +126,7 @@ export default function DrugDetailPage() {
       // Fetch from hospital_doctors table
       const { data: hdData } = await supabase
         .from('hospital_doctors')
-        .select('id, name, staff_type, specialization')
+        .select('id, name, staff_type, specialization, phone_number')
         .eq('hospital_id', hospital.id)
         .eq('is_active', true)
         .order('display_order');
@@ -199,6 +206,7 @@ export default function DrugDetailPage() {
     return saved ? parseInt(saved, 10) : 14;
   });
   const [showFontSizeSavePrompt, setShowFontSizeSavePrompt] = useState(false);
+  const [physicianPhone, setPhysicianPhone] = useState('');
   const [nursePhone, setNursePhone] = useState('');
   const [phoneMode, setPhoneMode] = useState<'nurse' | 'custom'>('nurse');
   const [showPhoneWarning, setShowPhoneWarning] = useState(false);
@@ -270,11 +278,12 @@ export default function DrugDetailPage() {
         const fetchDedicatedDoctor = async () => {
           const { data } = await supabase
             .from('profiles')
-            .select('first_name, last_name')
+            .select('first_name, last_name, phone_number')
             .eq('id', profile.dedicated_nurse_id!)
             .maybeSingle();
           if (data?.first_name && data?.last_name) {
             setSelectedPhysician(`${data.first_name} ${data.last_name}`);
+            setPhysicianPhone(data.phone_number || '');
           }
         };
         fetchDedicatedDoctor();
@@ -283,8 +292,7 @@ export default function DrugDetailPage() {
       // Doctor/other: set them as physician (existing behavior)
       if (!selectedPhysician) {
         setSelectedPhysician(fullName);
-        // Set doctor's phone from profile
-        
+        setPhysicianPhone(profile.phone_number || '');
       }
       // If doctor has a dedicated nurse, pre-select that nurse
       if (!nurseSelection && !isNurseCustom && profile.dedicated_nurse_id) {
@@ -310,7 +318,23 @@ export default function DrugDetailPage() {
       }
     }
   }, [profile, hospitalNurses]);
-  const fetchPatientInfo = useCallback(async (physicianName?: string, nurseName?: string, language: string = 'nl', phoneNumber?: string) => {
+
+  useEffect(() => {
+    if (!selectedPhysician || physicianPhone.trim()) return;
+    const selectedDoctor = hospitalDoctors.find(doc => doc.name === selectedPhysician);
+    if (selectedDoctor?.phone_number) {
+      setPhysicianPhone(selectedDoctor.phone_number);
+    }
+  }, [selectedPhysician, hospitalDoctors, physicianPhone]);
+
+  const fetchPatientInfo = useCallback(async (
+    physicianName?: string,
+    nurseName?: string,
+    language: string = 'nl',
+    phoneNumber?: string,
+    physicianPhoneNumber?: string,
+    nursePhoneNumber?: string,
+  ) => {
     if (!drug) return;
     
     setIsGeneratingPdf(true);
@@ -324,6 +348,8 @@ export default function DrugDetailPage() {
           nurse_name: nurseName || '',
           language,
           phone_number: phoneNumber || '',
+          physician_phone: physicianPhoneNumber || '',
+          nurse_phone: nursePhoneNumber || '',
           folder_mode: folderMode,
           font_size: folderFontSize,
           premedicatie: includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : []
@@ -344,10 +370,12 @@ export default function DrugDetailPage() {
 
   const effectiveIncludeDosing = folderMode === 'uitgebreid' ? true : includeDosing;
 
-  const effectivePhone = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
+  const selectedPhysicianRecord = hospitalDoctors.find(d => d.name === selectedPhysician);
+  const effectivePhysicianPhone = physicianPhone.trim() || selectedPhysicianRecord?.phone_number || '';
+  const effectiveNursePhone = phoneMode === 'nurse' ? nursePhone.trim() : customPhone.trim();
 
   const staticPreviewHtml = drug ? generateStaticPreviewHtml(
-    drug, selectedPhysician, currentNurseName, selectedLanguage, effectivePhone,
+    drug, selectedPhysician, currentNurseName, selectedLanguage, effectiveNursePhone,
     effectiveIncludeDosing, includeSideEffects, folderMode,
     hospital?.name || 'OncoInfo',
     (() => {
@@ -360,8 +388,8 @@ export default function DrugDetailPage() {
     (hospital?.branding as any)?.primary_color || '#6b2d5b',
     includePremedicatie ? selectedPremedicatie.map(i => `${i.name} (${i.route}) – ${i.timing}`) : [],
     folderFontSize,
-    '',
-    nursePhone,
+    effectivePhysicianPhone,
+    effectiveNursePhone,
   ) : '';
 
   const handleOpenStaffDialog = () => {
@@ -371,22 +399,19 @@ export default function DrugDetailPage() {
 
   const handleConfirmStaff = async () => {
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
-    const phone = customPhone.trim();
-    
-    // Check if phone number is missing
-    const effectivePhoneCheck = phoneMode === 'nurse' ? nursePhone : customPhone.trim();
-    if (!effectivePhoneCheck) {
+
+    if (isMissingOrDefaultPhone(effectivePhysicianPhone) || isMissingOrDefaultPhone(effectiveNursePhone)) {
       setShowPhoneWarning(true);
       return;
     }
     
-    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, phone);
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, effectiveNursePhone, effectivePhysicianPhone, effectiveNursePhone);
   };
   
   const handleConfirmStaffForce = async () => {
     setShowPhoneWarning(false);
     const nurseName = isNurseCustom ? customNurse.trim() : nurseSelection;
-    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, customPhone.trim());
+    await fetchPatientInfo(selectedPhysician, nurseName, selectedLanguage, effectiveNursePhone, effectivePhysicianPhone, effectiveNursePhone);
   };
 
   const handlePrint = () => {
@@ -581,7 +606,7 @@ export default function DrugDetailPage() {
         
         if (sections.length > 0) {
           // Also capture the header (everything before first section)
-          const logoHeader = pageContainer.querySelector('.logo-header') as HTMLElement;
+          const logoHeader = iframeDoc.querySelector('.logo-header') as HTMLElement;
           if (logoHeader) {
             const { canvas, imgData, imgWidthMm, imgHeightMm } = await captureElement(logoHeader);
             addSectionToPdf(canvas, imgData, imgWidthMm, imgHeightMm);
@@ -860,19 +885,24 @@ export default function DrugDetailPage() {
                         <span>{t('patientFolder.fontLarge', 'Groot')}</span>
                       </div>
                       {showFontSizeSavePrompt && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-full h-7 text-xs mt-1"
-                          onClick={() => {
-                            localStorage.setItem('folder-font-size-default', String(folderFontSize));
-                            setShowFontSizeSavePrompt(false);
-                            toast.success(t('patientFolder.fontSizeSaved', 'Tekstgrootte opgeslagen als standaard'));
-                          }}
-                        >
-                          {t('patientFolder.saveAsDefault', 'Opslaan als standaard')} ({folderFontSize}px)
-                        </Button>
+                        <div className="rounded-md border bg-muted/40 p-2 space-y-2">
+                          <p className="text-xs font-medium">
+                            {t('patientFolder.fontSizeSaveQuestion', 'Deze tekstgrootte opslaan als standaard?')}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-7 text-xs"
+                            onClick={() => {
+                              localStorage.setItem('folder-font-size-default', String(folderFontSize));
+                              setShowFontSizeSavePrompt(false);
+                              toast.success(t('patientFolder.fontSizeSaved', 'Tekstgrootte opgeslagen als standaard'));
+                            }}
+                          >
+                            {t('patientFolder.saveAsDefault', 'Opslaan als standaard')} ({folderFontSize}px)
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1368,6 +1398,8 @@ export default function DrugDetailPage() {
                         return (
                           <Select value={selectedPhysician} onValueChange={(val) => {
                             setSelectedPhysician(val);
+                            const selectedDoctor = hospitalDoctors.find(doc => doc.name === val);
+                            setPhysicianPhone(selectedDoctor?.phone_number || '');
                           }}>
                             <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
                               <SelectValue placeholder={t('patientFolder.select')} />
@@ -1391,6 +1423,12 @@ export default function DrugDetailPage() {
                           </Select>
                         );
                       })()}
+                      <Input
+                        placeholder={t('patientFolder.phonePhysicianPlaceholder', 'Telefoonnummer arts')}
+                        value={physicianPhone}
+                        onChange={(e) => setPhysicianPhone(e.target.value)}
+                        className="h-8 sm:h-9 text-xs sm:text-sm"
+                      />
                     </div>
 
                     <div className="space-y-2 sm:space-y-3 border-t pt-3 sm:pt-4">
@@ -1553,7 +1591,14 @@ export default function DrugDetailPage() {
                         drug={drug}
                         previewHtml={previewHtml}
                         iframeRef={iframeRef}
-                        onRefreshPreview={fetchPatientInfo}
+                        onRefreshPreview={() => fetchPatientInfo(
+                          selectedPhysician,
+                          currentNurseName,
+                          selectedLanguage,
+                          effectiveNursePhone,
+                          effectivePhysicianPhone,
+                          effectiveNursePhone,
+                        )}
                         onUnsavedChanges={setHasUnsavedEditorChanges}
                       />
                     </div>

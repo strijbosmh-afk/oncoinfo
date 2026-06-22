@@ -2,6 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Drug, DrugFilters } from '@/types/drug';
 
+const DRUG_LIST_COLUMNS = [
+  'id',
+  'generic_name',
+  'brand_names',
+  'drug_class',
+  'disease_areas',
+  'approved_indications',
+  'common_regimens',
+  'administration_route',
+  'is_on_zvz',
+  'cycle_length_days',
+  'created_at',
+  'updated_at',
+].join(',');
+
 function convertDrug(dbDrug: any): Drug {
   return {
     id: dbDrug.id,
@@ -35,7 +50,7 @@ export function useDrugs(filters?: DrugFilters) {
   return useQuery({
     queryKey: ['drugs', filters],
     queryFn: async () => {
-      let query = supabase.from('drugs').select('*').eq('is_archived', false);
+      let query = supabase.from('drugs').select(DRUG_LIST_COLUMNS).eq('is_archived', false);
 
       if (filters?.drug_class?.length) {
         // Include Combinatietherapie when Chemotherapie is selected

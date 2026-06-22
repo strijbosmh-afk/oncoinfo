@@ -458,7 +458,8 @@ export function generateStaticPreviewHtml(
      .full-width { grid-column: 1 / -1; }
      .contact-section { background: #f5f5f5; padding: 8px 10px; border-radius: 4px; font-size: ${contactFontSize}px; }
      .contact-section h2 { font-size: ${contactFontSize + 2}px; margin-bottom: 6px; color: ${hospitalColor}; }
-     .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+     .contact-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+     .contact-grid p { overflow-wrap: anywhere; }
      .footer { padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: ${footerFontSize}px; color: #666; text-align: center; }
       .page-break { page-break-before: always; break-before: page; margin-top: 30px; padding-top: 20px; border-top: 3px dashed #ccc; }
       .print-disclaimer { margin-top: 8px; padding: 8px 10px; border: 1.5px solid #cc0000; border-radius: 6px; background: #fff5f5; }
@@ -470,7 +471,7 @@ export function generateStaticPreviewHtml(
         body { padding: 10mm; padding-bottom: 28mm; }
         .fixed-print-disclaimer { position: fixed; bottom: 0; left: 10mm; right: 10mm; background: white; z-index: 999; }
         .inline-disclaimer { display: none !important; }
-        .info-section, .se-category, .tips-box, .contact-section, .drug-header, .timeline-item, .inline-list, .se-grid-row, .print-disclaimer { break-inside: avoid; page-break-inside: avoid; }
+        .info-section, .se-category, .tips-box, .contact-section, .page-footer-block, .drug-header, .timeline-item, .inline-list, .se-grid-row, .print-disclaimer { break-inside: avoid; page-break-inside: avoid; }
         h2, h3, strong { break-after: avoid; page-break-after: avoid; }
       }
       @media screen { .fixed-print-disclaimer { display: none !important; } }
@@ -531,9 +532,8 @@ export function generateStaticPreviewHtml(
      <div class="contact-section full-width">
       <h2>${labels.contact}</h2>
       <div class="contact-grid">
-        <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
-        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-        <p><strong>${labels.phone}:</strong> ${phoneNumber || nursePhone || ''}</p>
+        <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}<br><strong>${labels.phone}:</strong> ${physicianPhone || '_________________'}</p>
+        <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}<br><strong>${labels.phone}:</strong> ${nursePhone || phoneNumber || '_________________'}</p>
       </div>
     </div>
 
@@ -544,10 +544,6 @@ export function generateStaticPreviewHtml(
   </div>
 
   <div class="fixed-print-disclaimer">${disclaimerHtml}</div>
-
-    <div class="footer"><p>${labels.footer}</p></div>
-  </div>
-  </div>
 
   ${premedicatieItems.length > 0 ? `
   <div class="page-break" style="display: flex; flex-direction: column; min-height: calc(297mm - 24mm);">
@@ -588,9 +584,8 @@ export function generateStaticPreviewHtml(
       <div class="contact-section full-width">
         <h2>${labels.contact}</h2>
         <div class="contact-grid">
-          <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}</p>
-          <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}</p>
-          <p><strong>${labels.phone}:</strong> ${phoneNumber || nursePhone || ''}</p>
+          <p><strong>${labels.physician}:</strong> ${physicianName || '_________________'}<br><strong>${labels.phone}:</strong> ${physicianPhone || '_________________'}</p>
+          <p><strong>${labels.nurse}:</strong> ${nurseName || '_________________'}<br><strong>${labels.phone}:</strong> ${nursePhone || phoneNumber || '_________________'}</p>
         </div>
       </div>
 
