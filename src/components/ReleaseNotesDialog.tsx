@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, Printer, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { CheckCircle2, ClipboardList, Printer, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const STORAGE_KEY = "oncoinfo_release_2026_06_ai_print_seen";
+const STORAGE_KEY = "oncoinfo_release_2026_06_workflow_tools_seen";
 
 export function ReleaseNotesDialog() {
   const { t } = useTranslation();
@@ -51,6 +51,11 @@ export function ReleaseNotesDialog() {
       icon: ShieldCheck,
       title: t("releaseNotes.aiTitle"),
       description: t("releaseNotes.aiDescription"),
+    },
+    {
+      icon: ClipboardList,
+      title: t("releaseNotes.workflowTitle"),
+      description: t("releaseNotes.workflowDescription"),
     },
   ];
 

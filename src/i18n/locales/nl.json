@@ -28,7 +28,7 @@
   },
   "releaseNotes": {
     "title": "OncoInfo is verbeterd",
-    "subtitle": "We hebben de patiëntfolders en de AI-ondersteuning betrouwbaarder, sneller en veiliger gemaakt.",
+    "subtitle": "We hebben patiëntenfolders, AI-ondersteuning en dagelijkse zorgteam-workflows betrouwbaarder, sneller en praktischer gemaakt.",
     "printTitle": "Betere patiëntfolders",
     "printDescription": "Print en PDF-layouts blijven stabieler, met correcte plaatsing van arts, verpleegkundige, telefoonnummers en disclaimer.",
     "speedTitle": "Sneller laden",
@@ -36,7 +36,9 @@
     "aiTitle": "Veiligere AI-generatie",
     "aiDescription": "AI-uitvoer wordt gevalideerd, hergebruikt waar mogelijk en de folderlayout blijft deterministisch door OncoInfo opgebouwd.",
     "footerNote": "Deze melding verschijnt één keer per gebruiker op dit toestel.",
-    "cta": "Begrepen"
+    "cta": "Begrepen",
+    "workflowTitle": "Nieuwe zorgteam-workflows",
+    "workflowDescription": "Gebruik de schema-navigatie, monitoringkalender, supportive-care presets, schema-vergelijking en folder-preflight om sneller naar de juiste fiche en planning te gaan."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -261,7 +263,7 @@
     "duration": "Behandelduur",
     "maxDose": "Maximale Dosering",
     "doseAdjustments": "Dosisaanpassingen",
-"noDosingInfo": "Geen doseringsinformatie beschikbaar.",
+    "noDosingInfo": "Geen doseringsinformatie beschikbaar.",
     "translating": "Inhoud wordt vertaald...",
     "cycleDuration": "Cyclusduur",
     "days": "dagen",

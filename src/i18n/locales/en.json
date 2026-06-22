@@ -28,7 +28,7 @@
   },
   "releaseNotes": {
     "title": "OncoInfo has been improved",
-    "subtitle": "We made patient folders and AI support more reliable, faster, and safer.",
+    "subtitle": "We made patient folders, AI support, and day-to-day care-team workflows more reliable, faster, and more practical.",
     "printTitle": "Better patient folders",
     "printDescription": "Print and PDF layouts are more stable, with correct placement of physician, nurse, phone numbers, and disclaimer.",
     "speedTitle": "Faster loading",
@@ -36,7 +36,9 @@
     "aiTitle": "Safer AI generation",
     "aiDescription": "AI output is validated, reused where possible, and the folder layout remains deterministically built by OncoInfo.",
     "footerNote": "This message appears once per user on this device.",
-    "cta": "Got it"
+    "cta": "Got it",
+    "workflowTitle": "New care-team workflows",
+    "workflowDescription": "Use regimen navigation, the monitoring calendar, supportive-care presets, regimen comparison, and folder preflight to reach the right sheet and planning faster."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -261,7 +263,7 @@
     "duration": "Treatment Duration",
     "maxDose": "Maximum Dose",
     "doseAdjustments": "Dose Adjustments",
-"noDosingInfo": "No dosing information available.",
+    "noDosingInfo": "No dosing information available.",
     "translating": "Translating content...",
     "cycleDuration": "Cycle Duration",
     "days": "days",
