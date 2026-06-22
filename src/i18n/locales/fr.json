@@ -38,7 +38,7 @@
     "footerNote": "Ce message apparaît une seule fois par utilisateur sur cet appareil.",
     "cta": "Compris",
     "workflowTitle": "Nouveaux workflows d’équipe",
-    "workflowDescription": "Utilisez la navigation par schéma, le calendrier de suivi, les préréglages de soins de support, la comparaison de schémas et le contrôle de fiche pour accéder plus vite à la bonne fiche et au bon planning."
+    "workflowDescription": "Utilisez le calendrier de suivi, les préréglages de soins de support, la comparaison de schémas et le contrôle de fiche pour accéder plus vite au bon planning."
   },
   "workflow": {
     "consultTab": "Consultation",
@@ -220,17 +220,6 @@
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
     "disciplineDisabled": "Cette fonctionnalité a été désactivée pour votre établissement.",
-    "decisionTreeTitle": "Quel schéma convient ?",
-    "decisionTreeDesc": "Naviguez par domaine, setting, biomarqueur et ligne vers les fiches pertinentes.",
-    "decisionTree": {
-      "disease": "Domaine",
-      "setting": "Setting",
-      "biomarker": "Biomarqueur",
-      "line": "Ligne"
-    },
-    "relevantTreatments": "Traitements pertinents",
-    "noGuideMatches": "Aucune fiche correspondante trouvée avec les filtres actuels.",
-    "decisionTreeDisclaimer": "Aide à la navigation uniquement : pas un avis thérapeutique ni un système de décision médicale.",
     "compareTitle": "Comparer deux schémas",
     "compareDesc": "Comparez administration, cycle, suivi, effets indésirables et charge pratique.",
     "compareFirst": "Choisir le premier schéma",

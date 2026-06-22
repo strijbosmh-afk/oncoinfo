@@ -38,7 +38,7 @@
     "footerNote": "Deze melding verschijnt één keer per gebruiker op dit toestel.",
     "cta": "Begrepen",
     "workflowTitle": "Nieuwe zorgteam-workflows",
-    "workflowDescription": "Gebruik de schema-navigatie, monitoringkalender, supportive-care presets, schema-vergelijking en folder-preflight om sneller naar de juiste fiche en planning te gaan."
+    "workflowDescription": "Gebruik de monitoringkalender, supportive-care presets, schema-vergelijking en folder-preflight om sneller naar de juiste planning te gaan."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -220,17 +220,6 @@
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
     "disciplineDisabled": "Deze functie werd uitgeschakeld voor uw instelling.",
-    "decisionTreeTitle": "Welk schema past?",
-    "decisionTreeDesc": "Navigeer via ziektegebied, setting, biomarker en lijn naar relevante fiches.",
-    "decisionTree": {
-      "disease": "Ziektegebied",
-      "setting": "Setting",
-      "biomarker": "Biomarker",
-      "line": "Lijn"
-    },
-    "relevantTreatments": "Relevante behandelingen",
-    "noGuideMatches": "Geen passende fiches gevonden binnen de huidige filters.",
-    "decisionTreeDisclaimer": "Navigatiehulp: geen behandeladvies of medisch beslissysteem.",
     "compareTitle": "Vergelijk twee schema's",
     "compareDesc": "Zet toediening, cyclus, monitoring, bijwerkingen en praktische belasting naast elkaar.",
     "compareFirst": "Eerste schema kiezen",
