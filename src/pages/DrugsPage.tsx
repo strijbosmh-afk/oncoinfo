@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
+import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine, GitBranch, Scale, ArrowRight, ClipboardList } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -87,6 +87,41 @@ const getDrugClassColor = (drugClass: string) => {
   };
   return colors[drugClass] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
+
+const DECISION_TREE_OPTIONS = {
+  disease: ['Borstkanker', 'Prostaatkanker', 'NSCLC'],
+  setting: ['Neoadjuvant', 'Adjuvant', 'Gemetastaseerd', 'mHSPC', 'mCRPC'],
+  biomarker: ['HR-positief', 'HER2-positief', 'Triple negatief', 'EGFR', 'ALK', 'PD-L1', 'BRCA'],
+  line: ['1e lijn', '2e lijn', 'Onderhoud', 'Progressie'],
+};
+
+function getDrugSearchBlob(drug: Drug, hospitalFilterTags?: string[]) {
+  return [
+    drug.generic_name,
+    drug.drug_class,
+    drug.administration_route || '',
+    ...(drug.brand_names || []),
+    ...(drug.disease_areas || []),
+    ...(drug.approved_indications || []),
+    ...(drug.common_regimens || []),
+    ...(drug.monitoring_requirements || []),
+    ...(hospitalFilterTags || []),
+    JSON.stringify(drug.dosing_info || {}),
+    JSON.stringify(drug.side_effects || {}),
+  ].join(' ').toLowerCase();
+}
+
+function formatCompareValue(value?: unknown, fallback = '-') {
+  if (!value) return fallback;
+  if (Array.isArray(value)) return value.slice(0, 4).join(', ') || fallback;
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>)
+      .slice(0, 3)
+      .map(([key, item]) => `${key}: ${Array.isArray(item) ? item.join(', ') : String(item)}`)
+      .join(' | ') || fallback;
+  }
+  return String(value);
+}
 
 interface DrugCardProps {
   drug: Drug;
@@ -334,6 +369,11 @@ export default function DrugsPage() {
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
   const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
+  const [guideDisease, setGuideDisease] = useState('');
+  const [guideSetting, setGuideSetting] = useState('');
+  const [guideBiomarker, setGuideBiomarker] = useState('');
+  const [guideLine, setGuideLine] = useState('');
+  const [compareIds, setCompareIds] = useState<[string, string]>(['', '']);
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital, isDemoClinic } = useHospital();
@@ -384,6 +424,18 @@ export default function DrugsPage() {
       navigate('/home');
     }
   }, [category, disciplines, navigate]);
+
+  useEffect(() => {
+    const defaultDiseaseByCategory: Record<string, string> = {
+      breast: 'Borstkanker',
+      urology: 'Prostaatkanker',
+      respiratory: 'NSCLC',
+    };
+    setGuideDisease(defaultDiseaseByCategory[category || ''] || '');
+    setGuideSetting('');
+    setGuideBiomarker('');
+    setGuideLine('');
+  }, [category]);
 
   const { data: drugs, isLoading, error } = useDrugs({
     ...filters,
@@ -652,6 +704,37 @@ export default function DrugsPage() {
     const individuals = orderedDrugs.filter(drug => !excludedClasses.includes(drug.drug_class));
     return { combinationDrugs: combinations, hormonalDrugs: hormonal, cdk46Drugs: cdk46, artaDrugs: arta, lhrhDrugs: lhrh, individualDrugs: individuals };
   }, [filteredDrugs, applyUserOrder, category]);
+
+  const guideMatches = useMemo(() => {
+    const selectedTerms = [guideDisease, guideSetting, guideBiomarker, guideLine].filter(Boolean);
+    if (selectedTerms.length === 0) return applyUserOrder(filteredDrugs).slice(0, 6);
+
+    return applyUserOrder(filteredDrugs)
+      .map(drug => {
+        const blob = getDrugSearchBlob(drug, hospitalFilterTags[drug.id]);
+        const diseaseMatch = !guideDisease || drug.disease_areas.includes(guideDisease) || blob.includes(guideDisease.toLowerCase());
+        const score = selectedTerms.reduce((sum, term) => sum + (blob.includes(term.toLowerCase()) ? 1 : 0), 0);
+        return { drug, score: score + (diseaseMatch ? 2 : 0) };
+      })
+      .filter(item => item.score > 1)
+      .sort((a, b) => b.score - a.score || a.drug.generic_name.localeCompare(b.drug.generic_name))
+      .slice(0, 6)
+      .map(item => item.drug);
+  }, [filteredDrugs, guideDisease, guideSetting, guideBiomarker, guideLine, hospitalFilterTags, applyUserOrder]);
+
+  const compareDrugOptions = useMemo(() => applyUserOrder(filteredDrugs).slice(0, 80), [filteredDrugs, applyUserOrder]);
+  const compareA = compareDrugOptions.find(drug => drug.id === compareIds[0]);
+  const compareB = compareDrugOptions.find(drug => drug.id === compareIds[1]);
+
+  const getPatientBurden = (drug?: Drug) => {
+    if (!drug) return '-';
+    const route = drug.administration_route?.toLowerCase() || '';
+    const cycle = drug.cycle_length_days ? `${drug.cycle_length_days} ${t('drugDetail.days')}` : t('drugs.compareVariable');
+    if (route.includes('oraal')) return t('drugs.compareBurdenOral', { cycle });
+    if (route.includes('intraveneus')) return t('drugs.compareBurdenIv', { cycle });
+    if (route.includes('subcutaan')) return t('drugs.compareBurdenSc', { cycle });
+    return t('drugs.compareBurdenGeneric', { cycle });
+  };
 
   // Get display drug classes based on category
   const displayDrugClasses = useMemo(() => {
@@ -1181,6 +1264,129 @@ export default function DrugsPage() {
             </div>
           </div>
         )}
+
+        <div className="grid gap-4 lg:grid-cols-2 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <GitBranch className="h-5 w-5 text-primary" />
+                {t('drugs.decisionTreeTitle')}
+              </CardTitle>
+              <CardDescription>{t('drugs.decisionTreeDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {([
+                ['disease', guideDisease, setGuideDisease, DECISION_TREE_OPTIONS.disease],
+                ['setting', guideSetting, setGuideSetting, DECISION_TREE_OPTIONS.setting],
+                ['biomarker', guideBiomarker, setGuideBiomarker, DECISION_TREE_OPTIONS.biomarker],
+                ['line', guideLine, setGuideLine, DECISION_TREE_OPTIONS.line],
+              ] as const).map(([key, value, setter, options], stepIndex) => (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary">{stepIndex + 1}</span>
+                    {t(`drugs.decisionTree.${key}`)}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {options.map(option => (
+                      <Button
+                        key={option}
+                        type="button"
+                        variant={value === option ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => setter(value === option ? '' : option)}
+                      >
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{t('drugs.relevantTreatments')}</p>
+                  <Badge variant="outline">{guideMatches.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {guideMatches.length > 0 ? guideMatches.map(drug => (
+                    <Link key={drug.id} to={`/drugs/${drug.id}`} className="flex items-center justify-between gap-3 rounded-md bg-background px-3 py-2 text-sm hover:bg-accent">
+                      <span className="font-medium">{drug.generic_name}</span>
+                      <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {drug.drug_class}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </Link>
+                  )) : (
+                    <p className="text-sm text-muted-foreground">{t('drugs.noGuideMatches')}</p>
+                  )}
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">{t('drugs.decisionTreeDisclaimer')}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Scale className="h-5 w-5 text-primary" />
+                {t('drugs.compareTitle')}
+              </CardTitle>
+              <CardDescription>{t('drugs.compareDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[0, 1].map(index => (
+                  <select
+                    key={index}
+                    value={compareIds[index]}
+                    onChange={(event) => setCompareIds(prev => index === 0 ? [event.target.value, prev[1]] : [prev[0], event.target.value])}
+                    className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="">{index === 0 ? t('drugs.compareFirst') : t('drugs.compareSecond')}</option>
+                    {compareDrugOptions.map(drug => (
+                      <option key={drug.id} value={drug.id}>{drug.generic_name}</option>
+                    ))}
+                  </select>
+                ))}
+              </div>
+
+              {compareA && compareB ? (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50 text-left">
+                        <th className="p-2 font-medium">{t('drugs.compareAspect')}</th>
+                        <th className="p-2 font-medium">{compareA.generic_name}</th>
+                        <th className="p-2 font-medium">{compareB.generic_name}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        [t('drugs.compareRoute'), compareA.administration_route, compareB.administration_route],
+                        [t('drugs.compareCycle'), compareA.cycle_length_days ? `${compareA.cycle_length_days} ${t('drugDetail.days')}` : '-', compareB.cycle_length_days ? `${compareB.cycle_length_days} ${t('drugDetail.days')}` : '-'],
+                        [t('drugs.compareMonitoring'), formatCompareValue(compareA.monitoring_requirements), formatCompareValue(compareB.monitoring_requirements)],
+                        [t('drugs.compareSideEffects'), formatCompareValue(compareA.side_effects?.common || compareA.side_effects?.veel_voorkomend), formatCompareValue(compareB.side_effects?.common || compareB.side_effects?.veel_voorkomend)],
+                        [t('drugs.comparePatientBurden'), getPatientBurden(compareA), getPatientBurden(compareB)],
+                      ].map(([label, first, second]) => (
+                        <tr key={label} className="border-b last:border-0">
+                          <td className="p-2 font-medium align-top">{label}</td>
+                          <td className="p-2 text-muted-foreground align-top">{first}</td>
+                          <td className="p-2 text-muted-foreground align-top">{second}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  <ClipboardList className="mx-auto mb-2 h-6 w-6" />
+                  {t('drugs.compareEmpty')}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Search Bar */}
         <div className="flex gap-4 mb-6">

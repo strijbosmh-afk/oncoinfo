@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { FolderMilestoneDialog } from '@/components/FolderMilestoneDialog';
 import { DemoRestrictionDialog } from '@/components/DemoRestrictionDialog';
 import { useQueryClient } from '@tanstack/react-query';
@@ -49,7 +49,6 @@ import {
   Eye,
   Save,
   RotateCcw,
-  CalendarDays,
   History
 } from 'lucide-react';
 import { Download } from 'lucide-react';
@@ -242,7 +241,45 @@ export default function DrugDetailPage() {
     { name: 'Filgrastim 48IE', route: 'SC', timing: 'Dag 1 en 2 na therapie' },
   ];
 
-  const premItemKey = (item: PremedicatieItem) => `${item.name}|${item.route}|${item.timing}`;
+  function premItemKey(item: PremedicatieItem) {
+    return `${item.name}|${item.route}|${item.timing}`;
+  }
+
+  const suggestedPremedicatieItems = useMemo(() => {
+    if (!drug) return defaultPremedicatieItems;
+    const suggestions = new Map<string, PremedicatieItem>();
+    const add = (item: PremedicatieItem) => suggestions.set(premItemKey(item), item);
+    const drugClass = drug.drug_class.toLowerCase();
+    const route = drug.administration_route?.toLowerCase() || '';
+    const textBlob = [
+      drug.generic_name,
+      drug.drug_class,
+      drug.administration_route,
+      ...(drug.common_regimens || []),
+      ...(drug.approved_indications || []),
+      JSON.stringify(drug.dosing_info || {}),
+    ].join(' ').toLowerCase();
+
+    if (drugClass.includes('chemo') || drugClass.includes('combinatie') || textBlob.includes('paclitaxel') || textBlob.includes('docetaxel')) {
+      add({ name: 'Ondansetron 8mg', route: 'PO', timing: t('workflow.supportiveDayOfTherapy') });
+      add({ name: 'Dexamethasone 8mg', route: 'PO', timing: t('workflow.supportiveDayTwoThree') });
+    }
+    if (textBlob.includes('paclitaxel') || textBlob.includes('docetaxel')) {
+      add({ name: 'Dexamethasone 10mg', route: 'PO', timing: '12u en 1u voor therapie' });
+    }
+    if (drugClass.includes('io') || drugClass.includes('immuno')) {
+      add({ name: t('workflow.supportiveIoCard'), route: 'PO', timing: t('workflow.supportiveBringEachVisit') });
+    }
+    if (textBlob.includes('dose-dense') || textBlob.includes('dd-') || textBlob.includes('q2w')) {
+      add({ name: 'Lonquex 6mg', route: 'SC', timing: '24u na chemotherapie' });
+    }
+    if (route.includes('oraal')) {
+      add({ name: t('workflow.supportiveOralDiary'), route: 'PO', timing: t('workflow.supportiveDaily') });
+    }
+
+    defaultPremedicatieItems.forEach(add);
+    return Array.from(suggestions.values());
+  }, [drug, t]);
 
   const togglePremedicatieItem = (item: PremedicatieItem) => {
     const key = premItemKey(item);
@@ -437,6 +474,51 @@ export default function DrugDetailPage() {
   const estimatedPages = folderFontSize >= 17 || contentScore > 38 ? 3 : contentScore > 22 || folderFontSize >= 15 ? 2 : 1;
   const fitStatus = estimatedPages <= 2 ? 'ok' : 'warn';
 
+  const monitoringPlan = useMemo(() => {
+    if (!drug) return [];
+
+    const textBlob = [
+      drug.generic_name,
+      drug.drug_class,
+      drug.administration_route || '',
+      ...(drug.common_regimens || []),
+      ...(drug.approved_indications || []),
+      JSON.stringify(drug.dosing_info || {}),
+    ].join(' ').toLowerCase();
+    const items: { label: string; timing: string; type: 'lab' | 'imaging' | 'toxicity' | 'check' }[] = [];
+    const add = (label: string, timing: string, type: 'lab' | 'imaging' | 'toxicity' | 'check') => {
+      if (!items.some(item => item.label === label && item.timing === timing)) {
+        items.push({ label, timing, type });
+      }
+    };
+
+    (drug.monitoring_requirements || []).slice(0, 4).forEach(req => add(req, t('workflow.monitoringPerProtocol'), 'check'));
+
+    if (drug.drug_class.includes('Chemo') || drug.drug_class.includes('Combinatie')) {
+      add('Bloedbeeld', t('workflow.monitoringBeforeEachCycle'), 'lab');
+      add('Nier- en leverfunctie', t('workflow.monitoringBeforeEachCycle'), 'lab');
+      add(t('workflow.monitoringNauseaNeuropathy'), t('workflow.monitoringEachVisit'), 'toxicity');
+    }
+
+    if (drug.drug_class.includes('IO') || drug.drug_class.includes('Immuno')) {
+      add('TSH / vrij T4', t('workflow.monitoringEvery6Weeks'), 'lab');
+      add('Leverwaarden', t('workflow.monitoringBeforeEachCycle'), 'lab');
+      add(t('workflow.monitoringImmuneToxicity'), t('workflow.monitoringEachVisit'), 'toxicity');
+    }
+
+    if (drug.drug_class.includes('TKI') || drug.drug_class.includes('ARTA') || textBlob.includes('parp')) {
+      add(t('workflow.monitoringBloodPressureSkin'), t('workflow.monitoringEachVisit'), 'toxicity');
+      add('Bloedbeeld en biochemie', t('workflow.monitoringBeforeEachCycle'), 'lab');
+    }
+
+    if (drug.administration_route?.toLowerCase().includes('oraal')) {
+      add(t('workflow.monitoringAdherence'), t('workflow.monitoringEachVisit'), 'check');
+    }
+
+    add(t('workflow.monitoringImaging'), t('workflow.monitoringPerProtocol'), 'imaging');
+    return items.slice(0, 9);
+  }, [drug, t]);
+
   const preflightItems = [
     {
       ok: Boolean(selectedPhysician),
@@ -504,6 +586,61 @@ export default function DrugDetailPage() {
       toast.error(t('workflow.presetInvalid'));
     }
   };
+
+  const applySupportiveCarePresets = () => {
+    setIncludePremedicatie(true);
+    setSelectedPremedicatie(suggestedPremedicatieItems);
+    toast.success(t('workflow.supportivePresetsApplied'));
+  };
+
+  const handlePrintMonitoringPlan = useCallback(() => {
+    if (!drug) return;
+    const typeLabel = (type: 'lab' | 'imaging' | 'toxicity' | 'check') => {
+      const keys = {
+        lab: 'workflow.monitoringTypeLab',
+        imaging: 'workflow.monitoringTypeImaging',
+        toxicity: 'workflow.monitoringTypeToxicity',
+        check: 'workflow.monitoringTypeCheck',
+      } as const;
+      return t(keys[type]);
+    };
+    const rows = monitoringPlan.map(item => `
+      <tr>
+        <td>${item.timing}</td>
+        <td>${item.label}</td>
+        <td>${typeLabel(item.type)}</td>
+      </tr>
+    `).join('');
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) return;
+    printWindow.document.write(`<!doctype html>
+      <html>
+        <head>
+          <title>${t('workflow.monitoringCalendar')} - ${drug.generic_name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 32px; color: #111827; }
+            h1 { font-size: 22px; margin-bottom: 4px; }
+            .meta { color: #4b5563; margin-bottom: 24px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #d1d5db; padding: 10px; text-align: left; vertical-align: top; }
+            th { background: #f3f4f6; }
+            .note { margin-top: 20px; font-size: 12px; color: #6b7280; }
+          </style>
+        </head>
+        <body>
+          <h1>${t('workflow.monitoringCalendar')}</h1>
+          <div class="meta">${drug.generic_name}${drug.brand_names?.length ? ` (${drug.brand_names.join(', ')})` : ''}</div>
+          <table>
+            <thead><tr><th>${t('workflow.monitoringTiming')}</th><th>${t('workflow.monitoringAction')}</th><th>${t('workflow.monitoringType')}</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <p class="note">${t('workflow.monitoringDisclaimer')}</p>
+        </body>
+      </html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    window.setTimeout(() => printWindow.print(), 250);
+  }, [drug, monitoringPlan, t]);
 
   const handleOpenStaffDialog = () => {
     setPreviewHtml(null);
@@ -1503,6 +1640,52 @@ export default function DrugDetailPage() {
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardCheck className="h-5 w-5" />
+                    {t('workflow.monitoringCalendar')}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('workflow.monitoringCalendarDesc')}</p>
+                </div>
+                <Button variant="outline" size="sm" className="gap-2" onClick={handlePrintMonitoringPlan}>
+                  <Printer className="h-4 w-4" />
+                  {t('workflow.printMonitoring')}
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="py-2 pr-3 font-medium">{t('workflow.monitoringTiming')}</th>
+                        <th className="py-2 pr-3 font-medium">{t('workflow.monitoringAction')}</th>
+                        <th className="py-2 font-medium">{t('workflow.monitoringType')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monitoringPlan.map((item, index) => (
+                        <tr key={`${item.label}-${index}`} className="border-b last:border-0">
+                          <td className="py-2 pr-3 align-top">{item.timing}</td>
+                          <td className="py-2 pr-3 align-top text-muted-foreground">{item.label}</td>
+                          <td className="py-2 align-top">
+                            <Badge variant="outline">
+                              {item.type === 'lab' && t('workflow.monitoringTypeLab')}
+                              {item.type === 'imaging' && t('workflow.monitoringTypeImaging')}
+                              {item.type === 'toxicity' && t('workflow.monitoringTypeToxicity')}
+                              {item.type === 'check' && t('workflow.monitoringTypeCheck')}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">{t('workflow.monitoringDisclaimer')}</p>
+              </CardContent>
+            </Card>
+
             {drug.monitoring_requirements && drug.monitoring_requirements.length > 0 ? (
               <Card>
                 <CardHeader>
@@ -1746,7 +1929,16 @@ export default function DrugDetailPage() {
                       </div>
                       {includePremedicatie && (
                         <div className="space-y-2 pl-1">
-                          {defaultPremedicatieItems.map((item) => (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={applySupportiveCarePresets}
+                          >
+                            {t('workflow.applySupportivePresets')}
+                          </Button>
+                          {suggestedPremedicatieItems.map((item) => (
                             <label key={premItemKey(item)} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                               <Checkbox
                                 checked={selectedPremedicatie.some(i => premItemKey(i) === premItemKey(item))}
@@ -1755,7 +1947,7 @@ export default function DrugDetailPage() {
                               <span><strong>{item.name}</strong> ({item.route}) – {item.timing}</span>
                             </label>
                           ))}
-                          {selectedPremedicatie.filter(i => !defaultPremedicatieItems.some(d => premItemKey(d) === premItemKey(i))).map((item) => (
+                          {selectedPremedicatie.filter(i => !suggestedPremedicatieItems.some(d => premItemKey(d) === premItemKey(i))).map((item) => (
                             <label key={premItemKey(item)} className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                               <Checkbox
                                 checked={true}
