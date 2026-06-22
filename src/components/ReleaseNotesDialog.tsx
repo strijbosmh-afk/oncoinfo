@@ -21,13 +21,22 @@ export function ReleaseNotesDialog() {
   useEffect(() => {
     let isMounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted || !data.session || localStorage.getItem(STORAGE_KEY)) return;
+    const maybeOpenReleaseNotes = (hasSession: boolean) => {
+      if (!isMounted || !hasSession || localStorage.getItem(STORAGE_KEY)) return;
       setOpen(true);
+    };
+
+    supabase.auth.getSession().then(({ data }) => {
+      maybeOpenReleaseNotes(Boolean(data.session));
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      maybeOpenReleaseNotes(Boolean(session));
     });
 
     return () => {
       isMounted = false;
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
