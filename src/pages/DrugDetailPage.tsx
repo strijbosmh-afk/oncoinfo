@@ -103,7 +103,7 @@ function countTextItems(value?: unknown): number {
   if (!value) return 0;
   if (Array.isArray(value)) return value.length;
   if (typeof value === 'string') return value.trim() ? 1 : 0;
-  if (typeof value === 'object') return Object.values(value as Record<string, unknown>).reduce((sum, item) => sum + countTextItems(item), 0);
+  if (typeof value === 'object') return Object.values(value as Record<string, unknown>).reduce<number>((sum, item) => sum + countTextItems(item), 0);
   return 0;
 }
 
@@ -140,7 +140,7 @@ export default function DrugDetailPage() {
       // Fetch from hospital_doctors table
       const { data: hdData } = await supabase
         .from('hospital_doctors')
-        .select('id, name, staff_type, specialization, phone_number')
+        .select('id, name, staff_type, specialization')
         .eq('hospital_id', hospital.id)
         .eq('is_active', true)
         .order('display_order');
