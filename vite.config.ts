@@ -5,6 +5,20 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 function manualChunks(id: string) {
+  const normalizedHelperId = id.replace(/\\/g, "/");
+
+  // Keep Rollup's shared interop/helper virtual modules in their own chunk.
+  // Otherwise they can land inside a vendor chunk (e.g. vendor-charts) that the
+  // vendor-react chunk imports, creating a circular chunk dependency and a
+  // "Cannot access 'React' before initialization" crash in production.
+  if (
+    normalizedHelperId.includes("commonjsHelpers") ||
+    normalizedHelperId.includes("vite/preload-helper") ||
+    normalizedHelperId.includes("\0")
+  ) {
+    return "vendor-helpers";
+  }
+
   if (!id.includes("node_modules")) return undefined;
 
   const normalizedId = id.replace(/\\/g, "/");
