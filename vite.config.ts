@@ -13,8 +13,7 @@ function manualChunks(id: string) {
   // "Cannot access 'React' before initialization" crash in production.
   if (
     normalizedHelperId.includes("commonjsHelpers") ||
-    normalizedHelperId.includes("vite/preload-helper") ||
-    normalizedHelperId.includes("\0")
+    normalizedHelperId.includes("vite/preload-helper")
   ) {
     return "vendor-helpers";
   }
