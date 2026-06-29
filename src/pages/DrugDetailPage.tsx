@@ -140,7 +140,7 @@ export default function DrugDetailPage() {
       // Fetch from hospital_doctors table
       const { data: hdData } = await supabase
         .from('hospital_doctors')
-        .select('id, name, staff_type, specialization, phone_number')
+        .select('id, name, staff_type, specialization')
         .eq('hospital_id', hospital.id)
         .eq('is_active', true)
         .order('display_order');
