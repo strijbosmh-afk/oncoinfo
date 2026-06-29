@@ -103,7 +103,7 @@ function countTextItems(value?: unknown): number {
   if (!value) return 0;
   if (Array.isArray(value)) return value.length;
   if (typeof value === 'string') return value.trim() ? 1 : 0;
-  if (typeof value === 'object') return Object.values(value as Record<string, unknown>).reduce((sum, item) => sum + countTextItems(item), 0);
+  if (typeof value === 'object') return Object.values(value as Record<string, unknown>).reduce<number>((sum, item) => sum + countTextItems(item), 0);
   return 0;
 }
 
