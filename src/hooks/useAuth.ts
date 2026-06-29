@@ -82,7 +82,9 @@ export function useAuth() {
 
     if (error) {
       console.error('Error checking roles:', error);
-      return { admin: false, apotheker: false, superAdmin: false };
+      // Return null so callers can preserve previously-loaded role state
+      // instead of incorrectly collapsing the UI on a transient failure.
+      return null;
     }
     const roles = (data || []).map((r: any) => r.role);
     return {
