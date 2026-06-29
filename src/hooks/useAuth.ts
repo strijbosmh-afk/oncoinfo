@@ -160,7 +160,7 @@ export function useAuth() {
           fetchProfile(session.user.id).then(p => { if (isMounted) setProfile(p); });
           fetchPermissions(session.user.id).then(p => { if (isMounted) setPermissions(p); });
           checkRoles(session.user.id).then(r => {
-            if (isMounted) {
+            if (isMounted && r) {
               setIsAdmin(r.admin);
               setIsApotheker(r.apotheker);
               setIsSuperAdmin(r.superAdmin);
@@ -196,9 +196,11 @@ export function useAuth() {
           ]);
           if (isMounted) {
             setProfile(p);
-            setIsAdmin(r.admin);
-            setIsApotheker(r.apotheker);
-            setIsSuperAdmin(r.superAdmin);
+            if (r) {
+              setIsAdmin(r.admin);
+              setIsApotheker(r.apotheker);
+              setIsSuperAdmin(r.superAdmin);
+            }
             setPermissions(perm);
             setUserHospitals(hospitals);
           }

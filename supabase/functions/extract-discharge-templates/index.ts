@@ -122,24 +122,73 @@ ${documentText.slice(0, 60000)}`;
       return json({ error: "Geen sjablonen kunnen extraheren uit dit document." }, 400);
     }
 
-    // Use service role to insert the new version (previous versions are kept as history)
+    // Use service role to replace the current version for this hospital/platform.
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-
-    const { data: doc, error: docErr } = await adminClient
+    let existingDocQuery = adminClient
       .from("discharge_letter_documents")
-      .insert({
-        hospital_id: targetHospitalId,
-        document_title: documentTitle,
-        uploaded_by: user.id,
-      })
-      .select()
-      .single();
+      .select("id")
+      .limit(1);
 
-    if (docErr || !doc) {
-      console.error("Insert doc error:", docErr);
-      return json({ error: "Kon document niet opslaan" }, 500);
+    existingDocQuery = targetHospitalId === null
+      ? existingDocQuery.is("hospital_id", null)
+      : existingDocQuery.eq("hospital_id", targetHospitalId);
+
+    const { data: existingDocs, error: existingDocErr } = await existingDocQuery;
+    if (existingDocErr) {
+      console.error("Find existing doc error:", existingDocErr);
+      return json({ error: "Kon huidige documentversie niet ophalen" }, 500);
+    }
+
+    const existingDoc = existingDocs?.[0] ?? null;
+    let doc;
+
+    if (existingDoc) {
+      const { data: updatedDoc, error: updateDocErr } = await adminClient
+        .from("discharge_letter_documents")
+        .update({
+          document_title: documentTitle,
+          uploaded_by: user.id,
+          uploaded_at: new Date().toISOString(),
+        })
+        .eq("id", existingDoc.id)
+        .select()
+        .single();
+
+      if (updateDocErr || !updatedDoc) {
+        console.error("Update doc error:", updateDocErr);
+        return json({ error: "Kon documentversie niet bijwerken" }, 500);
+      }
+
+      const { error: deleteTemplatesErr } = await adminClient
+        .from("discharge_letter_templates")
+        .delete()
+        .eq("document_id", updatedDoc.id);
+
+      if (deleteTemplatesErr) {
+        console.error("Delete old templates error:", deleteTemplatesErr);
+        return json({ error: "Kon oude sjablonen niet vervangen" }, 500);
+      }
+
+      doc = updatedDoc;
+    } else {
+      const { data: insertedDoc, error: insertDocErr } = await adminClient
+        .from("discharge_letter_documents")
+        .insert({
+          hospital_id: targetHospitalId,
+          document_title: documentTitle,
+          uploaded_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (insertDocErr || !insertedDoc) {
+        console.error("Insert doc error:", insertDocErr);
+        return json({ error: "Kon document niet opslaan" }, 500);
+      }
+
+      doc = insertedDoc;
     }
 
     const rows = templates.map((t, idx) => ({
