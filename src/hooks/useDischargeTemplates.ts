@@ -13,6 +13,7 @@ export interface DischargeDocument {
   id: string;
   document_title: string;
   uploaded_at: string;
+  created_at?: string;
 }
 
 export function useDischargeTemplates(enabled = true) {
@@ -20,10 +21,13 @@ export function useDischargeTemplates(enabled = true) {
     queryKey: ['discharge-templates'],
     enabled,
     queryFn: async () => {
-      const { data: docs } = await supabase
+      const { data: docs, error: docsError } = await supabase
         .from('discharge_letter_documents' as any)
-        .select('id, document_title, uploaded_at')
-        .order('uploaded_at', { ascending: false });
+        .select('id, document_title, uploaded_at, created_at')
+        .order('uploaded_at', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (docsError) throw docsError;
 
       const documents = (docs as unknown as DischargeDocument[]) || [];
       const current = documents[0] || null;
