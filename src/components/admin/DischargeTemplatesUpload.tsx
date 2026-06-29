@@ -41,9 +41,10 @@ export function DischargeTemplatesUpload() {
       if (error) throw error;
       if (resp?.error) throw new Error(resp.error);
 
+      await queryClient.invalidateQueries({ queryKey: ['discharge-templates'] });
+      await queryClient.refetchQueries({ queryKey: ['discharge-templates'], type: 'active' });
       setResult({ count: resp.count, disciplines: resp.disciplines });
       toast.success(`${resp.count} sjablonen geëxtraheerd uit ${resp.disciplines.length} disciplines`);
-      queryClient.invalidateQueries({ queryKey: ['discharge-templates'] });
     } catch (e) {
       console.error(e);
       toast.error((e as Error).message || 'Upload mislukt');
