@@ -228,7 +228,9 @@ export default function UserManualPage() {
               <p className="text-sm text-muted-foreground">
                 🔒 {t('manual.s1ForgotPassword')}
               </p>
+            </div>
             <div className="bg-muted/50 rounded-lg p-3 mt-2">
+
               <p className="text-sm text-muted-foreground">
                 ⏱️ {t('manual.s1SessionTimeout', 'Om veiligheidsredenen wordt je sessie na 15 minuten inactiviteit automatisch afgemeld.')}
               </p>
