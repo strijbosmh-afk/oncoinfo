@@ -58,7 +58,9 @@ export function HospitalManagement() {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeStaffTab, setActiveStaffTab] = useState<StaffType>('arts');
+  const [activeStaffTab, setActiveStaffTab] = useState<StaffType | 'users'>('users');
+  const [userSearch, setUserSearch] = useState('');
+  const { users, updateHospitals, refetch: refetchUsers } = useUserManagement();
 
   // Form state
   const [formName, setFormName] = useState('');
