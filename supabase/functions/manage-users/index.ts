@@ -12,6 +12,19 @@ function jsonResponse(data: unknown, status = 200) {
   });
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function safeColor(value: string) {
+  return /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#6b2d5b';
+}
+
 async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader: string) {
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -81,31 +94,36 @@ async function sendCredentialsEmail(email: string, username: string, password: s
   const { Resend } = await import("npm:resend@2.0.0");
   const resend = new Resend(resendApiKey);
   const t = getT(lang);
+  const safeHospitalName = escapeHtml(hospitalName);
+  const safeUsername = escapeHtml(username);
+  const safePassword = escapeHtml(password);
+  const safeLoginUrl = escapeHtml(loginUrl);
+  const safePrimaryColor = safeColor(primaryColor);
 
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+      <div style="background: ${safePrimaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
-        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${safeHospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
         <h2 style="color: #333; margin-top: 0;">${t.credentialsTitle}</h2>
         <p style="color: #555; line-height: 1.6;">${t.credentialsBody}</p>
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${username}</p>
-          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${password}</p>
-          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${safeUsername}</p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${safePassword}</p>
+          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${safeLoginUrl}" style="color: ${safePrimaryColor};">${safeLoginUrl}</a></p>
         </div>
         <p style="color: #555; line-height: 1.6;">${t.credentialsSafe}</p>
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
+          <a href="${safeLoginUrl}" style="background: ${safePrimaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
         </div>
       </div>
       <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">${t.autoMessage}</p>
     </div>
   `;
 
-  console.log('Attempting to send credentials email to:', email);
+  console.log('Attempting to send credentials email');
   const result = await resend.emails.send({
     from: 'OncoInfo <admin@oncoinfo.be>',
     to: [email],
@@ -113,9 +131,9 @@ async function sendCredentialsEmail(email: string, username: string, password: s
     html: htmlContent,
   });
 
-  console.log('Resend result:', JSON.stringify(result));
+  console.log('Credentials email send result:', result.error ? 'error' : 'ok');
   if (result.error) {
-    console.error('Resend error:', JSON.stringify(result.error));
+    console.error('Resend error:', result.error.name || 'UnknownResendError');
     throw new Error(`E-mail versturen mislukt: ${result.error.message}`);
   }
   return result;
@@ -127,33 +145,38 @@ async function sendResetEmail(email: string, username: string, password: string,
   const { Resend } = await import("npm:resend@2.0.0");
   const resend = new Resend(resendApiKey);
   const t = getT(lang);
+  const safeHospitalName = escapeHtml(hospitalName);
+  const safeUsername = escapeHtml(username);
+  const safePassword = escapeHtml(password);
+  const safeLoginUrl = escapeHtml(loginUrl);
+  const safePrimaryColor = safeColor(primaryColor);
   const htmlContent = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div style="background: ${primaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+      <div style="background: ${safePrimaryColor}; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
         <h1 style="color: white; margin: 0; font-size: 24px;">OncoInfo</h1>
-        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${hospitalName} - Oncologie</p>
+        <p style="color: rgba(255,255,255,0.8); margin: 5px 0 0;">${safeHospitalName} - Oncologie</p>
       </div>
       <div style="background: #f9f9f9; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
         <h2 style="color: #333; margin-top: 0;">${t.resetTitle}</h2>
         <p style="color: #555; line-height: 1.6;">${t.resetBody}</p>
         <div style="background: white; border: 1px solid #e0e0e0; border-radius: 6px; padding: 20px; margin: 20px 0;">
-          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${username}</p>
-          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${password}</p>
-          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${loginUrl}" style="color: ${primaryColor};">${loginUrl}</a></p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsUsername}:</strong> ${safeUsername}</p>
+          <p style="margin: 0 0 10px;"><strong>${t.credentialsPassword}:</strong> ${safePassword}</p>
+          <p style="margin: 0;"><strong>${t.credentialsLogin}:</strong> <a href="${safeLoginUrl}" style="color: ${safePrimaryColor};">${safeLoginUrl}</a></p>
         </div>
         <p style="color: #555; line-height: 1.6;">${t.credentialsSafe}</p>
         <p style="color: #d32f2f; font-weight: 500; line-height: 1.6;">${t.resetWarning}</p>
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${loginUrl}" style="background: ${primaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
+          <a href="${safeLoginUrl}" style="background: ${safePrimaryColor}; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 500;">${t.credentialsCta}</a>
         </div>
       </div>
       <p style="color: #999; font-size: 12px; text-align: center; margin-top: 15px;">${t.autoMessage}</p>
     </div>
   `;
-  console.log('Attempting to send reset email to:', email);
+  console.log('Attempting to send reset email');
   const result = await resend.emails.send({ from: 'OncoInfo <admin@oncoinfo.be>', to: [email], subject: t.resetSubject, html: htmlContent });
-  console.log('Resend reset result:', JSON.stringify(result));
-  if (result.error) { console.error('Resend error:', JSON.stringify(result.error)); throw new Error(`E-mail versturen mislukt: ${result.error.message}`); }
+  console.log('Reset email send result:', result.error ? 'error' : 'ok');
+  if (result.error) { console.error('Resend error:', result.error.name || 'UnknownResendError'); throw new Error(`E-mail versturen mislukt: ${result.error.message}`); }
   return result;
 }
 

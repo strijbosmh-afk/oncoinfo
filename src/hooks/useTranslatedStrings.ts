@@ -1,6 +1,20 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+
+const MAX_BATCH_TERMS = 120;
+const MAX_TERM_LENGTH = 240;
+
+function stableHash(values: string[]) {
+  let hash = 2166136261;
+  const input = values.join('\u001f');
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
 
 /**
  * Batch-translates an array of Dutch medical strings to the current UI language.
@@ -12,11 +26,15 @@ export function useTranslatedStrings(strings: string[]) {
   const language = i18n.language;
   const needsTranslation = language !== 'nl';
 
-  // Deduplicate and sort for stable cache key
-  const uniqueStrings = [...new Set(strings)].filter(Boolean).sort();
-  // Use a hash-like stable key based on full content to avoid cache collisions
-  // (truncating to 200 chars caused different term-sets to share the same cache entry)
-  const cacheKey = `${uniqueStrings.length}:${uniqueStrings.join('|')}`;
+  const uniqueStrings = useMemo(() => {
+    return [...new Set(strings)]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value))
+      .filter((value) => value.length <= MAX_TERM_LENGTH)
+      .sort()
+      .slice(0, MAX_BATCH_TERMS);
+  }, [strings]);
+  const cacheKey = useMemo(() => `${uniqueStrings.length}:${stableHash(uniqueStrings)}`, [uniqueStrings]);
 
   const { data: translationMap, isLoading } = useQuery({
     queryKey: ['translated-strings', 'v2', language, cacheKey],

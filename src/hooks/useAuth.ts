@@ -49,7 +49,7 @@ export function useAuth() {
   const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, user_id, email, username, first_name, last_name, function, role, password_changed, created_at, hospital_id, dedicated_nurse_id, phone_number')
       .eq('user_id', userId)
       .single();
     

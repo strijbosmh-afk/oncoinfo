@@ -230,7 +230,9 @@ Return ONLY trials that are NOT in this list of existing acronyms: ${Array.from(
     }
 
     const aiResponse = await response.json();
-    console.log("AI Response:", JSON.stringify(aiResponse, null, 2));
+    console.log("AI response received", {
+      choices: Array.isArray(aiResponse.choices) ? aiResponse.choices.length : 0,
+    });
 
     // Extract trials from tool call response
     const toolCall = aiResponse.choices?.[0]?.message?.tool_calls?.[0];

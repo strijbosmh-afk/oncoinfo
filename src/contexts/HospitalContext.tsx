@@ -50,7 +50,7 @@ export function HospitalProvider({ children }: { children: ReactNode }) {
       // Use hospitals_public view to avoid exposing billing data to non-admin users
       const { data, error } = await supabase
         .from('hospitals_public')
-        .select('*')
+        .select('id, name, slug, logo_url, branding, is_active, default_language')
         .eq('id', profile.hospital_id)
         .maybeSingle();
 

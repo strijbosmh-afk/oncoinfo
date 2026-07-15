@@ -17,6 +17,33 @@ const DRUG_LIST_COLUMNS = [
   'updated_at',
 ].join(',');
 
+const DRUG_DETAIL_COLUMNS = [
+  'id',
+  'generic_name',
+  'brand_names',
+  'drug_class',
+  'mechanism_of_action',
+  'disease_areas',
+  'approved_indications',
+  'common_regimens',
+  'dosing_info',
+  'administration_route',
+  'cycle_length_days',
+  'side_effects',
+  'contraindications',
+  'drug_interactions',
+  'monitoring_requirements',
+  'patient_counseling_points',
+  'ema_approval_date',
+  'fda_approval_date',
+  'is_on_zvz',
+  'unit_price',
+  'price_unit',
+  'reference_links',
+  'created_at',
+  'updated_at',
+].join(',');
+
 function convertDrug(dbDrug: any): Drug {
   return {
     id: dbDrug.id,
@@ -98,7 +125,7 @@ export function useDrug(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('drugs')
-        .select('*')
+        .select(DRUG_DETAIL_COLUMNS)
         .eq('id', id)
         .single();
 

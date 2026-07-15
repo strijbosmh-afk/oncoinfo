@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useState, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
 
 function Section({ icon: Icon, title, children, defaultOpen = false }: { 
   icon: React.ElementType; 
@@ -66,7 +67,11 @@ function IconLabel({ icon: Icon, label, className = '' }: { icon: React.ElementT
 }
 
 function Html({ html }: { html: string }) {
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  const sanitized = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['strong', 'em', 'code', 'br'],
+    ALLOWED_ATTR: [],
+  });
+  return <span dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
 export default function UserManualPage() {
