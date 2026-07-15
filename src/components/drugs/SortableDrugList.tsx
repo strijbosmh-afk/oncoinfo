@@ -260,10 +260,10 @@ export function SortableDrugList({
 
       {/* Combination Regimens Section */}
       {localCombinations.length > 0 && showCombinations && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Layers className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">{t('drugs.combinations')}</h2>
+        <div className="mb-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Layers className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">{t('drugs.combinations')}</h2>
             <Badge variant="secondary">
               {localCombinations.length}
             </Badge>
@@ -288,7 +288,7 @@ export function SortableDrugList({
               items={localCombinations.map((d) => d.id)}
               strategy={rectSortingStrategy}
             >
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {localCombinations.map((drug) => (
                   <SortableDrugCard
                     key={drug.id}
@@ -318,10 +318,10 @@ export function SortableDrugList({
 
       {/* Hormonal Drugs Section */}
       {hormonalDrugs.length > 0 && showHormonal && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Antihormonaal</h2>
+        <div className="mb-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">Antihormonaal</h2>
             <Badge variant="secondary">
               {hormonalDrugs.length}
             </Badge>
@@ -337,7 +337,7 @@ export function SortableDrugList({
               </Button>
             )}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {hormonalDrugs.map((drug) => (
               <SortableDrugCard
                 key={drug.id}
@@ -365,10 +365,10 @@ export function SortableDrugList({
 
       {/* CDK4/6 Drugs Section */}
       {cdk46Drugs.length > 0 && showCdk46 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">CDK4/6</h2>
+        <div className="mb-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">CDK4/6</h2>
             <Badge variant="secondary">
               {cdk46Drugs.length}
             </Badge>
@@ -384,7 +384,7 @@ export function SortableDrugList({
               </Button>
             )}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {cdk46Drugs.map((drug) => (
               <SortableDrugCard
                 key={drug.id}
@@ -412,10 +412,10 @@ export function SortableDrugList({
 
       {/* ARTA Drugs Section */}
       {localArta.length > 0 && showArta && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">ARTA</h2>
+        <div className="mb-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">ARTA</h2>
             <Badge variant="secondary">
               {localArta.length}
             </Badge>
@@ -440,7 +440,7 @@ export function SortableDrugList({
               items={localArta.map((d) => d.id)}
               strategy={rectSortingStrategy}
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {localArta.map((drug) => (
                   <SortableDrugCard
                     key={drug.id}
@@ -470,10 +470,10 @@ export function SortableDrugList({
 
       {/* LHRH Drugs Section */}
       {lhrhDrugs.length > 0 && showLhrh && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">LHRH</h2>
+        <div className="mb-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">LHRH</h2>
             <Badge variant="secondary">
               {lhrhDrugs.length}
             </Badge>
@@ -489,7 +489,7 @@ export function SortableDrugList({
               </Button>
             )}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {lhrhDrugs.map((drug) => (
               <SortableDrugCard
                 key={drug.id}
@@ -518,9 +518,9 @@ export function SortableDrugList({
       {/* Individual Drugs Section */}
       {localIndividuals.length > 0 && showIndividuals && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Pill className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">{t('drugs.individualDrugs')}</h2>
+          <div className="mb-3 flex items-center gap-2">
+            <Pill className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold">{t('drugs.individualDrugs')}</h2>
             <Badge variant="secondary">{localIndividuals.length}</Badge>
             {!isEditMode && (
               <Button
@@ -543,7 +543,7 @@ export function SortableDrugList({
               items={localIndividuals.map((d) => d.id)}
               strategy={rectSortingStrategy}
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {localIndividuals.map((drug) => (
                   <SortableDrugCard
                     key={drug.id}

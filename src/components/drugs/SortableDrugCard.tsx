@@ -76,8 +76,8 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
             <GripVertical className="h-5 w-5 text-amber-600" />
           </div>
         )}
-        <Card className={`h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+        <Card className={`h-full border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
           {isAdminProp && !isEditMode && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
@@ -110,19 +110,19 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
           </button>
         </div>
           <Link to={`/drugs/${drug.id}`} className={isEditMode ? 'pointer-events-none' : ''}>
-            <CardHeader className="pb-2 pr-16">
-              <div className="flex items-start gap-2 mb-1">
-                <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <CardTitle className="text-lg text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
+            <CardHeader className="p-3 pb-2 pr-16">
+              <div className="flex items-start gap-2">
+                <Layers className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="line-clamp-1 text-base leading-tight text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
                   {drug.brand_names.length > 0 && (
-                    <CardDescription className="text-amber-700/70">
+                    <CardDescription className="line-clamp-1 text-xs text-amber-700/70">
                       {drug.brand_names.join(', ')}
                     </CardDescription>
                   )}
                 </div>
               </div>
-            <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+            <Badge className="w-fit border-0 bg-amber-500 px-1.5 py-0 text-[10px] text-white">
               {t('drugs.combinationRegimen')}
             </Badge>
               {drug.is_on_zvz ? (
@@ -135,17 +135,17 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
                 </Badge>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0">
               {drug.approved_indications && drug.approved_indications.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {drug.approved_indications.slice(0, 3).map((ind) => (
-                    <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200 max-w-full">
-                      <span className="line-clamp-2">{tMed(ind)}</span>
+                  {drug.approved_indications.slice(0, 1).map((ind) => (
+                    <Badge key={ind} variant="outline" className="max-w-full border-amber-200 px-1.5 py-0 text-[10px] text-amber-800 dark:text-amber-200">
+                      <span className="line-clamp-1">{tMed(ind)}</span>
                     </Badge>
                   ))}
-                  {drug.approved_indications.length > 3 && (
-                    <Badge variant="outline" className="text-xs border-amber-200">
-                      +{drug.approved_indications.length - 3}
+                  {drug.approved_indications.length > 1 && (
+                    <Badge variant="outline" className="border-amber-200 px-1.5 py-0 text-[10px]">
+                      +{drug.approved_indications.length - 1}
                     </Badge>
                   )}
                 </div>
@@ -169,7 +169,7 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
         </div>
       )}
       <Card className={`h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group ${isEditMode ? 'pl-10' : ''}`}>
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
         {isAdminProp && !isEditMode && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
@@ -202,9 +202,9 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
         </button>
       </div>
         <Link to={`/drugs/${drug.id}`} className={isEditMode ? 'pointer-events-none' : ''}>
-          <CardHeader className="pb-2 pr-16">
+          <CardHeader className="p-3 pb-2 pr-16">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
+              <CardTitle className="line-clamp-1 text-base leading-tight">{drug.generic_name}</CardTitle>
               {drug.is_on_zvz ? (
                 <Badge className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700 text-[10px] px-1.5 py-0">
                   ✓ RIZIV
@@ -216,28 +216,28 @@ export function SortableDrugCard({ drug, isFavorite, isMostUsed, onToggleFavorit
               )}
             </div>
             {drug.brand_names.length > 0 && (
-              <CardDescription>
+              <CardDescription className="line-clamp-1 text-xs">
                 {drug.brand_names.join(', ')}
               </CardDescription>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0">
             {drug.administration_route && (
-             <p className="text-sm text-muted-foreground mb-2">
+             <p className="mb-1.5 text-xs text-muted-foreground">
                {tMed(drug.administration_route)}
               </p>
             )}
             <div className="flex items-end justify-between gap-2">
               {drug.disease_areas.length > 0 ? (
                 <div className="flex flex-wrap gap-1">
-                  {drug.disease_areas.slice(0, 3).map((area) => (
-                    <Badge key={area} variant="outline" className="text-xs">
+                  {drug.disease_areas.slice(0, 2).map((area) => (
+                    <Badge key={area} variant="outline" className="px-1.5 py-0 text-[10px]">
                       {tMed(area)}
                     </Badge>
                   ))}
-                  {drug.disease_areas.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{drug.disease_areas.length - 3}
+                  {drug.disease_areas.length > 2 && (
+                    <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                      +{drug.disease_areas.length - 2}
                     </Badge>
                   )}
                 </div>

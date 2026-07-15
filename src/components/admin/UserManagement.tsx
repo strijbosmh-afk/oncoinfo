@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus, ChevronDown, ChevronRight } from 'lucide-react';
 
+const USERS_PER_GROUP_PAGE = 25;
+
 export function UserManagement() {
   const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
@@ -47,6 +49,7 @@ export function UserManagement() {
   const [allHospitals, setAllHospitals] = useState<HospitalOption[]>([]);
   const [hospitalMeta, setHospitalMeta] = useState<Map<string, { name: string; color?: string }>>(new Map());
   const [openHospitals, setOpenHospitals] = useState<Set<string>>(new Set());
+  const [visibleUserCounts, setVisibleUserCounts] = useState<Record<string, number>>({});
 
   // Fetch all active hospitals for the dialog dropdown
   useEffect(() => {
@@ -127,6 +130,15 @@ export function UserManagement() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+  };
+
+  const getVisibleUserCount = (groupId: string) => visibleUserCounts[groupId] || USERS_PER_GROUP_PAGE;
+
+  const showMoreUsers = (groupId: string) => {
+    setVisibleUserCounts((prev) => ({
+      ...prev,
+      [groupId]: getVisibleUserCount(groupId) + USERS_PER_GROUP_PAGE,
+    }));
   };
 
   // Default: only RZ Tienen is expanded
@@ -319,16 +331,21 @@ export function UserManagement() {
                     </Badge>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="space-y-1.5 ml-6 mt-1">
-                      {group.users.map((user) => {
+                    <div className="ml-6 mt-1 overflow-hidden rounded-lg border">
+                      <div className="hidden grid-cols-[minmax(260px,1fr)_180px_150px] gap-3 border-b bg-muted/40 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+                        <span>Gebruiker</span>
+                        <span>Functie</span>
+                        <span className="text-right">Acties</span>
+                      </div>
+                      {group.users.slice(0, getVisibleUserCount(group.id)).map((user) => {
                         const isAdminRole = user.role === 'admin' || user.role === 'super_admin';
                         return (
                           <div
                             key={user.id}
-                            className="flex items-center p-2.5 border rounded-lg gap-3"
+                            className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 border-b p-2.5 last:border-b-0 lg:grid-cols-[minmax(260px,1fr)_180px_150px] lg:items-center"
                           >
                             {/* Avatar */}
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 lg:hidden">
                               {isAdminRole ? (
                                 <Shield className="h-4 w-4 text-primary" />
                               ) : (
@@ -337,7 +354,7 @@ export function UserManagement() {
                             </div>
 
                             {/* Name + badges */}
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="font-medium truncate">
                                   {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || user.email}
@@ -386,9 +403,9 @@ export function UserManagement() {
                             </div>
 
                             {/* Function + discipline */}
-                            <div className="hidden lg:flex w-[180px] justify-end flex-shrink-0">
+                            <div className="col-span-2 flex lg:col-span-1 lg:justify-start">
                               {user.function ? (
-                                <div className="flex flex-col items-end gap-0.5">
+                                <div className="flex flex-col items-start gap-0.5">
                                   <Badge variant="outline" className={`text-xs capitalize whitespace-nowrap ${
                                     user.function === 'arts' ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700' :
                                     user.function === 'verpleegkundige' ? 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700' :
@@ -406,7 +423,7 @@ export function UserManagement() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-0.5 flex-shrink-0 border-l pl-2 ml-1">
+                            <div className="col-span-2 flex items-center justify-end gap-0.5 lg:col-span-1 lg:border-l lg:pl-2">
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
@@ -442,6 +459,13 @@ export function UserManagement() {
                           </div>
                         );
                       })}
+                      {group.users.length > getVisibleUserCount(group.id) && (
+                        <div className="bg-muted/20 px-3 py-2 text-center">
+                          <Button variant="ghost" size="sm" onClick={() => showMoreUsers(group.id)}>
+                            Toon volgende {Math.min(USERS_PER_GROUP_PAGE, group.users.length - getVisibleUserCount(group.id))} gebruikers
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
