@@ -296,7 +296,10 @@ Extract:
         continue;
       }
       
-      console.log(`Extracted data for ${trial.acronym}:`, JSON.stringify(extractedData).substring(0, 500));
+      console.log(`Extracted trial data for ${trial.acronym}`, {
+        arms: Array.isArray(extractedData.arms) ? extractedData.arms.length : 0,
+        endpoints: Array.isArray(extractedData.endpoints) ? extractedData.endpoints.length : 0,
+      });
 
       // Insert arms
       const armIdMap: Record<string, string> = {};

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import confetti from "canvas-confetti";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -53,10 +53,9 @@ export function FolderMilestoneDialog({ open, onOpenChange, count }: FolderMiles
           <p className="text-2xl font-bold text-primary">
             {t('milestone.congrats')}
           </p>
-          <p
-            className="text-muted-foreground"
-            dangerouslySetInnerHTML={{ __html: t('milestone.message', { count }) }}
-          />
+          <p className="text-muted-foreground">
+            <Trans i18nKey="milestone.message" values={{ count }} components={{ strong: <strong /> }} />
+          </p>
           <p className="text-sm text-muted-foreground italic">
             {t('milestone.joke')}
           </p>

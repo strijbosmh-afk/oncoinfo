@@ -17,6 +17,9 @@ import type { Drug } from '@/types/drug';
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/schema-assistant`;
+const MAX_CLIENT_CONTEXT_MESSAGES = 14;
+const MAX_CLIENT_MESSAGE_CHARS = 1600;
+const MAX_CLIENT_SUMMARY_CHARS = 2400;
 
 interface SchemaAssistantProps {
   existingDrugs?: Drug[];
@@ -47,6 +50,35 @@ interface ExtractedSchema {
   components_description?: string;
   drug_id?: string;
   phases?: SchemaPhase[];
+}
+
+function truncateMessage(content: string, maxChars = MAX_CLIENT_MESSAGE_CHARS) {
+  if (content.length <= maxChars) return content;
+  return `${content.slice(0, maxChars)}\n[...ingekort...]`;
+}
+
+function compactMessagesForApi(messages: Msg[]): Msg[] {
+  const normalized = messages.map((message) => ({
+    role: message.role,
+    content: truncateMessage(message.content),
+  }));
+
+  if (normalized.length <= MAX_CLIENT_CONTEXT_MESSAGES) return normalized;
+
+  const older = normalized.slice(0, -MAX_CLIENT_CONTEXT_MESSAGES);
+  const recent = normalized.slice(-MAX_CLIENT_CONTEXT_MESSAGES);
+  const summary = older
+    .map((message, index) => `${index + 1}. ${message.role}: ${truncateMessage(message.content, 500)}`)
+    .join('\n')
+    .slice(0, MAX_CLIENT_SUMMARY_CHARS);
+
+  return [
+    {
+      role: 'assistant',
+      content: `Samenvatting van eerdere context:\n${summary}`,
+    },
+    ...recent,
+  ];
 }
 
 export function SchemaAssistant({ existingDrugs = [], initialEditDrugId }: SchemaAssistantProps) {
@@ -89,7 +121,7 @@ export function SchemaAssistant({ existingDrugs = [], initialEditDrugId }: Schem
         Authorization: `Bearer ${token}`,
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
-      body: JSON.stringify({ messages: allMessages }),
+      body: JSON.stringify({ messages: compactMessagesForApi(allMessages) }),
     });
 
     if (!resp.ok) {
@@ -197,7 +229,7 @@ export function SchemaAssistant({ existingDrugs = [], initialEditDrugId }: Schem
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ messages: allMessages, action: 'extract' }),
+        body: JSON.stringify({ messages: compactMessagesForApi(allMessages), action: 'extract' }),
       });
 
       const data = await resp.json();
@@ -236,7 +268,7 @@ export function SchemaAssistant({ existingDrugs = [], initialEditDrugId }: Schem
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ messages: pendingMessages, action: 'save' }),
+        body: JSON.stringify({ messages: compactMessagesForApi(pendingMessages), action: 'save' }),
       });
 
       const data = await resp.json();

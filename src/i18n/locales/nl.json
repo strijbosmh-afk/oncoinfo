@@ -38,7 +38,7 @@
     "footerNote": "Deze melding verschijnt één keer per gebruiker op dit toestel.",
     "cta": "Begrepen",
     "workflowTitle": "Nieuwe zorgteam-workflows",
-    "workflowDescription": "Gebruik de monitoringkalender, supportive-care presets, schema-vergelijking en folder-preflight om sneller naar de juiste planning te gaan."
+    "workflowDescription": "Gebruik de monitoringkalender, supportive-care presets en folder-preflight om sneller naar een praktische planning te gaan."
   },
   "workflow": {
     "consultTab": "Consult",
@@ -219,23 +219,7 @@
     "tabCdk46": "CDK4/6",
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
-    "disciplineDisabled": "Deze functie werd uitgeschakeld voor uw instelling.",
-    "compareTitle": "Vergelijk twee schema's",
-    "compareDesc": "Zet toediening, cyclus, monitoring, bijwerkingen en praktische belasting naast elkaar.",
-    "compareFirst": "Eerste schema kiezen",
-    "compareSecond": "Tweede schema kiezen",
-    "compareEmpty": "Kies twee schema's om te vergelijken.",
-    "compareAspect": "Aspect",
-    "compareRoute": "Toediening",
-    "compareCycle": "Cyclusduur",
-    "compareMonitoring": "Monitoring",
-    "compareSideEffects": "Bijwerkingen",
-    "comparePatientBurden": "Praktische belasting",
-    "compareVariable": "variabel",
-    "compareBurdenOral": "Oraal traject; opvolging en therapietrouw belangrijk. Cyclus: {{cycle}}.",
-    "compareBurdenIv": "Ziekenhuisbezoek voor IV-toediening. Cyclus: {{cycle}}.",
-    "compareBurdenSc": "Subcutane toediening met korte contactmomenten. Cyclus: {{cycle}}.",
-    "compareBurdenGeneric": "Praktische belasting afhankelijk van lokaal schema. Cyclus: {{cycle}}."
+    "disciplineDisabled": "Deze functie werd uitgeschakeld voor uw instelling."
   },
   "drugDetail": {
     "overview": "Overzicht",

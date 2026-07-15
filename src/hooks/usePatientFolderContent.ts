@@ -1,6 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+const PATIENT_FOLDER_CONTENT_COLUMNS = [
+  'id',
+  'drug_id',
+  'introduction',
+  'usage_info',
+  'dosing_info',
+  'contraindications',
+  'side_effects_common',
+  'side_effects_serious',
+  'tips',
+  'self_care_tips',
+  'monitoring',
+  'created_at',
+  'updated_at',
+].join(',');
+
 export interface PatientFolderContent {
   id?: string;
   drug_id: string;
@@ -23,7 +39,7 @@ export function usePatientFolderContent(drugId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('patient_folder_content')
-        .select('*')
+        .select(PATIENT_FOLDER_CONTENT_COLUMNS)
         .eq('drug_id', drugId)
         .maybeSingle();
 
@@ -62,7 +78,7 @@ export function useSavePatientFolderContent() {
             monitoring: content.monitoring,
           })
           .eq('drug_id', content.drug_id)
-          .select()
+          .select(PATIENT_FOLDER_CONTENT_COLUMNS)
           .single();
 
         if (error) throw error;
@@ -83,7 +99,7 @@ export function useSavePatientFolderContent() {
             self_care_tips: content.self_care_tips,
             monitoring: content.monitoring,
           })
-          .select()
+          .select(PATIENT_FOLDER_CONTENT_COLUMNS)
           .single();
 
         if (error) throw error;

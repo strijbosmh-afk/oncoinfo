@@ -38,7 +38,7 @@
     "footerNote": "Ce message apparaît une seule fois par utilisateur sur cet appareil.",
     "cta": "Compris",
     "workflowTitle": "Nouveaux workflows d’équipe",
-    "workflowDescription": "Utilisez le calendrier de suivi, les préréglages de soins de support, la comparaison de schémas et le contrôle de fiche pour accéder plus vite au bon planning."
+    "workflowDescription": "Utilisez le calendrier de suivi, les préréglages de soins de support et le contrôle de fiche pour accéder plus vite à un planning pratique."
   },
   "workflow": {
     "consultTab": "Consultation",
@@ -219,23 +219,7 @@
     "tabCdk46": "CDK4/6",
     "tabLhrh": "LHRH",
     "tabArta": "ARTA",
-    "disciplineDisabled": "Cette fonctionnalité a été désactivée pour votre établissement.",
-    "compareTitle": "Comparer deux schémas",
-    "compareDesc": "Comparez administration, cycle, suivi, effets indésirables et charge pratique.",
-    "compareFirst": "Choisir le premier schéma",
-    "compareSecond": "Choisir le deuxième schéma",
-    "compareEmpty": "Choisissez deux schémas à comparer.",
-    "compareAspect": "Aspect",
-    "compareRoute": "Administration",
-    "compareCycle": "Durée du cycle",
-    "compareMonitoring": "Suivi",
-    "compareSideEffects": "Effets indésirables",
-    "comparePatientBurden": "Charge pratique",
-    "compareVariable": "variable",
-    "compareBurdenOral": "Parcours oral ; suivi et observance importants. Cycle : {{cycle}}.",
-    "compareBurdenIv": "Visite hospitalière pour administration IV. Cycle : {{cycle}}.",
-    "compareBurdenSc": "Administration sous-cutanée avec contacts courts. Cycle : {{cycle}}.",
-    "compareBurdenGeneric": "Charge pratique selon le schéma local. Cycle : {{cycle}}."
+    "disciplineDisabled": "Cette fonctionnalité a été désactivée pour votre établissement."
   },
   "drugDetail": {
     "overview": "Aperçu",
