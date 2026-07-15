@@ -969,7 +969,7 @@ export default function HospitalManagementPage() {
       existing.push(r.role);
       rolesMap.set(r.user_id, existing);
     });
-    const users: HospitalUser[] = (usersRes.data || []).map((p: any) => ({
+    const users: HospitalUser[] = ((profilesRes.data as any[]) || []).map((p: any) => ({
       ...p,
       app_roles: rolesMap.get(p.user_id) || [],
     }));
