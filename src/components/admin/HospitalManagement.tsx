@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X, Stethoscope, Heart, Pill } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X, Stethoscope, Heart, Pill, Users, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { useUserManagement } from '@/hooks/useUserManagement';
 
 interface Hospital {
   id: string;
