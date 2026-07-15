@@ -45,24 +45,33 @@ export function UserManagement() {
   const [hospitalFilter, setHospitalFilter] = useState<string>('all');
   const [functionFilter, setFunctionFilter] = useState<string>('all');
   const [allHospitals, setAllHospitals] = useState<HospitalOption[]>([]);
+  const [hospitalMeta, setHospitalMeta] = useState<Map<string, { name: string; color?: string }>>(new Map());
   const [openHospitals, setOpenHospitals] = useState<Set<string>>(new Set());
 
   // Fetch all active hospitals for the dialog dropdown
   useEffect(() => {
-    supabase.from('hospitals_public' as any).select('id, name').order('name').then(({ data }) => {
-      if (data) setAllHospitals(data.map((h: any) => ({ id: h.id, name: h.name })));
+    supabase.from('hospitals_public' as any).select('id, name, branding').order('name').then(({ data }) => {
+      if (data) {
+        setAllHospitals(data.map((h: any) => ({ id: h.id, name: h.name })));
+        const map = new Map<string, { name: string; color?: string }>();
+        data.forEach((h: any) => map.set(h.id, { name: h.name, color: h.branding?.primary_color }));
+        setHospitalMeta(map);
+      }
     });
   }, []);
 
-  // Derive unique hospitals and functions for filter dropdowns
+  // Helper: all hospital ids a user is linked to (primary + secondary)
+  const userHospitalIds = (u: ManagedUser): string[] => {
+    const ids = new Set<string>();
+    if (u.hospital_id) ids.add(u.hospital_id);
+    (u.linked_hospital_ids || []).forEach((id) => ids.add(id));
+    return Array.from(ids);
+  };
+
+  // Hospitals for filter dropdown: all active hospitals
   const hospitals = useMemo(() => {
-    if (!users) return [];
-    const map = new Map<string, string>();
-    users.forEach(u => {
-      if (u.hospital_id && u.hospital_name) map.set(u.hospital_id, u.hospital_name);
-    });
-    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
-  }, [users]);
+    return allHospitals.map((h) => [h.id, h.name] as [string, string]);
+  }, [allHospitals]);
 
   const functions = useMemo(() => {
     if (!users) return [];
@@ -77,30 +86,40 @@ export function UserManagement() {
       const q = searchQuery.toLowerCase();
       const matchesSearch = !q || u.email?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q) ||
         u.first_name?.toLowerCase().includes(q) || u.last_name?.toLowerCase().includes(q);
-      const matchesHospital = hospitalFilter === 'all' || u.hospital_id === hospitalFilter;
+      const matchesHospital = hospitalFilter === 'all' || userHospitalIds(u).includes(hospitalFilter);
       const matchesFunction = functionFilter === 'all' || u.function === functionFilter;
       return matchesSearch && matchesHospital && matchesFunction;
     });
   }, [users, searchQuery, hospitalFilter, functionFilter]);
 
-  // Group filtered users by hospital, sorted alphabetically
+  // Group filtered users by every hospital they're linked to
   const groupedByHospital = useMemo(() => {
     const groups = new Map<string, { id: string; name: string; color?: string; users: ManagedUser[] }>();
     filteredUsers.forEach((u) => {
-      const key = u.hospital_id || '__none__';
-      if (!groups.has(key)) {
-        groups.set(key, {
-          id: key,
-          name: u.hospital_name || t('hospitalMgmt.noHospital'),
-          color: u.hospital_color || undefined,
-          users: [],
-        });
+      const ids = userHospitalIds(u);
+      if (ids.length === 0) {
+        const key = '__none__';
+        if (!groups.has(key)) groups.set(key, { id: key, name: t('hospitalMgmt.noHospital'), users: [] });
+        groups.get(key)!.users.push(u);
+        return;
       }
-      groups.get(key)!.users.push(u);
+      ids.forEach((hid) => {
+        if (!groups.has(hid)) {
+          const meta = hospitalMeta.get(hid);
+          groups.set(hid, {
+            id: hid,
+            name: meta?.name || (hid === u.hospital_id ? (u.hospital_name || t('hospitalMgmt.noHospital')) : hid),
+            color: meta?.color || (hid === u.hospital_id ? (u.hospital_color || undefined) : undefined),
+            users: [],
+          });
+        }
+        groups.get(hid)!.users.push(u);
+      });
     });
     // Sort groups alphabetically by hospital name
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredUsers]);
+  }, [filteredUsers, hospitalMeta, t]);
+
 
   const toggleHospital = (id: string) => {
     setOpenHospitals((prev) => {
