@@ -80,43 +80,77 @@ TEKST:
 ${documentText.slice(0, 60000)}`;
 
     console.log(`Extracting templates: textLength=${documentText.length}, title=${documentTitle}`);
-    const aiStart = Date.now();
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-      }),
+
+    // Chunk the document so we can process very long files (multi-discipline).
+    // We split on "Ter info:" boundaries so each template stays intact.
+    const CHUNK_TARGET = 45000;
+    const chunks: string[] = [];
+    if (documentText.length <= CHUNK_TARGET) {
+      chunks.push(documentText);
+    } else {
+      const parts = documentText.split(/(?=Ter info:)/g);
+      let current = "";
+      for (const p of parts) {
+        if ((current + p).length > CHUNK_TARGET && current.length > 0) {
+          chunks.push(current);
+          current = p;
+        } else {
+          current += p;
+        }
+      }
+      if (current.length > 0) chunks.push(current);
+    }
+    console.log(`Split into ${chunks.length} chunk(s)`);
+
+    const allTemplates: Array<{ discipline: string; title: string; content: string }> = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const chunkPrompt = prompt.replace(/TEKST:\n[\s\S]*$/, `TEKST:\n${chunks[i]}`);
+      const aiStart = Date.now();
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [{ role: "user", content: chunkPrompt }],
+          response_format: { type: "json_object" },
+        }),
+      });
+      console.log(`Chunk ${i + 1}/${chunks.length} AI response in ${Date.now() - aiStart}ms, status=${aiResp.status}`);
+
+      if (!aiResp.ok) {
+        const errText = await aiResp.text();
+        console.error("AI gateway error:", aiResp.status, errText);
+        if (aiResp.status === 429) return json({ error: "Rate limit. Probeer later opnieuw." }, 429);
+        if (aiResp.status === 402) return json({ error: "AI credits uitgeput." }, 402);
+        return json({ error: "AI extractie mislukt" }, 500);
+      }
+
+      const aiData = await aiResp.json();
+      const content = aiData.choices?.[0]?.message?.content || "{}";
+      let parsed: { templates?: Array<{ discipline: string; title: string; content: string }> };
+      try {
+        parsed = JSON.parse(content);
+      } catch {
+        const match = content.match(/\{[\s\S]*\}/);
+        parsed = match ? JSON.parse(match[0]) : { templates: [] };
+      }
+      for (const t of (parsed.templates || [])) {
+        if (t.discipline && t.title && t.content) allTemplates.push(t);
+      }
+    }
+
+    // Deduplicate on (discipline + title)
+    const seen = new Set<string>();
+    const templates = allTemplates.filter(t => {
+      const key = `${t.discipline.trim().toLowerCase()}|${t.title.trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
-    console.log(`AI response in ${Date.now() - aiStart}ms, status=${aiResp.status}`);
-
-    if (!aiResp.ok) {
-      const errText = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, errText);
-      if (aiResp.status === 429) return json({ error: "Rate limit. Probeer later opnieuw." }, 429);
-      if (aiResp.status === 402) return json({ error: "AI credits uitgeput." }, 402);
-      return json({ error: "AI extractie mislukt" }, 500);
-    }
-
-    const aiData = await aiResp.json();
-    const content = aiData.choices?.[0]?.message?.content || "{}";
-    let parsed: { templates?: Array<{ discipline: string; title: string; content: string }> };
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      // Try to extract JSON from text
-      const match = content.match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : { templates: [] };
-    }
-
-    const templates = (parsed.templates || []).filter(t =>
-      t.discipline && t.title && t.content
-    );
+    console.log(`Extracted ${templates.length} unique templates across ${chunks.length} chunk(s)`);
 
     if (templates.length === 0) {
       return json({ error: "Geen sjablonen kunnen extraheren uit dit document." }, 400);
