@@ -228,8 +228,18 @@ export default function UserManualPage() {
               <p className="text-sm text-muted-foreground">
                 🔒 {t('manual.s1ForgotPassword')}
               </p>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                ⏱️ {t('manual.s1SessionTimeout', 'Om veiligheidsredenen wordt je sessie na 15 minuten inactiviteit automatisch afgemeld.')}
+              </p>
+            </div>
+            <div className="bg-muted/50 rounded-lg p-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                🚦 {t('manual.s1RateLimit', 'Na 5 mislukte inlogpogingen binnen 15 minuten wordt je tijdelijk geblokkeerd.')}
+              </p>
             </div>
           </Section>
+
 
           {/* 2. HOME */}
           <Section icon={Home} title={t('manual.s2Title')}>
