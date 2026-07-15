@@ -7,7 +7,8 @@ import {
   ChevronLeft, LogIn, Home, Search, Star, Zap, Layers, Pill, 
   FileText, GripVertical, Filter, Users, Shield, Download, 
   Printer, Settings2, Heart, Baby, Stethoscope, Eye, FlaskConical,
-  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles, Megaphone
+  ChevronDown, Globe, Lock, Copy, Check, Loader2, Bot, Tags, Sparkles, Megaphone,
+  Building2, BookOpen, BarChart3, RefreshCw, Upload, Bell, Repeat, Palette, Crown
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState, useRef, useCallback } from 'react';
