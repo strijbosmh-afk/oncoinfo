@@ -17,7 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Search, Filter, Pill, Loader2, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, Filter, Pill, Star, FileText, ChevronLeft, Heart, Stethoscope, Baby, MoreHorizontal, GripVertical, Wind, UtensilsCrossed, Palette, Ear, Zap, PenLine } from 'lucide-react';
 import { Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -108,8 +109,8 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
   
   if (isCombo) {
     return (
-      <Card className="h-full border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 hover:border-amber-400 hover:shadow-lg transition-all cursor-pointer relative group">
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+      <Card className="h-full border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer relative group">
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
           {isAdminProp && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
@@ -142,19 +143,19 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
           </button>
         </div>
         <Link to={`/drugs/${drug.id}`}>
-          <CardHeader className="pb-2 pr-20">
-            <div className="flex items-start gap-2 mb-1">
-              <Layers className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <CardTitle className="text-lg text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
+          <CardHeader className="p-3 pb-2 pr-16">
+            <div className="flex items-start gap-2">
+              <Layers className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <CardTitle className="line-clamp-1 text-base leading-tight text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
                 {drug.brand_names.length > 0 && (
-                  <CardDescription className="text-amber-700/70">
+                  <CardDescription className="line-clamp-1 text-xs text-amber-700/70">
                     {drug.brand_names.join(', ')}
                   </CardDescription>
                 )}
               </div>
             </div>
-            <Badge className="w-fit bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+            <Badge className="w-fit border-0 bg-amber-500 px-1.5 py-0 text-[10px] text-white">
               {t('drugs.combinationRegimen')}
             </Badge>
             {!isDemoClinic && (drug.is_on_zvz ? (
@@ -167,17 +168,17 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
               </Badge>
             ))}
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 pt-0">
             {drug.approved_indications && drug.approved_indications.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {drug.approved_indications.slice(0, 3).map((ind) => (
-                  <Badge key={ind} variant="outline" className="text-xs border-amber-200 text-amber-800 dark:text-amber-200 max-w-full">
-                    <span className="line-clamp-2">{tMed(ind)}</span>
+                {drug.approved_indications.slice(0, 1).map((ind) => (
+                  <Badge key={ind} variant="outline" className="max-w-full border-amber-200 px-1.5 py-0 text-[10px] text-amber-800 dark:text-amber-200">
+                    <span className="line-clamp-1">{tMed(ind)}</span>
                   </Badge>
                 ))}
-                {drug.approved_indications.length > 3 && (
-                  <Badge variant="outline" className="text-xs border-amber-200">
-                    +{drug.approved_indications.length - 3}
+                {drug.approved_indications.length > 1 && (
+                  <Badge variant="outline" className="border-amber-200 px-1.5 py-0 text-[10px]">
+                    +{drug.approved_indications.length - 1}
                   </Badge>
                 )}
               </div>
@@ -191,7 +192,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
   return (
     <TooltipProvider delayDuration={300}>
     <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer relative group">
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5">
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
         {isAdminProp && (
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
@@ -224,21 +225,21 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
         </button>
       </div>
       <Link to={`/drugs/${drug.id}`}>
-        <CardHeader className="pb-2 pr-20">
+        <CardHeader className="p-3 pb-2 pr-16">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <CardTitle className="text-lg">{drug.generic_name}</CardTitle>
+            <div className="min-w-0">
+              <CardTitle className="line-clamp-1 text-base leading-tight">{drug.generic_name}</CardTitle>
               {drug.brand_names.length > 0 && (
-                <CardDescription>
+                <CardDescription className="line-clamp-1 text-xs">
                   {drug.brand_names.join(', ')}
                 </CardDescription>
               )}
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex shrink-0 items-end gap-1">
               {DRUG_CLASS_FULL_NAMES[drug.drug_class] ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge className={getDrugClassColor(drug.drug_class)}>
+                    <Badge className={`${getDrugClassColor(drug.drug_class)} px-1.5 py-0 text-[10px]`}>
                       {tMed(drug.drug_class)}
                     </Badge>
                   </TooltipTrigger>
@@ -247,7 +248,7 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <Badge className={getDrugClassColor(drug.drug_class)}>
+                <Badge className={`${getDrugClassColor(drug.drug_class)} px-1.5 py-0 text-[10px]`}>
                   {tMed(drug.drug_class)}
                 </Badge>
               )}
@@ -263,22 +264,22 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 pt-0">
           {drug.administration_route && tMed(drug.administration_route) && (
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="mb-1.5 text-xs text-muted-foreground">
               {tMed(drug.administration_route)}
             </p>
           )}
           {drug.disease_areas.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {drug.disease_areas.slice(0, 3).map((area) => (
-                <Badge key={area} variant="outline" className="text-xs">
+              {drug.disease_areas.slice(0, 2).map((area) => (
+                <Badge key={area} variant="outline" className="px-1.5 py-0 text-[10px]">
                   {tMed(area)}
                 </Badge>
               ))}
-              {drug.disease_areas.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{drug.disease_areas.length - 3}
+              {drug.disease_areas.length > 2 && (
+                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                  +{drug.disease_areas.length - 2}
                 </Badge>
               )}
             </div>
@@ -311,6 +312,38 @@ const categoryColors: Record<DrugCategoryKey, { text: string; bg: string }> = {
   head_neck: { text: 'text-teal-500', bg: 'bg-teal-500/10' },
   other: { text: 'text-emerald-500', bg: 'bg-emerald-500/10' }
 };
+
+function DrugListSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-5 rounded-full" />
+        <Skeleton className="h-6 w-44" />
+        <Skeleton className="h-5 w-10 rounded-full" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <Card key={index} className="h-[118px]">
+            <CardContent className="space-y-3 p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-36" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-20" />
+              <div className="flex gap-1">
+                <Skeleton className="h-5 w-20 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DrugsPage() {
   const { t } = useTranslation();
@@ -805,10 +838,10 @@ export default function DrugsPage() {
           </Link>
         )}
 
-        <div className="mb-4">
+        <div className="mb-3">
           {categoryConfig ? (
             <>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="mb-2 flex items-center gap-3">
                 {(() => {
                   const Icon = categoryIcons[category!];
                   const colors = categoryColors[category!];
@@ -818,7 +851,7 @@ export default function DrugsPage() {
                     </div>
                   );
                 })()}
-                <h1 className="text-3xl font-bold">{t(`medicalTerms.cat_${category}`, categoryConfig.name)}</h1>
+                <h1 className="text-2xl font-bold sm:text-3xl">{t(`medicalTerms.cat_${category}`, categoryConfig.name)}</h1>
               </div>
               <p className="text-muted-foreground">
                 {t('drugs.browseFor', { category: t(`medicalTerms.cat_${category}`, categoryConfig.name).toLowerCase() })}
@@ -826,7 +859,7 @@ export default function DrugsPage() {
             </>
           ) : (
             <>
-              <h1 className="text-3xl font-bold mb-2">{t('drugs.library')}</h1>
+              <h1 className="mb-2 text-2xl font-bold sm:text-3xl">{t('drugs.library')}</h1>
               <p className="text-muted-foreground">
                 {t('drugs.browseAll')}
               </p>
@@ -1157,7 +1190,7 @@ export default function DrugsPage() {
                 <Badge variant="secondary">{favoriteDrugs.length}</Badge>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {favoriteDrugs.map((drug) => (
                 <DrugCard
                   key={drug.id}
@@ -1183,21 +1216,23 @@ export default function DrugsPage() {
         )}
 
         {/* Search Bar */}
-        <div className="flex gap-4 mb-6">
+        <div className="sticky top-0 z-20 -mx-4 mb-4 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:top-0">
+          <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               placeholder={t('drugs.searchByName')}
-              className="pl-10"
+              className="h-9 pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button
             variant="outline"
+            size="sm"
             onClick={() => setFiltersOpen(!filtersOpen)}
-            className="gap-2"
+            className="h-9 gap-2"
           >
             <Filter className="h-4 w-4" />
             {t('drugs.filters')}
@@ -1207,6 +1242,15 @@ export default function DrugsPage() {
               </Badge>
             )}
           </Button>
+          </div>
+          {(searchQuery || activeFilterCount > 0) && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{filteredDrugs.length} resultaten</span>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => { clearFilters(); clearCategoryFilters(); }}>
+                {t('drugs.clearAllFilters')}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Template search results */}
@@ -1217,7 +1261,7 @@ export default function DrugsPage() {
           {/* Filters Sidebar */}
           <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
             <CollapsibleContent>
-              <Card>
+              <Card className="lg:sticky lg:top-20">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{t('drugs.filters')}</CardTitle>
@@ -1305,9 +1349,7 @@ export default function DrugsPage() {
           {/* Drug List */}
           <div>
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
+              <DrugListSkeleton />
             ) : error ? (
               <Card>
                 <CardContent className="py-8 text-center text-destructive">
@@ -1316,10 +1358,12 @@ export default function DrugsPage() {
               </Card>
             ) : filteredDrugs?.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center">
-                  <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <CardContent className="flex flex-col items-center py-14 text-center">
+                  <div className="mb-4 rounded-full bg-muted p-4">
+                    <Pill className="h-8 w-8 text-muted-foreground" />
+                  </div>
                   <h3 className="text-lg font-medium mb-2">{t('drugs.noDrugsFound')}</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="mb-4 max-w-md text-sm text-muted-foreground">
                     {(selectedSubtypes.length > 0 || selectedStages.length > 0) 
                       ? t('drugs.noFilterResults')
                       : t('drugs.adjustFilters')}
