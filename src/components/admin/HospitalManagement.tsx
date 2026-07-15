@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X, Stethoscope, Heart, Pill } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Building2, UserPlus, X, Stethoscope, Heart, Pill, Users, Search } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { useUserManagement } from '@/hooks/useUserManagement';
 
 interface Hospital {
   id: string;
@@ -57,7 +58,9 @@ export function HospitalManagement() {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeStaffTab, setActiveStaffTab] = useState<StaffType>('arts');
+  const [activeStaffTab, setActiveStaffTab] = useState<StaffType | 'users'>('users');
+  const [userSearch, setUserSearch] = useState('');
+  const { users, updateHospitals, refetch: refetchUsers } = useUserManagement();
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -346,15 +349,21 @@ export function HospitalManagement() {
 
       {/* Staff Dialog */}
       <Dialog open={doctorsDialogOpen} onOpenChange={setDoctorsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Medewerkers – {selectedHospital?.name}</DialogTitle>
           </DialogHeader>
           {staffLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : (
-            <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType)}>
+            <Tabs value={activeStaffTab} onValueChange={v => setActiveStaffTab(v as StaffType | 'users')}>
               <TabsList className="w-full">
+                <TabsTrigger value="users" className="flex-1 gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Gekoppelde gebruikers ({
+                    (users || []).filter(u => selectedHospital && (u.hospital_id === selectedHospital.id || (u.linked_hospital_ids || []).includes(selectedHospital.id))).length
+                  })
+                </TabsTrigger>
                 {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
                   const Icon = staffTypeIcons[type];
                   const count = staffMembers.filter(s => s.staff_type === type).length;
@@ -366,6 +375,110 @@ export function HospitalManagement() {
                   );
                 })}
               </TabsList>
+
+              <TabsContent value="users" className="space-y-3 mt-4">
+                {selectedHospital && (() => {
+                  const hid = selectedHospital.id;
+                  const linked = (users || []).filter(u => u.hospital_id === hid || (u.linked_hospital_ids || []).includes(hid));
+                  const q = userSearch.trim().toLowerCase();
+                  const notLinked = (users || []).filter(u => u.hospital_id !== hid && !(u.linked_hospital_ids || []).includes(hid));
+                  const filtered = q ? notLinked.filter(u =>
+                    [u.first_name, u.last_name, u.email, u.username].filter(Boolean).some(v => String(v).toLowerCase().includes(q))
+                  ) : [];
+                  return (
+                    <>
+                      <div>
+                        <p className="text-xs font-medium mb-2 text-muted-foreground">Gekoppelde gebruikers ({linked.length})</p>
+                        {linked.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-3">Nog geen gebruikers gekoppeld</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {linked.map(u => {
+                              const isPrimary = u.hospital_id === hid;
+                              return (
+                                <div key={u.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm truncate">
+                                      {[u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || u.email}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {u.email}{u.function ? ` · ${u.function}` : ''}{u.discipline ? ` · ${u.discipline}` : ''}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Badge variant={isPrimary ? 'default' : 'secondary'} className="text-xs">
+                                      {isPrimary ? 'Primair' : 'Gekoppeld'}
+                                    </Badge>
+                                    {!isPrimary && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={async () => {
+                                          const next = (u.linked_hospital_ids || []).filter(id => id !== hid);
+                                          await updateHospitals.mutateAsync({ user_id: u.id, hospital_ids: next });
+                                          refetchUsers();
+                                        }}
+                                        title="Loskoppelen"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t">
+                        <p className="text-xs font-medium mb-2 text-muted-foreground">Bestaande gebruiker koppelen</p>
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            value={userSearch}
+                            onChange={e => setUserSearch(e.target.value)}
+                            placeholder="Zoek op naam of e-mail…"
+                            className="pl-8"
+                          />
+                        </div>
+                        {q && (
+                          <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
+                            {filtered.length === 0 ? (
+                              <p className="text-sm text-muted-foreground text-center py-3">Geen gebruikers gevonden</p>
+                            ) : filtered.slice(0, 20).map(u => (
+                              <div key={u.id} className="flex items-center justify-between p-2 border rounded-lg">
+                                <div className="min-w-0">
+                                  <p className="text-sm truncate">
+                                    {[u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || u.email}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {u.email}{u.hospital_name ? ` · primair: ${u.hospital_name}` : ''}
+                                  </p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    const next = Array.from(new Set([...(u.linked_hospital_ids || []), hid]));
+                                    await updateHospitals.mutateAsync({ user_id: u.id, hospital_ids: next });
+                                    setUserSearch('');
+                                    refetchUsers();
+                                  }}
+                                  className="gap-1 shrink-0"
+                                >
+                                  <Plus className="h-3.5 w-3.5" /> Koppelen
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </TabsContent>
+
               {(Object.keys(staffTypeLabels) as StaffType[]).map(type => {
                 const filtered = staffMembers.filter(s => s.staff_type === type);
                 return (
