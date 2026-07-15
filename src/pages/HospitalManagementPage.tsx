@@ -934,14 +934,29 @@ export default function HospitalManagementPage() {
         .eq('hospital_id', h.id)
         .maybeSingle(),
       supabase
-        .from('profiles')
-        .select('id, user_id, first_name, last_name, username, function, discipline, role')
-        .eq('hospital_id', h.id)
-        .order('last_name'),
+        .from('user_hospitals')
+        .select('user_id')
+        .eq('hospital_id', h.id),
       supabase
         .from('user_roles')
         .select('user_id, role'),
     ]);
+
+    // Collect user_ids from user_hospitals (primary + linked) and also profiles with hospital_id
+    const linkedUserIds = new Set<string>((usersRes.data || []).map((r: any) => r.user_id));
+    const { data: primaryProfiles } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('hospital_id', h.id);
+    (primaryProfiles || []).forEach((p: any) => linkedUserIds.add(p.user_id));
+
+    const profilesRes = linkedUserIds.size > 0
+      ? await supabase
+          .from('profiles')
+          .select('id, user_id, first_name, last_name, username, function, discipline, role')
+          .in('user_id', Array.from(linkedUserIds))
+          .order('last_name')
+      : { data: [] as any[] };
 
     setStaffMembers((staffRes.data || []) as StaffMember[]);
     setHospitalDisciplines((discRes.data || []) as HospitalDiscipline[]);
