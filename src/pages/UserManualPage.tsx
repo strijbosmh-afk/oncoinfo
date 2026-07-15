@@ -367,6 +367,39 @@ export default function UserManualPage() {
               </p>
             </div>
           </Section>
+          {/* 4b. DISCHARGE TEMPLATES */}
+          <Section icon={BookOpen} title={t('manual.s4bTitle', 'Ontslagbriefsjablonen')}>
+            <p>{t('manual.s4bIntro', 'Kant-en-klare tekstblokken voor ontslagbrieven, gegroepeerd per discipline (borstkanker, urologie, gynaecologie, respiratoire oncologie, digestieve tumoren, huid-, hoofd-hals- en supportive care).')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              {t('manual.s4bBrowseTitle', 'Bladeren en zoeken')}
+            </h4>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li>{t('manual.s4bBrowse1', 'Kies een discipline op de hoofdpagina of via het menu.')}</li>
+              <li>{t('manual.s4bBrowse2', 'Filter op therapielijn, stadium of trefwoord.')}</li>
+              <li>{t('manual.s4bBrowse3', 'Elk sjabloon toont de brontekst en optioneel een "Ter info"-blok.')}</li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Copy className="h-4 w-4" />
+              {t('manual.s4bCopyTitle', 'Kopiëren en gebruiken')}
+            </h4>
+            <p className="text-sm">{t('manual.s4bCopyDesc', 'Klik op het kopieer-icoon om de tekst in één klik naar je klembord te sturen. Plak vervolgens in je EPD of ontslagbrief.')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+              {t('manual.s4bFavTitle', 'Favorieten & meest gebruikt')}
+            </h4>
+            <p className="text-sm">{t('manual.s4bFavDesc', 'Markeer sjablonen als favoriet voor snelle toegang. Meest-gebruikte sjablonen verschijnen automatisch bovenaan op basis van je gebruik.')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              {t('manual.s4bLangTitle', 'Meertalig')}
+            </h4>
+            <p className="text-sm">{t('manual.s4bLangDesc', 'Sjablonen zijn beschikbaar in het Nederlands. Andere talen worden automatisch vertaald bij het openen (24u cache).')}</p>
+          </Section>
+
 
           {/* 5. FAVORITES & MOST USED */}
           <Section icon={Star} title={t('manual.s5Title')}>
