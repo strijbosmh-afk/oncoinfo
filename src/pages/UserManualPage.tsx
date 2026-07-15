@@ -571,7 +571,79 @@ export default function UserManualPage() {
                 {t('manual.s7UpdatesPermission')}
               </p>
             </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              {t('manual.s7DischargeTitle', 'Ontslagbriefsjablonen uploaden')}
+            </h4>
+            <p>{t('manual.s7DischargeDesc', 'Upload een PDF met ontslagbrief-teksten. Het systeem splitst het document automatisch op "Ter info:" grenzen en extraheert per discipline de sjablonen met AI. Bestaande sjablonen worden vervangen door een nieuwe versie.')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7DischargePermission', 'Enkel super admin.')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              {t('manual.s7UsageTitle', 'Gebruiksdashboard')}
+            </h4>
+            <p>{t('manual.s7UsageDesc', 'Bekijk KPI\'s per ziekenhuis: aantal unieke gebruikers, aantal geprinte patiëntenfolders, meest geraadpleegde geneesmiddelen en activiteit over tijd.')}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2.5 mt-2">
+              <p className="text-xs text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 shrink-0" />
+                {t('manual.s7UsagePermission', 'Enkel admin en super admin.')}
+              </p>
+            </div>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              {t('manual.s7ScheduleTitle', 'Automatische updates plannen')}
+            </h4>
+            <p>{t('manual.s7ScheduleDesc', 'Plan periodieke AI-scans (dagelijks, wekelijks of maandelijks) die nieuwe FDA/EMA-goedkeuringen en klinische studies detecteren en voorstellen ter validatie.')}</p>
           </Section>
+
+          {/* 7b. HOSPITAL MANAGEMENT */}
+          <Section icon={Building2} title={t('manual.s7bTitle', 'Ziekenhuisbeheer')}>
+            <p>{t('manual.s7bIntro', 'Super admins beheren alle ziekenhuizen op het platform vanuit één centraal scherm (Beheer → Ziekenhuizen).')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              {t('manual.s7bBrandTitle', 'Branding & huisstijl')}
+            </h4>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li>{t('manual.s7bBrand1', 'Naam, slug (URL) en actief/inactief-status.')}</li>
+              <li>{t('manual.s7bBrand2', 'Logo uploaden (publiek beschikbaar).')}</li>
+              <li>{t('manual.s7bBrand3', 'Primaire huisstijlkleur voor knoppen en accenten.')}</li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Layers className="h-4 w-4" />
+              {t('manual.s7bDiscTitle', 'Disciplines activeren')}
+            </h4>
+            <p className="text-sm">{t('manual.s7bDiscDesc', 'Schakel per ziekenhuis in welke oncologische disciplines en sub-disciplines zichtbaar zijn. Uitgeschakelde disciplines worden vergrendeld in het menu voor gebruikers van dat ziekenhuis.')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              {t('manual.s7bFeatTitle', 'Premium functies')}
+            </h4>
+            <p className="text-sm">{t('manual.s7bFeatDesc', 'Activeer betalende opties per ziekenhuis (API-toegang, AI-assistent, extra rapportage). Deze worden apart gefactureerd.')}</p>
+
+            <h4 className="font-semibold mt-4 mb-2 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {t('manual.s7bStaffTitle', 'Medewerkers koppelen')}
+            </h4>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li>{t('manual.s7bStaff1', 'Zie alle gebruikers gekoppeld aan het ziekenhuis (primair én secundair).')}</li>
+              <li>{t('manual.s7bStaff2', 'Koppel een bestaande gebruiker aan een extra ziekenhuis via het zoekveld.')}</li>
+              <li>{t('manual.s7bStaff3', 'Loskoppelen kan enkel voor secundaire koppelingen; primaire koppeling wijzig je in Gebruikersbeheer.')}</li>
+              <li>{t('manual.s7bStaff4', 'Beheer daarnaast statische lijsten van artsen, verpleging en apothekers per discipline (zichtbaar op patiëntenfolders).')}</li>
+            </ul>
+
+            <h4 className="font-semibold mt-4 mb-2">{t('manual.s7bBillingTitle', 'Facturatiegegevens')}</h4>
+            <p className="text-sm">{t('manual.s7bBillingDesc', 'Vul BTW-nummer, adres, contactpersoon, IBAN/BIC en Peppol-ID in. Deze worden gebruikt voor jaarlijkse facturatie van premium functies.')}</p>
+          </Section>
+
 
           {/* 8. LANGUAGE */}
           <Section icon={LogIn} title={t('manual.s8Title')}>
