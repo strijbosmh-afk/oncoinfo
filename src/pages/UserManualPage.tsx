@@ -662,7 +662,29 @@ export default function UserManualPage() {
             </ul>
           </Section>
 
+          {/* 8b. MULTI-HOSPITAL SWITCHER */}
+          <Section icon={Repeat} title={t('manual.s8bTitle', 'Werken in meerdere ziekenhuizen')}>
+            <p>{t('manual.s8bIntro', 'Werk je in meer dan één ziekenhuis? Dan zie je rechtsboven een ziekenhuis-selector waarmee je snel kan wisselen zonder opnieuw in te loggen.')}</p>
+            <ul className="list-disc list-inside space-y-1 text-sm mt-2">
+              <li>{t('manual.s8bItem1', 'Eén ziekenhuis is jouw primair ziekenhuis (standaard bij inloggen).')}</li>
+              <li>{t('manual.s8bItem2', 'Extra ziekenhuizen worden gekoppeld door de admin via Ziekenhuisbeheer.')}</li>
+              <li>{t('manual.s8bItem3', 'Bij wisselen wordt de app herladen zodat disciplines, huisstijl en sjablonen van het nieuwe ziekenhuis correct worden getoond.')}</li>
+              <li>{t('manual.s8bItem4', 'Favorieten en meest-gebruikt zijn persoonlijk en volgen je in elk ziekenhuis.')}</li>
+            </ul>
+          </Section>
+
+          {/* 8c. NEW DRUGS NOTIFICATION */}
+          <Section icon={Bell} title={t('manual.s8cTitle', 'Nieuwe geneesmiddelen melding')}>
+            <p>{t('manual.s8cIntro', 'Bij het openen van de app zie je een popup met de geneesmiddelen die zijn toegevoegd sinds jouw vorige login. Zo mis je nooit nieuwe therapieën.')}</p>
+            <ul className="list-disc list-inside space-y-1 text-sm mt-2">
+              <li>{t('manual.s8cItem1', 'Enkel geneesmiddelen zichtbaar voor jouw ziekenhuis worden getoond.')}</li>
+              <li>{t('manual.s8cItem2', 'Klik op een geneesmiddel om direct naar het detailscherm te gaan.')}</li>
+              <li>{t('manual.s8cItem3', 'Sluit je de popup, dan verschijnt hij pas terug bij een volgende nieuwe toevoeging.')}</li>
+            </ul>
+          </Section>
+
           {/* 9. MULTI-DEVICE */}
+
           <Section icon={Eye} title={t('manual.s9Title')}>
             <p>{t('manual.s9Intro')}</p>
             <ul className="list-disc list-inside space-y-1 text-sm mt-2">
