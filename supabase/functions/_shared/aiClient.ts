@@ -2,7 +2,7 @@ import { z } from "https://esm.sh/zod@3.25.76";
 
 export { z };
 
-const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
 
 export class AIClientError extends Error {
   status: number;

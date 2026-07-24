@@ -47,7 +47,8 @@ Deno.serve(async (req) => {
 
      let hospitalName = 'OncoInfo';
      let hospitalColor = '#6b2d5b';
-     let hospitalLogoUrl = 'https://oncoinfo.lovable.app/images/logo-rzt.png';
+     const appUrl = Deno.env.get('APP_URL') || 'https://www.oncoinfo.be';
+     let hospitalLogoUrl = `${appUrl}/images/logo-rzt.png`;
 
      if (userProfile?.hospital_id) {
        const { data: hospital } = await supabase
@@ -59,11 +60,10 @@ Deno.serve(async (req) => {
          hospitalName = hospital.name;
          hospitalColor = (hospital.branding as any)?.primary_color || '#6b2d5b';
           if (hospital.logo_url) {
-            const APP_URL = 'https://oncoinfo.lovable.app';
             hospitalLogoUrl = hospital.logo_url.startsWith('http')
               ? hospital.logo_url
               : hospital.logo_url.startsWith('/')
-                ? `${APP_URL}${hospital.logo_url}`
+                ? `${appUrl}${hospital.logo_url}`
                 : `${supabaseUrl}/storage/v1/object/public/public-assets/${hospital.logo_url}`;
           }
        }

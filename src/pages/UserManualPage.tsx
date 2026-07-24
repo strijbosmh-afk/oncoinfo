@@ -782,7 +782,7 @@ export default function UserManualPage() {
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s11ExampleTitle')}</h4>
             <div className="bg-muted/50 rounded-lg p-3 font-mono text-xs overflow-x-auto whitespace-pre-wrap break-all">
 {`curl -H "X-API-Key: YOUR_API_KEY" \\
-  "https://ynuggqeumqzwwuffrnnv.supabase.co/functions/v1/public-api/drugs?q=pembrolizumab"`}
+  "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-api/drugs?q=pembrolizumab"`}
             </div>
 
             <h4 className="font-semibold mt-4 mb-2">{t('manual.s11RateLimitTitle')}</h4>

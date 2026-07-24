@@ -39,9 +39,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
+    if (!AI_GATEWAY_API_KEY) {
+      throw new Error("AI_GATEWAY_API_KEY is not configured");
     }
 
     // Limit PDF size - base64 over ~1MB (750KB binary) risks timeout
@@ -56,10 +56,10 @@ Deno.serve(async (req) => {
     const timeoutId = setTimeout(() => controller.abort(), 90_000);
 
     try {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
           "Content-Type": "application/json",
         },
         signal: controller.signal,

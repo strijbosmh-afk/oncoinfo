@@ -24,7 +24,7 @@ serve(async (req) => {
      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
      const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+     const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
  
      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
        throw new Error("Supabase configuration is missing");
@@ -68,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY not configured");
 
     // Fetch trial data with arms and endpoints
     const { data: trial, error: trialError } = await supabase
@@ -122,10 +122,10 @@ Analyze the clinical trial data provided and generate comprehensive analysis inc
 
 Be specific, evidence-based, and clinically relevant in your analysis.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, Eye, EyeOff, Globe, Lock, Search, FileText } from 'lucide-react';
 
-const API_BASE = 'https://ynuggqeumqzwwuffrnnv.supabase.co/functions/v1/public-api';
+const API_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-api`;
 
 const endpoints = [
   {
@@ -86,7 +86,7 @@ export function ApiDocumentation() {
             <div className="flex items-center gap-2 bg-muted rounded-md px-3 py-2 font-mono text-sm">
               <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
               <span className="flex-1 truncate">
-                {showKey ? 'Configureer via Lovable Cloud Secrets (ONCOINFO_API_KEY)' : maskedKey}
+                {showKey ? 'Configureer via Supabase Edge Function Secrets (ONCOINFO_API_KEY)' : maskedKey}
               </span>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowKey(!showKey)}>
                 {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}

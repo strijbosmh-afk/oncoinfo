@@ -41,8 +41,8 @@ serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = Deno.env.get("AI_GATEWAY_API_KEY");
+    if (!apiKey) throw new Error("AI_GATEWAY_API_KEY is not configured");
 
     const langNames: Record<string, string> = {
       fr: "French",

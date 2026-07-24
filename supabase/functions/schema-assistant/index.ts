@@ -149,19 +149,19 @@ serve(async (req) => {
     const { messages: rawMessages, action, drug_id } = await req.json();
     const messages = compactMessages(rawMessages);
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY not configured' }), {
+    const AI_GATEWAY_API_KEY = Deno.env.get('AI_GATEWAY_API_KEY');
+    if (!AI_GATEWAY_API_KEY) {
+      return new Response(JSON.stringify({ error: 'AI_GATEWAY_API_KEY not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (action === 'save') {
-      return await handleSave(messages, authClient, user.id, corsHeaders, LOVABLE_API_KEY);
+      return await handleSave(messages, authClient, user.id, corsHeaders, AI_GATEWAY_API_KEY);
     }
 
     if (action === 'extract') {
-      return await handleExtract(messages, corsHeaders, LOVABLE_API_KEY);
+      return await handleExtract(messages, corsHeaders, AI_GATEWAY_API_KEY);
     }
 
     if (action === 'load' && drug_id) {
@@ -173,7 +173,7 @@ serve(async (req) => {
 
     const response = await callAIStream({
       operation: 'schema_assistant_stream',
-      apiKey: LOVABLE_API_KEY,
+      apiKey: AI_GATEWAY_API_KEY,
       model: AI_MODEL,
       timeoutMs: 30_000,
       messages: [

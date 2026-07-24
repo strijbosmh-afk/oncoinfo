@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
       source = "web";
       const resp = await fetch(formattedUrl, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; OncoInfo/1.0; +https://oncoinfo.lovable.app)",
+          "User-Agent": "Mozilla/5.0 (compatible; OncoInfo/1.0; +https://www.oncoinfo.be)",
           "Accept": "text/html,application/xhtml+xml",
         },
       });

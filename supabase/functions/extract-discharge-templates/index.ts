@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY")!;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -106,11 +106,11 @@ ${documentText.slice(0, 60000)}`;
     for (let i = 0; i < chunks.length; i++) {
       const chunkPrompt = prompt.replace(/TEKST:\n[\s\S]*$/, `TEKST:\n${chunks[i]}`);
       const aiStart = Date.now();
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiResp = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Authorization": `Bearer ${AI_GATEWAY_API_KEY}`,
         },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",

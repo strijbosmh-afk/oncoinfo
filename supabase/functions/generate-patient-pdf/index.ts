@@ -24,7 +24,7 @@ serve(async (req) => {
      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
      const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+     const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
  
      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
        throw new Error("Supabase configuration is missing");
@@ -43,7 +43,7 @@ serve(async (req) => {
      }
  
      if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error("Service role key not configured");
-     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+     if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY not configured");
  
      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -176,10 +176,10 @@ Format as HTML for PDF generation.`,
 
     const systemPrompt = lc.prompt;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -299,7 +299,7 @@ function generatePatientPdfHtml(info: any, trial: any, includeDosing: boolean, i
   const primaryColor = hospital?.branding?.primary_color || '#0077b6';
   const hospitalName = hospital?.name || 'OncoInfo';
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || '';
-  const APP_URL = 'https://oncoinfo.lovable.app';
+  const APP_URL = Deno.env.get('APP_URL') || 'https://www.oncoinfo.be';
   const rawLogoUrl = hospital?.branding?.patient_folder_logo_url || hospital?.logo_url || '';
   const logoUrl = rawLogoUrl
     ? (rawLogoUrl.startsWith('http') ? rawLogoUrl
