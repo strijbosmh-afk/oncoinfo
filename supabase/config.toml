@@ -8,6 +8,15 @@ additional_redirect_urls = [
   "http://localhost:8080/**",
 ]
 
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "admin@oncoinfo.be"
+sender_name = "OncoInfo"
+
 [functions.fetch-pubmed]
 verify_jwt = false
 
