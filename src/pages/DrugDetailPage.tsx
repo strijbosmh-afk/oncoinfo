@@ -65,6 +65,41 @@ interface HospitalDoctor {
   discipline?: string | null;
 }
 
+const waitForDocumentAssets = async (doc: Document) => {
+  try {
+    await doc.fonts?.ready;
+  } catch {
+    // A missing webfont should not block printing with the fallback font.
+  }
+
+  const imagesReady = Promise.all(
+    Array.from(doc.images).map(async image => {
+      if (!image.complete) {
+        await new Promise<void>(resolve => {
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+          if (image.complete) resolve();
+        });
+      }
+      try {
+        await image.decode?.();
+      } catch {
+        // Broken or cross-origin images render as their browser fallback.
+      }
+    }),
+  );
+  await Promise.race([
+    imagesReady,
+    new Promise<void>(resolve => window.setTimeout(resolve, 3000)),
+  ]);
+
+  await new Promise<void>(resolve => {
+    const view = doc.defaultView;
+    if (view) view.requestAnimationFrame(() => resolve());
+    else resolve();
+  });
+};
+
 
 interface PremedicatieItem {
   name: string;
@@ -673,23 +708,23 @@ export default function DrugDetailPage() {
     document.body.appendChild(printIframe);
     
     const printDoc = printIframe.contentDocument || printIframe.contentWindow?.document;
-    if (!printDoc) return;
-    
+    if (!printDoc) {
+      printIframe.remove();
+      return;
+    }
+
+    printIframe.onload = async () => {
+      await waitForDocumentAssets(printDoc);
+      printIframe.contentWindow?.focus();
+      printIframe.contentWindow?.print();
+
+      // Printing blocks the frame while the system dialog is open.
+      setTimeout(() => printIframe.remove(), 1000);
+    };
+
     printDoc.open();
     printDoc.write(previewHtml);
     printDoc.close();
-    
-    // Wait for content and images to load before printing
-    printIframe.onload = () => {
-      setTimeout(() => {
-        printIframe.contentWindow?.focus();
-        printIframe.contentWindow?.print();
-        // Clean up after print dialog closes
-        setTimeout(() => {
-          document.body.removeChild(printIframe);
-        }, 1000);
-      }, 500);
-    };
   };
 
   const handleDownloadPdf = async () => {
@@ -742,7 +777,7 @@ export default function DrugDetailPage() {
       iframeDoc.write(previewHtml);
       iframeDoc.close();
       
-      await new Promise(resolve => setTimeout(resolve, 600));
+      await waitForDocumentAssets(iframeDoc);
 
       // Hide ALL HTML disclaimers before capture — jsPDF overlay is the single source
       // Match both .disclaimer-box class and inline-styled disclaimer divs (red border)
@@ -767,10 +802,22 @@ export default function DrugDetailPage() {
         pageContainer.style.overflow = 'visible';
       }
 
-      const contentAreaHeight = pdfHeight - disclaimerBoxHeight;
+      // Render the printable content as one column. CSS grids fragment poorly
+      // across pages and can otherwise clip the bottom of a grid item.
+      const contentGrid = iframeDoc.querySelector('.content') as HTMLElement | null;
+      if (contentGrid) contentGrid.style.display = 'block';
+      pageBreaks.forEach(page => {
+        page.style.minHeight = '0';
+        page.style.height = 'auto';
+        page.style.overflow = 'visible';
+      });
+
+      const pageMargin = 10;
+      const contentWidth = pdfWidth - (pageMargin * 2);
+      const contentBottom = pdfHeight - disclaimerBoxHeight - 4;
+      const contentAreaHeight = contentBottom - pageMargin;
       const sectionGap = 1.5; // mm gap between sections
-      let isFirstPdfPage = true;
-      let yPosition = 0; // current vertical position on the page in mm
+      let yPosition = pageMargin; // current vertical position on the page in mm
 
       // Helper: render a single HTML element to a canvas and get its image + mm dimensions
       const captureElement = async (el: HTMLElement) => {
@@ -782,9 +829,71 @@ export default function DrugDetailPage() {
           windowWidth: 794,
         });
         const imgData = canvas.toDataURL('image/png');
-        const imgWidthMm = pdfWidth;
-        const imgHeightMm = (canvas.height * pdfWidth) / canvas.width;
+        const imgWidthMm = contentWidth;
+        const imgHeightMm = (canvas.height * contentWidth) / canvas.width;
         return { canvas, imgData, imgWidthMm, imgHeightMm };
+      };
+
+      // Locate a quiet horizontal band close to the desired page edge. This
+      // keeps a canvas slice between text lines instead of through the letters.
+      const findSafeSliceHeight = (
+        canvas: HTMLCanvasElement,
+        startYpx: number,
+        maxSliceHeightPx: number,
+      ) => {
+        const remainingPx = canvas.height - startYpx;
+        const idealHeightPx = Math.min(remainingPx, Math.floor(maxSliceHeightPx));
+        if (idealHeightPx >= remainingPx) return remainingPx;
+
+        const minimumHeightPx = Math.max(1, Math.floor(idealHeightPx * 0.7));
+        const searchStartY = startYpx + minimumHeightPx;
+        const searchEndY = startYpx + idealHeightPx;
+        const searchHeight = searchEndY - searchStartY;
+        const ctx = canvas.getContext('2d');
+        if (!ctx || searchHeight < 8) return idealHeightPx;
+
+        try {
+          const imageData = ctx.getImageData(0, searchStartY - 1, canvas.width, searchHeight + 1);
+          const pixels = imageData.data;
+          const rowStride = canvas.width * 4;
+          const xStep = Math.max(1, Math.floor(canvas.width / 500));
+          const sampleCount = Math.ceil(canvas.width / xStep);
+          const quietBandRows = Math.max(4, Math.round(canvas.width / 220));
+          let quietRows = 0;
+
+          for (let localY = searchHeight; localY >= 1; localY -= 1) {
+            let changedSamples = 0;
+            const currentRow = localY * rowStride;
+            const previousRow = (localY - 1) * rowStride;
+
+            for (let x = 0; x < canvas.width; x += xStep) {
+              const current = currentRow + (x * 4);
+              const previous = previousRow + (x * 4);
+              const difference =
+                Math.abs(pixels[current] - pixels[previous]) +
+                Math.abs(pixels[current + 1] - pixels[previous + 1]) +
+                Math.abs(pixels[current + 2] - pixels[previous + 2]);
+              if (difference > 36) changedSamples += 1;
+            }
+
+            if ((changedSamples / sampleCount) < 0.012) {
+              quietRows += 1;
+              if (quietRows >= quietBandRows) {
+                return Math.max(
+                  minimumHeightPx,
+                  (searchStartY - startYpx) + localY + Math.floor(quietBandRows / 2),
+                );
+              }
+            } else {
+              quietRows = 0;
+            }
+          }
+        } catch {
+          // Cross-origin canvas data can be unreadable; the exact slice is a
+          // safe fallback and still preserves all content.
+        }
+
+        return idealHeightPx;
       };
 
       const addCanvasSliceToPdf = (canvas: HTMLCanvasElement, startYpx: number, sliceHeightPx: number) => {
@@ -794,25 +903,21 @@ export default function DrugDetailPage() {
         const ctx = sliceCanvas.getContext('2d');
         if (!ctx) return;
         ctx.drawImage(canvas, 0, startYpx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
-        const sliceMm = (sliceHeightPx * pdfWidth) / canvas.width;
+        const sliceMm = (sliceHeightPx * contentWidth) / canvas.width;
         const sliceData = sliceCanvas.toDataURL('image/png');
-        pdf.addImage(sliceData, 'PNG', 0, yPosition, pdfWidth, sliceMm);
+        pdf.addImage(sliceData, 'PNG', pageMargin, yPosition, contentWidth, sliceMm);
         yPosition += sliceMm + sectionGap;
       };
 
       // Helper: add section image to PDF, handling page overflow and oversized sections
       const addSectionToPdf = (canvas: HTMLCanvasElement, imgData: string, imgW: number, imgH: number) => {
-        if (isFirstPdfPage && yPosition === 0) {
-          isFirstPdfPage = false;
-        }
-
         if (imgH <= contentAreaHeight) {
-          if (yPosition > 0 && (yPosition + imgH) > contentAreaHeight) {
+          if (yPosition > pageMargin && (yPosition + imgH) > contentBottom) {
             addDisclaimerToPage(pdf);
             pdf.addPage();
-            yPosition = 0;
+            yPosition = pageMargin;
           }
-          pdf.addImage(imgData, 'PNG', 0, yPosition, imgW, imgH);
+          pdf.addImage(imgData, 'PNG', pageMargin, yPosition, imgW, imgH);
           yPosition += imgH + sectionGap;
           return;
         }
@@ -822,19 +927,26 @@ export default function DrugDetailPage() {
         let startYpx = 0;
 
         while (remainingPx > 0) {
-          const availableMm = yPosition > 0 ? contentAreaHeight - yPosition : contentAreaHeight;
+          const availableMm = contentBottom - yPosition;
+          if (yPosition > pageMargin && availableMm < 28) {
+            addDisclaimerToPage(pdf);
+            pdf.addPage();
+            yPosition = pageMargin;
+            continue;
+          }
           if (availableMm <= 2) {
             addDisclaimerToPage(pdf);
             pdf.addPage();
-            yPosition = 0;
+            yPosition = pageMargin;
             continue;
           }
 
-          const sliceHeightPx = Math.min(remainingPx, Math.floor(availableMm * pxPerMm));
+          const maxSliceHeightPx = Math.min(remainingPx, Math.floor(availableMm * pxPerMm));
+          const sliceHeightPx = findSafeSliceHeight(canvas, startYpx, maxSliceHeightPx);
           if (sliceHeightPx <= 0) {
             addDisclaimerToPage(pdf);
             pdf.addPage();
-            yPosition = 0;
+            yPosition = pageMargin;
             continue;
           }
 
@@ -845,7 +957,7 @@ export default function DrugDetailPage() {
           if (remainingPx > 0) {
             addDisclaimerToPage(pdf);
             pdf.addPage();
-            yPosition = 0;
+            yPosition = pageMargin;
           }
         }
       };
@@ -869,33 +981,19 @@ export default function DrugDetailPage() {
           addDisclaimerToPage(pdf);
         } else {
           // Fallback: no sections found, capture entire page container
-          const { imgData, imgWidthMm, imgHeightMm } = await captureElement(pageContainer);
-          if (imgHeightMm <= contentAreaHeight) {
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
-            addDisclaimerToPage(pdf);
-          } else {
-            let heightLeft = imgHeightMm;
-            let pos = 0;
-            pdf.addImage(imgData, 'PNG', 0, pos, imgWidthMm, imgHeightMm);
-            addDisclaimerToPage(pdf);
-            heightLeft -= contentAreaHeight;
-            while (heightLeft > 5) {
-              pos -= contentAreaHeight;
-              pdf.addPage();
-              pdf.addImage(imgData, 'PNG', 0, pos, imgWidthMm, imgHeightMm);
-              addDisclaimerToPage(pdf);
-              heightLeft -= contentAreaHeight;
-            }
-          }
+          const { canvas, imgData, imgWidthMm, imgHeightMm } = await captureElement(pageContainer);
+          addSectionToPdf(canvas, imgData, imgWidthMm, imgHeightMm);
+          addDisclaimerToPage(pdf);
         }
       }
 
-      // Capture premedicatie pages as full-page renders (separate pages)
+      // Capture premedication pages through the same safe slicer. A long
+      // schedule can then continue on another page without being clipped.
       for (const pageEl of pageBreaks) {
         pdf.addPage();
-        yPosition = 0;
-        const { imgData, imgWidthMm, imgHeightMm } = await captureElement(pageEl);
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
+        yPosition = pageMargin;
+        const { canvas, imgData, imgWidthMm, imgHeightMm } = await captureElement(pageEl);
+        addSectionToPdf(canvas, imgData, imgWidthMm, imgHeightMm);
         addDisclaimerToPage(pdf);
       }
       
