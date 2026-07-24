@@ -4,6 +4,7 @@ import { callAIJson, callAIToolJson, z } from "../_shared/aiClient.ts";
 const AI_MODEL = 'google/gemini-2.5-flash';
 const PATIENT_FOLDER_PROMPT_VERSION = 'patient-folder-text-v2';
 const PATIENT_FOLDER_CONTENT_VERSION = 'patient-folder-layout-v3';
+const APP_URL = Deno.env.get('APP_URL') || 'https://www.oncoinfo.be';
 
 const SideEffectsSchema = z.object({
   common_friendly: z.string().nullable().optional(),
@@ -21,8 +22,7 @@ type GenerationMetadata = {
 };
 
 const allowedOrigins = new Set([
-  'https://oncoinfo.lovable.app',
-  'https://www.oncoinfo.be',
+  APP_URL,
   'https://oncoinfo.be',
   'http://localhost:8080',
   'http://localhost:5173',
@@ -36,7 +36,7 @@ function getCorsHeaders(req: Request) {
   const origin = req.headers.get('Origin') || '';
   return {
     ...baseCorsHeaders,
-    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://oncoinfo.lovable.app',
+    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : APP_URL,
     'Vary': 'Origin',
   };
 }
@@ -63,8 +63,8 @@ async function humanizeSideEffects(
   drugName: string,
   language: string,
 ): Promise<{ commonHumanized: string | null; seriousHumanized: string | null; selfCareTips: string | null }> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY || (!commonText && !seriousText)) {
+  const AI_GATEWAY_API_KEY = Deno.env.get('AI_GATEWAY_API_KEY');
+  if (!AI_GATEWAY_API_KEY || (!commonText && !seriousText)) {
     return { commonHumanized: commonText, seriousHumanized: seriousText, selfCareTips: null };
   }
 
@@ -91,7 +91,7 @@ ${seriousText || 'None provided'}`;
   try {
     const result = await callAIToolJson({
       operation: 'patient_folder_humanize_side_effects',
-      apiKey: LOVABLE_API_KEY,
+      apiKey: AI_GATEWAY_API_KEY,
       model: AI_MODEL,
       timeoutMs: 25_000,
       messages: [
@@ -129,9 +129,9 @@ ${seriousText || 'None provided'}`;
 }
 
 async function translateContent(textsMap: Record<string, string | null>, targetLang: string): Promise<Record<string, string | null>> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) {
-    console.error('LOVABLE_API_KEY not configured, skipping translation');
+  const AI_GATEWAY_API_KEY = Deno.env.get('AI_GATEWAY_API_KEY');
+  if (!AI_GATEWAY_API_KEY) {
+    console.error('AI_GATEWAY_API_KEY not configured, skipping translation');
     return textsMap;
   }
 
@@ -157,7 +157,7 @@ ${JSON.stringify(toTranslate, null, 2)}`;
   try {
     const translated = await callAIJson({
       operation: 'patient_folder_translate_content',
-      apiKey: LOVABLE_API_KEY,
+      apiKey: AI_GATEWAY_API_KEY,
       model: AI_MODEL,
       timeoutMs: 25_000,
       messages: [
@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
 
     // Fetch logo - use hospital logo or fallback
     let logoDataUri = '';
-    const APP_URL = 'https://oncoinfo.lovable.app';
+    const APP_URL = Deno.env.get('APP_URL') || 'https://www.oncoinfo.be';
     const logoSourceUrl = hospitalLogoUrl
       ? (hospitalLogoUrl.startsWith('http') ? hospitalLogoUrl
         : hospitalLogoUrl.startsWith('/') ? `${APP_URL}${hospitalLogoUrl}`

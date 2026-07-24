@@ -1,73 +1,78 @@
-# Welcome to your Lovable project
+# OncoInfo
 
-## Project info
+OncoInfo is een Vite/React-app voor oncologische geneesmiddeleninformatie. De
+frontend draait op Vercel. Database, authenticatie, opslag en Edge Functions
+draaien op een eigen Supabase-project.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Lokaal ontwikkelen
 
-## How can I edit this code?
+Vereisten:
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+- Node.js 22
+- npm
+- Supabase CLI voor database- en Edge Function-werk
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Vul in `.env.local` de publieke browserconfiguratie van het bedoelde
+Supabase-project in:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```dotenv
+VITE_SUPABASE_PROJECT_ID=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_PUBLISHABLE_KEY=
+```
 
-**Use GitHub Codespaces**
+## Controles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+npm run build
+npm test
+npm run lint
+```
 
-## What technologies are used for this project?
+## Vercel
 
-This project is built with:
+Het Vercel-project is gekoppeld aan de GitHub-repository. Productiedeployments
+komen van `main`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Stel deze variabelen in voor Production, Preview en Development:
 
-## How can I deploy this project?
+- `VITE_SUPABASE_PROJECT_ID`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+`vercel.json` stuurt alle browserroutes naar `index.html`, zodat directe links
+zoals `/drugs/:id` en `/reset-password` werken.
 
-## Can I connect a custom domain to my Lovable project?
+## Supabase
 
-Yes, you can!
+Koppel de CLI aan het eigen project:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+supabase link --project-ref <project-ref>
+supabase db push
+supabase functions deploy
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+De Edge Functions gebruiken daarnaast deze secrets:
+
+- `AI_GATEWAY_API_KEY`
+- `APP_URL` (`https://www.oncoinfo.be`)
+- `ONCOINFO_API_KEY`
+- `RESEND_API_KEY`
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY` en `SUPABASE_SERVICE_ROLE_KEY` worden door
+Supabase beschikbaar gesteld.
+
+## Productiedomein
+
+- Canoniek: `https://www.oncoinfo.be`
+- Redirect: `https://oncoinfo.be` → `https://www.oncoinfo.be`
+
+Wijzig DNS pas nadat alle bestaande web-, e-mail- en verificatierecords naar de
+actieve DNS-provider zijn overgenomen.

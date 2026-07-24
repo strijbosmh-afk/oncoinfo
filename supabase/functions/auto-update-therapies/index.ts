@@ -17,7 +17,7 @@ function calculateNextRun(interval: string): string {
   return now.toISOString();
 }
 
-async function runScan(supabase: any, lovableApiKey: string, diseaseAreas?: string[]) {
+async function runScan(supabase: any, aiGatewayApiKey: string, diseaseAreas?: string[]) {
   const { data: existingDrugs } = await supabase.from("drugs").select("generic_name, drug_class, disease_areas");
   const existingNames = (existingDrugs || []).map((d: any) => d.generic_name.toLowerCase());
 
@@ -49,10 +49,10 @@ Genereer ALLEEN therapieën die NIET in bovenstaande lijst staan.`;
 Geef voor elke gevonden therapie de volgende informatie in het opgegeven JSON-schema. Wees zo specifiek en accuraat mogelijk.
 Geef maximaal 15 relevante nieuwe therapieën. Als er geen nieuwe zijn, geef een lege array.`;
 
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
+      Authorization: `Bearer ${aiGatewayApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -191,9 +191,9 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
 
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY not configured");
 
     const body = await req.json();
     const { action } = body;
@@ -219,7 +219,7 @@ serve(async (req) => {
 
       for (const schedule of dueSchedules) {
         try {
-          const scanResult = await runScan(supabase, LOVABLE_API_KEY, schedule.disease_areas?.length ? schedule.disease_areas : undefined);
+          const scanResult = await runScan(supabase, AI_GATEWAY_API_KEY, schedule.disease_areas?.length ? schedule.disease_areas : undefined);
 
           let addResult = { added: [] as string[], errors: [] as string[], skipped: [] as string[] };
           if (scanResult.therapies?.length > 0) {
@@ -311,7 +311,7 @@ serve(async (req) => {
     // ---- ACTION: scan ----
     if (action === "scan") {
       const { disease_areas } = body;
-      const result = await runScan(supabase, LOVABLE_API_KEY, disease_areas);
+      const result = await runScan(supabase, AI_GATEWAY_API_KEY, disease_areas);
 
       const { data: profileData } = await supabase
         .from("profiles")

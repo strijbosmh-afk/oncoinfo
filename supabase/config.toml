@@ -1,4 +1,4 @@
-project_id = "ynuggqeumqzwwuffrnnv"
+project_id = "qcpbbgrjdqgzkdxdscnn"
 
 [functions.fetch-pubmed]
 verify_jwt = false
