@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>OncoInfo</title>
+  <rect width="512" height="512" rx="112" fill="#6b2d5b"/>
+  <g transform="rotate(-36 256 256)">
+    <rect x="92" y="198" width="328" height="116" rx="58" fill="#ffffff"/>
+    <path d="M256 198h106a58 58 0 0 1 0 116H256z" fill="#9fd8cf"/>
+    <path d="M256 202v108" stroke="#6b2d5b" stroke-width="16"/>
+    <circle cx="332" cy="231" r="10" fill="#6b2d5b"/>
+    <rect x="322" y="250" width="20" height="42" rx="10" fill="#6b2d5b"/>
+  </g>
+</svg>
