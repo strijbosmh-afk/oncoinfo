@@ -1,5 +1,13 @@
 project_id = "qcpbbgrjdqgzkdxdscnn"
 
+[auth]
+site_url = "https://www.oncoinfo.be"
+additional_redirect_urls = [
+  "https://oncoinfo.be/**",
+  "https://www.oncoinfo.be/**",
+  "http://localhost:8080/**",
+]
+
 [functions.fetch-pubmed]
 verify_jwt = false
 
