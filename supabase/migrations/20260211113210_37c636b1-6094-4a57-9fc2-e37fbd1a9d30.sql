@@ -30,6 +30,9 @@ BEFORE UPDATE ON public.scheduled_auto_updates
 FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column();
 
--- Assign super_admin role to the 'admin' user
+-- Preserve the legacy admin role only when that auth user exists.
+-- Fresh deployments create their administrator after the auth migration.
 INSERT INTO public.user_roles (user_id, role)
-VALUES ('0c0cb2b8-9903-4c30-abb8-ec6211eb611d', 'super_admin');
+SELECT id, 'super_admin'
+FROM auth.users
+WHERE id = '0c0cb2b8-9903-4c30-abb8-ec6211eb611d';
