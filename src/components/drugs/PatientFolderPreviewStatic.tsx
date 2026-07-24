@@ -390,12 +390,12 @@ export function generateStaticPreviewHtml(
       .map(cat => {
         const info = seCategories[cat];
         const catLabel = info.label[language] || info.label['nl'];
-        return `<div style="margin-bottom:6px;">
+        return `<div class="se-category" style="margin-bottom:6px;">
           <div style="display:flex; align-items:center; gap:4px; margin-bottom:2px;">
             <span style="font-size:${fontSize - 2}px;">${info.icon}</span>
             <span style="font-size:${fontSize - 2}px; font-weight:600; color:#555;">${catLabel}</span>
           </div>
-          ${groups[cat].map((se, i) => `<div style="padding:2px 6px 2px 20px; font-size:${listFontSize}px; color:#333; background:${i % 2 === 0 ? 'transparent' : bgAlt};">• ${se}</div>`).join('')}
+          ${groups[cat].map((se, i) => `<div class="se-item" style="padding:2px 6px 2px 20px; font-size:${listFontSize}px; color:#333; background:${i % 2 === 0 ? 'transparent' : bgAlt};">• ${se}</div>`).join('')}
         </div>`;
       }).join('');
   };
@@ -423,7 +423,7 @@ export function generateStaticPreviewHtml(
 <head>
   <meta charset="UTF-8">
   <style>
-    @page { size: A4; margin: 12mm; }
+    @page { size: A4; margin: 12mm 12mm 24mm; }
      * { margin: 0; padding: 0; box-sizing: border-box; }
      html, body { height: 100%; }
      body {
@@ -467,12 +467,18 @@ export function generateStaticPreviewHtml(
       .print-disclaimer-text { font-size: ${disclaimerTextSize}px; color: #444; line-height: 1.4; }
       @media print {
         .preview-badge { display: none !important; }
-        .page-break { margin-top: 0; padding-top: 10mm; border-top: none; }
-        body { padding: 10mm; padding-bottom: 28mm; }
-        .fixed-print-disclaimer { position: fixed; bottom: 0; left: 10mm; right: 10mm; background: white; z-index: 999; }
+        html, body { height: auto; }
+        body { padding: 0; overflow: visible; }
+        .page-container, .page-content { display: block; overflow: visible; }
+        .content { display: block; }
+        .section { break-inside: auto; page-break-inside: auto; margin-bottom: 4mm; }
+        .page-break { margin-top: 0; padding-top: 0; border-top: none; min-height: 0 !important; }
+        .fixed-print-disclaimer { position: fixed; bottom: -19mm; left: 0; right: 0; background: white; z-index: 999; }
         .inline-disclaimer { display: none !important; }
-        .info-section, .se-category, .tips-box, .contact-section, .page-footer-block, .drug-header, .timeline-item, .inline-list, .se-grid-row, .print-disclaimer { break-inside: avoid; page-break-inside: avoid; }
-        h2, h3, strong { break-after: avoid; page-break-after: avoid; }
+        .contact-section, .drug-header, .timeline-item, .inline-list, .se-item, .print-disclaimer { break-inside: avoid; page-break-inside: avoid; }
+        .warning-box, .danger-box, .selfcare-box, .info-box, .se-category, .page-footer-block { break-inside: auto; page-break-inside: auto; }
+        p, li { orphans: 3; widows: 3; }
+        h2, h3 { break-after: avoid; page-break-after: avoid; }
       }
       @media screen { .fixed-print-disclaimer { display: none !important; } }
      .timeline { position: relative; margin: 16px 0; padding-left: 0; }
