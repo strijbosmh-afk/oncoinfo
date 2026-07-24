@@ -137,7 +137,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.png", "pwa-icon-192.png", "pwa-icon-512.png", "images/logo-rzt.png"],
+      includeAssets: [
+        "favicon.svg",
+        "favicon.ico",
+        "favicon.png",
+        "pwa-icon-192.png",
+        "pwa-icon-512.png",
+        "pwa-icon-maskable-512.png",
+        "images/logo-rzt.png",
+      ],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
@@ -166,6 +174,7 @@ export default defineConfig({
         background_color: "#f5f0f7",
         display: "standalone",
         start_url: "/",
+        lang: "nl",
         orientation: "any",
         icons: [
           {
@@ -179,7 +188,7 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "/pwa-icon-512.png",
+            src: "/pwa-icon-maskable-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
