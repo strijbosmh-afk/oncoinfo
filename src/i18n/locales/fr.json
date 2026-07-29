@@ -750,7 +750,8 @@
     "lookupSuccessDesc": "{{name}} — confirmez le logo",
     "lookupFailed": "Recherche échouée",
     "lookupRetry": "Veuillez réessayer",
-    "noHospital": "Aucun hôpital"
+    "noHospital": "Aucun hôpital",
+    "unknownHospital": "Hôpital inconnu"
   },
   "medicalTerms": {
     "Borstkanker": "Cancer du sein",
