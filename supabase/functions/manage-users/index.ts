@@ -25,6 +25,35 @@ function safeColor(value: string) {
   return /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#6b2d5b';
 }
 
+function generateTemporaryPassword() {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghjkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const special = '!@#$%';
+  const all = upper + lower + digits + special;
+  const pick = (chars: string) => {
+    const bytes = new Uint8Array(1);
+    crypto.getRandomValues(bytes);
+    return chars[bytes[0] % chars.length];
+  };
+
+  const password = [
+    pick(upper),
+    pick(lower),
+    pick(digits),
+    pick(special),
+    ...Array.from({ length: 12 }, () => pick(all)),
+  ];
+
+  const randomBytes = new Uint8Array(password.length);
+  crypto.getRandomValues(randomBytes);
+  for (let i = password.length - 1; i > 0; i--) {
+    const j = randomBytes[i] % (i + 1);
+    [password[i], password[j]] = [password[j], password[i]];
+  }
+  return password.join('');
+}
+
 async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader: string) {
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -875,16 +904,7 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'Wachtwoord van super admin kan niet worden gereset' }, 403);
         }
 
-        // Generate a random password: 12 chars, mixed case + digits + special
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-        let newPassword = '';
-        const randomBytes = new Uint8Array(12);
-        crypto.getRandomValues(randomBytes);
-        for (let i = 0; i < 12; i++) {
-          newPassword += chars[randomBytes[i] % chars.length];
-        }
-        // Ensure at least one uppercase, one lowercase, one digit, one special
-        newPassword = newPassword.slice(0, 8) + 'A' + 'a' + '3' + '!';
+        const newPassword = generateTemporaryPassword();
 
         // Update password
         const { error: pwError } = await supabase.auth.admin.updateUserById(user_id, { password: newPassword });
@@ -938,6 +958,102 @@ Deno.serve(async (req) => {
         ]);
 
         return jsonResponse({ success: true, email_sent: true });
+      }
+
+      case 'bulk-reset-passwords': {
+        if (!(await isSuperAdmin(supabase, adminUser.id))) {
+          return jsonResponse({ error: 'Alleen super admins kunnen alle wachtwoorden resetten' }, 403);
+        }
+        if (params.confirmation !== 'RESET_ALL_USERS') {
+          return jsonResponse({ error: 'Bevestiging voor de bulkreset ontbreekt' }, 400);
+        }
+
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, email, username, hospital_id, default_language')
+          .neq('user_id', adminUser.id)
+          .order('created_at', { ascending: true })
+          .limit(500);
+        if (profilesError) throw profilesError;
+
+        const hospitalIds = [...new Set((profiles || []).map((p: any) => p.hospital_id).filter(Boolean))];
+        const { data: hospitalRows } = hospitalIds.length > 0
+          ? await supabase.from('hospitals').select('id, name, branding, default_language').in('id', hospitalIds)
+          : { data: [] };
+        const hospitalMap = new Map((hospitalRows || []).map((h: any) => [h.id, h]));
+        const callerUsername = await getCallerUsername(supabase, adminUser.id);
+        const results: Array<{ user_id: string; username: string; success: boolean; error?: string }> = [];
+
+        for (const profile of profiles || []) {
+          const label = profile.username || profile.email || profile.user_id;
+          if (!profile.email) {
+            results.push({ user_id: profile.user_id, username: label, success: false, error: 'Geen e-mailadres' });
+            continue;
+          }
+
+          try {
+            const temporaryPassword = generateTemporaryPassword();
+            const { error: passwordError } = await supabase.auth.admin.updateUserById(
+              profile.user_id,
+              { password: temporaryPassword },
+            );
+            if (passwordError) throw passwordError;
+
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .update({ password_changed: false })
+              .eq('user_id', profile.user_id);
+            if (profileError) throw profileError;
+
+            const hospital: any = profile.hospital_id ? hospitalMap.get(profile.hospital_id) : null;
+            const language = profile.default_language || hospital?.default_language || 'nl';
+            await sendResetEmail(
+              profile.email,
+              profile.username || '',
+              temporaryPassword,
+              'https://www.oncoinfo.be',
+              hospital?.name || 'OncoInfo',
+              hospital?.branding?.primary_color || '#6b2d5b',
+              language,
+            );
+            results.push({ user_id: profile.user_id, username: label, success: true });
+          } catch (resetError: any) {
+            console.error('Bulk password reset failed for user', profile.user_id, resetError?.message || 'unknown');
+            results.push({
+              user_id: profile.user_id,
+              username: label,
+              success: false,
+              error: resetError?.message || 'Onbekende fout',
+            });
+          }
+        }
+
+        const succeeded = results.filter((result) => result.success).length;
+        const failed = results.length - succeeded;
+        await supabase.from('audit_log').insert({
+          user_id: adminUser.id,
+          username: callerUsername,
+          action: 'bulk_password_reset',
+          entity_type: 'users',
+          entity_name: 'Alle gebruikers',
+          hospital_id: await getAdminHospitalId(supabase, adminUser.id),
+          details: {
+            requested: results.length,
+            succeeded,
+            failed,
+            failed_user_ids: results.filter((result) => !result.success).map((result) => result.user_id),
+          },
+        });
+
+        return jsonResponse({
+          success: failed === 0,
+          requested: results.length,
+          succeeded,
+          failed,
+          failures: results
+            .filter((result) => !result.success)
+            .map(({ username, error }) => ({ username, error })),
+        });
       }
 
       case 'update-hospitals': {

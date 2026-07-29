@@ -138,6 +138,40 @@ export function useUserManagement() {
     },
   });
 
+  const bulkResetPasswords = useMutation({
+    mutationFn: () => callManageUsers('bulk-reset-passwords', { confirmation: 'RESET_ALL_USERS' }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['managed-users'] });
+      if (data.failed > 0) {
+        const failedUsers = (data.failures || [])
+          .slice(0, 5)
+          .map((failure: { username: string }) => failure.username)
+          .join(', ');
+        toast({
+          title: t('userMgmt.bulkResetPartialTitle'),
+          description: t('userMgmt.bulkResetPartialDesc', {
+            succeeded: data.succeeded,
+            failed: data.failed,
+            users: failedUsers,
+          }),
+          variant: 'destructive',
+        });
+        return;
+      }
+      toast({
+        title: t('userMgmt.bulkResetSuccessTitle'),
+        description: t('userMgmt.bulkResetSuccessDesc', { count: data.succeeded }),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t('userMgmt.bulkResetErrorTitle'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
   const updateHospitals = useMutation({
     mutationFn: (params: { user_id: string; hospital_ids: string[] }) =>
       callManageUsers('update-hospitals', params),
@@ -159,6 +193,7 @@ export function useUserManagement() {
     deleteUser,
     sendCredentials,
     resetPassword,
+    bulkResetPasswords,
     updateHospitals,
     refetch: usersQuery.refetch,
   };

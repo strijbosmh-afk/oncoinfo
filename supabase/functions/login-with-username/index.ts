@@ -58,9 +58,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Record this attempt
-    await supabaseAdmin.from('login_attempts').insert({ identifier: rateLimitIdentifier });
-
     // Look up user by username, optionally filtering by hospital
     let query = supabaseAdmin
       .from('profiles')
@@ -74,6 +71,8 @@ Deno.serve(async (req) => {
     const { data: profileData, error: lookupError } = await query.maybeSingle();
 
     if (lookupError || !profileData?.email) {
+      await supabaseAdmin.from('login_attempts').insert({ identifier: rateLimitIdentifier });
+
       // Generic error - never reveal whether username exists
       return new Response(
         JSON.stringify({ error: 'Gebruikersnaam of wachtwoord is onjuist.' }),
@@ -88,12 +87,20 @@ Deno.serve(async (req) => {
     });
 
     if (signInError || !signInData.session) {
+      await supabaseAdmin.from('login_attempts').insert({ identifier: rateLimitIdentifier });
+
       // Generic error - never reveal whether username exists
       return new Response(
         JSON.stringify({ error: 'Gebruikersnaam of wachtwoord is onjuist.' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // A successful login resets the failure counter for this account.
+    await supabaseAdmin
+      .from('login_attempts')
+      .delete()
+      .eq('identifier', rateLimitIdentifier);
 
     // Fetch all hospitals this user is linked to
     const { data: userHospitals } = await supabaseAdmin

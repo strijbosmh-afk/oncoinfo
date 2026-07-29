@@ -551,7 +551,17 @@
     "hospitalsUpdated": "Hospitals updated",
     "hospitalsUpdatedDesc": "Hospital links have been saved.",
     "hospitalsUpdateError": "Error updating",
-    "hospitalSwitchError": "Could not switch hospital."
+    "hospitalSwitchError": "Could not switch hospital.",
+    "bulkResetButton": "Send new passwords",
+    "bulkResetTitle": "Reset all user passwords?",
+    "bulkResetDescription": "{{count}} users will receive a unique temporary password by email and must change it at their next login. Your own super-admin account will not be changed. This action cannot be undone.",
+    "bulkResetConfirmationLabel": "Type RESET to confirm",
+    "bulkResetConfirmButton": "Reset and send",
+    "bulkResetSuccessTitle": "New passwords sent",
+    "bulkResetSuccessDesc": "{{count}} users received a new temporary password.",
+    "bulkResetPartialTitle": "Bulk reset partially completed",
+    "bulkResetPartialDesc": "{{succeeded}} sent, {{failed}} failed. Check these users manually: {{users}}.",
+    "bulkResetErrorTitle": "Bulk reset failed"
   },
   "auditLog": {
     "title": "Activity Log",

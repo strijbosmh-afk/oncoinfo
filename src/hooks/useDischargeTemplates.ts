@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizeDischargeTemplateDiscipline } from '@/lib/dischargeTemplateClassification';
 
 export interface DischargeTemplate {
   id: string;
@@ -43,7 +44,10 @@ export function useDischargeTemplates(enabled = true) {
           .order('display_order', { ascending: true });
 
         if (error) throw error;
-        templates = (data as unknown as DischargeTemplate[]) || [];
+        templates = ((data as unknown as DischargeTemplate[]) || []).map((template) => ({
+          ...template,
+          discipline: normalizeDischargeTemplateDiscipline(template),
+        }));
       }
 
       return {
