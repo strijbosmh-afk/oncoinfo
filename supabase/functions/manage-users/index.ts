@@ -472,9 +472,13 @@ Deno.serve(async (req) => {
         const { data: profiles } = await supabase.from('profiles').select('*');
         const { data: roles } = await supabase.from('user_roles').select('*');
         const { data: permissions } = await supabase.from('user_permissions').select('*');
-        const { data: hospitals } = await supabase.from('hospitals').select('id, name, branding');
+        const { data: hospitals } = await supabase.from('hospitals').select('id, name, branding, is_active');
 
-        const hospitalMap = new Map((hospitals || []).map((h: any) => [h.id, { name: h.name, color: h.branding?.primary_color || null }]));
+        const hospitalMap = new Map((hospitals || []).map((h: any) => [h.id, {
+          name: h.name,
+          color: h.branding?.primary_color || null,
+          is_active: h.is_active,
+        }]));
 
         const callerIsSuperAdmin = await isSuperAdmin(supabase, adminUser.id);
         const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
@@ -520,6 +524,17 @@ Deno.serve(async (req) => {
               dedicated_nurse_name: nurseProfile ? `${nurseProfile.first_name || ''} ${nurseProfile.last_name || ''}`.trim() : null,
               phone_number: profile?.phone_number || null,
               linked_hospital_ids: linkedHospitalIds,
+              linked_hospitals: linkedHospitalIds
+                .map((hospitalId: string) => {
+                  const linkedHospital = hospitalMap.get(hospitalId);
+                  return linkedHospital ? {
+                    id: hospitalId,
+                    name: linkedHospital.name,
+                    color: linkedHospital.color,
+                    is_active: linkedHospital.is_active,
+                  } : null;
+                })
+                .filter(Boolean),
               default_language: profile?.default_language || null,
             };
           })

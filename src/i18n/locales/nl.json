@@ -750,7 +750,8 @@
     "lookupSuccessDesc": "{{name}} — bevestig het logo",
     "lookupFailed": "Zoeken mislukt",
     "lookupRetry": "Probeer het opnieuw",
-    "noHospital": "Geen ziekenhuis"
+    "noHospital": "Geen ziekenhuis",
+    "unknownHospital": "Onbekend ziekenhuis"
   },
   "medicalTerms": {
     "Borstkanker": "Borstkanker",

@@ -25,6 +25,12 @@ export interface ManagedUser {
   dedicated_nurse_name: string | null;
   phone_number: string | null;
   linked_hospital_ids: string[];
+  linked_hospitals: Array<{
+    id: string;
+    name: string;
+    color: string | null;
+    is_active: boolean;
+  }>;
   default_language: string | null;
 }
 

@@ -111,10 +111,14 @@ export function UserManagement() {
       }
       ids.forEach((hid) => {
         if (!groups.has(hid)) {
-          const meta = hospitalMeta.get(hid);
+          const linkedHospital = u.linked_hospitals?.find((hospital) => hospital.id === hid);
+          const meta = hospitalMeta.get(hid) || (linkedHospital ? {
+            name: linkedHospital.name,
+            color: linkedHospital.color || undefined,
+          } : undefined);
           groups.set(hid, {
             id: hid,
-            name: meta?.name || (hid === u.hospital_id ? (u.hospital_name || t('hospitalMgmt.noHospital')) : hid),
+            name: meta?.name || (hid === u.hospital_id ? (u.hospital_name || t('hospitalMgmt.noHospital')) : t('hospitalMgmt.unknownHospital')),
             color: meta?.color || (hid === u.hospital_id ? (u.hospital_color || undefined) : undefined),
             users: [],
           });
