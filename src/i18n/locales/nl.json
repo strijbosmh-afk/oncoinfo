@@ -551,7 +551,17 @@
     "hospitalsUpdated": "Ziekenhuizen bijgewerkt",
     "hospitalsUpdatedDesc": "De ziekenhuiskoppelingen zijn opgeslagen.",
     "hospitalsUpdateError": "Fout bij bijwerken",
-    "hospitalSwitchError": "Kon niet van ziekenhuis wisselen."
+    "hospitalSwitchError": "Kon niet van ziekenhuis wisselen.",
+    "bulkResetButton": "Nieuwe wachtwoorden versturen",
+    "bulkResetTitle": "Wachtwoorden van alle gebruikers resetten?",
+    "bulkResetDescription": "{{count}} gebruikers krijgen een uniek tijdelijk wachtwoord per e-mail en moeten dit bij hun volgende login wijzigen. Uw eigen super-adminaccount wordt niet aangepast. Deze actie kan niet ongedaan worden gemaakt.",
+    "bulkResetConfirmationLabel": "Typ RESET om te bevestigen",
+    "bulkResetConfirmButton": "Resetten en versturen",
+    "bulkResetSuccessTitle": "Nieuwe wachtwoorden verstuurd",
+    "bulkResetSuccessDesc": "{{count}} gebruikers hebben een nieuw tijdelijk wachtwoord ontvangen.",
+    "bulkResetPartialTitle": "Bulkreset gedeeltelijk voltooid",
+    "bulkResetPartialDesc": "{{succeeded}} verstuurd, {{failed}} mislukt. Controleer deze gebruikers handmatig: {{users}}.",
+    "bulkResetErrorTitle": "Bulkreset mislukt"
   },
   "auditLog": {
     "title": "Activiteitenlog",

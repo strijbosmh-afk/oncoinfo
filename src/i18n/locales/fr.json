@@ -551,7 +551,17 @@
     "hospitalsUpdated": "Hôpitaux mis à jour",
     "hospitalsUpdatedDesc": "Les liens hospitaliers ont été enregistrés.",
     "hospitalsUpdateError": "Erreur lors de la mise à jour",
-    "hospitalSwitchError": "Impossible de changer d'hôpital."
+    "hospitalSwitchError": "Impossible de changer d'hôpital.",
+    "bulkResetButton": "Envoyer de nouveaux mots de passe",
+    "bulkResetTitle": "Réinitialiser les mots de passe de tous les utilisateurs ?",
+    "bulkResetDescription": "{{count}} utilisateurs recevront un mot de passe temporaire unique par e-mail et devront le modifier lors de leur prochaine connexion. Votre propre compte super administrateur ne sera pas modifié. Cette action est irréversible.",
+    "bulkResetConfirmationLabel": "Saisissez RESET pour confirmer",
+    "bulkResetConfirmButton": "Réinitialiser et envoyer",
+    "bulkResetSuccessTitle": "Nouveaux mots de passe envoyés",
+    "bulkResetSuccessDesc": "{{count}} utilisateurs ont reçu un nouveau mot de passe temporaire.",
+    "bulkResetPartialTitle": "Réinitialisation partiellement terminée",
+    "bulkResetPartialDesc": "{{succeeded}} envoyés, {{failed}} échoués. Vérifiez manuellement ces utilisateurs : {{users}}.",
+    "bulkResetErrorTitle": "Échec de la réinitialisation groupée"
   },
   "auditLog": {
     "title": "Journal d'activité",

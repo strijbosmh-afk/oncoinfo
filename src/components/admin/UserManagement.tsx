@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -22,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Mail, Shield, Eye, Building2, Filter, KeyRound, UserPlus, ChevronDown, ChevronRight, Send } from 'lucide-react';
 
 const USERS_PER_GROUP_PAGE = 25;
 
@@ -30,7 +31,7 @@ export function UserManagement() {
   const { t } = useTranslation();
   const { user: currentUser, isSuperAdmin } = useAuth();
   const { toast } = useToast();
-  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword, updateHospitals } = useUserManagement();
+  const { users, isLoading, createUser, updateUser, deleteUser, sendCredentials, resetPassword, bulkResetPasswords, updateHospitals } = useUserManagement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [preselectedHospital, setPreselectedHospital] = useState<string | null>(null);
@@ -43,6 +44,8 @@ export function UserManagement() {
   const [credentialsPassword, setCredentialsPassword] = useState('');
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetUser, setResetUser] = useState<ManagedUser | null>(null);
+  const [bulkResetDialogOpen, setBulkResetDialogOpen] = useState(false);
+  const [bulkResetConfirmation, setBulkResetConfirmation] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState<string>('all');
   const [functionFilter, setFunctionFilter] = useState<string>('all');
@@ -235,6 +238,19 @@ export function UserManagement() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              {isSuperAdmin && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setBulkResetConfirmation('');
+                    setBulkResetDialogOpen(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  {t('userMgmt.bulkResetButton')}
+                </Button>
+              )}
               <Button onClick={() => handleCreate(hospitalFilter !== 'all' ? hospitalFilter : undefined)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 {t('userMgmt.newUser')}
@@ -491,6 +507,52 @@ export function UserManagement() {
         hospitals={allHospitals}
         preselectedHospitalId={preselectedHospital || undefined}
       />
+
+      <AlertDialog open={bulkResetDialogOpen} onOpenChange={setBulkResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('userMgmt.bulkResetTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('userMgmt.bulkResetDescription', {
+                count: Math.max((users?.length || 1) - 1, 0),
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="bulk-reset-confirmation">
+              {t('userMgmt.bulkResetConfirmationLabel')}
+            </Label>
+            <Input
+              id="bulk-reset-confirmation"
+              value={bulkResetConfirmation}
+              onChange={(event) => setBulkResetConfirmation(event.target.value)}
+              placeholder="RESET"
+              autoComplete="off"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkResetPasswords.isPending}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                bulkResetPasswords.mutate(undefined, {
+                  onSuccess: () => {
+                    setBulkResetDialogOpen(false);
+                    setBulkResetConfirmation('');
+                  },
+                });
+              }}
+              disabled={bulkResetConfirmation !== 'RESET' || bulkResetPasswords.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkResetPasswords.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('userMgmt.bulkResetConfirmButton')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

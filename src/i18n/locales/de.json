@@ -551,7 +551,17 @@
     "hospitalsUpdated": "Krankenhäuser aktualisiert",
     "hospitalsUpdatedDesc": "Die Krankenhausverknüpfungen wurden gespeichert.",
     "hospitalsUpdateError": "Fehler beim Aktualisieren",
-    "hospitalSwitchError": "Konnte das Krankenhaus nicht wechseln."
+    "hospitalSwitchError": "Konnte das Krankenhaus nicht wechseln.",
+    "bulkResetButton": "Neue Passwörter senden",
+    "bulkResetTitle": "Passwörter aller Benutzer zurücksetzen?",
+    "bulkResetDescription": "{{count}} Benutzer erhalten per E-Mail ein eindeutiges temporäres Passwort und müssen es bei der nächsten Anmeldung ändern. Ihr eigenes Super-Admin-Konto wird nicht geändert. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "bulkResetConfirmationLabel": "Geben Sie zur Bestätigung RESET ein",
+    "bulkResetConfirmButton": "Zurücksetzen und senden",
+    "bulkResetSuccessTitle": "Neue Passwörter gesendet",
+    "bulkResetSuccessDesc": "{{count}} Benutzer haben ein neues temporäres Passwort erhalten.",
+    "bulkResetPartialTitle": "Massenrücksetzung teilweise abgeschlossen",
+    "bulkResetPartialDesc": "{{succeeded}} gesendet, {{failed}} fehlgeschlagen. Prüfen Sie diese Benutzer manuell: {{users}}.",
+    "bulkResetErrorTitle": "Massenrücksetzung fehlgeschlagen"
   },
   "auditLog": {
     "title": "Aktivitätsprotokoll",
