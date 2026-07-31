@@ -22,7 +22,6 @@ import {
 import {
   SortableContext, rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { DischargeTemplatesSection } from '@/components/home/DischargeTemplatesSection';
 import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
 import { DischargeTemplatesAnnouncement } from '@/components/home/DischargeTemplatesAnnouncement';
 
@@ -181,8 +180,10 @@ const Index = () => {
           {mostUsedDrugs.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
-                <Zap className="h-4 w-4 text-orange-400 fill-orange-400" />
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                  <Zap className="h-3.5 w-3.5 fill-primary text-primary" />
+                </span>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
                   {t('home.mostUsed', 'Meest gebruikt')}
                 </h3>
               </div>
@@ -193,9 +194,9 @@ const Index = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 gap-1.5 pr-7 text-xs font-medium border-orange-200 !text-foreground hover:border-orange-400 hover:bg-orange-50 dark:border-orange-800 dark:hover:border-orange-600 dark:hover:bg-orange-950/30 transition-colors"
+                        className="h-8 gap-1.5 rounded-lg border-primary/25 bg-card pr-7 text-xs font-medium !text-foreground shadow-sm hover:border-primary/55 hover:bg-primary/10 hover:shadow-primary/10 dark:border-primary/30 dark:bg-primary/5 dark:hover:border-primary/60 dark:hover:bg-primary/15"
                       >
-                        <Zap className="h-3 w-3 text-orange-400 fill-orange-400 shrink-0" />
+                        <Zap className="h-3 w-3 shrink-0 fill-primary text-primary" />
                         {drug.generic_name}
                       </Button>
                     </Link>
@@ -299,7 +300,6 @@ const Index = () => {
             </SortableContext>
           </DndContext>
 
-          <DischargeTemplatesSection />
           <TemplateShortcutsSection />
         </div>
       </section>

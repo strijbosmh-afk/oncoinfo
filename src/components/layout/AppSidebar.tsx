@@ -1,11 +1,10 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BookOpenText, ClipboardList, FlaskConical, LayoutGrid, Pin, Settings, Star } from 'lucide-react';
+import { BookOpenText, ClipboardList, LayoutGrid, Pin, Settings, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 
 const primaryItems = [
-  { label: 'Infofolders', href: '/drugs?view=individual', icon: BookOpenText },
-  { label: 'Chemotherapiesjablonen', href: '/home', icon: FlaskConical },
+  { label: 'Infofolders', href: '/home', icon: BookOpenText },
   { label: 'Ontslagbriefsjablonen', href: '/discharge-templates', icon: ClipboardList, physicianOnly: true },
 ];
 
@@ -19,12 +18,13 @@ function SidebarLink({ item }: { item: { label: string; href: string; icon: Reac
   const location = useLocation();
   const target = new URL(item.href, window.location.origin);
   const isShortcut = item.href.includes('#') || item.href.includes('focus=');
-  const matchesModule = target.pathname === '/drugs' || target.pathname === '/discharge-templates'
+  const matchesInfofolders = item.label === 'Infofolders' && (location.pathname === '/home' || location.pathname.startsWith('/drugs'));
+  const matchesModule = target.pathname === '/discharge-templates'
     ? location.pathname.startsWith(target.pathname)
     : location.pathname === target.pathname;
   const isActive = isShortcut
     ? location.pathname === target.pathname && location.search === target.search && location.hash === target.hash
-    : matchesModule && !location.search.includes('focus=') && location.hash !== '#shortcuts';
+    : (matchesInfofolders || matchesModule) && !location.search.includes('focus=') && location.hash !== '#shortcuts';
   return (
     <Link to={item.href} className={[
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
