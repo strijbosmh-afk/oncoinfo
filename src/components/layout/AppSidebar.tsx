@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BookOpenText, ClipboardList, LayoutGrid, Pin, Star } from 'lucide-react';
+import { BookOpenText, ClipboardList, Pin, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 
@@ -44,15 +44,10 @@ export function AppSidebar() {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-card lg:flex">
-      <div className="flex h-20 items-center gap-3 border-b px-5">
-        {hospital?.logo_url ? (
-          <img src={hospital.logo_url} alt={hospital.name} className="h-9 w-9 rounded-lg object-contain" />
-        ) : (
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm"><LayoutGrid className="h-5 w-5" /></div>
-        )}
+      <div className="flex h-20 items-center border-b px-5">
         <div className="min-w-0">
-          <div className="text-lg font-bold tracking-tight text-primary">OncoInfo</div>
-          {hospital?.name && <div className="truncate text-[11px] text-muted-foreground">{hospital.name}</div>}
+          <div className="text-2xl font-bold tracking-tight text-primary">OncoInfo</div>
+          {hospital?.name && <div className="mt-0.5 truncate text-sm font-medium text-muted-foreground">{hospital.name}</div>}
         </div>
       </div>
 

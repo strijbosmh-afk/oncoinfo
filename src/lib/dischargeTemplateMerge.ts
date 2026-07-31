@@ -1,5 +1,6 @@
 import { normalizeDischargeTemplateDiscipline } from './dischargeTemplateClassification';
 import { formatDischargeTemplateContent } from './dischargeTemplateFormat';
+import { capitalizeTherapyName } from './capitalizeTherapyName';
 
 export interface MergeDocument {
   id: string;
@@ -35,11 +36,12 @@ export function mergeDischargeTemplates<TDocument extends MergeDocument>(
     })
     .map((template) => {
       const discipline = normalizeDischargeTemplateDiscipline(template);
+      const title = capitalizeTherapyName(template.title);
       return {
         id: template.id,
         discipline,
-        title: template.title,
-        content: formatDischargeTemplateContent({ ...template, discipline }),
+        title,
+        content: formatDischargeTemplateContent({ ...template, discipline, title }),
         display_order: template.display_order,
       };
     });
