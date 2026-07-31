@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BookOpenText, ClipboardList, LayoutGrid, Pin, Settings, Star } from 'lucide-react';
+import { BookOpenText, ClipboardList, LayoutGrid, Pin, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 
@@ -67,7 +67,7 @@ export function AppSidebar() {
 
       <div className="border-t p-3">
         <NavLink to="/handleiding" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-          <Settings className="h-4 w-4" /> Handleiding & instellingen
+          <BookOpenText className="h-4 w-4" /> Handleiding
         </NavLink>
         <div className="mt-2 rounded-lg bg-muted/60 px-3 py-2">
           <div className="truncate text-sm font-semibold capitalize">{displayName}</div>
