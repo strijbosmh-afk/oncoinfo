@@ -172,17 +172,38 @@ const Index = () => {
       <DischargeTemplatesAnnouncement />
       <section className="flex-1 py-6 md:py-10">
         <div className="container max-w-7xl">
-          <div className="mb-7">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Chemotherapiesjablonen</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Selecteer een discipline of zoek een schema.</p>
+          <div className="mb-6 flex flex-col gap-4 border-b pb-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="shrink-0">
+              <h1 className="text-2xl font-bold tracking-tight">Chemotherapiesjablonen</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Selecteer een discipline of zoek een schema.</p>
+            </div>
+            <div className="w-full lg:max-w-xl" ref={searchRef}>
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="text" placeholder={t('home.searchPlaceholder')} value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
+                  onFocus={() => setShowResults(true)}
+                  className="h-11 rounded-lg border bg-card pl-10 pr-4 text-sm shadow-sm focus-visible:border-primary" />
+                {showResults && searchQuery.length >= 2 && searchResults && searchResults.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-lg border bg-popover shadow-lg">
+                    {searchResults.slice(0, 8).map((drug) => (
+                      <button key={drug.id} type="button" onClick={() => handleResultClick(drug.id)} className="search-result flex w-full items-center justify-between border-b px-4 py-3 text-left last:border-b-0">
+                        <div><p className="font-medium">{drug.generic_name}</p>{drug.brand_names && drug.brand_names.length > 0 && <p className="text-sm text-muted-foreground">{drug.brand_names.join(', ')}</p>}</div>
+                        <span className="rounded bg-muted px-2 py-1 text-xs text-muted-foreground">{drug.drug_class}</span>
+                      </button>
+                    ))}
+                    {searchResults.length > 8 && <button type="submit" className="w-full px-4 py-3 text-center font-medium text-primary hover:bg-muted/50">{t('drugs.viewAllResults', { count: searchResults.length })} →</button>}
+                  </div>
+                )}
+                {showResults && searchQuery.length >= 2 && searchResults && searchResults.length === 0 && <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-lg border bg-popover p-4 text-center text-muted-foreground shadow-lg">{t('drugs.noResultsFor')} "{searchQuery}"</div>}
+              </form>
+            </div>
           </div>
           {/* Quick access: most used drugs — at the very top for power users */}
           {mostUsedDrugs.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                  <Zap className="h-3.5 w-3.5 fill-primary text-primary" />
-                </span>
+            <div className="mb-7">
+              <div className="mb-2.5 flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 fill-primary text-primary" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
                   {t('home.mostUsed', 'Meest gebruikt')}
                 </h3>
@@ -216,62 +237,6 @@ const Index = () => {
               </div>
             </div>
           )}
-
-          {/* Search — prominently placed for quick drug lookup */}
-          <div className="max-w-3xl mb-10" ref={searchRef}>
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder={t('home.searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setShowResults(true); }}
-                  onFocus={() => setShowResults(true)}
-                  className="pl-12 pr-4 py-6 text-lg rounded-xl border-2 focus:border-primary"
-                />
-              </div>
-              
-              {showResults && searchQuery.length >= 2 && searchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 max-h-80 overflow-y-auto">
-                  {searchResults.slice(0, 8).map((drug) => (
-                    <button
-                      key={drug.id}
-                      type="button"
-                      onClick={() => handleResultClick(drug.id)}
-                      className="search-result w-full px-4 py-3 text-left flex items-center justify-between border-b last:border-b-0"
-                    >
-                      <div>
-                        <p className="font-medium">{drug.generic_name}</p>
-                        {drug.brand_names && drug.brand_names.length > 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            {drug.brand_names.join(', ')}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                        {drug.drug_class}
-                      </span>
-                    </button>
-                  ))}
-                  {searchResults.length > 8 && (
-                    <button
-                      type="submit"
-                      className="w-full px-4 py-3 text-center text-primary hover:bg-muted/50 font-medium"
-                    >
-                      {t('drugs.viewAllResults', { count: searchResults.length })} →
-                    </button>
-                  )}
-                </div>
-              )}
-              
-              {showResults && searchQuery.length >= 2 && searchResults && searchResults.length === 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-background border-2 rounded-xl shadow-lg z-50 p-4 text-center text-muted-foreground">
-                  {t('drugs.noResultsFor')} "{searchQuery}"
-                </div>
-              )}
-            </form>
-          </div>
 
           {/* Specialty cards — browse by category */}
           <h2 className="text-xl font-bold mb-6">
