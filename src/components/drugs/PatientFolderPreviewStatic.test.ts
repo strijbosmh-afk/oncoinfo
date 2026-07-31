@@ -45,4 +45,16 @@ describe('generateStaticPreviewHtml print layout', () => {
     expect(html).toContain('class="se-item"');
     expect(html).toContain('.se-item, .print-disclaimer { break-inside: avoid;');
   });
+
+  it.each([
+    ['nl', 'Praktische tips', 'lang="nl"'],
+    ['fr', 'Conseils pratiques', 'lang="fr"'],
+    ['de', 'Praktische Tipps', 'lang="de"'],
+    ['en', 'Practical tips', 'lang="en"'],
+  ])('renders all fixed preview text in %s', (language, expectedText, htmlLang) => {
+    const html = generateStaticPreviewHtml(drug, '', '', language, '', false, true);
+
+    expect(html).toContain(expectedText);
+    expect(html).toContain(htmlLang);
+  });
 });

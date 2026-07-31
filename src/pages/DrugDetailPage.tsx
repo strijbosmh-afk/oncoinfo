@@ -247,6 +247,7 @@ export default function DrugDetailPage() {
   const isDACH = ['DE', 'AT', 'CH'].includes(billingCountry);
   const defaultFolderLang = hospital?.default_language === 'fr' ? 'fr' : hospital?.default_language === 'de' ? 'de' : hospital?.default_language === 'en' ? 'en' : 'nl';
   const [selectedLanguage, setSelectedLanguage] = useState<'nl' | 'fr' | 'de' | 'en'>(defaultFolderLang);
+  const { translatedDrug: folderDrug, isTranslating: isTranslatingFolder } = useTranslatedDrug(drug, selectedLanguage);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [customPhone, setCustomPhone] = useState('');
   const [folderMode] = useState<'compact' | 'uitgebreid'>('uitgebreid');
@@ -461,8 +462,8 @@ export default function DrugDetailPage() {
   const effectivePhysicianPhone = physicianPhone.trim() || selectedPhysicianRecord?.phone_number || '';
   const effectiveNursePhone = phoneMode === 'nurse' ? nursePhone.trim() : customPhone.trim();
 
-  const staticPreviewHtml = drug ? generateStaticPreviewHtml(
-    drug, selectedPhysician, currentNurseName, selectedLanguage, effectiveNursePhone,
+  const staticPreviewHtml = folderDrug && !isTranslatingFolder ? generateStaticPreviewHtml(
+    folderDrug, selectedPhysician, currentNurseName, selectedLanguage, effectiveNursePhone,
     effectiveIncludeDosing, includeSideEffects, folderMode,
     hospital?.name || 'OncoInfo',
     (() => {
