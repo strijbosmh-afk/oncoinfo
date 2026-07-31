@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, X } from 'lucide-react';
+import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, X, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
@@ -37,15 +37,15 @@ const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   other: ['Supportive Care', 'Anti-emetica', 'Groeifactoren', 'Erytropoietines', 'Trombopoietine-agonisten', 'Antiresorptiva'],
 };
 
-const LIBRARY_CONFIG: Record<string, { icon: any; color: string; bgColor: string }> = {
-  breast: { icon: Heart, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
-  urology: { icon: Stethoscope, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-  gynecology: { icon: Baby, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-  respiratory: { icon: Wind, color: 'text-sky-500', bgColor: 'bg-sky-500/10' },
-  digestive: { icon: UtensilsCrossed, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-  skin: { icon: Palette, color: 'text-amber-500', bgColor: 'bg-amber-500/10' },
-  head_neck: { icon: Ear, color: 'text-teal-500', bgColor: 'bg-teal-500/10' },
-  other: { icon: MoreHorizontal, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10' },
+const LIBRARY_CONFIG: Record<string, { icon: LucideIcon; color: string; bgColor: string }> = {
+  breast: { icon: Heart, color: 'text-primary', bgColor: 'bg-primary/10' },
+  urology: { icon: Stethoscope, color: 'text-primary', bgColor: 'bg-primary/10' },
+  gynecology: { icon: Baby, color: 'text-primary', bgColor: 'bg-primary/10' },
+  respiratory: { icon: Wind, color: 'text-primary', bgColor: 'bg-primary/10' },
+  digestive: { icon: UtensilsCrossed, color: 'text-primary', bgColor: 'bg-primary/10' },
+  skin: { icon: Palette, color: 'text-primary', bgColor: 'bg-primary/10' },
+  head_neck: { icon: Ear, color: 'text-primary', bgColor: 'bg-primary/10' },
+  other: { icon: MoreHorizontal, color: 'text-primary', bgColor: 'bg-primary/10' },
 };
 
 const Index = () => {
@@ -134,7 +134,7 @@ const Index = () => {
         color: config.color,
         bgColor: config.bgColor,
       };
-    }).filter(Boolean) as Array<{ key: string; title: string; description: string; icon: any; href: string; color: string; bgColor: string }>;
+    }).filter(Boolean) as Array<{ key: string; title: string; description: string; icon: LucideIcon; href: string; color: string; bgColor: string }>;
   }, [specialtyOrder, t]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -171,18 +171,22 @@ const Index = () => {
     <Layout>
       <NewDrugsDialog open={showPopup} onClose={dismissPopup} drugs={newDrugs} />
       <DischargeTemplatesAnnouncement />
-      <section className="flex-1 flex items-center py-6 md:py-10">
-        <div className="container">
+      <section className="flex-1 py-6 md:py-10">
+        <div className="container max-w-7xl">
+          <div className="mb-7">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Chemotherapiesjablonen</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Selecteer een discipline of zoek een schema.</p>
+          </div>
           {/* Quick access: most used drugs — at the very top for power users */}
           {mostUsedDrugs.length > 0 && (
             <div className="mb-8">
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3">
                 <Zap className="h-4 w-4 text-orange-400 fill-orange-400" />
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {t('home.mostUsed', 'Meest gebruikt')}
                 </h3>
               </div>
-              <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+              <div className="flex flex-wrap gap-2">
                 {mostUsedDrugs.map((drug) => (
                   <div key={drug.id} className="relative group flex items-center">
                     <Link to={`/drugs/${drug.id}`}>
@@ -213,7 +217,7 @@ const Index = () => {
           )}
 
           {/* Search — prominently placed for quick drug lookup */}
-          <div className="max-w-2xl mx-auto mb-10" ref={searchRef}>
+          <div className="max-w-3xl mb-10" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -269,7 +273,7 @@ const Index = () => {
           </div>
 
           {/* Specialty cards — browse by category */}
-          <h2 className="text-xl font-bold text-center mb-6">
+          <h2 className="text-xl font-bold mb-6">
             {t('home.chooseSpecialty')}
           </h2>
 
