@@ -202,7 +202,7 @@ export default function LoginPage() {
   return (
     <Layout>
       <div className="container flex items-center justify-center py-12 sm:py-16 min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md shadow-lg">
+        <Card className="w-full max-w-md border-primary/10 shadow-[0_12px_36px_hsl(var(--foreground)/0.08)]">
           <CardHeader className="text-center pb-4">
             {/* Language selector at top — always accessible */}
             <div className="flex items-center justify-center gap-1 mb-4">
@@ -213,10 +213,10 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => { i18n.changeLanguage(lang.code); }}
-                        className={`text-xl px-1.5 py-1 rounded-md transition-all ${
+                        className={`text-xl px-1.5 py-1 rounded-md border transition-all ${
                           i18n.language === lang.code
-                            ? 'bg-primary/10 ring-1 ring-primary/30 scale-110'
-                            : 'opacity-50 hover:opacity-80 hover:bg-muted'
+                            ? 'border-primary/30 bg-primary/10 text-primary shadow-sm'
+                            : 'border-transparent opacity-55 hover:border-primary/15 hover:bg-primary/5 hover:opacity-90'
                         }`}
                         aria-label={lang.label}
                       >
@@ -237,10 +237,10 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             {loggedOutByInactivity && (
-              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 px-4 py-3">
+              <div className="mb-4 rounded-lg border border-primary/25 bg-primary/[0.06] px-4 py-3">
                 <div className="flex items-start gap-2">
-                  <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                  <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-foreground/80">
                     U bent automatisch uitgelogd wegens inactiviteit. Log opnieuw in om verder te gaan.
                   </p>
                 </div>
@@ -258,7 +258,7 @@ export default function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                     autoComplete="username"
-                    className="h-11"
+                    className="h-11 border-border bg-muted/30 focus-visible:border-primary"
                   />
                 </div>
                 <div className="space-y-2">
@@ -271,7 +271,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="h-11"
+                    className="h-11 border-border bg-muted/30 focus-visible:border-primary"
                   />
                 </div>
               </div>
@@ -279,7 +279,7 @@ export default function LoginPage() {
               {/* Primary CTA — prominent, full width */}
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base gap-2" 
+                className="w-full h-11 text-base gap-2 shadow-sm"
                 disabled={isLoading || !isFormComplete}
               >
                 {isLoading ? (
@@ -293,7 +293,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setShowForgotPassword(true); setResetUsername(username); setResetSent(false); }}
-                className="w-full text-center text-sm text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+                className="w-full text-center text-sm text-primary/80 hover:text-primary transition-colors underline-offset-4 hover:underline"
               >
                 {t('forgotPassword.link')}
               </button>
