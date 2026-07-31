@@ -59,20 +59,22 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
       "borst", "mamma", "breast", "her2", "hr+", "triple negatief", "tnbc",
       "ribociclib", "palbociclib", "abemaciclib", "trastuzumab", "pertuzumab",
       "sacituzumab", "trastuzumab deruxtecan",
+      "tolaney",
     ],
   },
   {
     discipline: "Respiratoire oncologie",
     terms: [
       "nsclc", "sclc", "longkanker", "longcarcinoom", "mesothelioom", "osimertinib",
-      "alectinib", "lorlatinib", "durvalumab", "sotorasib",
+      "alectinib", "lorlatinib", "durvalumab", "sotorasib", "pacific", "caspian",
     ],
   },
   {
     discipline: "Digestieve oncologie",
     terms: [
       "colorectaal", "colon", "rectum", "pancreas", "maag", "oesofagus", "slokdarm",
-      "galweg", "cholangiocarcinoom", "hepatocellulair", "gist", "folfox", "folfiri",
+      "galweg", "galwegen", "cholangiocarcinoom", "hepatocellulair", "hcc", "gist",
+      "folfox", "folfiri", "topaz-1", "himalaya",
     ],
   },
   {
@@ -203,20 +205,22 @@ Retourneer ENKEL valide JSON in dit exacte formaat:
   "templates": [
     {
       "discipline": "Borstkanker",
-      "title": "EC dose-dense gevolgd door paclitaxel — adjuvant",
-      "content": "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant\n---\n\nVolledige tekst van het sjabloon, inclusief 'Verwachte nevenwerkingen' en 'Indicaties tot verwijzing'."
+      "title": "EC dose-dense gevolgd door paclitaxel - adjuvant",
+      "content": "Ter info: EC dose-dense gevolgd door paclitaxel - adjuvant\n--------------------------------------\nUitleg over therapie\n\nVerwachte nevenwerkingen\n- Nevenwerking 1\n- Nevenwerking 2\n\nIndicaties doorverwijzing\n- Indicatie 1\n- Indicatie 2"
     }
   ]
 }
 
 Regels:
 - discipline = de hoofdstuktitel waar de tekst onder valt (zonder nummer, bv "Borstkanker" niet "1. Borstkanker")
-- title = de naam na "Ter info:" (zonder de woorden "Ter info:")
-- content = MOET ALTIJD beginnen met de volledige "Ter info:"-titelregel (bv "Ter info: EC dose-dense gevolgd door paclitaxel — adjuvant"), gevolgd door een onderstreping op een eigen regel met "---", daarna een lege regel, en daarna de volledige inhoud die bij dit sjabloon hoort (beschrijving + nevenwerkingen + verwijscriteria)
+- title = de naam na "Ter info:" (zonder de woorden "Ter info:") en MOET de vorm "Therapienaam - Indicatie" hebben
+- content = MOET exact deze vaste structuur gebruiken: "Ter info: Therapienaam - Indicatie", daarna 38 koppeltekens, uitleg, "Verwachte nevenwerkingen" met bullets en "Indicaties doorverwijzing" met bullets
 - Zet ELKE bullet om naar een regel die begint met "- " (gebruik nooit "•")
 - Plaats bullets DIRECT onder elkaar zonder lege regels ertussen (elke bullet op een eigen regel, geen lege regel tussen opeenvolgende bullets)
 - Gebruik enkel een lege regel om paragrafen/secties te scheiden, NOOIT tussen bullets
-- Neem de "Ter info:"-regel en de "---"-onderstreping ALTIJD op bovenaan de content, ook al staat de onderstreping niet expliciet in de brontekst
+- Gebruik exact "--------------------------------------" als onderstreping
+- Gebruik exact de sectietitels "Verwachte nevenwerkingen" en "Indicaties doorverwijzing"
+- Als informatie voor een verplichte sectie ontbreekt, gebruik "- Niet gespecificeerd in het brondocument." en verzin geen medische informatie
 - Geen markdown headers (##, ###) in content
 - Geen toelichting buiten de JSON
 

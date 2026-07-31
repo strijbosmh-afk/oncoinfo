@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizeDischargeTemplateDiscipline } from '@/lib/dischargeTemplateClassification';
+import { mergeDischargeTemplates, type MergeTemplate } from '@/lib/dischargeTemplateMerge';
 
 export interface DischargeTemplate {
   id: string;
@@ -23,7 +23,7 @@ export function useDischargeTemplates(enabled = true) {
     enabled,
     queryFn: async () => {
       const { data: docs, error: docsError } = await supabase
-        .from('discharge_letter_documents' as any)
+        .from('discharge_letter_documents')
         .select('id, document_title, uploaded_at, created_at')
         .order('uploaded_at', { ascending: false })
         .order('created_at', { ascending: false });
@@ -35,19 +35,19 @@ export function useDischargeTemplates(enabled = true) {
       const previousDocuments = documents.slice(1);
 
       let templates: DischargeTemplate[] = [];
-      if (current) {
+      if (documents.length > 0) {
         const { data, error } = await supabase
-          .from('discharge_letter_templates' as any)
-          .select('id, discipline, title, content, display_order')
-          .eq('document_id', current.id)
+          .from('discharge_letter_templates')
+          .select('id, document_id, discipline, title, content, display_order')
+          .in('document_id', documents.map((document) => document.id))
           .order('discipline', { ascending: true })
           .order('display_order', { ascending: true });
 
         if (error) throw error;
-        templates = ((data as unknown as DischargeTemplate[]) || []).map((template) => ({
-          ...template,
-          discipline: normalizeDischargeTemplateDiscipline(template),
-        }));
+        templates = mergeDischargeTemplates(
+          documents,
+          (data as unknown as MergeTemplate[]) || [],
+        );
       }
 
       return {

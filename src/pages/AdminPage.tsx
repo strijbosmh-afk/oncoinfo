@@ -26,6 +26,7 @@ import { ApiDocumentation } from '@/components/admin/ApiDocumentation';
 import { SchemaAssistant } from '@/components/admin/SchemaAssistant';
 import { SendUpdate } from '@/components/admin/SendUpdate';
 import { DischargeTemplatesUpload } from '@/components/admin/DischargeTemplatesUpload';
+import { canAccessAdminPortal } from '@/lib/adminAccess';
 import { toast } from 'sonner';
 
 export default function AdminPage() {
@@ -175,7 +176,7 @@ export default function AdminPage() {
 
   const hasAnyTreatmentPermission = !!permissions?.can_add_treatments || !!permissions?.can_modify_treatments || !!permissions?.can_delete_treatments;
 
-  if (!isAdmin && !isApotheker && !hasAnyTreatmentPermission) {
+  if (!canAccessAdminPortal({ isAdmin, isApotheker, isSuperAdmin, permissions })) {
     return (
       <Layout>
         <div className="container py-16 text-center">

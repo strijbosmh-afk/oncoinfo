@@ -5,6 +5,7 @@ import { User, LogOut, Shield, Stethoscope, FlaskConical, Eye, Languages, BookOp
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useTranslation } from 'react-i18next';
+import { canAccessAdminPortal } from '@/lib/adminAccess';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,7 @@ export function Header() {
   const userFunction = profile?.function ?? null;
   const roleBadge = getRoleBadge(isAdmin, isApotheker, userFunction, t);
   const RoleIcon = roleBadge.icon;
+  const canAccessAdmin = canAccessAdminPortal({ isAdmin, isApotheker, isSuperAdmin, permissions });
 
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || profile?.username || user?.email?.split('@')[0] || '';
 
@@ -173,7 +175,7 @@ export function Header() {
                   {t('nav.manual')}
                 </Link>
               </Button>
-              {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
+              {canAccessAdmin && (
                 <Button variant="outline" size="sm" asChild className="hidden md:inline-flex gap-1.5">
                   <Link to="/admin">
                     <Shield className="h-4 w-4" />
@@ -191,7 +193,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9">
                   <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
+                  {canAccessAdmin && (
                     <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-primary" />
                   )}
                 </Button>
@@ -215,7 +217,7 @@ export function Header() {
                     />
                   </div>
                 </div>
-                {(isAdmin || isApotheker || permissions?.can_add_treatments || permissions?.can_modify_treatments || permissions?.can_delete_treatments) && (
+                {canAccessAdmin && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="flex items-center gap-2 cursor-pointer md:hidden">

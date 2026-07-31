@@ -7,6 +7,7 @@ import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlatformUpdatePopup } from '@/components/PlatformUpdatePopup';
+import { canAccessAdminPortal } from '@/lib/adminAccess';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -62,7 +63,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     }
   }
 
-  if (requireAdmin && !isAdmin && !isApotheker && !permissions?.can_add_treatments && !permissions?.can_modify_treatments && !permissions?.can_delete_treatments) {
+  if (requireAdmin && !canAccessAdminPortal({ isAdmin, isApotheker, isSuperAdmin, permissions })) {
     return <Navigate to="/home" replace />;
   }
 
