@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Drug, DrugFilters } from '@/types/drug';
+import { dedupeCombinationRegimens } from '@/lib/dedupeDrugs';
+import type { Database } from '@/integrations/supabase/types';
+
+type DrugRow = Database['public']['Tables']['drugs']['Row'];
+type DrugInsert = Database['public']['Tables']['drugs']['Insert'];
+type DrugUpdate = Database['public']['Tables']['drugs']['Update'];
 
 const DRUG_LIST_COLUMNS = [
   'id',
@@ -44,7 +50,7 @@ const DRUG_DETAIL_COLUMNS = [
   'updated_at',
 ].join(',');
 
-function convertDrug(dbDrug: any): Drug {
+function convertDrug(dbDrug: DrugRow): Drug {
   return {
     id: dbDrug.id,
     generic_name: dbDrug.generic_name,
@@ -54,10 +60,10 @@ function convertDrug(dbDrug: any): Drug {
     disease_areas: dbDrug.disease_areas || [],
     approved_indications: dbDrug.approved_indications,
     common_regimens: dbDrug.common_regimens,
-    dosing_info: dbDrug.dosing_info,
+    dosing_info: dbDrug.dosing_info as Drug['dosing_info'],
     administration_route: dbDrug.administration_route,
     cycle_length_days: dbDrug.cycle_length_days,
-    side_effects: dbDrug.side_effects,
+    side_effects: dbDrug.side_effects as Drug['side_effects'],
     contraindications: dbDrug.contraindications,
     drug_interactions: dbDrug.drug_interactions,
     monitoring_requirements: dbDrug.monitoring_requirements,
@@ -102,7 +108,7 @@ export function useDrugs(filters?: DrugFilters) {
 
       if (error) throw error;
       
-      let results = (data || []).map(convertDrug);
+      let results = dedupeCombinationRegimens((data || []).map(convertDrug));
       
       // Client-side search filtering on generic_name, brand_names, and drug schema names
       if (filters?.search) {
@@ -143,7 +149,7 @@ export function useCreateDrug() {
     mutationFn: async (drug: Omit<Drug, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('drugs')
-        .insert(drug as any)
+        .insert(drug as unknown as DrugInsert)
         .select()
         .single();
 
@@ -163,7 +169,7 @@ export function useUpdateDrug() {
     mutationFn: async ({ id, ...drug }: Partial<Drug> & { id: string }) => {
       const { data, error } = await supabase
         .from('drugs')
-        .update(drug as any)
+        .update(drug as unknown as DrugUpdate)
         .eq('id', id)
         .select()
         .single();

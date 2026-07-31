@@ -902,33 +902,32 @@ export default function DrugsPage() {
           </Link>
         )}
 
-        <div className="mb-3">
-          {categoryConfig ? (
-            <>
-              <div className="mb-2 flex items-center gap-3">
-                {(() => {
-                  const Icon = categoryIcons[category!];
-                  const colors = categoryColors[category!];
-                  return (
-                    <div className={`h-10 w-10 rounded-lg ${colors.bg} flex items-center justify-center`}>
-                      <Icon className={`h-5 w-5 ${colors.text}`} />
-                    </div>
-                  );
-                })()}
-                <h1 className="text-2xl font-bold sm:text-3xl">{t(`medicalTerms.cat_${category}`, categoryConfig.name)}</h1>
+        <div className="relative mb-4 overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              {categoryConfig ? (() => {
+                const Icon = categoryIcons[category!];
+                return <Icon className="h-5 w-5" />;
+              })() : <Layers className="h-5 w-5" />}
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+                  {categoryConfig ? t(`medicalTerms.cat_${category}`, categoryConfig.name) : t('drugs.library')}
+                </h1>
+                {!isLoading && (
+                  <Badge variant="secondary" className="rounded-full">
+                    {filteredDrugs.length} {filteredDrugs.length === 1 ? 'schema' : "schema's"}
+                  </Badge>
+                )}
               </div>
-              <p className="text-muted-foreground">
-                {t('drugs.browseFor', { category: t(`medicalTerms.cat_${category}`, categoryConfig.name).toLowerCase() })}
+              <p className="mt-1 text-sm text-muted-foreground">
+                {categoryConfig
+                  ? t('drugs.browseFor', { category: t(`medicalTerms.cat_${category}`, categoryConfig.name).toLowerCase() })
+                  : t('drugs.browseAll')}
               </p>
-            </>
-          ) : (
-            <>
-              <h1 className="mb-2 text-2xl font-bold sm:text-3xl">{t('drugs.library')}</h1>
-              <p className="text-muted-foreground">
-                {t('drugs.browseAll')}
-              </p>
-            </>
-          )}
+            </div>
+          </div>
         </div>
 
         {/* Active filter indicator */}
