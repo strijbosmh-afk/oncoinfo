@@ -436,7 +436,7 @@ export default function DrugsPage() {
   });
 
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
-  const { isMostUsed: isMostUsedCheck, toggleMostUsed } = useMostUsed();
+  const { mostUsed, isMostUsed: isMostUsedCheck, toggleMostUsed } = useMostUsed();
   const { isAdmin } = useAuth();
   const { applyUserOrder } = useUserDrugOrder();
 
@@ -835,6 +835,58 @@ export default function DrugsPage() {
 
   // Get favorite drugs from the loaded drugs list
   const favoriteDrugs = filteredDrugs?.filter(drug => favorites.includes(drug.id)) || [];
+  const focus = searchParams.get('focus');
+  const mostUsedDrugs = mostUsed
+    .map(entry => filteredDrugs?.find(drug => drug.id === entry.drug_id))
+    .filter((drug): drug is Drug => Boolean(drug));
+
+  if (focus === 'favorites' || focus === 'most-used') {
+    const isFavoritesView = focus === 'favorites';
+    const selectedDrugs = isFavoritesView ? favoriteDrugs : mostUsedDrugs;
+    const title = isFavoritesView ? 'Favorieten' : 'Snelkeuzes';
+    const description = isFavoritesView
+      ? 'Uw favoriete therapiefiches op één plaats.'
+      : 'Uw meest gebruikte therapiefiches op één plaats.';
+    const Icon = isFavoritesView ? Star : Zap;
+
+    return (
+      <Layout>
+        <div className="container max-w-7xl py-8">
+          <div className="mb-6 flex items-center gap-3 border-b pb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Icon className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <DrugListSkeleton />
+          ) : selectedDrugs.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center py-14 text-center">
+                <Icon className="mb-3 h-8 w-8 text-muted-foreground/50" />
+                <h2 className="font-semibold">Nog geen {title.toLowerCase()}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Selecteer therapieën via de ster of bliksem op een fiche.</p>
+                <Button asChild variant="outline" className="mt-4"><Link to="/home">Naar infofolders</Link></Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {selectedDrugs.map(drug => (
+                <DrugCard key={drug.id} drug={drug} isFavorite={isFavorite(drug.id)} isMostUsed={isMostUsedCheck(drug.id)}
+                  onToggleFavorite={(event) => { event.preventDefault(); event.stopPropagation(); toggleFavorite(drug.id); }}
+                  onToggleMostUsed={(event) => { event.preventDefault(); event.stopPropagation(); toggleMostUsed(drug.id); }}
+                  translateTerm={tCardBatch} isAdmin={isAdmin} />
+              ))}
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
