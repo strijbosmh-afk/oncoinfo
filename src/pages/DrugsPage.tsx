@@ -366,7 +366,9 @@ export default function DrugsPage() {
   const [milestoneCount, setMilestoneCount] = useState(0);
   const [exportIncludeDosing, setExportIncludeDosing] = useState(true);
   const [exportIncludeSideEffects, setExportIncludeSideEffects] = useState(true);
-  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>('all');
+  const requestedView = searchParams.get('view');
+  const initialView = requestedView === 'individual' || requestedView === 'combinations' ? requestedView : 'all';
+  const [viewMode, setViewMode] = useState<'all' | 'combinations' | 'hormonal' | 'cdk46' | 'arta' | 'lhrh' | 'individual'>(initialView);
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { hospital, isDemoClinic } = useHospital();
@@ -375,6 +377,16 @@ export default function DrugsPage() {
   // Hospital-specific filter tags: map drug_id -> Set of canonical tag strings
   const [hospitalFilterTags, setHospitalFilterTags] = useState<Record<string, string[]>>({});
   const [filterTagsLoaded, setFilterTagsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (requestedView === 'individual' || requestedView === 'combinations') setViewMode(requestedView);
+  }, [requestedView]);
+
+  useEffect(() => {
+    if (searchParams.get('focus') === 'favorites') {
+      requestAnimationFrame(() => document.getElementById('drug-favorites')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    }
+  }, [searchParams]);
 
   // Fetch hospital disciplines and filter tags
   useEffect(() => {
@@ -904,7 +916,7 @@ export default function DrugsPage() {
 
         {/* Category-specific navigation cards */}
         {categoryConfig && (
-          <div className="mb-4">
+          <div id="drug-favorites" className="mb-4 scroll-mt-24">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {/* Breast cancer subtypes and stages */}
               {category === 'breast' && 'subtypes' in categoryConfig && (

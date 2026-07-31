@@ -64,7 +64,7 @@ export function TemplateShortcutsSection() {
   );
 
   return (
-    <div className="mt-6 max-w-6xl mx-auto space-y-4">
+    <div id="shortcuts" className="mt-6 max-w-6xl mx-auto space-y-4 scroll-mt-24">
       {favTemplates.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2">

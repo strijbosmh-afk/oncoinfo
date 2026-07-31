@@ -25,9 +25,14 @@ export default function DischargeTemplatesPage() {
   const canView = isAdmin || isSuperAdmin || !!permissions?.is_physician;
 
   const decoded = decodeURIComponent(discipline || '');
+  const isOverview = !discipline;
+  const disciplines = useMemo(
+    () => Array.from(new Set((data?.templates || []).map(t => t.discipline))).sort(),
+    [data]
+  );
   const items = useMemo(
-    () => (data?.templates || []).filter(t => t.discipline === decoded),
-    [data, decoded]
+    () => isOverview ? (data?.templates || []) : (data?.templates || []).filter(t => t.discipline === decoded),
+    [data, decoded, isOverview]
   );
 
   const filtered = useMemo(() => {
@@ -57,9 +62,11 @@ export default function DischargeTemplatesPage() {
   return (
     <Layout>
       <div className="container max-w-4xl py-8">
-        <Link to="/home" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-          <ArrowLeft className="h-4 w-4 mr-1" /> Terug
-        </Link>
+        {!isOverview && (
+          <Link to="/discharge-templates" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ArrowLeft className="h-4 w-4 mr-1" /> Alle ontslagbriefsjablonen
+          </Link>
+        )}
 
         {/* Header banner */}
         <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 mb-6">
@@ -69,7 +76,7 @@ export default function DischargeTemplatesPage() {
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{decoded}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{isOverview ? 'Ontslagbriefsjablonen' : decoded}</h1>
                 {!isLoading && (
                   <Badge variant="secondary" className="rounded-full">
                     {items.length} {items.length === 1 ? 'sjabloon' : 'sjablonen'}
@@ -77,7 +84,7 @@ export default function DischargeTemplatesPage() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Standaardteksten voor ontslagbrieven — klik op een sjabloon om te kopiëren.
+                {isOverview ? 'Selecteer een discipline of zoek een sjabloon.' : 'Standaardteksten voor ontslagbrieven — klik op een sjabloon om te kopiëren.'}
               </p>
               {data?.document && (
                 <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -93,6 +100,16 @@ export default function DischargeTemplatesPage() {
             </div>
           </div>
         </div>
+
+        {isOverview && disciplines.length > 0 && (
+          <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
+            {disciplines.map(item => (
+              <Button key={item} variant="outline" size="sm" asChild className="shrink-0 rounded-full">
+                <Link to={`/discharge-templates/${encodeURIComponent(item)}`}>{item}</Link>
+              </Button>
+            ))}
+          </div>
+        )}
 
         {/* Search */}
         {!isLoading && items.length > 0 && (
