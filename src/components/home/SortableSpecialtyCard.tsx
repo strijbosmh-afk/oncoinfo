@@ -67,7 +67,7 @@ export function SortableSpecialtyCard({
   if (isDisabled) {
     return (
       <div ref={setNodeRef} style={style} onClick={onDisabledClick} className="cursor-not-allowed">
-        <Card className="h-full relative overflow-hidden border-2 border-muted opacity-50 grayscale">
+        <Card className="relative flex h-full flex-col overflow-hidden border-2 border-muted opacity-50 grayscale">
           <div className="absolute top-3 right-3 z-10">
             <Lock className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -78,7 +78,7 @@ export function SortableSpecialtyCard({
             <CardTitle className="text-xl text-muted-foreground">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>
           </CardHeader>
-          <CardContent className="relative pt-0">
+          <CardContent className="relative mt-auto pt-0">
             <Button variant="ghost" className="w-full" disabled>
               {t('home.viewDrugs')}
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -91,7 +91,7 @@ export function SortableSpecialtyCard({
 
   return (
     <div ref={setNodeRef} style={style} onClick={handleCardClick} className="cursor-pointer">
-      <Card className="h-full group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <Card className="group relative flex h-full flex-col overflow-hidden border-2 transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         {isReordering && (
           <div
@@ -110,7 +110,7 @@ export function SortableSpecialtyCard({
           <CardTitle className="text-xl">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent className="relative pt-0">
+        <CardContent className="relative mt-auto pt-0">
           <Button variant="ghost" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
             {t('home.viewDrugs')}
             <ArrowRight className="ml-2 h-4 w-4" />
