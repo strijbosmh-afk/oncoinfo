@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Copy, Check, FileText, Loader2, Star, Pin, Search, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
 
 export default function DischargeTemplatesPage() {
   const { discipline } = useParams<{ discipline: string }>();
@@ -110,6 +111,8 @@ export default function DischargeTemplatesPage() {
             ))}
           </div>
         )}
+
+        {isOverview && <TemplateShortcutsSection />}
 
         {/* Search */}
         {!isLoading && items.length > 0 && (

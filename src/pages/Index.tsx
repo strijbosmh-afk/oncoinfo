@@ -22,7 +22,6 @@ import {
 import {
   SortableContext, rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
 import { DischargeTemplatesAnnouncement } from '@/components/home/DischargeTemplatesAnnouncement';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
@@ -201,7 +200,7 @@ const Index = () => {
           </div>
           {/* Quick access: most used drugs — at the very top for power users */}
           {mostUsedDrugs.length > 0 && (
-            <div className="mb-7">
+            <div id="most-used" className="mb-7 scroll-mt-24">
               <div className="mb-2.5 flex items-center gap-1.5">
                 <Zap className="h-3.5 w-3.5 fill-primary text-primary" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -265,7 +264,6 @@ const Index = () => {
             </SortableContext>
           </DndContext>
 
-          <TemplateShortcutsSection />
         </div>
       </section>
 
