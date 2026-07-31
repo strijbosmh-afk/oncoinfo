@@ -419,7 +419,7 @@ export function generateStaticPreviewHtml(
   const disclaimerHtml = `<div class="print-disclaimer"><p class="print-disclaimer-title">⚠ ${disclaimerTitle}</p><p class="print-disclaimer-text">${disclaimerText}</p></div>`;
 
   return `<!DOCTYPE html>
-<html lang="${isFr ? 'fr' : 'nl'}">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <style>
@@ -524,8 +524,8 @@ export function generateStaticPreviewHtml(
     <div class="section full-width" data-pdf-section>
       <h2>${labels.selfCare}</h2>
       <div class="selfcare-box">
-        <h3>${isFr ? 'Conseils pratiques' : 'Praktische tips'}</h3>
-        <p style="font-size: ${fontSize - 3}px; color: #555; font-style: italic;">${isFr ? 'Des conseils personnalisés seront générés automatiquement.' : 'Gepersonaliseerde tips worden automatisch gegenereerd.'}</p>
+        <h3>${isFr ? 'Conseils pratiques' : isDe ? 'Praktische Tipps' : isEn ? 'Practical tips' : 'Praktische tips'}</h3>
+        <p style="font-size: ${fontSize - 3}px; color: #555; font-style: italic;">${isFr ? 'Des conseils personnalisés seront générés automatiquement.' : isDe ? 'Personalisierte Tipps werden automatisch erstellt.' : isEn ? 'Personalized tips will be generated automatically.' : 'Gepersonaliseerde tips worden automatisch gegenereerd.'}</p>
       </div>
     </div>
 

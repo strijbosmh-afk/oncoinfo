@@ -15,9 +15,9 @@ interface TranslatableContent {
   patient_counseling_points?: string[];
 }
 
-export function useTranslatedDrug(drug: Drug | undefined) {
+export function useTranslatedDrug(drug: Drug | undefined, targetLanguage?: string) {
   const { i18n } = useTranslation();
-  const language = i18n.language as string;
+  const language = (targetLanguage || i18n.language || 'nl').split('-')[0].toLowerCase();
   // Only translate for non-Dutch languages
   const needsTranslation = !!drug && language !== 'nl';
 

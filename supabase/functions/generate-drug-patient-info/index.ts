@@ -482,14 +482,15 @@ Deno.serve(async (req) => {
     }
 
     // Prepare raw side effects arrays for structured/categorized rendering
-    const rawCommonSE: string[] = customContent?.side_effects_common
+    let rawCommonSE: string[] = customContent?.side_effects_common
       ? customContent.side_effects_common.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
       : (drug.side_effects?.common || drug.side_effects?.veel_voorkomend || []).slice(0, maxCommonSideEffects);
-    const rawSeriousSE: string[] = customContent?.side_effects_serious
+    let rawSeriousSE: string[] = customContent?.side_effects_serious
       ? customContent.side_effects_serious.split('\n').map((s: string) => s.replace(/^[•\-]\s*/, '').trim()).filter(Boolean)
       : (drug.side_effects?.serious || drug.side_effects?.ernstig || []).slice(0, maxSeriousSideEffects);
 
-    // Translate content if not Dutch (skip side effects — already generated in target language by humanize)
+    // Translate every patient-facing content field. The humanizer only creates the
+    // self-care text; the categorized side-effect lists still need translation too.
     if (language !== 'nl') {
       const textsToTranslate: Record<string, string | null> = {
         introduction: introductionText,
@@ -498,6 +499,9 @@ Deno.serve(async (req) => {
         contraindications: contraindicationsText,
         tips: tipsText,
         monitoring: monitoringText,
+        self_care_tips: selfCareTips,
+        side_effects_common: rawCommonSE.join('\n'),
+        side_effects_serious: rawSeriousSE.join('\n'),
       };
 
       // Also translate premedicatie timing texts
@@ -526,6 +530,13 @@ Deno.serve(async (req) => {
       contraindicationsText = translated.contraindications ?? contraindicationsText;
       tipsText = translated.tips ?? tipsText;
       monitoringText = translated.monitoring ?? monitoringText;
+      selfCareTips = translated.self_care_tips ?? selfCareTips;
+      if (translated.side_effects_common) {
+        rawCommonSE = translated.side_effects_common.split('\n').map((item: string) => item.replace(/^[•\-]\s*/, '').trim()).filter(Boolean);
+      }
+      if (translated.side_effects_serious) {
+        rawSeriousSE = translated.side_effects_serious.split('\n').map((item: string) => item.replace(/^[•\-]\s*/, '').trim()).filter(Boolean);
+      }
 
       // Apply translated premedicatie items
       if (premedicatie && premedicatie.length > 0) {
