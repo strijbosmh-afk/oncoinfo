@@ -852,13 +852,22 @@ export default function DrugsPage() {
     return (
       <Layout>
         <div className="container max-w-7xl py-8">
-          <div className="mb-6 flex items-center gap-3 border-b pb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Icon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <div className="relative mb-4 overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
+                  {!isLoading && (
+                    <Badge variant="secondary" className="rounded-full">
+                      {selectedDrugs.length} {selectedDrugs.length === 1 ? 'fiche' : 'fiches'}
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+              </div>
             </div>
           </div>
 
