@@ -56,4 +56,17 @@ describe('normalizeDischargeTemplateDiscipline', () => {
     expect(normalizeDischargeTemplateDiscipline({ discipline: 'Oncologie', title, content }))
       .toBe('Gynaecologische oncologie');
   });
+
+  it.each([
+    ['Tolaney-schema', 'Paclitaxel en trastuzumab bij HER2-positieve borstkanker', 'Borstkanker'],
+    ['Durvalumab + tremelimumab (STRIDE)', '1e lijn HCC (HIMALAYA)', 'Digestieve oncologie'],
+    ['Gemcitabine + cisplatine + durvalumab', 'TOPAZ-1 bij galwegen', 'Digestieve oncologie'],
+    ['Durvalumab consolidatie', 'PACIFIC-schema bij stadium III NSCLC', 'Respiratoire oncologie'],
+  ])('corrects a wrong respiratory heading for %s', (title, content, expected) => {
+    expect(normalizeDischargeTemplateDiscipline({
+      discipline: 'Respiratoire oncologie',
+      title,
+      content,
+    })).toBe(expected);
+  });
 });

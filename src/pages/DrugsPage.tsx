@@ -109,28 +109,28 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
   
   if (isCombo) {
     return (
-      <Card className="h-full border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer relative group">
+      <Card className="h-full border border-[#bfd9d7] bg-card dark:border-[#315f5d] hover:border-[#8fc1bd] hover:shadow-sm transition-all cursor-pointer relative group">
         <div className="absolute top-2 right-2 z-10 flex items-center gap-0.5">
           {isAdminProp && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/admin?editDrug=${drug.id}`); }}
-              className="p-1.5 rounded-full hover:bg-amber-100 transition-colors opacity-0 group-hover:opacity-100"
+              className="p-1.5 rounded-full hover:bg-[#e3f1f0] transition-colors opacity-0 group-hover:opacity-100"
               aria-label="Schema bewerken"
               title="Schema bewerken"
             >
-              <PenLine className="h-4 w-4 text-amber-600 hover:text-amber-800 transition-colors" />
+              <PenLine className="h-4 w-4 text-[#2f8b87] hover:text-[#214b4a] transition-colors" />
             </button>
           )}
           <button
             onClick={onToggleMostUsed}
-            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            className="p-1.5 rounded-full hover:bg-[#e3f1f0] transition-colors"
             aria-label={t('mostUsed.toggle')}
           >
-            <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-orange-400 text-orange-400' : 'text-muted-foreground hover:text-orange-400'}`} />
+            <Zap className={`h-4 w-4 transition-colors ${isMostUsed ? 'fill-[#2f8b87] text-[#2f8b87]' : 'text-[#66817f] hover:text-[#2f8b87]'}`} />
           </button>
           <button
             onClick={onToggleFavorite}
-            className="p-1.5 rounded-full hover:bg-amber-100 transition-colors"
+            className="p-1.5 rounded-full hover:bg-[#e3f1f0] transition-colors"
             aria-label={isFavorite ? t('drugs.removeFromFavorites') : t('drugs.addToFavorites')}
           >
             <Star
@@ -145,21 +145,21 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
         <Link to={`/drugs/${drug.id}`}>
           <CardHeader className="p-3 pb-2 pr-16">
             <div className="flex items-start gap-2">
-              <Layers className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <Layers className="h-4 w-4 text-[#2f8b87] flex-shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <CardTitle className="line-clamp-1 text-base leading-tight text-amber-900 dark:text-amber-100">{drug.generic_name}</CardTitle>
+                <CardTitle className="line-clamp-1 text-base leading-tight text-[#214b4a] dark:text-[#b7d9d6]">{drug.generic_name}</CardTitle>
                 {drug.brand_names.length > 0 && (
-                  <CardDescription className="line-clamp-1 text-xs text-amber-700/70">
+                  <CardDescription className="line-clamp-1 text-xs text-[#66817f]">
                     {drug.brand_names.join(', ')}
                   </CardDescription>
                 )}
               </div>
             </div>
-            <Badge className="w-fit border-0 bg-amber-500 px-1.5 py-0 text-[10px] text-white">
+            <Badge className="w-fit border border-[#bfd9d7] bg-[#ddefef] px-1.5 py-0 text-[10px] text-[#214b4a] hover:bg-[#ddefef]">
               {t('drugs.combinationRegimen')}
             </Badge>
             {!isDemoClinic && (drug.is_on_zvz ? (
-              <Badge className="w-fit bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700">
+              <Badge className="w-fit border-[#c6e2d7] bg-[#e7f5ef] text-[#35765f] dark:border-[#35765f] dark:bg-[#244d42] dark:text-[#bce5d4]">
                 ✓ RIZIV
               </Badge>
             ) : (
@@ -172,12 +172,12 @@ function DrugCard({ drug, isFavorite, isMostUsed, onToggleFavorite, onToggleMost
             {drug.approved_indications && drug.approved_indications.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {drug.approved_indications.slice(0, 1).map((ind) => (
-                  <Badge key={ind} variant="outline" className="max-w-full border-amber-200 px-1.5 py-0 text-[10px] text-amber-800 dark:text-amber-200">
+                  <Badge key={ind} variant="outline" className="max-w-full border-[#cbd9d7] bg-[#f7faf9] px-1.5 py-0 text-[10px] text-[#496765] dark:bg-transparent dark:text-[#b7d9d6]">
                     <span className="line-clamp-1">{tMed(ind)}</span>
                   </Badge>
                 ))}
                 {drug.approved_indications.length > 1 && (
-                  <Badge variant="outline" className="border-amber-200 px-1.5 py-0 text-[10px]">
+                  <Badge variant="outline" className="border-[#cbd9d7] bg-[#f7faf9] px-1.5 py-0 text-[10px] text-[#496765] dark:bg-transparent dark:text-[#b7d9d6]">
                     +{drug.approved_indications.length - 1}
                   </Badge>
                 )}

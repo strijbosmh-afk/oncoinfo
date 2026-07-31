@@ -64,20 +64,22 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
       'borst', 'mamma', 'breast', 'her2', 'hr+', 'triple negatief', 'tnbc',
       'ribociclib', 'palbociclib', 'abemaciclib', 'trastuzumab', 'pertuzumab',
       'sacituzumab', 'trastuzumab deruxtecan',
+      'tolaney',
     ],
   },
   {
     discipline: 'Respiratoire oncologie',
     terms: [
       'nsclc', 'sclc', 'longkanker', 'longcarcinoom', 'mesothelioom', 'osimertinib',
-      'alectinib', 'lorlatinib', 'durvalumab', 'sotorasib',
+      'alectinib', 'lorlatinib', 'durvalumab', 'sotorasib', 'pacific', 'caspian',
     ],
   },
   {
     discipline: 'Digestieve oncologie',
     terms: [
       'colorectaal', 'colon', 'rectum', 'pancreas', 'maag', 'oesofagus', 'slokdarm',
-      'galweg', 'cholangiocarcinoom', 'hepatocellulair', 'gist', 'folfox', 'folfiri',
+      'galweg', 'galwegen', 'cholangiocarcinoom', 'hepatocellulair', 'hcc', 'gist',
+      'folfox', 'folfiri', 'topaz-1', 'himalaya',
     ],
   },
   {
