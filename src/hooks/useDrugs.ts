@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Drug, DrugFilters } from '@/types/drug';
 import { dedupeCombinationRegimens } from '@/lib/dedupeDrugs';
 import type { Database } from '@/integrations/supabase/types';
+import { capitalizeTherapyName } from '@/lib/capitalizeTherapyName';
 
 type DrugRow = Database['public']['Tables']['drugs']['Row'];
 type DrugInsert = Database['public']['Tables']['drugs']['Insert'];
@@ -53,7 +54,7 @@ const DRUG_DETAIL_COLUMNS = [
 function convertDrug(dbDrug: DrugRow): Drug {
   return {
     id: dbDrug.id,
-    generic_name: dbDrug.generic_name,
+    generic_name: capitalizeTherapyName(dbDrug.generic_name),
     brand_names: dbDrug.brand_names || [],
     drug_class: dbDrug.drug_class,
     mechanism_of_action: dbDrug.mechanism_of_action,

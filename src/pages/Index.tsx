@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Lock, Zap, X, type LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Stethoscope, Baby, MoreHorizontal, UtensilsCrossed, Wind, Palette, Ear, Search, Layers, type LucideIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useDrugs } from '@/hooks/useDrugs';
-import { useMostUsed } from '@/hooks/useMostUsed';
 import { useTranslation } from 'react-i18next';
 import { useHospital } from '@/contexts/HospitalContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,37 +52,15 @@ const Index = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const { hospital } = useHospital();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { newDrugs, showPopup, dismissPopup } = useNewDrugsNotification(user?.id);
   const [disciplines, setDisciplines] = useState<{ disease_area: string; is_enabled: boolean }[] | null>(null);
-  const { mostUsed, toggleMostUsed } = useMostUsed();
-  const [mostUsedDrugs, setMostUsedDrugs] = useState<{ id: string; generic_name: string; drug_class: string }[]>([]);
   const { order: specialtyOrder, saveOrder, loaded: orderLoaded } = useSpecialtyOrder();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   );
-
-  useEffect(() => {
-    if (mostUsed.length === 0) {
-      setMostUsedDrugs([]);
-      return;
-    }
-    const fetchDrugs = async () => {
-      const { data } = await supabase
-        .from('drugs')
-        .select('id, generic_name, drug_class')
-        .in('id', mostUsed.map(m => m.drug_id));
-      if (data) {
-        const ordered = mostUsed
-          .map(m => data.find(d => d.id === m.drug_id))
-          .filter(Boolean) as typeof data;
-        setMostUsedDrugs(ordered);
-      }
-    };
-    fetchDrugs();
-  }, [mostUsed]);
 
   useEffect(() => {
     if (!hospital?.id) return;
@@ -171,12 +147,18 @@ const Index = () => {
       <DischargeTemplatesAnnouncement />
       <section className="flex-1 py-6 md:py-10">
         <div className="container max-w-7xl">
-          <div className="mb-6 flex flex-col gap-4 border-b pb-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="shrink-0">
-              <h1 className="text-2xl font-bold tracking-tight">Chemotherapiesjablonen</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Selecteer een discipline of zoek een schema.</p>
+          <div className="relative mb-4 overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Layers className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Chemotherapiesjablonen</h1>
+                <p className="mt-1 text-sm text-muted-foreground">Selecteer een discipline of zoek een schema.</p>
+              </div>
             </div>
-            <div className="w-full lg:max-w-xl" ref={searchRef}>
+          </div>
+          <div className="mb-5 w-full" ref={searchRef}>
               <form onSubmit={handleSearchSubmit} className="relative">
                 <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="text" placeholder={t('home.searchPlaceholder')} value={searchQuery}
@@ -196,46 +178,7 @@ const Index = () => {
                 )}
                 {showResults && searchQuery.length >= 2 && searchResults && searchResults.length === 0 && <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-lg border bg-popover p-4 text-center text-muted-foreground shadow-lg">{t('drugs.noResultsFor')} "{searchQuery}"</div>}
               </form>
-            </div>
           </div>
-          {/* Quick access: most used drugs — at the very top for power users */}
-          {mostUsedDrugs.length > 0 && (
-            <div id="most-used" className="mb-7 scroll-mt-24">
-              <div className="mb-2.5 flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 fill-primary text-primary" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  {t('home.mostUsed', 'Meest gebruikt')}
-                </h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {mostUsedDrugs.map((drug) => (
-                  <div key={drug.id} className="relative group flex items-center">
-                    <Link to={`/drugs/${drug.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-1.5 rounded-lg border-primary/25 bg-card pr-7 text-xs font-medium !text-foreground shadow-sm hover:border-primary/55 hover:bg-primary/10 hover:shadow-primary/10 dark:border-primary/30 dark:bg-primary/5 dark:hover:border-primary/60 dark:hover:bg-primary/15"
-                      >
-                        <Zap className="h-3 w-3 shrink-0 fill-primary text-primary" />
-                        {drug.generic_name}
-                      </Button>
-                    </Link>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleMostUsed(drug.id);
-                      }}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded-full opacity-0 group-hover:opacity-100 hover:bg-destructive/10 transition-opacity"
-                      aria-label={t('mostUsed.remove')}
-                    >
-                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Specialty cards — browse by category */}
           <h2 className="text-xl font-bold mb-6">
