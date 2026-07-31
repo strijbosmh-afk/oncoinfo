@@ -51,6 +51,7 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     terms: [
       'testis', 'testikel', 'kiemceltumor', 'germ cell', 'seminoom', 'non-seminoom',
       'bep', 'bleomycine etoposide cisplatine', 'tip schema',
+      'carboplatine mono auc7', 'carboplatine mono auc 7', 'carbo mono auc7', 'carbo mono auc 7',
     ],
   },
   {
@@ -83,7 +84,9 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     discipline: 'Gynaecologische oncologie',
     terms: [
       'ovarium', 'eierstok', 'endometrium', 'cervix', 'vulva', 'gynaecologisch',
-      'niraparib', 'rucaparib',
+      'niraparib', 'rucaparib', 'parp-inhibitor', 'parp inhibitor',
+      'dostarlimab', 'jemperli', 'tisotumab vedotin', 'tivdak',
+      'mirvetuximab', 'elahere',
     ],
   },
   {
@@ -165,7 +168,9 @@ export function normalizeDischargeTemplateDiscipline(template: {
   if (scored.length > 0) {
     const best = scored[0];
     const currentScore = scored.find((rule) => rule.discipline === canonicalCurrent)?.score || 0;
-    if (best.score >= 2 || currentScore === 0) return best.discipline;
+    if (!canonicalCurrent || (best.discipline !== canonicalCurrent && best.score >= 2 && best.score > currentScore)) {
+      return best.discipline;
+    }
   }
 
   return canonicalCurrent || current || 'Indicatie-overstijgende teksten';
