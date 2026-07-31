@@ -9,8 +9,8 @@ const primaryItems = [
 ];
 
 const shortcutItems = [
-  { label: 'Favoriete infofolders', href: '/drugs?focus=favorites', icon: Star },
-  { label: 'Snelkeuzes', href: '/home#most-used', icon: Pin },
+  { label: 'Favorieten', href: '/drugs?focus=favorites', icon: Star },
+  { label: 'Snelkeuzes', href: '/drugs?focus=most-used', icon: Pin },
 ];
 
 function SidebarLink({ item }: { item: { label: string; href: string; icon: React.ElementType } }) {
@@ -57,16 +57,10 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5">
-        {primaryItems.filter(item => !item.physicianOnly || canViewDischarge).map(item => (
-          <div key={item.label}>
-            <SidebarLink item={item} />
-            {item.label === 'Infofolders' && (
-              <div className="ml-5 mt-1 space-y-0.5 border-l pl-2">
-                {shortcutItems.map(shortcut => <SidebarLink key={shortcut.label} item={shortcut} />)}
-              </div>
-            )}
-          </div>
-        ))}
+        {primaryItems.filter(item => !item.physicianOnly || canViewDischarge).map(item => <SidebarLink key={item.label} item={item} />)}
+        <div className="my-4 border-t" />
+        <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Persoonlijk</div>
+        {shortcutItems.map(shortcut => <SidebarLink key={shortcut.label} item={shortcut} />)}
         <div className="my-4 border-t" />
         <div className="px-3 py-2 text-xs text-muted-foreground">Ruimte voor toekomstige tools</div>
       </nav>
