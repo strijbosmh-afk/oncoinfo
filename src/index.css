@@ -6,35 +6,35 @@
 
 @layer base {
   :root {
-    --background: 300 15% 97%;
-    --foreground: 280 25% 15%;
+    --background: 200 24% 98%;
+    --foreground: 218 45% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 280 25% 15%;
+    --card-foreground: 218 45% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 280 25% 15%;
+    --popover-foreground: 218 45% 16%;
 
-    --primary: 320 45% 35%;
+    --primary: 184 82% 27%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 300 12% 94%;
-    --secondary-foreground: 280 25% 15%;
+    --secondary: 186 24% 94%;
+    --secondary-foreground: 184 75% 22%;
 
-    --muted: 300 10% 93%;
-    --muted-foreground: 280 15% 45%;
+    --muted: 200 20% 95%;
+    --muted-foreground: 215 16% 43%;
 
-    --accent: 340 65% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 184 38% 91%;
+    --accent-foreground: 184 78% 22%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 300 12% 87%;
-    --input: 300 12% 87%;
-    --ring: 320 45% 35%;
+    --border: 203 20% 87%;
+    --input: 203 20% 87%;
+    --ring: 184 82% 27%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
     /* Disease area colors */
     --prostate: 320 45% 35%;
@@ -51,52 +51,52 @@
     --chart-5: 25 95% 53%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 280 25% 15%;
-    --sidebar-primary: 320 45% 35%;
+    --sidebar-foreground: 218 45% 16%;
+    --sidebar-primary: 184 82% 27%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 300 10% 93%;
-    --sidebar-accent-foreground: 280 25% 15%;
-    --sidebar-border: 300 12% 87%;
-    --sidebar-ring: 320 45% 35%;
+    --sidebar-accent: 184 38% 91%;
+    --sidebar-accent-foreground: 184 78% 22%;
+    --sidebar-border: 203 20% 87%;
+    --sidebar-ring: 184 82% 27%;
   }
 
   .dark {
-    --background: 300 20% 8%;
-    --foreground: 300 15% 95%;
+    --background: 215 30% 8%;
+    --foreground: 190 20% 95%;
 
-    --card: 300 18% 12%;
-    --card-foreground: 300 15% 95%;
+    --card: 214 27% 12%;
+    --card-foreground: 190 20% 95%;
 
-    --popover: 300 18% 12%;
-    --popover-foreground: 300 15% 95%;
+    --popover: 214 27% 12%;
+    --popover-foreground: 190 20% 95%;
 
-    --primary: 320 50% 55%;
-    --primary-foreground: 300 20% 8%;
+    --primary: 180 62% 48%;
+    --primary-foreground: 215 30% 8%;
 
-    --secondary: 300 18% 18%;
-    --secondary-foreground: 300 15% 95%;
+    --secondary: 185 20% 18%;
+    --secondary-foreground: 190 20% 95%;
 
-    --muted: 300 18% 18%;
-    --muted-foreground: 300 12% 60%;
+    --muted: 214 20% 18%;
+    --muted-foreground: 205 14% 65%;
 
-    --accent: 340 65% 60%;
-    --accent-foreground: 300 20% 8%;
+    --accent: 184 32% 21%;
+    --accent-foreground: 180 55% 78%;
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 300 15% 95%;
 
-    --border: 300 15% 20%;
-    --input: 300 15% 20%;
-    --ring: 320 50% 55%;
+    --border: 210 18% 22%;
+    --input: 210 18% 22%;
+    --ring: 180 62% 48%;
 
-    --sidebar-background: 300 18% 10%;
-    --sidebar-foreground: 300 15% 95%;
-    --sidebar-primary: 320 50% 55%;
-    --sidebar-primary-foreground: 300 20% 8%;
-    --sidebar-accent: 300 18% 16%;
-    --sidebar-accent-foreground: 300 15% 95%;
-    --sidebar-border: 300 15% 20%;
-    --sidebar-ring: 320 50% 55%;
+    --sidebar-background: 214 28% 10%;
+    --sidebar-foreground: 190 20% 95%;
+    --sidebar-primary: 180 62% 48%;
+    --sidebar-primary-foreground: 215 30% 8%;
+    --sidebar-accent: 184 32% 18%;
+    --sidebar-accent-foreground: 180 55% 78%;
+    --sidebar-border: 210 18% 22%;
+    --sidebar-ring: 180 62% 48%;
   }
 }
 

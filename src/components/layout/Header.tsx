@@ -80,7 +80,7 @@ export function Header() {
       <div className="container relative flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4">
         {/* Left: branding */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Link to="/home" className="flex items-center gap-2 shrink-0">
+          <Link to="/home" className="flex items-center gap-2 shrink-0 lg:hidden">
             {hospital?.logo_url && (
               <img src={hospital.logo_url} alt={hospital.name} className="h-7 sm:h-8 w-auto" />
             )}
@@ -127,7 +127,7 @@ export function Header() {
 
         {/* Center: user name + role — absolute for true center */}
         {user && displayName && (
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-auto">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-auto lg:hidden">
             <div className="hidden sm:flex items-center gap-2.5">
               <span className="text-base font-semibold text-foreground capitalize truncate max-w-[200px]">{displayName}</span>
               <TooltipProvider delayDuration={200}>

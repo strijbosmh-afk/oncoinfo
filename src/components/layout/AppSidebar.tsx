@@ -28,7 +28,7 @@ function SidebarLink({ item }: { item: { label: string; href: string; icon: Reac
   return (
     <Link to={item.href} className={[
       'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-      isActive ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/10' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+        isActive ? 'border-l-[3px] border-primary bg-primary/10 pl-[9px] text-primary' : 'border-l-[3px] border-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
     ].join(' ')}>
       <Icon className="h-[18px] w-[18px] shrink-0" />
       <span>{item.label}</span>
@@ -43,7 +43,7 @@ export function AppSidebar() {
   const displayName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || profile?.username || 'Gebruiker';
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-card lg:flex">
+    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r bg-card lg:flex">
       <div className="flex h-20 items-center gap-3 border-b px-5">
         {hospital?.logo_url ? (
           <img src={hospital.logo_url} alt={hospital.name} className="h-9 w-9 rounded-lg object-contain" />
