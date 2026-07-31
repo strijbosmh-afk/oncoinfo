@@ -245,7 +245,7 @@ const Index = () => {
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={specialtyOrder} strategy={rectSortingStrategy}>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {sortedLibraries.map((library) => (
                   <SortableSpecialtyCard
                     key={library.key}
