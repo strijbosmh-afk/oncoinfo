@@ -137,6 +137,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      manifestFilename: "oncoinfo.webmanifest",
       includeAssets: [
         "favicon.svg",
         "favicon.ico",
@@ -167,6 +168,7 @@ export default defineConfig({
         ],
       },
       manifest: {
+        id: "/",
         name: "OncoInfo - Medicijnbibliotheek",
         short_name: "OncoInfo",
         description: "Compleet geneesmiddelenoverzicht voor oncologie",
@@ -174,6 +176,7 @@ export default defineConfig({
         background_color: "#f4f8f8",
         display: "standalone",
         start_url: "/",
+        scope: "/",
         lang: "nl",
         orientation: "any",
         icons: [
