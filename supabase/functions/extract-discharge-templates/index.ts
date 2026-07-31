@@ -87,11 +87,28 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
 ];
 
 const DISCIPLINE_ALIASES: Record<string, string> = {
+  borstkanker: "Borstkanker",
+  mammaoncologie: "Borstkanker",
   nierkanker: "Niercelcarcinoom",
   nier: "Niercelcarcinoom",
+  niercelcarcinoom: "Niercelcarcinoom",
   prostaat: "Prostaatkanker",
+  prostaatkanker: "Prostaatkanker",
   blaas: "Blaaskanker",
+  blaaskanker: "Blaaskanker",
+  urotheelcarcinoom: "Blaaskanker",
+  urotheelcarcinomen: "Blaaskanker",
   testis: "Testiskanker",
+  testiskanker: "Testiskanker",
+  peniskanker: "Peniskanker",
+  gynaecologischeoncologie: "Gynaecologische oncologie",
+  respiratoireoncologie: "Respiratoire oncologie",
+  longkanker: "Respiratoire oncologie",
+  digestieveoncologie: "Digestieve oncologie",
+  huidtumoren: "Huidtumoren",
+  hoofdhalsoncologie: "Hoofd-halsoncologie",
+  supportivecare: "Supportive care",
+  indicatieoverstijgendeteksten: "Indicatie-overstijgende teksten",
 };
 
 function normalizeText(value: string) {
@@ -102,12 +119,18 @@ function normalizeText(value: string) {
 }
 
 function countTermMatches(text: string, terms: string[]) {
-  return terms.reduce((score, term) => text.includes(normalizeText(term)) ? score + 1 : score, 0);
+  return terms.reduce((score, term) => {
+    const escaped = normalizeText(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp(`(^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, "i");
+    return pattern.test(text) ? score + 1 : score;
+  }, 0);
 }
 
 function normalizeDiscipline(template: ExtractedTemplate) {
   const current = template.discipline.trim();
   const haystack = normalizeText(`${template.title}\n${template.content}`);
+  const normalizedCurrent = normalizeText(current).replace(/[^a-z0-9]+/g, "");
+  const canonicalCurrent = DISCIPLINE_ALIASES[normalizedCurrent];
   const scored = DISCIPLINE_RULES
     .map((rule) => ({ discipline: rule.discipline, score: countTermMatches(haystack, rule.terms) }))
     .filter((rule) => rule.score > 0)
@@ -115,11 +138,11 @@ function normalizeDiscipline(template: ExtractedTemplate) {
 
   if (scored.length > 0) {
     const best = scored[0];
-    const currentScore = scored.find((rule) => rule.discipline === current)?.score || 0;
+    const currentScore = scored.find((rule) => rule.discipline === canonicalCurrent)?.score || 0;
     if (best.score >= 2 || currentScore === 0) return best.discipline;
   }
 
-  return DISCIPLINE_ALIASES[normalizeText(current)] || current || "Indicatie-overstijgende teksten";
+  return canonicalCurrent || current || "Indicatie-overstijgende teksten";
 }
 
 Deno.serve(async (req) => {
