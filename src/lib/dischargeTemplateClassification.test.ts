@@ -25,4 +25,35 @@ describe('normalizeDischargeTemplateDiscipline', () => {
       content: 'Behandeling bij mHSPC.',
     })).toBe('Prostaatkanker');
   });
+
+  it('classifies carboplatin mono AUC7 as testicular cancer', () => {
+    expect(normalizeDischargeTemplateDiscipline({
+      discipline: 'Oncologie',
+      title: 'Carboplatine mono AUC 7',
+      content: 'Ter info: carboplatine mono AUC 7',
+    })).toBe('Testiskanker');
+  });
+
+  it('keeps PARP and immunotherapy regimens under a canonical gynaecology heading', () => {
+    expect(normalizeDischargeTemplateDiscipline({
+      discipline: 'Gynaecologische oncologie',
+      title: 'Olaparib',
+      content: 'Onderhoudsbehandeling met een PARP inhibitor.',
+    })).toBe('Gynaecologische oncologie');
+
+    expect(normalizeDischargeTemplateDiscipline({
+      discipline: 'Gynaecologische oncologie',
+      title: 'Carboplatine-paclitaxel met pembrolizumab',
+      content: 'Immunotherapie voor endometriumcarcinoom.',
+    })).toBe('Gynaecologische oncologie');
+  });
+
+  it.each([
+    ['Dostarlimab (Jemperli)', 'endometriumcarcinoom'],
+    ['Tisotumab vedotin (Tivdak)', 'cervixcarcinoom'],
+    ['Mirvetuximab (Elahere)', 'ovariumcarcinoom'],
+  ])('recognizes gynaecological regimen %s', (title, content) => {
+    expect(normalizeDischargeTemplateDiscipline({ discipline: 'Oncologie', title, content }))
+      .toBe('Gynaecologische oncologie');
+  });
 });
