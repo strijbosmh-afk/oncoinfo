@@ -172,7 +172,7 @@ export default defineConfig({
         name: "OncoInfo - Medicijnbibliotheek",
         short_name: "OncoInfo",
         description: "Compleet geneesmiddelenoverzicht voor oncologie",
-        theme_color: "#0c767d",
+        theme_color: "#0f766e",
         background_color: "#f4f8f8",
         display: "standalone",
         start_url: "/",
