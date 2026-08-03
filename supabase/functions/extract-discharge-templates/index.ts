@@ -56,6 +56,7 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     discipline: "Borstkanker",
     terms: [
       "borst", "mamma", "breast", "her2", "hr+", "triple negatief", "tnbc",
+      "tolaney", "apt-regime", "apt schema",
       "ribociclib", "palbociclib", "abemaciclib", "trastuzumab", "pertuzumab",
       "sacituzumab", "trastuzumab deruxtecan",
     ],
@@ -78,7 +79,7 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     discipline: "Gynaecologische oncologie",
     terms: [
       "ovarium", "eierstok", "endometrium", "cervix", "vulva", "gynaecologisch",
-      "niraparib", "rucaparib",
+      "topotecan", "niraparib", "zejula", "rucaparib", "rubraca", "olaparib", "lynparza",
     ],
   },
   { discipline: "Huidtumoren", terms: ["melanoom", "merkel", "cutaan", "huidtumor", "cemiplimab"] },
