@@ -62,9 +62,9 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     discipline: 'Borstkanker',
     terms: [
       'borst', 'mamma', 'breast', 'her2', 'hr+', 'triple negatief', 'tnbc',
+      'tolaney', 'apt-regime', 'apt schema',
       'ribociclib', 'palbociclib', 'abemaciclib', 'trastuzumab', 'pertuzumab',
       'sacituzumab', 'trastuzumab deruxtecan',
-      'tolaney',
     ],
   },
   {
@@ -86,7 +86,8 @@ const DISCIPLINE_RULES: DisciplineRule[] = [
     discipline: 'Gynaecologische oncologie',
     terms: [
       'ovarium', 'eierstok', 'endometrium', 'cervix', 'vulva', 'gynaecologisch',
-      'niraparib', 'rucaparib', 'parp-inhibitor', 'parp inhibitor',
+      'topotecan', 'olaparib', 'lynparza', 'niraparib', 'zejula', 'rucaparib', 'rubraca',
+      'parp-inhibitor', 'parp inhibitor',
       'dostarlimab', 'jemperli', 'tisotumab vedotin', 'tivdak',
       'mirvetuximab', 'elahere',
     ],
