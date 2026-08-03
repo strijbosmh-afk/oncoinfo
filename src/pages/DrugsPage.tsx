@@ -27,6 +27,7 @@ import { SortableDrugList } from '@/components/drugs/SortableDrugList';
 import { TemplateSearchResults } from '@/components/drugs/TemplateSearchResults';
 import { useHospital } from '@/contexts/HospitalContext';
 import { useDischargeTemplates } from '@/hooks/useDischargeTemplates';
+import { TemplateShortcutsSection } from '@/components/home/TemplateShortcutsSection';
 
 const CATEGORY_DISCIPLINE_MAP: Record<string, string[]> = {
   breast: ['Borstkanker'],
@@ -871,13 +872,26 @@ export default function DrugsPage() {
             </div>
           </div>
 
+          {isFavoritesView && (
+            <TemplateShortcutsSection showMostUsed={false} flushTop className="mb-6" />
+          )}
+
+          {isFavoritesView && selectedDrugs.length > 0 && (
+            <div className="mb-3 flex items-center gap-2">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <h2 className="text-sm font-semibold">Favoriete infofolders</h2>
+            </div>
+          )}
+
           {isLoading ? (
             <DrugListSkeleton />
           ) : selectedDrugs.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center py-14 text-center">
                 <Icon className="mb-3 h-8 w-8 text-muted-foreground/50" />
-                <h2 className="font-semibold">Nog geen {title.toLowerCase()}</h2>
+                <h2 className="font-semibold">
+                  {isFavoritesView ? 'Nog geen favoriete infofolders' : `Nog geen ${title.toLowerCase()}`}
+                </h2>
                 <p className="mt-1 text-sm text-muted-foreground">Selecteer therapieën via de ster of bliksem op een fiche.</p>
                 <Button asChild variant="outline" className="mt-4"><Link to="/home">Naar infofolders</Link></Button>
               </CardContent>

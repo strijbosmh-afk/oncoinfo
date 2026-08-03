@@ -114,7 +114,7 @@ export default function DischargeTemplatesPage() {
           </div>
         )}
 
-        {isOverview && <TemplateShortcutsSection />}
+        {isOverview && <TemplateShortcutsSection className="mb-5" />}
 
         {/* Search */}
         {!isLoading && items.length > 0 && (

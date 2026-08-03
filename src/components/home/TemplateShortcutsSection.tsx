@@ -9,7 +9,19 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
-export function TemplateShortcutsSection() {
+interface TemplateShortcutsSectionProps {
+  showFavorites?: boolean;
+  showMostUsed?: boolean;
+  flushTop?: boolean;
+  className?: string;
+}
+
+export function TemplateShortcutsSection({
+  showFavorites = true,
+  showMostUsed = true,
+  flushTop = false,
+  className = '',
+}: TemplateShortcutsSectionProps = {}) {
   const { permissions, isAdmin, isSuperAdmin } = useAuth();
   const canView = isAdmin || isSuperAdmin || !!permissions?.is_physician;
   const { data } = useDischargeTemplates(canView);
@@ -25,7 +37,10 @@ export function TemplateShortcutsSection() {
     .map(m => byId.get(m.template_id))
     .filter(Boolean) as typeof data.templates;
 
-  if (favTemplates.length === 0 && mostUsedTemplates.length === 0) return null;
+  const hasFavorites = showFavorites && favTemplates.length > 0;
+  const hasMostUsed = showMostUsed && mostUsedTemplates.length > 0;
+
+  if (!hasFavorites && !hasMostUsed) return null;
 
   const copy = async (id: string, content: string) => {
     try {
@@ -64,8 +79,8 @@ export function TemplateShortcutsSection() {
   );
 
   return (
-    <div id="shortcuts" className="mt-6 max-w-6xl mx-auto space-y-4 scroll-mt-24">
-      {favTemplates.length > 0 && (
+    <div id="shortcuts" className={`mx-auto max-w-6xl space-y-4 scroll-mt-24 ${flushTop ? '' : 'mt-6'} ${className}`}>
+      {hasFavorites && (
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -76,7 +91,7 @@ export function TemplateShortcutsSection() {
           </div>
         </div>
       )}
-      {mostUsedTemplates.length > 0 && (
+      {hasMostUsed && (
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Pin className="h-4 w-4 fill-primary text-primary" />
