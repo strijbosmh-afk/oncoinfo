@@ -17,6 +17,13 @@ const copy: Record<Language, Record<string, string>> = {
     professional: 'Voor zorgprofessionals',
     external: 'Externe tool',
     open: 'Open ONCOassist',
+    eviqDescription: 'Evidence-based behandelprotocollen, doseeradviezen en toxiciteitsmanagement, ontwikkeld voor de Australische context.',
+    predictDescription: 'Prognose- en behandelvoordeelcalculator voor patiënten met vroege invasieve borstkanker.',
+    trialsDescription: 'Doorzoekbaar internationaal register van klinische studies, met filters voor aandoening, locatie en studiestatus.',
+    protocols: 'Behandelprotocollen',
+    prognosis: 'Prognose',
+    research: 'Klinische studies',
+    openTool: 'Open tool',
     noticeTitle: 'Gebruik als professioneel hulpmiddel',
     notice: 'Externe tools ondersteunen, maar vervangen geen klinische beoordeling. Controleer uitkomsten steeds aan de hand van actuele richtlijnen en lokale ziekenhuisafspraken.',
   },
@@ -27,6 +34,13 @@ const copy: Record<Language, Record<string, string>> = {
     professional: 'Pour les professionnels de santé',
     external: 'Outil externe',
     open: 'Ouvrir ONCOassist',
+    eviqDescription: 'Protocoles fondés sur les preuves, conseils de dosage et gestion des toxicités, développés pour le contexte australien.',
+    predictDescription: 'Calculateur de pronostic et de bénéfice thérapeutique pour le cancer du sein invasif précoce.',
+    trialsDescription: "Registre international consultable des études cliniques, avec filtres par maladie, lieu et statut de l'étude.",
+    protocols: 'Protocoles de traitement',
+    prognosis: 'Pronostic',
+    research: 'Études cliniques',
+    openTool: "Ouvrir l'outil",
     noticeTitle: 'Utiliser comme outil professionnel',
     notice: "Les outils externes soutiennent mais ne remplacent pas le jugement clinique. Vérifiez toujours les résultats à l'aide des recommandations actuelles et des accords locaux de l'hôpital.",
   },
@@ -37,6 +51,13 @@ const copy: Record<Language, Record<string, string>> = {
     professional: 'For healthcare professionals',
     external: 'External tool',
     open: 'Open ONCOassist',
+    eviqDescription: 'Evidence-based treatment protocols, dosing guidance and toxicity management, developed for the Australian context.',
+    predictDescription: 'Prognosis and treatment benefit calculator for patients with early invasive breast cancer.',
+    trialsDescription: 'Searchable international clinical study registry with filters for condition, location and recruitment status.',
+    protocols: 'Treatment protocols',
+    prognosis: 'Prognosis',
+    research: 'Clinical studies',
+    openTool: 'Open tool',
     noticeTitle: 'Use as a professional aid',
     notice: 'External tools support but do not replace clinical judgement. Always verify results against current guidelines and local hospital policies.',
   },
@@ -47,6 +68,13 @@ const copy: Record<Language, Record<string, string>> = {
     professional: 'Für medizinisches Fachpersonal',
     external: 'Externes Tool',
     open: 'ONCOassist öffnen',
+    eviqDescription: 'Evidenzbasierte Behandlungsprotokolle, Dosierungshinweise und Toxizitätsmanagement für den australischen Kontext.',
+    predictDescription: 'Prognose- und Therapienutzenrechner für frühes invasives Mammakarzinom.',
+    trialsDescription: 'Durchsuchbares internationales Studienregister mit Filtern nach Erkrankung, Ort und Rekrutierungsstatus.',
+    protocols: 'Behandlungsprotokolle',
+    prognosis: 'Prognose',
+    research: 'Klinische Studien',
+    openTool: 'Tool öffnen',
     noticeTitle: 'Als professionelles Hilfsmittel verwenden',
     notice: 'Externe Tools unterstützen die klinische Beurteilung, ersetzen sie jedoch nicht. Prüfen Sie Ergebnisse stets anhand aktueller Leitlinien und lokaler Krankenhausvorgaben.',
   },
@@ -114,6 +142,60 @@ export default function ToolsPage() {
                 <Button asChild className="mt-4 w-full sm:w-fit">
                   <a href="https://oncoassist.com/" target="_blank" rel="noopener noreferrer">
                     {text.open}<ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-lg transition-colors hover:border-primary/40">
+              <CardContent className="flex h-full flex-col p-4 sm:p-5">
+                <div className="flex min-h-16 items-center rounded-md bg-[#f4fbfd] px-4 py-2">
+                  <span className="text-3xl font-bold tracking-normal text-[#007f95]">eviQ</span>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">{text.eviqDescription}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="font-normal">{text.protocols}</Badge>
+                  <Badge variant="outline" className="font-normal">{text.external}</Badge>
+                </div>
+                <Button asChild className="mt-4 w-full sm:w-fit">
+                  <a href="https://www.eviq.org.au/" target="_blank" rel="noopener noreferrer">
+                    {text.openTool}<ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-lg transition-colors hover:border-primary/40">
+              <CardContent className="flex h-full flex-col p-4 sm:p-5">
+                <div className="flex min-h-16 items-center rounded-md bg-[#f2f7fb] px-4 py-2">
+                  <span className="text-2xl font-bold tracking-normal text-[#005eb8]">PREDICT Breast</span>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">{text.predictDescription}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="font-normal">{text.prognosis}</Badge>
+                  <Badge variant="outline" className="font-normal">{text.external}</Badge>
+                </div>
+                <Button asChild className="mt-4 w-full sm:w-fit">
+                  <a href="https://breast.v3.predict.cam/tool" target="_blank" rel="noopener noreferrer">
+                    {text.openTool}<ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-lg transition-colors hover:border-primary/40">
+              <CardContent className="flex h-full flex-col p-4 sm:p-5">
+                <div className="flex min-h-16 items-center rounded-md bg-[#f5f7fb] px-4 py-2">
+                  <span className="text-2xl font-bold tracking-normal text-[#16365c]">ClinicalTrials.gov</span>
+                </div>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">{text.trialsDescription}</p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <Badge variant="secondary" className="font-normal">{text.research}</Badge>
+                  <Badge variant="outline" className="font-normal">{text.external}</Badge>
+                </div>
+                <Button asChild className="mt-4 w-full sm:w-fit">
+                  <a href="https://clinicaltrials.gov/" target="_blank" rel="noopener noreferrer">
+                    {text.openTool}<ExternalLink className="ml-2 h-4 w-4" />
                   </a>
                 </Button>
               </CardContent>
