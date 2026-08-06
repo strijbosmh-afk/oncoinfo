@@ -526,14 +526,15 @@ Deno.serve(async (req) => {
             const userRoles = roles?.filter((r: any) => r.user_id === u.id).map((r: any) => r.role) || [];
             const perm = permissions?.find((p: any) => p.user_id === u.id);
             const isSA = userRoles.includes('super_admin');
-            const hospId = profile?.hospital_id || null;
-            // Resolve dedicated nurse name
-            const nurseId = profile?.dedicated_nurse_id || null;
-            const nurseProfile = nurseId ? profiles?.find((p: any) => p.id === nurseId) : null;
-            // Get linked hospitals
             const linkedHospitalIds = (userHospitalsData || [])
               .filter((uh: any) => uh.user_id === u.id)
               .map((uh: any) => uh.hospital_id);
+            // Older migrated profiles can lack a primary hospital while still
+            // having one unambiguous hospital link.
+            const hospId = profile?.hospital_id || (linkedHospitalIds.length === 1 ? linkedHospitalIds[0] : null);
+            // Resolve dedicated nurse name
+            const nurseId = profile?.dedicated_nurse_id || null;
+            const nurseProfile = nurseId ? profiles?.find((p: any) => p.id === nurseId) : null;
             return {
               id: u.id,
               email: u.email,
