@@ -1,11 +1,12 @@
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { BookOpenText, ClipboardList, Pin, Star } from 'lucide-react';
+import { BookMarked, BookOpenText, ClipboardList, Pin, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospital } from '@/contexts/HospitalContext';
 
 const primaryItems = [
   { label: 'Infofolders', href: '/home', icon: BookOpenText },
   { label: 'Ontslagbriefsjablonen', href: '/discharge-templates', icon: ClipboardList, physicianOnly: true },
+  { label: 'Richtlijnen', href: '/guidelines', icon: BookMarked, physicianOnly: true },
 ];
 
 const shortcutItems = [

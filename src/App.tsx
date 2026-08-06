@@ -22,6 +22,7 @@ const ColorPreview = lazy(() => import("./pages/ColorPreview"));
 const UserManualPage = lazy(() => import("./pages/UserManualPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const DischargeTemplatesPage = lazy(() => import("./pages/DischargeTemplatesPage"));
+const GuidelinesPage = lazy(() => import("./pages/GuidelinesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/handleiding" element={<ProtectedRoute><UserManualPage /></ProtectedRoute>} />
                 <Route path="/discharge-templates/:discipline" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
                 <Route path="/discharge-templates" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
+                <Route path="/guidelines" element={<ProtectedRoute><GuidelinesPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
