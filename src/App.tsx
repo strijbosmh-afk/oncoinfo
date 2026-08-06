@@ -23,6 +23,7 @@ const UserManualPage = lazy(() => import("./pages/UserManualPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const DischargeTemplatesPage = lazy(() => import("./pages/DischargeTemplatesPage"));
 const GuidelinesPage = lazy(() => import("./pages/GuidelinesPage"));
+const ToolsPage = lazy(() => import("./pages/ToolsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="/discharge-templates/:discipline" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
                 <Route path="/discharge-templates" element={<ProtectedRoute><DischargeTemplatesPage /></ProtectedRoute>} />
                 <Route path="/guidelines" element={<ProtectedRoute><GuidelinesPage /></ProtectedRoute>} />
+                <Route path="/tools" element={<ProtectedRoute><ToolsPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
