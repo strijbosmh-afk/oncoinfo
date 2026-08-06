@@ -40,9 +40,20 @@ async function callManageUsers(action: string, params: Record<string, unknown> =
   });
 
   if (error) {
-    const message = typeof error === 'object' && 'message' in error
-      ? error.message
+    let message = typeof error === 'object' && 'message' in error
+      ? String(error.message)
       : String(error);
+    const context = typeof error === 'object' && error && 'context' in error
+      ? (error as { context?: Response }).context
+      : undefined;
+    if (context) {
+      try {
+        const payload = await context.json();
+        if (payload?.error) message = String(payload.error);
+      } catch {
+        // Keep the SDK message when the response body is unavailable.
+      }
+    }
     throw new Error(message);
   }
 
