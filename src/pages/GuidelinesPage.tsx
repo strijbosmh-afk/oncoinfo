@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BookMarked, ExternalLink, Loader2, Search, ShieldCheck } from 'lucide-react';
+import { BookMarked, ExternalLink, Search, ShieldCheck } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
-import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -127,13 +125,11 @@ function currentLanguage(language: string): Language {
 
 export default function GuidelinesPage() {
   const { i18n } = useTranslation();
-  const { permissions, isAdmin, isSuperAdmin, loading } = useAuth();
   const language = currentLanguage(i18n.resolvedLanguage || i18n.language);
   const text = copy[language];
   const areaLabels = areas[language];
   const [activeArea, setActiveArea] = useState('all');
   const [query, setQuery] = useState('');
-  const canView = isAdmin || isSuperAdmin || !!permissions?.is_physician;
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase(language);
@@ -143,9 +139,6 @@ export default function GuidelinesPage() {
       return matchesArea && (!normalizedQuery || searchable.includes(normalizedQuery));
     });
   }, [activeArea, areaLabels, language, query]);
-
-  if (loading) return <Layout><div className="flex flex-1 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></Layout>;
-  if (!canView) return <Navigate to="/home" replace />;
 
   const sections = [
     { scope: 'belgian', title: text.belgian },

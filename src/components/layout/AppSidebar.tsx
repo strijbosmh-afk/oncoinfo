@@ -6,8 +6,8 @@ import { useHospital } from '@/contexts/HospitalContext';
 const primaryItems = [
   { label: 'Infofolders', href: '/home', icon: BookOpenText },
   { label: 'Ontslagbriefsjablonen', href: '/discharge-templates', icon: ClipboardList, physicianOnly: true },
-  { label: 'Richtlijnen', href: '/guidelines', icon: BookMarked, physicianOnly: true },
-  { label: 'Tools', href: '/tools', icon: Wrench, physicianOnly: true },
+  { label: 'Richtlijnen', href: '/guidelines', icon: BookMarked },
+  { label: 'Tools', href: '/tools', icon: Wrench },
 ];
 
 const shortcutItems = [
