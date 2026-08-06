@@ -55,6 +55,7 @@ const DISCIPLINE_OPTIONS = [
   'respiratoir oncoloog',
   'chirurg',
   'radiotherapeut',
+  'huisarts',
 ];
 
 function generatePassword(length = 12): string {
@@ -88,7 +89,6 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
   const [password, setPassword] = useState('');
   const [hospitalId, setHospitalId] = useState('');
   const [role, setRole] = useState<'admin' | 'viewer' | 'apotheker' | 'super_admin'>('viewer');
-  const [sendEmail, setSendEmail] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [canAdd, setCanAdd] = useState(false);
   const [canDelete, setCanDelete] = useState(false);
@@ -155,7 +155,6 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         setHospitalId(preselectedHospitalId || '');
         setPassword(generatePassword());
         setRole('viewer');
-        setSendEmail(true);
         setShowPassword(true);
         setCanAdd(false);
         setCanDelete(false);
@@ -203,8 +202,9 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
         hospital_id: hospitalId,
         password: password.trim(),
         role,
-        send_email: sendEmail,
+        send_email: false,
         login_url: 'https://www.oncoinfo.be',
+        is_physician: userFunction === 'arts',
         can_add_treatments: canAdd,
         can_delete_treatments: canDelete,
         can_modify_treatments: canModify,
@@ -222,6 +222,7 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
       changes.last_name = lastName.trim();
       changes.function = userFunction;
       changes.discipline = userFunction === 'arts' ? discipline : null;
+      changes.is_physician = userFunction === 'arts';
       changes.can_add_treatments = canAdd;
       changes.can_delete_treatments = canDelete;
       changes.can_modify_treatments = canModify;
@@ -592,18 +593,6 @@ export function UserDialog({ open, onOpenChange, mode, user, onSubmit, onUpdateH
             </div>
           </div>
 
-          {mode === 'create' && (
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox
-                id="send-email"
-                checked={sendEmail}
-                onCheckedChange={(checked) => setSendEmail(checked as boolean)}
-              />
-              <Label htmlFor="send-email" className="text-sm font-normal cursor-pointer">
-                {t('userDialog.sendEmail')}
-              </Label>
-            </div>
-          )}
         </div>
 
         <DialogFooter>

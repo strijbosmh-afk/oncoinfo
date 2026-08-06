@@ -54,6 +54,40 @@ function generateTemporaryPassword() {
   return password.join('');
 }
 
+const ALLOWED_USER_FUNCTIONS = new Set(['arts', 'apotheek', 'verpleegkundige', 'overige']);
+const ALLOWED_PHYSICIAN_DISCIPLINES = new Set([
+  'medisch oncoloog',
+  'gynaecoloog',
+  'uroloog',
+  'digestief oncoloog',
+  'respiratoir oncoloog',
+  'chirurg',
+  'radiotherapeut',
+  'huisarts',
+]);
+
+async function saveAndVerifyNewUserProfile(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  profileData: Record<string, unknown>,
+) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(profileData)
+    .eq('user_id', userId)
+    .select('user_id, function, discipline, password_changed')
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error('Profiel kon niet worden opgeslagen');
+  if (data.function !== profileData.function || data.discipline !== profileData.discipline) {
+    throw new Error('Functie of specialisme werd niet correct opgeslagen');
+  }
+  if (data.password_changed !== false) {
+    throw new Error('Verplichte wachtwoordwijziging kon niet worden ingesteld');
+  }
+}
+
 async function verifyAdmin(supabase: ReturnType<typeof createClient>, authHeader: string) {
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -556,6 +590,23 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'email, username, password en role zijn verplicht' }, 400);
         }
 
+        if (!ALLOWED_USER_FUNCTIONS.has(userFunction)) {
+          return jsonResponse({ error: 'Selecteer een geldige functie' }, 400);
+        }
+        if (userFunction === 'arts' && !ALLOWED_PHYSICIAN_DISCIPLINES.has(discipline)) {
+          return jsonResponse({ error: 'Selecteer een geldig specialisme voor de arts' }, 400);
+        }
+
+        const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
+        const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
+        const targetHospitalId = hospital_id || callerHospitalId;
+        if (!callerIsSuper && targetHospitalId !== callerHospitalId) {
+          return jsonResponse({ error: 'U kunt alleen gebruikers aanmaken in uw eigen ziekenhuis' }, 403);
+        }
+        if (role === 'super_admin' && !callerIsSuper) {
+          return jsonResponse({ error: 'Alleen super admins kunnen de super admin rol toewijzen' }, 403);
+        }
+
         // Create user via Admin API (auto-confirms email)
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
           email,
@@ -571,32 +622,30 @@ Deno.serve(async (req) => {
         }
 
         // Set username, name fields and hospital_id in profiles
-        const profileData: Record<string, any> = { username };
+        const profileData: Record<string, any> = {
+          username,
+          function: userFunction,
+          discipline: userFunction === 'arts' ? discipline : null,
+          password_changed: false,
+        };
         if (first_name !== undefined) profileData.first_name = first_name;
         if (last_name !== undefined) profileData.last_name = last_name;
-        if (userFunction !== undefined) profileData.function = userFunction;
-        if (discipline !== undefined) profileData.discipline = discipline;
         // Assign hospital: use provided hospital_id, or caller's hospital
-        const callerHospitalId = await getAdminHospitalId(supabase, adminUser.id);
-        const callerIsSuper = await isSuperAdmin(supabase, adminUser.id);
-        // Non-super-admins can only create users in their own hospital
-        const targetHospitalId = hospital_id || callerHospitalId;
-        if (!callerIsSuper && targetHospitalId !== callerHospitalId) {
-          return jsonResponse({ error: 'U kunt alleen gebruikers aanmaken in uw eigen ziekenhuis' }, 403);
-        }
         profileData.hospital_id = targetHospitalId;
         if (dedicated_nurse_id) profileData.dedicated_nurse_id = dedicated_nurse_id;
         if (phone_number !== undefined) profileData.phone_number = phone_number;
         if (default_language !== undefined) profileData.default_language = default_language;
-        await supabase.from('profiles').update(profileData).eq('user_id', newUser.user.id);
+        try {
+          await saveAndVerifyNewUserProfile(supabase, newUser.user.id, profileData);
+        } catch (profileError) {
+          await supabase.auth.admin.deleteUser(newUser.user.id);
+          const message = profileError instanceof Error ? profileError.message : 'Profiel kon niet worden opgeslagen';
+          return jsonResponse({ error: message }, 500);
+        }
 
         const assignedRole = role === 'super_admin' || role === 'admin' || role === 'apotheker' ? role : 'viewer';
 
         // Only super_admin callers can assign super_admin role
-        if (assignedRole === 'super_admin' && !(await isSuperAdmin(supabase, adminUser.id))) {
-          return jsonResponse({ error: 'Alleen super admins kunnen de super admin rol toewijzen' }, 403);
-        }
-
         if (assignedRole !== 'viewer') {
           await supabase.from('user_roles').delete().eq('user_id', newUser.user.id);
           await supabase.from('user_roles').insert({ user_id: newUser.user.id, role: assignedRole });
@@ -869,6 +918,11 @@ Deno.serve(async (req) => {
         if (user_id) {
           const { error: pwError } = await supabase.auth.admin.updateUserById(user_id, { password });
           if (pwError) throw pwError;
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ password_changed: false })
+            .eq('user_id', user_id);
+          if (profileError) throw profileError;
         }
 
         // Fetch hospital branding for email
