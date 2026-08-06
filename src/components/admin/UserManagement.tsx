@@ -42,6 +42,12 @@ export function UserManagement() {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const [credentialsUser, setCredentialsUser] = useState<ManagedUser | null>(null);
   const [credentialsPassword, setCredentialsPassword] = useState('');
+  const [newUserCredentials, setNewUserCredentials] = useState<{
+    userId: string;
+    email: string;
+    username: string;
+    password: string;
+  } | null>(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetUser, setResetUser] = useState<ManagedUser | null>(null);
   const [bulkResetDialogOpen, setBulkResetDialogOpen] = useState(false);
@@ -206,10 +212,32 @@ export function UserManagement() {
 
   const handleDialogSubmit = (data: Record<string, unknown>) => {
     if (dialogMode === 'create') {
-      createUser.mutate(data as any, { onSuccess: () => setDialogOpen(false) });
+      createUser.mutate({ ...data, send_email: false } as any, {
+        onSuccess: (result) => {
+          setDialogOpen(false);
+          setNewUserCredentials({
+            userId: result.user.id,
+            email: String(data.email),
+            username: String(data.username),
+            password: String(data.password),
+          });
+        },
+      });
     } else {
       updateUser.mutate(data as any, { onSuccess: () => setDialogOpen(false) });
     }
+  };
+
+  const handleSendNewUserCredentials = () => {
+    if (!newUserCredentials) return;
+    sendCredentials.mutate({
+      user_id: newUserCredentials.userId,
+      email: newUserCredentials.email,
+      username: newUserCredentials.username,
+      password: newUserCredentials.password,
+      login_url: 'https://www.oncoinfo.be',
+    });
+    setNewUserCredentials(null);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -227,6 +255,32 @@ export function UserManagement() {
 
   return (
     <>
+      <AlertDialog
+        open={!!newUserCredentials}
+        onOpenChange={(open) => { if (!open) setNewUserCredentials(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('userMgmt.sendNewCredentialsTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('userMgmt.sendNewCredentialsDesc', {
+                name: newUserCredentials?.username,
+                email: newUserCredentials?.email,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setNewUserCredentials(null)}>
+              {t('userMgmt.sendNewCredentialsLater')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSendNewUserCredentials}>
+              <Send className="mr-2 h-4 w-4" />
+              {t('userMgmt.sendNewCredentialsNow')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">

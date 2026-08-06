@@ -114,7 +114,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
         />
       )}
       {!needsPasswordChange && <PlatformUpdatePopup />}
-      {children}
+      {!needsPasswordChange && children}
     </>
   );
 }

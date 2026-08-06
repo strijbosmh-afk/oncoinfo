@@ -42,10 +42,11 @@ export function ChangePasswordDialog({ open, onSuccess, userId, isExpired = fals
       if (error) throw error;
 
       // Mark password as changed in profile
-      await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({ password_changed: true } as any)
         .eq('user_id', userId);
+      if (profileError) throw profileError;
 
       toast({
         title: t('changePassword.success'),
