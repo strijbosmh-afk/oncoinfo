@@ -622,6 +622,19 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: msg }, 400);
         }
 
+        // The database only permits assigning a primary hospital after the
+        // user has been linked to that hospital.
+        if (targetHospitalId) {
+          const { error: hospitalLinkError } = await supabase.from('user_hospitals').upsert(
+            { user_id: newUser.user.id, hospital_id: targetHospitalId },
+            { onConflict: 'user_id,hospital_id' }
+          );
+          if (hospitalLinkError) {
+            await supabase.auth.admin.deleteUser(newUser.user.id);
+            return jsonResponse({ error: `Ziekenhuiskoppeling kon niet worden opgeslagen: ${hospitalLinkError.message}` }, 500);
+          }
+        }
+
         // Set username, name fields and hospital_id in profiles
         const profileData: Record<string, any> = {
           username,
@@ -661,14 +674,6 @@ Deno.serve(async (req) => {
           can_delete_treatments: can_delete_treatments ?? false,
           can_modify_treatments: can_modify_treatments ?? false,
         }, { onConflict: 'user_id' });
-
-        // Auto-add primary hospital to user_hospitals
-        if (targetHospitalId) {
-          await supabase.from('user_hospitals').upsert(
-            { user_id: newUser.user.id, hospital_id: targetHospitalId },
-            { onConflict: 'user_id,hospital_id' }
-          );
-        }
 
         // Send credentials email if requested
         let emailSent = false;
