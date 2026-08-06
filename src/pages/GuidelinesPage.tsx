@@ -45,7 +45,7 @@ const sources: GuidelineSource[] = [
       en: 'Belgian clinical practice guidelines, reports and quality indicators for cancer care.',
       de: 'Belgische Praxisleitlinien, Berichte und Qualitätsindikatoren für die Krebsversorgung.',
     },
-    url: 'https://kce.fgov.be/nl/over-ons/wat-doet-het-kce/onze-onderzoeksdomeinen/good-clinical-practice',
+    url: 'https://kce.fgov.be/nl/over-ons/wat-is-het-kce/onze-activiteitsdomeinen/good-clinical-practice',
     scope: 'belgian', areas: ['general', ...allClinicalAreas], access: 'free',
   },
   {
